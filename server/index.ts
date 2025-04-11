@@ -3,6 +3,9 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { seedDatabase } from "./seed";
 import { businessDataInjector } from "./middleware/businessDataInjector";
+import { businessExtractor } from "./middleware/businessExtractor";
+import { setupSSL } from "./ssl";
+import { storage } from "./storage";
 
 const app = express();
 app.use(express.json());
@@ -42,11 +45,27 @@ app.use((req, res, next) => {
   // Seed the database with initial data
   await seedDatabase();
   
+  // Add the business extractor middleware before routes
+  app.use(businessExtractor);
+  
   // Let the routes.ts define all routes
-  const server = await registerRoutes(app);
+  let server = await registerRoutes(app);
+  
+  // Set up SSL certificate handling with Greenlock
+  try {
+    const sslServer = await setupSSL(app, storage);
+    console.log("SSL setup completed successfully");
+    
+    // If in production, use the SSL server instead
+    if (process.env.NODE_ENV === 'production') {
+      server = sslServer;
+    }
+  } catch (error) {
+    console.error("Error setting up SSL:", error);
+    // Continue with HTTP if SSL setup fails
+  }
   
   // No need for businessDataInjector here as it's now handled in routes.ts
-
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";

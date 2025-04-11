@@ -13,6 +13,7 @@ import { z } from "zod";
 import Stripe from "stripe";
 import nodemailer from "nodemailer";
 import { businessExtractor } from "./middleware/businessExtractor";
+import { manuallyRegisterDomain, getRegisteredDomains } from "./ssl";
 
 // Initialize Stripe if secret key is available
 let stripe: Stripe | undefined;
