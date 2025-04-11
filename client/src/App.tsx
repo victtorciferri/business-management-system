@@ -8,7 +8,6 @@ import Customers from "@/pages/customers";
 import Services from "@/pages/services";
 import Checkout from "@/pages/checkout";
 import NotFound from "@/pages/not-found";
-import CustomerPortalSimple from "@/pages/customer-portal-simple";
 import BusinessPortal from "@/pages/business-portal";
 import DomainSetupInstructions from "@/pages/domain-setup";
 import CustomDomain from "@/pages/custom-domain";
@@ -28,20 +27,25 @@ function AppContent() {
   const [isLoading, setIsLoading] = useState(true);
   
   // Get current location
-  const [location] = useLocation();
-  const isCustomerPortal = location.startsWith('/customer-portal');
+  const [location, setLocation] = useLocation();
   
   // Check if the URL looks like a business portal URL (e.g., /salonelegante)
   const businessPortalRegex = /^\/([a-zA-Z0-9_-]+)(?:\/.*)?$/;
   const match = location.match(businessPortalRegex);
   const potentialBusinessSlug = match && 
-    match[1] !== 'customer-portal' && 
     match[1] !== 'api' && 
     match[1] !== 'auth' &&
     match[1] !== 'admin' &&
     match[1] !== 'checkout' &&
     match[1] !== 'preview' &&
     match[1] !== 'instructions' ? match[1] : null;
+  
+  // Redirect /customer-portal to the default business page
+  useEffect(() => {
+    if (location.startsWith('/customer-portal')) {
+      setLocation('/salonelegante');
+    }
+  }, [location, setLocation]);
   
   useEffect(() => {
     // First check if we have business data from window
@@ -93,7 +97,6 @@ function AppContent() {
   console.log("App.tsx is rendering");
   console.log("Location:", location);
   console.log("isBusinessPortal:", isBusinessPortal);
-  console.log("isCustomerPortal:", isCustomerPortal);
   console.log("businessData:", businessData);
   console.log("window.BUSINESS_DATA:", typeof window !== "undefined" ? (window as any).BUSINESS_DATA : "Not available");
   console.log("currentUser:", currentUser);
@@ -108,14 +111,7 @@ function AppContent() {
   }
   
   return (
-    isCustomerPortal ? (
-      <div className="min-h-screen bg-background">
-        <Switch>
-          <Route path="/customer-portal" component={CustomerPortalSimple} />
-          <Route component={NotFound} />
-        </Switch>
-      </div>
-    ) : isBusinessPortal ? (
+    isBusinessPortal ? (
       <div className="min-h-screen bg-background">
         <Switch>
           {/* For business subpages like /:slug/services */}
