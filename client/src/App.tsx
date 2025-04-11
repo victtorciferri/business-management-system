@@ -40,7 +40,10 @@ function App() {
   // Check if the URL looks like a business portal URL (e.g., /salonelegante)
   const businessPortalRegex = /^\/([a-zA-Z0-9_-]+)(?:\/.*)?$/;
   const match = location.match(businessPortalRegex);
-  const potentialBusinessSlug = match && match[1] !== 'customer-portal' && match[1] !== 'api' ? match[1] : null;
+  const potentialBusinessSlug = match && 
+    match[1] !== 'customer-portal' && 
+    match[1] !== 'api' && 
+    match[1] !== 'instructions' ? match[1] : null;
   
   useEffect(() => {
     // First check if we have business data from window
