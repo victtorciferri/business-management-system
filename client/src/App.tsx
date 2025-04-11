@@ -14,29 +14,30 @@ import DomainSetupInstructions from "@/pages/domain-setup";
 import CustomDomain from "@/pages/custom-domain";
 import PreviewBusiness from "@/pages/preview-business";
 import AdminDashboard from "@/pages/admin-dashboard";
+import AuthPage from "@/pages/auth-page";
 import { useState, useEffect } from "react";
 import { User } from "@shared/schema";
 
 function App() {
-  // In a real app, this would come from an auth context
-  // For this MVP, we'll use a simple state
-  const [currentUser, setCurrentUser] = useState<User | null>({
-    id: 1,
-    username: "businessowner",
-    password: "password",
-    email: "owner@example.com",
-    businessName: "Salon Elegante",
-    businessSlug: "salonelegante",
-    customDomain: "salonelegante.cl",
-    phone: "+56 9 9876 5432",
-    role: "admin", // Set as admin for development purposes
-    subscription: null,
-    subscriptionStatus: "free",
-    subscriptionExpiresAt: null,
-    platformFeePercentage: 2,
-    createdAt: new Date(),
-    updatedAt: new Date()
-  });
+  // Use state to track the current user
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  
+  // Check if user is logged in on app load
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      try {
+        const response = await fetch('/api/user');
+        if (response.ok) {
+          const userData = await response.json();
+          setCurrentUser(userData);
+        }
+      } catch (error) {
+        console.error('Error checking auth status:', error);
+      }
+    };
+    
+    checkAuthStatus();
+  }, []);
 
   // Check if we're on a custom domain or subdomain
   const [businessData, setBusinessData] = useState<any>(null);
@@ -153,13 +154,14 @@ function App() {
         <Layout currentUser={currentUser}>
           <Switch>
             <Route path="/" component={Dashboard} />
+            <Route path="/auth" component={AuthPage} />
             <Route path="/appointments" component={Appointments} />
             <Route path="/customers" component={Customers} />
             <Route path="/services" component={Services} />
             <Route path="/custom-domain" component={CustomDomain} />
             <Route path="/instructions/domain-setup" component={DomainSetupInstructions} />
             <Route path="/admin">
-              {currentUser?.role === 'admin' ? <AdminDashboard /> : <Redirect to="/" />}
+              {currentUser?.role === 'admin' ? <AdminDashboard /> : <Redirect to="/auth" />}
             </Route>
             <Route path="/checkout/:appointmentId">
               {params => <Checkout appointmentId={Number(params.appointmentId)} />}
