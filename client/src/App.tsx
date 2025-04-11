@@ -9,6 +9,7 @@ import Services from "@/pages/services";
 import Checkout from "@/pages/checkout";
 import NotFound from "@/pages/not-found";
 import CustomerPortalSimple from "@/pages/customer-portal-simple";
+import BusinessPortal from "@/pages/business-portal";
 import { useState } from "react";
 import { User } from "@shared/schema";
 
@@ -27,13 +28,21 @@ function App() {
   
   const [location] = useLocation();
   const isCustomerPortal = location.startsWith('/customer-portal');
-
+  const isBusinessPortal = /^\/[^/]+$/.test(location) && location !== '/';
+  
   return (
     <QueryClientProvider client={queryClient}>
       {isCustomerPortal ? (
         <div className="min-h-screen bg-background">
           <Switch>
             <Route path="/customer-portal" component={CustomerPortalSimple} />
+            <Route component={NotFound} />
+          </Switch>
+        </div>
+      ) : isBusinessPortal ? (
+        <div className="min-h-screen bg-background">
+          <Switch>
+            <Route path="/:slug" component={BusinessPortal} />
             <Route component={NotFound} />
           </Switch>
         </div>

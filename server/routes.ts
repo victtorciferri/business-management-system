@@ -33,6 +33,30 @@ const transporter = nodemailer.createTransport({
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // User routes
+  app.get("/api/business/:slug", async (req: Request, res: Response) => {
+    try {
+      const { slug } = req.params;
+      const business = await storage.getUserByBusinessSlug(slug);
+      
+      if (!business) {
+        return res.status(404).json({ message: "Business not found" });
+      }
+      
+      // Get services for this business
+      const services = await storage.getServicesByUserId(business.id);
+      
+      // Return business data excluding sensitive information
+      const { password, ...businessData } = business;
+      
+      res.json({
+        business: businessData,
+        services: services.filter(service => service.active)
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch business data" });
+    }
+  });
+  
   app.post("/api/users", async (req: Request, res: Response) => {
     try {
       const userData = insertUserSchema.parse(req.body);
@@ -40,6 +64,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (existingUser) {
         return res.status(400).json({ message: "Username already exists" });
+      }
+      
+      // Generate a business slug if not provided
+      if (!userData.businessSlug && userData.businessName) {
+        userData.businessSlug = userData.businessName
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, '') // Remove non-alphanumeric characters
+          .replace(/\s+/g, '');      // Remove spaces
       }
       
       const user = await storage.createUser(userData);

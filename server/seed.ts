@@ -20,6 +20,7 @@ export async function seedDatabase() {
         email: "owner@example.com",
         password: "password123", // In a real app, this would be hashed
         businessName: "Salon Elegante",
+        businessSlug: "salonelegante",
         phone: "+56 9 9876 5432",
       });
     }
