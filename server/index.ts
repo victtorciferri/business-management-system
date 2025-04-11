@@ -6,6 +6,7 @@ import { businessDataInjector } from "./middleware/businessDataInjector";
 import { businessExtractor } from "./middleware/businessExtractor";
 import { setupSSL } from "./ssl";
 import { storage } from "./storage";
+import { setupAuth } from "./auth";
 
 const app = express();
 app.use(express.json());
@@ -44,6 +45,9 @@ app.use((req, res, next) => {
 (async () => {
   // Seed the database with initial data
   await seedDatabase();
+  
+  // Set up authentication
+  setupAuth(app);
   
   // Add the business extractor middleware before routes
   app.use(businessExtractor);

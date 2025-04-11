@@ -1091,11 +1091,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin API routes - middleware to check admin role
   const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
     // Check if user is authenticated and has admin role
-    if (!req.isAuthenticated()) {
+    if (!req.isAuthenticated || !req.isAuthenticated()) {
       return res.status(401).json({ message: "Authentication required" });
     }
     
-    if (req.user && req.user.role === 'admin') {
+    // Type assertion to tell TypeScript that req.user has the properties we expect
+    const user = req.user as Express.User;
+    
+    if (user && user.role === 'admin') {
       return next();
     }
     
