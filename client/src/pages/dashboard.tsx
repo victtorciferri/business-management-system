@@ -29,6 +29,11 @@ export default function Dashboard() {
             Business Dashboard
           </h2>
           <p className="mt-1 text-sm text-gray-500">
+            <a href="/customer-portal" className="text-primary hover:underline font-medium" target="_blank">
+              View Customer Portal →
+            </a>
+          </p>
+          <p className="mt-1 text-sm text-gray-500">
             Today is {format(new Date(), "EEEE, MMMM d, yyyy")}
           </p>
         </div>
