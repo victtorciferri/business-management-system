@@ -22,6 +22,7 @@ function App() {
     password: "password",
     email: "owner@example.com",
     businessName: "Salon Elegante",
+    businessSlug: "salonelegante",
     phone: "+56 9 9876 5432",
     createdAt: new Date()
   });
