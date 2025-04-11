@@ -145,12 +145,18 @@ export const payments = pgTable("payments", {
   appointmentId: integer("appointment_id").notNull().references(() => appointments.id, { onDelete: 'cascade' }),
   amount: numeric("amount").notNull(),
   status: text("status").notNull().default("pending"), // pending, completed, refunded
-  stripePaymentId: text("stripe_payment_id"),
-  merchantAccountId: text("merchant_account_id"), // Store business-specific payment processor account ID
+  paymentProcessor: text("payment_processor").default("mercadopago"), // mercadopago, manual, etc.
+  processorPaymentId: text("processor_payment_id"), // ID from Mercadopago or other processor
+  merchantAccountId: text("merchant_account_id"), // Business-specific payment processor account ID
+  metadata: text("metadata"), // JSON string with additional payment details
+  paymentUrl: text("payment_url"), // URL for payment checkout (Mercadopago generated URL)
+  paymentMethod: text("payment_method"), // credit_card, debit_card, bank_transfer, etc.
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => {
   return {
     appointmentIdIdx: index("payments_appointment_id_idx").on(table.appointmentId),
+    statusIdx: index("payments_status_idx").on(table.status),
   };
 });
 
@@ -158,8 +164,12 @@ export const insertPaymentSchema = createInsertSchema(payments).pick({
   appointmentId: true,
   amount: true,
   status: true,
-  stripePaymentId: true,
+  paymentProcessor: true,
+  processorPaymentId: true,
   merchantAccountId: true,
+  metadata: true,
+  paymentUrl: true,
+  paymentMethod: true,
 });
 
 // Define relationships between tables for Drizzle ORM
