@@ -236,6 +236,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to check business context" });
     }
   });
+  
+  // New API endpoint to get business data by slug
+  app.get("/api/business-data/:slug", async (req: Request, res: Response) => {
+    try {
+      const { slug } = req.params;
+      console.log(`Fetching business data for slug: ${slug}`);
+      
+      // Get the business by slug
+      const business = await storage.getUserByBusinessSlug(slug);
+      
+      if (!business) {
+        console.log(`No business found for slug: ${slug}`);
+        return res.status(404).json({ message: "Business not found" });
+      }
+      
+      // Get services for this business
+      const services = await storage.getServicesByUserId(business.id);
+      const activeServices = services.filter(service => service.active);
+      
+      // Determine subpath for business portal routes if from referer
+      let subPath = "";
+      const referer = req.headers.referer;
+      if (referer) {
+        const urlObj = new URL(referer);
+        const regex = new RegExp(`^/${slug}/(.*)$`);
+        const match = urlObj.pathname.match(regex);
+        if (match && match[1]) {
+          subPath = match[1].split('?')[0]; // Remove query params
+        }
+      }
+      
+      // Remove sensitive data
+      const { password: _, ...businessData } = business;
+      
+      // Return the business data
+      res.json({
+        business: businessData,
+        services: activeServices,
+        subPath
+      });
+      
+      console.log(`Returned business data for ${slug}`);
+    } catch (error) {
+      console.error(`Error fetching business data for ${req.params.slug}:`, error);
+      res.status(500).json({ message: "Failed to fetch business data" });
+    }
+  });
 
   /**************************************
    * HTML ROUTES - COME AFTER API ROUTES
