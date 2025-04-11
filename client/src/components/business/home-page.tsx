@@ -1,8 +1,8 @@
 import { User, Service } from "@shared/schema";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { CalendarDays, Clock, DollarSign, ArrowRight, Star } from "lucide-react";
-import { Link } from "wouter";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Clock, DollarSign, BadgeCheck, Calendar, Heart, Star } from "lucide-react";
+import { useLocation } from "wouter";
 
 interface HomePageProps {
   business: Omit<User, "password">;
@@ -11,158 +11,215 @@ interface HomePageProps {
 }
 
 export default function HomePage({ business, services, slug }: HomePageProps) {
-  // Display featured services (up to 3)
-  const featuredServices = services.slice(0, 3);
-  
+  const [, setLocation] = useLocation();
+
+  // Display only a subset of services on homepage
+  const featuredServices = services?.slice(0, 3) || [];
+
+  // Customer testimonials
+  const testimonials = [
+    {
+      name: "Carolina Herrera",
+      comment: "Amazing service! The staff was professional and I loved my new look.",
+      rating: 5
+    },
+    {
+      name: "Juan Mendez",
+      comment: "Always a great experience. I've been coming here for over a year and I'm always satisfied.",
+      rating: 5
+    },
+    {
+      name: "Andrea Fuentes",
+      comment: "Very satisfied with the results. Will definitely come back again.",
+      rating: 4
+    }
+  ];
+
   return (
-    <div className="space-y-12">
+    <div className="space-y-16 py-6">
       {/* Hero Section */}
-      <section className="py-12 md:py-16 bg-gradient-to-br from-primary-50 to-white rounded-xl">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-primary-800">
+      <section className="relative">
+        <div className="max-w-4xl mx-auto text-center px-4">
+          <h1 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-indigo-500 text-transparent bg-clip-text">
             Welcome to {business.businessName}
           </h1>
-          <p className="text-xl text-gray-700 mb-8 max-w-3xl mx-auto">
-            Book appointments online with ease and discover our premium services tailored just for you.
+          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+            Experience exceptional beauty and wellness services tailored to your needs. 
+            Book your appointment today for a rejuvenating experience.
           </p>
-          <Button size="lg" asChild>
-            <Link href={`/${slug}/schedule`}>
-              Book an Appointment <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button 
+              size="lg" 
+              className="gap-2"
+              onClick={() => setLocation(`/${slug}/schedule`)}
+            >
+              <Calendar className="h-5 w-5" />
+              Book Appointment
+            </Button>
+            <Button 
+              variant="outline" 
+              size="lg"
+              className="gap-2"
+              onClick={() => setLocation(`/${slug}/store`)}
+            >
+              <Heart className="h-5 w-5" />
+              View Services
+            </Button>
+          </div>
         </div>
       </section>
 
       {/* Featured Services */}
-      <section>
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold mb-4">Our Services</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              We offer a variety of professional services to meet your needs. Book your appointment today.
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {featuredServices.map((service) => (
-              <Card key={service.id} className="overflow-hidden">
-                <div className="h-2 bg-gradient-to-r from-primary-400 to-primary-600"></div>
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-bold mb-2 flex items-center">
-                    <div 
-                      className="w-3 h-3 rounded-full mr-2" 
-                      style={{ backgroundColor: service.color || "#06b6d4" }}
-                    ></div>
-                    {service.name}
-                  </h3>
-                  <p className="text-gray-600 mb-4 line-clamp-2">{service.description}</p>
-                  
-                  <div className="grid grid-cols-2 gap-3 mb-4">
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Clock className="w-4 h-4 mr-2 text-primary-500" />
-                      {service.duration} minutes
-                    </div>
-                    <div className="flex items-center text-sm text-gray-600">
-                      <DollarSign className="w-4 h-4 mr-2 text-primary-500" />
-                      ${Number(service.price).toFixed(2)}
-                    </div>
+      <section className="max-w-5xl mx-auto px-4">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-bold mb-4">Our Services</h2>
+          <p className="text-muted-foreground">Discover our range of professional services</p>
+        </div>
+        
+        <div className="grid gap-6 md:grid-cols-3">
+          {featuredServices.map((service) => (
+            <Card key={service.id} className="overflow-hidden">
+              <div className="h-2" style={{ backgroundColor: service.color }}></div>
+              <CardHeader>
+                <CardTitle>{service.name}</CardTitle>
+                <CardDescription>Professional service</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="mb-4 text-sm">{service.description}</p>
+                <div className="flex justify-between text-sm">
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <span>{service.duration} mins</span>
                   </div>
-                  
-                  <Button variant="outline" size="sm" className="w-full" asChild>
-                    <Link href={`/${slug}/schedule?serviceId=${service.id}`}>
-                      Book Now
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-            
-            {/* If there are no services, show a placeholder */}
-            {services.length === 0 && (
-              <div className="col-span-1 md:col-span-3 text-center p-8 border rounded-lg bg-gray-50">
-                <p className="text-gray-600">No services available at the moment.</p>
-              </div>
-            )}
-          </div>
-          
-          {services.length > 3 && (
-            <div className="text-center mt-8">
-              <Button variant="outline" asChild>
-                <Link href={`/${slug}/services`}>View All Services</Link>
-              </Button>
-            </div>
-          )}
+                  <div className="flex items-center gap-1">
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    <span>${service.price}</span>
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button 
+                  variant="secondary"
+                  className="w-full"
+                  onClick={() => setLocation(`/${slug}/schedule?service=${service.id}`)}
+                >
+                  Book Now
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
         </div>
+        
+        {services?.length > 3 && (
+          <div className="mt-8 text-center">
+            <Button 
+              variant="outline"
+              onClick={() => setLocation(`/${slug}/store`)}
+            >
+              View All Services
+            </Button>
+          </div>
+        )}
       </section>
       
-      {/* Testimonials/Reviews Section */}
-      <section className="bg-gray-50 py-12 rounded-xl">
-        <div className="container mx-auto px-4">
+      {/* Why Choose Us */}
+      <section className="bg-gray-50 py-16">
+        <div className="max-w-5xl mx-auto px-4">
           <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold mb-4">What Our Clients Say</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              We pride ourselves on providing exceptional service to all our clients.
-            </p>
+            <h2 className="text-3xl font-bold mb-4">Why Choose Us</h2>
+            <p className="text-muted-foreground">Experience the difference at {business.businessName}</p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid gap-6 md:grid-cols-3">
             <Card>
-              <CardContent className="p-6">
-                <div className="flex text-yellow-400 mb-3">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-current" />
-                  ))}
+              <CardHeader className="text-center">
+                <div className="w-12 h-12 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-3">
+                  <BadgeCheck className="h-6 w-6 text-primary" />
                 </div>
-                <p className="text-gray-700 mb-4">
-                  "Amazing service! I've been a customer for over a year and couldn't be happier."
+                <CardTitle>Professional Staff</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center">
+                <p className="text-muted-foreground">
+                  Our team of certified professionals is dedicated to providing the highest quality services.
                 </p>
-                <div className="font-medium">Maria S.</div>
               </CardContent>
             </Card>
             
             <Card>
-              <CardContent className="p-6">
-                <div className="flex text-yellow-400 mb-3">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-current" />
-                  ))}
+              <CardHeader className="text-center">
+                <div className="w-12 h-12 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-3">
+                  <Star className="h-6 w-6 text-primary" />
                 </div>
-                <p className="text-gray-700 mb-4">
-                  "The online booking system is so convenient. Saves me so much time!"
+                <CardTitle>Premium Products</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center">
+                <p className="text-muted-foreground">
+                  We use only the highest quality products to ensure the best results for our clients.
                 </p>
-                <div className="font-medium">Carlos R.</div>
               </CardContent>
             </Card>
             
             <Card>
-              <CardContent className="p-6">
-                <div className="flex text-yellow-400 mb-3">
-                  {[...Array(4)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-current" />
-                  ))}
-                  <Star className="h-4 w-4 text-gray-300" />
+              <CardHeader className="text-center">
+                <div className="w-12 h-12 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-3">
+                  <Heart className="h-6 w-6 text-primary" />
                 </div>
-                <p className="text-gray-700 mb-4">
-                  "Professional staff and great atmosphere. Highly recommend!"
+                <CardTitle>Customer Satisfaction</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center">
+                <p className="text-muted-foreground">
+                  Your satisfaction is our priority. We strive to exceed your expectations with every visit.
                 </p>
-                <div className="font-medium">Ana P.</div>
               </CardContent>
             </Card>
           </div>
         </div>
       </section>
       
-      {/* CTA Section */}
-      <section className="bg-primary-600 text-white py-12 md:py-16 rounded-xl">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-4">Ready to Book Your Appointment?</h2>
-          <p className="text-xl opacity-90 mb-8 max-w-2xl mx-auto">
-            Schedule your appointment today and experience our exceptional services.
+      {/* Testimonials */}
+      <section className="max-w-5xl mx-auto px-4">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-bold mb-4">What Our Clients Say</h2>
+          <p className="text-muted-foreground">Read testimonials from our satisfied customers</p>
+        </div>
+        
+        <div className="grid gap-6 md:grid-cols-3">
+          {testimonials.map((testimonial, index) => (
+            <Card key={index}>
+              <CardHeader>
+                <div className="flex items-center mb-2">
+                  {[...Array(5)].map((_, i) => (
+                    <Star 
+                      key={i} 
+                      className={`h-4 w-4 ${i < testimonial.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} 
+                    />
+                  ))}
+                </div>
+                <CardTitle className="text-lg">{testimonial.name}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="italic text-muted-foreground">"{testimonial.comment}"</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
+      
+      {/* CTA */}
+      <section className="bg-primary text-white py-16">
+        <div className="max-w-3xl mx-auto text-center px-4">
+          <h2 className="text-3xl font-bold mb-6">Ready to Experience Our Services?</h2>
+          <p className="text-lg opacity-90 mb-8">
+            Book your appointment today and discover why our clients love {business.businessName}.
           </p>
-          <Button size="lg" variant="secondary" asChild>
-            <Link href={`/${slug}/schedule`}>
-              Book Now <CalendarDays className="ml-2 h-4 w-4" />
-            </Link>
+          <Button 
+            size="lg" 
+            variant="secondary"
+            className="gap-2"
+            onClick={() => setLocation(`/${slug}/schedule`)}
+          >
+            <Calendar className="h-5 w-5" />
+            Book Your Appointment
           </Button>
         </div>
       </section>
