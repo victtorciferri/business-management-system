@@ -1,9 +1,10 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { User } from "@shared/schema";
-import { Home, Calendar, Store, Info, Menu } from "lucide-react";
+import { Home, Calendar, Store, Info, Menu, Clock, UserCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface BusinessHeaderProps {
   business: Omit<User, "password">;
@@ -13,13 +14,15 @@ interface BusinessHeaderProps {
 
 export default function BusinessHeader({ business, slug, currentPath }: BusinessHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [, setLocation] = useLocation();
+  const [activeTab, setActiveTab] = useState("home");
 
   // Define the navigation items for business websites
   const navItems = [
-    { name: "Home", path: `/${slug}`, icon: <Home className="h-4 w-4 mr-2" /> },
-    { name: "Schedule", path: `/${slug}/schedule`, icon: <Calendar className="h-4 w-4 mr-2" /> },
-    { name: "About Us", path: `/${slug}/about`, icon: <Info className="h-4 w-4 mr-2" /> },
-    { name: "Store", path: `/${slug}/store`, icon: <Store className="h-4 w-4 mr-2" /> },
+    { name: "Home", path: `/${slug}`, value: "home", icon: <Home className="h-4 w-4 mr-2" /> },
+    { name: "Our Services", path: `/${slug}/store`, value: "services", icon: <Store className="h-4 w-4 mr-2" /> },
+    { name: "Book Appointment", path: `/${slug}/schedule`, value: "book", icon: <Calendar className="h-4 w-4 mr-2" /> },
+    { name: "My Appointments", path: `/${slug}?tab=my-appointments`, value: "my-appointments", icon: <Clock className="h-4 w-4 mr-2" /> },
   ];
 
   // Determine the active path
@@ -32,6 +35,47 @@ export default function BusinessHeader({ business, slug, currentPath }: Business
   
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
+  };
+  
+  // Determine which tab should be active based on the current path
+  useEffect(() => {
+    if (currentPath.includes('/schedule')) {
+      setActiveTab('book');
+    } else if (currentPath.includes('/store')) {
+      setActiveTab('services');
+    } else if (currentPath.includes('/about')) {
+      setActiveTab('about');
+    } else if (currentPath.includes('?tab=my-appointments')) {
+      setActiveTab('my-appointments');
+    } else {
+      setActiveTab('home');
+    }
+  }, [currentPath]);
+  
+  // Handle tab change 
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    
+    // Map tab values to paths
+    switch (value) {
+      case 'home':
+        setLocation(`/${slug}`);
+        break;
+      case 'services':
+        setLocation(`/${slug}/store`);
+        break;
+      case 'book':
+        setLocation(`/${slug}/schedule`);
+        break;
+      case 'my-appointments':
+        setLocation(`/${slug}?tab=my-appointments`);
+        break;
+      case 'about':
+        setLocation(`/${slug}/about`);
+        break;
+      default:
+        setLocation(`/${slug}`);
+    }
   };
 
   return (
@@ -49,24 +93,19 @@ export default function BusinessHeader({ business, slug, currentPath }: Business
               </h1>
             </div>
             
-            {/* Navigation */}
-            <nav className="hidden md:ml-6 md:flex md:space-x-8" aria-label="Main">
-              {navItems.map((item) => (
-                <Link
-                  key={item.path}
-                  href={item.path}
-                  className={cn(
-                    "inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium",
-                    getActivePath(item.path)
-                      ? "border-primary-500 text-gray-900"
-                      : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
-                  )}
-                >
-                  {item.icon}
-                  {item.name}
-                </Link>
-              ))}
-            </nav>
+            {/* Desktop Navigation with Tabs */}
+            <div className="hidden md:ml-6 md:flex md:items-center">
+              <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+                <TabsList>
+                  {navItems.map((item) => (
+                    <TabsTrigger key={item.value} value={item.value} className="flex items-center gap-1.5">
+                      {item.icon}
+                      {item.name}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
+            </div>
           </div>
           
           {/* Mobile menu button */}
@@ -88,22 +127,24 @@ export default function BusinessHeader({ business, slug, currentPath }: Business
       <div className={`md:hidden ${mobileMenuOpen ? 'block' : 'hidden'}`} id="mobile-menu">
         <div className="pt-2 pb-3 space-y-1">
           {navItems.map((item) => (
-            <Link
+            <button
               key={item.path}
-              href={item.path}
+              onClick={() => {
+                handleTabChange(item.value);
+                setMobileMenuOpen(false);
+              }}
               className={cn(
-                "block pl-3 pr-4 py-2 border-l-4 text-base font-medium",
-                getActivePath(item.path)
+                "w-full text-left block pl-3 pr-4 py-2 border-l-4 text-base font-medium",
+                activeTab === item.value
                   ? "bg-primary-50 border-primary-500 text-primary-700"
                   : "border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
               )}
-              onClick={() => setMobileMenuOpen(false)}
             >
               <div className="flex items-center">
                 {item.icon}
                 {item.name}
               </div>
-            </Link>
+            </button>
           ))}
         </div>
       </div>
