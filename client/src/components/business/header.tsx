@@ -44,7 +44,7 @@ export default function BusinessHeader({ business, slug, currentPath }: Business
               <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-bold text-xl mr-3">
                 {business.businessName?.substring(0, 1).toUpperCase() || "B"}
               </div>
-              <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-500 to-primary-700">
+              <h1 className="text-xl font-bold text-gray-900">
                 {business.businessName}
               </h1>
             </div>
