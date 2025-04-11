@@ -1,22 +1,16 @@
 import { useState, useEffect } from "react";
 import { useParams, useLocation } from "wouter";
-import { loadStripe } from "@stripe/stripe-js";
-import { Elements } from "@stripe/react-stripe-js";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckoutForm } from "@/components/payment/checkout-form";
 import { useQuery } from "@tanstack/react-query";
 import { Appointment, Customer, Service } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { ArrowLeft, CreditCard } from "lucide-react";
+import { CheckoutForm } from "@/components/payment/checkout-form";
 
-// Initialize Stripe
-if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
-  console.error("Missing required Stripe key: VITE_STRIPE_PUBLIC_KEY");
-}
-const stripePromise = loadStripe(
-  import.meta.env.VITE_STRIPE_PUBLIC_KEY || "pk_test_placeholder"
-);
+// Payment provider will be implemented with MercadoPago later
+// This is a temporary stub
+const PAYMENT_PROVIDER = "mercadopago";
 
 interface CheckoutProps {
   appointmentId: number;
@@ -147,16 +141,11 @@ export default function Checkout({ appointmentId }: CheckoutProps) {
         </CardHeader>
         <CardContent className="p-6">
           {clientSecret ? (
-            <Elements 
-              stripe={stripePromise} 
-              options={{ clientSecret, appearance: { theme: 'stripe' } }}
-            >
-              <CheckoutForm 
-                appointment={appointment} 
-                customer={customer} 
-                service={service} 
-              />
-            </Elements>
+            <CheckoutForm 
+              appointment={appointment} 
+              customer={customer} 
+              service={service} 
+            />
           ) : (
             <div className="flex justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>

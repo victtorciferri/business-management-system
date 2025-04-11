@@ -797,10 +797,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Payment routes
   app.post("/api/create-payment-intent", async (req: Request, res: Response) => {
     try {
-      if (!stripe) {
-        return res.status(500).json({ message: "Stripe is not configured" });
-      }
-      
       const { appointmentId } = req.body;
       
       if (!appointmentId) {
@@ -819,26 +815,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Service not found" });
       }
       
-      // Create a PaymentIntent with the service price
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount: parseFloat(service.price.toString()) * 100, // Convert to cents
-        currency: "usd",
-        metadata: {
-          appointmentId: appointment.id.toString(),
-          serviceId: service.id.toString(),
-        },
-      });
+      // Get the business user information
+      const business = await storage.getUser(appointment.userId);
       
-      // Save payment information
+      if (!business) {
+        return res.status(404).json({ message: "Business not found" });
+      }
+      
+      // Calculate platform fee (15% by default)
+      const platformFeePercentage = 15.00; // Can be adjusted per business or globally
+      const amount = parseFloat(service.price.toString());
+      const platformFeeAmount = (amount * platformFeePercentage) / 100;
+      const businessAmount = amount - platformFeeAmount;
+      
+      // Create a placeholder for payment processing (will be replaced by Mercadopago)
+      // In a real implementation, we would:
+      // 1. Create a Mercadopago preference with the payment details
+      // 2. Set up payment split between AppointEase platform and the business
+      // 3. Return the preference ID and init point URL
+      
+      // For now, just generate a mock client secret
+      const mockClientSecret = `mp_test_${Date.now()}_${appointmentId}`;
+      
+      // Save payment information with marketplace split details
       await storage.createPayment({
         appointmentId: appointment.id,
         amount: service.price,
         status: "pending",
-        stripePaymentId: paymentIntent.id,
+        paymentProcessor: "mercadopago",
+        processorPaymentId: mockClientSecret,
+        merchantAccountId: business.mercadopagoAccountId || null,
+        
+        // Marketplace payment split fields
+        platformFeePercentage: platformFeePercentage.toString(),
+        platformFeeAmount: platformFeeAmount.toString(),
+        businessAmount: businessAmount.toString(),
+        
+        // Additional Mercadopago-specific fields can be added here
+        preferenceId: null, // Will contain the Mercadopago preference ID
       });
       
-      res.json({ clientSecret: paymentIntent.client_secret });
+      // Return client secret and payment URL for the frontend
+      res.json({ 
+        clientSecret: mockClientSecret,
+        paymentUrl: null, // Will be the redirect URL from Mercadopago
+      });
     } catch (error) {
+      console.error("Payment processing error:", error);
       res.status(500).json({ message: "Payment processing failed" });
     }
   });
