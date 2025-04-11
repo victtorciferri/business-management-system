@@ -53,67 +53,35 @@ export default function AuthPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     
     try {
-      const response = await apiRequest("POST", "/api/login", loginForm);
+      // Use the login function from useAuth
+      const userData = await login(loginForm.username, loginForm.password);
       
-      if (!response.ok) {
-        throw new Error("Login failed. Please check your credentials.");
-      }
-      
-      const userData: User = await response.json();
-      
-      toast({
-        title: "Login successful",
-        description: `Welcome back, ${userData.username}!`,
-      });
-      
-      // Redirect based on role
-      if (userData.role === "admin") {
-        setLocation("/admin");
-      } else {
-        setLocation("/");
-      }
+      // Redirect will be handled by the useEffect watching the user state
     } catch (error) {
       toast({
         title: "Login failed",
         description: error instanceof Error ? error.message : "An unexpected error occurred",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     
     try {
-      const response = await apiRequest("POST", "/api/register", registerForm);
+      // Use the register function from useAuth
+      const userData = await register(registerForm);
       
-      if (!response.ok) {
-        throw new Error("Registration failed. Username may already be taken.");
-      }
-      
-      const userData: User = await response.json();
-      
-      toast({
-        title: "Registration successful",
-        description: `Welcome, ${userData.username}! Your account has been created.`,
-      });
-      
-      // Redirect to dashboard
-      setLocation("/");
+      // Redirect will be handled by the useEffect watching the user state
     } catch (error) {
       toast({
         title: "Registration failed",
         description: error instanceof Error ? error.message : "An unexpected error occurred",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -200,7 +168,11 @@ export default function AuthPage() {
                   </CardContent>
                   <CardFooter>
                     <Button type="submit" className="w-full" disabled={isLoading}>
-                      {isLoading ? "Logging in..." : "Login"}
+                      {isLoading ? (
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Logging in...</>
+                      ) : (
+                        "Login"
+                      )}
                     </Button>
                   </CardFooter>
                 </form>
@@ -293,7 +265,11 @@ export default function AuthPage() {
                   </CardContent>
                   <CardFooter>
                     <Button type="submit" className="w-full" disabled={isLoading}>
-                      {isLoading ? "Creating account..." : "Create account"}
+                      {isLoading ? (
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating account...</>
+                      ) : (
+                        "Create account"
+                      )}
                     </Button>
                   </CardFooter>
                 </form>

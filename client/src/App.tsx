@@ -15,6 +15,7 @@ import CustomDomain from "@/pages/custom-domain";
 import PreviewBusiness from "@/pages/preview-business";
 import AdminDashboard from "@/pages/admin-dashboard";
 import AuthPage from "@/pages/auth-page";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import { useState, useEffect } from "react";
 import { User } from "@shared/schema";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
@@ -36,6 +37,10 @@ function AppContent() {
   const potentialBusinessSlug = match && 
     match[1] !== 'customer-portal' && 
     match[1] !== 'api' && 
+    match[1] !== 'auth' &&
+    match[1] !== 'admin' &&
+    match[1] !== 'checkout' &&
+    match[1] !== 'preview' &&
     match[1] !== 'instructions' ? match[1] : null;
   
   useEffect(() => {
@@ -80,7 +85,9 @@ function AppContent() {
   }, [potentialBusinessSlug]);
   
   // Determine if this is a business portal based on the data we have
-  const isBusinessPortal = !!businessData?.business || !!potentialBusinessSlug;
+  const isBusinessPortal = (!!businessData?.business || !!potentialBusinessSlug) && 
+                          !location.startsWith('/auth') && 
+                          !location.startsWith('/admin');
   
   // Debug information to help troubleshoot
   console.log("App.tsx is rendering");
@@ -136,21 +143,53 @@ function AppContent() {
     ) : (
       <Layout currentUser={currentUser}>
         <Switch>
-          <Route path="/" component={Dashboard} />
+          <Route path="/">
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          </Route>
           <Route path="/auth" component={AuthPage} />
-          <Route path="/appointments" component={Appointments} />
-          <Route path="/customers" component={Customers} />
-          <Route path="/services" component={Services} />
-          <Route path="/custom-domain" component={CustomDomain} />
-          <Route path="/instructions/domain-setup" component={DomainSetupInstructions} />
+          <Route path="/appointments">
+            <ProtectedRoute>
+              <Appointments />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/customers">
+            <ProtectedRoute>
+              <Customers />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/services">
+            <ProtectedRoute>
+              <Services />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/custom-domain">
+            <ProtectedRoute>
+              <CustomDomain />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/instructions/domain-setup">
+            <ProtectedRoute>
+              <DomainSetupInstructions />
+            </ProtectedRoute>
+          </Route>
           <Route path="/admin">
-            {currentUser?.role === 'admin' ? <AdminDashboard /> : <Redirect to="/auth" />}
+            <ProtectedRoute requiredRole="admin">
+              <AdminDashboard />
+            </ProtectedRoute>
           </Route>
           <Route path="/checkout/:appointmentId">
-            {params => <Checkout appointmentId={Number(params.appointmentId)} />}
+            {params => (
+              <ProtectedRoute>
+                <Checkout appointmentId={Number(params.appointmentId)} />
+              </ProtectedRoute>
+            )}
           </Route>
           <Route path="/preview/:businessId">
-            <PreviewBusiness />
+            <ProtectedRoute>
+              <PreviewBusiness />
+            </ProtectedRoute>
           </Route>
           <Route component={NotFound} />
         </Switch>
