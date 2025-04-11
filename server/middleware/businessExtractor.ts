@@ -25,7 +25,24 @@ export async function businessExtractor(req: Request, res: Response, next: NextF
     // Check if we have a path parameter slug
     if (req.params.slug) {
       businessSlug = req.params.slug;
-    } 
+    }
+    // Check if the URL path starts with a potential business slug
+    // This handles URLs like /salonelegante or /salonelegante/services
+    else if (req.path !== '/' && req.path !== '/business-portal') {
+      // Extract the first segment of the path
+      const pathSegments = req.path.split('/').filter(Boolean);
+      if (pathSegments.length > 0) {
+        const potentialSlug = pathSegments[0];
+        
+        // Skip if it starts with "api", "assets", "src", or other known routes
+        if (!potentialSlug.startsWith('api') && 
+            !potentialSlug.startsWith('assets') && 
+            !potentialSlug.startsWith('src') && 
+            !potentialSlug.startsWith('components')) {
+          businessSlug = potentialSlug;
+        }
+      }
+    }
     // Check if we have a custom domain (excluding localhost and default domains)
     else if (req.headers.host) {
       const host = req.headers.host.toLowerCase();

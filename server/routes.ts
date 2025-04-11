@@ -45,6 +45,115 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Business public portal route - works with both /:slug and custom domains
+  app.get("/business-portal", async (req, res) => {
+    try {
+      // Check if we have a business context from the middleware
+      if (!req.business) {
+        return res.status(404).send("Business not found");
+      }
+      
+      // Get services for this business
+      const services = await storage.getServicesByUserId(req.business.id);
+      const activeServices = services.filter(service => service.active);
+      
+      // Return the business portal page with business data
+      res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>${req.business.businessName || 'Business Portal'}</title>
+          <link rel="stylesheet" href="/assets/main.css">
+          <script>
+            window.BUSINESS_DATA = ${JSON.stringify({
+              business: req.business,
+              services: activeServices
+            })};
+          </script>
+        </head>
+        <body>
+          <div id="root"></div>
+          <script type="module" src="/src/main.tsx"></script>
+        </body>
+        </html>
+      `);
+    } catch (error) {
+      console.error("Error rendering business portal:", error);
+      res.status(500).send("Error loading business portal");
+    }
+  });
+  
+  // Catch-all route for business-specific pages
+  // This will handle URLs like /:slug/services, /:slug/appointments, etc.
+  app.get("/:slug/*", async (req, res) => {
+    // The businessExtractor middleware should have already attached the business to req.business
+    if (!req.business) {
+      return res.status(404).send("Business not found");
+    }
+    
+    try {
+      // Get services for this business
+      const services = await storage.getServicesByUserId(req.business.id);
+      const activeServices = services.filter(service => service.active);
+      
+      // Return the business portal page with business data and subpage information
+      const subPath = req.params[0] as string; // This captures the part after /:slug/
+      
+      res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>${req.business.businessName || 'Business Portal'} - ${subPath.charAt(0).toUpperCase() + subPath.slice(1)}</title>
+          <link rel="stylesheet" href="/assets/main.css">
+          <script>
+            window.BUSINESS_DATA = ${JSON.stringify({
+              business: req.business,
+              services: activeServices,
+              subPath: subPath // Pass the subpath to the frontend for routing
+            })};
+          </script>
+        </head>
+        <body>
+          <div id="root"></div>
+          <script type="module" src="/src/main.tsx"></script>
+        </body>
+        </html>
+      `);
+    } catch (error) {
+      console.error("Error rendering business page:", error);
+      res.status(500).send("Error loading business page");
+    }
+  });
+  
+  // Catch-all route for the root path that redirects to business-portal if a business context exists
+  app.get("/", (req, res) => {
+    if (req.business) {
+      // If accessed via custom domain or a subdomain, redirect to the business portal
+      res.redirect("/business-portal");
+    } else {
+      // If no business context, serve the main application
+      res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>AppointEase - Appointment Scheduling Platform</title>
+          <link rel="stylesheet" href="/assets/main.css">
+        </head>
+        <body>
+          <div id="root"></div>
+          <script type="module" src="/src/main.tsx"></script>
+        </body>
+        </html>
+      `);
+    }
+  });
+  
   // User routes
   app.get("/api/business/:slug", async (req: Request, res: Response) => {
     try {
@@ -117,12 +226,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Service routes
   app.get("/api/services", async (req: Request, res: Response) => {
     try {
-      // For customer portal, if no userId is provided, default to user 1
-      const userIdParam = req.query.userId as string;
-      let userId = 1; // Default to first business user
+      // Get userId from business context or query parameter
+      let userId: number;
       
-      if (userIdParam) {
-        userId = parseInt(userIdParam);
+      if (req.business) {
+        // If we have a business context from the URL or domain, use that
+        userId = req.business.id;
+      } else {
+        // Otherwise use the userId query parameter (or default to 1)
+        const userIdParam = req.query.userId as string;
+        userId = userIdParam ? parseInt(userIdParam) : 1;
+        
         if (isNaN(userId)) {
           return res.status(400).json({ message: "Invalid user ID" });
         }
@@ -193,12 +307,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Customer routes
   app.get("/api/customers", async (req: Request, res: Response) => {
     try {
-      // For customer portal, if no userId is provided, default to user 1
-      const userIdParam = req.query.userId as string;
-      let userId = 1; // Default to first business user
+      // Get userId from business context or query parameter
+      let userId: number;
       
-      if (userIdParam) {
-        userId = parseInt(userIdParam);
+      if (req.business) {
+        // If we have a business context from the URL or domain, use that
+        userId = req.business.id;
+      } else {
+        // Otherwise use the userId query parameter (or default to 1)
+        const userIdParam = req.query.userId as string;
+        userId = userIdParam ? parseInt(userIdParam) : 1;
+        
         if (isNaN(userId)) {
           return res.status(400).json({ message: "Invalid user ID" });
         }
@@ -269,12 +388,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Appointment routes
   app.get("/api/appointments", async (req: Request, res: Response) => {
     try {
-      // For customer portal, if no userId is provided, default to user 1
-      const userIdParam = req.query.userId as string;
-      let userId = 1; // Default to first business user
+      // Get userId from business context or query parameter
+      let userId: number;
       
-      if (userIdParam) {
-        userId = parseInt(userIdParam);
+      if (req.business) {
+        // If we have a business context from the URL or domain, use that
+        userId = req.business.id;
+      } else {
+        // Otherwise use the userId query parameter (or default to 1)
+        const userIdParam = req.query.userId as string;
+        userId = userIdParam ? parseInt(userIdParam) : 1;
+        
         if (isNaN(userId)) {
           return res.status(400).json({ message: "Invalid user ID" });
         }
@@ -499,12 +623,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Availability analysis endpoint
   app.get("/api/availability-analysis", async (req: Request, res: Response) => {
     try {
-      // For customer portal, default to user 1
-      const userIdParam = req.query.userId as string;
-      let userId = 1; // Default to first business user
+      // Get userId from business context or query parameter
+      let userId: number;
       
-      if (userIdParam) {
-        userId = parseInt(userIdParam);
+      if (req.business) {
+        // If we have a business context from the URL or domain, use that
+        userId = req.business.id;
+      } else {
+        // Otherwise use the userId query parameter (or default to 1)
+        const userIdParam = req.query.userId as string;
+        userId = userIdParam ? parseInt(userIdParam) : 1;
+        
         if (isNaN(userId)) {
           return res.status(400).json({ message: "Invalid user ID" });
         }
