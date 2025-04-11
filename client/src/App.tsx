@@ -13,6 +13,7 @@ import BusinessPortal from "@/pages/business-portal";
 import DomainSetupInstructions from "@/pages/domain-setup";
 import CustomDomain from "@/pages/custom-domain";
 import PreviewBusiness from "@/pages/preview-business";
+import AdminDashboard from "@/pages/admin-dashboard";
 import { useState, useEffect } from "react";
 import { User } from "@shared/schema";
 
@@ -151,6 +152,7 @@ function App() {
             <Route path="/services" component={Services} />
             <Route path="/custom-domain" component={CustomDomain} />
             <Route path="/instructions/domain-setup" component={DomainSetupInstructions} />
+            <Route path="/admin" component={AdminDashboard} />
             <Route path="/checkout/:appointmentId">
               {params => <Checkout appointmentId={Number(params.appointmentId)} />}
             </Route>

@@ -10,7 +10,7 @@ import {
   insertPaymentSchema,
   users
 } from "@shared/schema";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, desc } from "drizzle-orm";
 import { z } from "zod";
 import Stripe from "stripe";
 import nodemailer from "nodemailer";
@@ -1085,6 +1085,115 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating platform fee percentage:", error);
       res.status(500).json({ message: "Failed to update platform fee percentage" });
+    }
+  });
+
+  // Admin API routes
+  app.get("/api/admin/businesses", async (req: Request, res: Response) => {
+    try {
+      // In a real app, we would check for admin authentication
+      // For now, we'll just return all users with role 'business'
+      
+      // Get all business users from the database using raw SQL instead of query API
+      const businessesResult = await db.execute(sql`
+        SELECT * FROM users 
+        WHERE role = 'business'
+        ORDER BY id DESC
+      `);
+      
+      // Map the result to proper user objects and remove sensitive information
+      const businessRows = businessesResult.rows || [];
+      const safeBusinesses = businessRows.map(row => {
+        // Convert snake_case column names to camelCase
+        const business = {
+          id: row.id,
+          username: row.username,
+          email: row.email,
+          businessName: row.business_name,
+          businessSlug: row.business_slug,
+          customDomain: row.custom_domain,
+          phone: row.phone,
+          role: row.role,
+          subscription: row.subscription,
+          subscriptionStatus: row.subscription_status,
+          platformFeePercentage: row.platform_fee_percentage,
+          createdAt: new Date(row.created_at)
+        };
+        return business;
+      });
+      
+      res.json(safeBusinesses);
+    } catch (error) {
+      console.error("Error fetching businesses:", error);
+      res.status(500).json({ message: "Failed to fetch businesses" });
+    }
+  });
+  
+  app.get("/api/admin/customers", async (req: Request, res: Response) => {
+    try {
+      const { businessId } = req.query;
+      
+      if (!businessId) {
+        return res.status(400).json({ message: "Business ID is required" });
+      }
+      
+      // Get all customers for the specified business
+      const allCustomers = await storage.getCustomersByUserId(parseInt(businessId.toString()));
+      
+      res.json(allCustomers);
+    } catch (error) {
+      console.error("Error fetching customers:", error);
+      res.status(500).json({ message: "Failed to fetch customers" });
+    }
+  });
+  
+  app.get("/api/admin/appointments", async (req: Request, res: Response) => {
+    try {
+      const { businessId } = req.query;
+      
+      if (!businessId) {
+        return res.status(400).json({ message: "Business ID is required" });
+      }
+      
+      // Get all appointments for the specified business
+      const allAppointments = await storage.getAppointmentsByUserId(parseInt(businessId.toString()));
+      
+      res.json(allAppointments);
+    } catch (error) {
+      console.error("Error fetching appointments:", error);
+      res.status(500).json({ message: "Failed to fetch appointments" });
+    }
+  });
+  
+  app.get("/api/admin/payments", async (req: Request, res: Response) => {
+    try {
+      const { businessId } = req.query;
+      
+      if (!businessId) {
+        return res.status(400).json({ message: "Business ID is required" });
+      }
+      
+      // Get all appointments for the business
+      const appointments = await storage.getAppointmentsByUserId(parseInt(businessId.toString()));
+      
+      if (!appointments || appointments.length === 0) {
+        return res.json([]);
+      }
+      
+      // Get all payments for these appointments
+      const paymentsPromises = appointments.map(appointment => 
+        storage.getPaymentsByAppointmentId(appointment.id)
+      );
+      
+      const paymentsArrays = await Promise.all(paymentsPromises);
+      
+      // Flatten the array of arrays
+      const allPayments = paymentsArrays.flat();
+      
+      res.json(allPayments);
+    } catch (error) {
+      console.error("Error fetching payments:", error);
+      res.status(500).json({ message: "Failed to fetch payments" });
     }
   });
 
