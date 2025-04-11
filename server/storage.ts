@@ -44,6 +44,14 @@ export interface IStorage {
   getPaymentsByAppointmentId(appointmentId: number): Promise<Payment[]>;
   createPayment(payment: InsertPayment): Promise<Payment>;
   updatePayment(id: number, payment: Partial<InsertPayment>): Promise<Payment | undefined>;
+  
+  // Product methods
+  getProduct(id: number): Promise<Product | undefined>;
+  getProductsByUserId(userId: number): Promise<Product[]>;
+  getProductsByCategory(userId: number, category: string): Promise<Product[]>;
+  createProduct(product: InsertProduct): Promise<Product>;
+  updateProduct(id: number, product: Partial<InsertProduct>): Promise<Product | undefined>;
+  deleteProduct(id: number): Promise<boolean>;
 }
 
 // Create a database storage instance

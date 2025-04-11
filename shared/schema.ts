@@ -199,11 +199,43 @@ export const insertPaymentSchema = createInsertSchema(payments).pick({
   preferenceId: true,
 });
 
+// Products schema
+export const products = pgTable("products", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  name: text("name").notNull(),
+  description: text("description"),
+  price: numeric("price").notNull(),
+  imageUrl: text("image_url"),
+  inventory: integer("inventory").default(0),
+  category: text("category").default("general"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    userIdIdx: index("products_user_id_idx").on(table.userId),
+    categoryIdx: index("products_category_idx").on(table.category),
+  };
+});
+
+export const insertProductSchema = createInsertSchema(products).pick({
+  userId: true,
+  name: true,
+  description: true,
+  price: true,
+  imageUrl: true,
+  inventory: true,
+  category: true,
+  isActive: true,
+});
+
 // Define relationships between tables for Drizzle ORM
 export const usersRelations = relations(users, ({ many }) => ({
   services: many(services),
   customers: many(customers),
   appointments: many(appointments),
+  products: many(products),
 }));
 
 export const servicesRelations = relations(services, ({ one, many }) => ({
@@ -245,6 +277,13 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
   }),
 }));
 
+export const productsRelations = relations(products, ({ one }) => ({
+  business: one(users, {
+    fields: [products.userId],
+    references: [users.id],
+  }),
+}));
+
 // Types for export
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -260,3 +299,6 @@ export type InsertAppointment = z.infer<typeof insertAppointmentSchema>;
 
 export type Payment = typeof payments.$inferSelect;
 export type InsertPayment = z.infer<typeof insertPaymentSchema>;
+
+export type Product = typeof products.$inferSelect;
+export type InsertProduct = z.infer<typeof insertProductSchema>;

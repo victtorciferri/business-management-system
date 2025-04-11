@@ -5,7 +5,8 @@ import {
   Customer, InsertCustomer, 
   Appointment, InsertAppointment, 
   Payment, InsertPayment,
-  users, services, customers, appointments, payments
+  Product, InsertProduct,
+  users, services, customers, appointments, payments, products
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte } from "drizzle-orm";
@@ -225,5 +226,42 @@ export class DatabaseStorage implements IStorage {
       .where(eq(payments.id, id))
       .returning();
     return updatedPayment || undefined;
+  }
+  
+  // Product methods
+  async getProduct(id: number): Promise<Product | undefined> {
+    const [product] = await db.select().from(products).where(eq(products.id, id));
+    return product || undefined;
+  }
+  
+  async getProductsByUserId(userId: number): Promise<Product[]> {
+    return db.select().from(products).where(eq(products.userId, userId));
+  }
+  
+  async getProductsByCategory(userId: number, category: string): Promise<Product[]> {
+    return db.select().from(products)
+      .where(and(
+        eq(products.userId, userId),
+        eq(products.category, category)
+      ));
+  }
+  
+  async createProduct(product: InsertProduct): Promise<Product> {
+    const [newProduct] = await db.insert(products).values(product).returning();
+    return newProduct;
+  }
+  
+  async updateProduct(id: number, productUpdate: Partial<InsertProduct>): Promise<Product | undefined> {
+    const [updatedProduct] = await db
+      .update(products)
+      .set(productUpdate)
+      .where(eq(products.id, id))
+      .returning();
+    return updatedProduct || undefined;
+  }
+  
+  async deleteProduct(id: number): Promise<boolean> {
+    const result = await db.delete(products).where(eq(products.id, id));
+    return !!result;
   }
 }
