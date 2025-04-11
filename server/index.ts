@@ -42,11 +42,10 @@ app.use((req, res, next) => {
   // Seed the database with initial data
   await seedDatabase();
   
+  // Let the routes.ts define all routes
   const server = await registerRoutes(app);
   
-  // Register business data injector middleware after routes are set up
-  // but before Vite middleware
-  app.use(businessDataInjector);
+  // No need for businessDataInjector here as it's now handled in routes.ts
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

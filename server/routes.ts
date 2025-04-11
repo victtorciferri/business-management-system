@@ -37,6 +37,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Apply the business extractor middleware to all routes
   app.use(businessExtractor);
   
+  // Add a custom middleware to inject business data into HTML responses
+  app.use(async (req, res, next) => {
+    // Skip for API routes
+    if (req.path.startsWith('/api/')) {
+      return next();
+    }
+    
+    // Intercept the response.send for HTML responses if we have business data
+    if (req.business) {
+      console.log(`Custom injector: Setup for path ${req.path}, business: ${req.business.businessName}`);
+      
+      // Get services for this business while we have the chance
+      try {
+        const services = await storage.getServicesByUserId(req.business.id);
+        const activeServices = services.filter(service => service.active);
+        
+        // Determine subpath for business portal routes
+        let subPath = "";
+        if (req.originalUrl !== `/${req.business.businessSlug}`) {
+          const regex = new RegExp(`^/${req.business.businessSlug}/(.*)$`);
+          const match = req.originalUrl.match(regex);
+          if (match && match[1]) {
+            subPath = match[1].split('?')[0]; // Remove query params
+          }
+        }
+        
+        // Store business data for injection
+        req.app.locals.BUSINESS_DATA = {
+          business: req.business,
+          services: activeServices,
+          subPath: subPath
+        };
+        
+        console.log(`Stored business data for path ${req.path}: ${JSON.stringify(req.app.locals.BUSINESS_DATA).slice(0, 100)}...`);
+        
+        // Override the res.send method to inject the business data
+        const originalSend = res.send;
+        res.send = function(body) {
+          if (typeof body === 'string' && body.includes('<!DOCTYPE html>')) {
+            console.log(`Injecting business data for path ${req.path}`);
+            
+            // Create script tag with business data
+            const businessDataScript = `
+<script>
+  window.BUSINESS_DATA = ${JSON.stringify(req.app.locals.BUSINESS_DATA)};
+</script>`;
+            
+            // Inject before closing head tag
+            body = body.replace('</head>', `${businessDataScript}\n</head>`);
+          }
+          
+          return originalSend.call(this, body);
+        };
+      } catch (err) {
+        console.error('Error preparing business data for injection:', err);
+      }
+    }
+    
+    next();
+  });
+  
   /**************************************
    * API ROUTES - MUST COME FIRST
    **************************************/
