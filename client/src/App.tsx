@@ -6,6 +6,7 @@ import Dashboard from "@/pages/dashboard";
 import Appointments from "@/pages/appointments";
 import Customers from "@/pages/customers";
 import Services from "@/pages/services";
+import Products from "@/pages/products";
 import Checkout from "@/pages/checkout";
 import NotFound from "@/pages/not-found";
 import BusinessPortal from "@/pages/business-portal";
@@ -158,6 +159,11 @@ function AppContent() {
           <Route path="/services">
             <ProtectedRoute>
               <Services />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/products">
+            <ProtectedRoute>
+              <Products />
             </ProtectedRoute>
           </Route>
           <Route path="/custom-domain">

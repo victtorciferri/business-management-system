@@ -98,7 +98,7 @@ export default function BusinessPortal({ slug, subPath, initialData }: BusinessP
           setActiveTab("about");
           break;
         case "store":
-          setActiveTab("services");
+          setActiveTab("store");
           break;
         default:
           setActiveTab("home");
@@ -174,11 +174,13 @@ export default function BusinessPortal({ slug, subPath, initialData }: BusinessP
           </div>
           
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="home">Home</TabsTrigger>
               <TabsTrigger value="services">Our Services</TabsTrigger>
+              <TabsTrigger value="store">Store</TabsTrigger>
               <TabsTrigger value="book">Book Appointment</TabsTrigger>
               <TabsTrigger value="my-appointments">My Appointments</TabsTrigger>
+              <TabsTrigger value="about">About Us</TabsTrigger>
             </TabsList>
             
             {/* Home Tab */}
@@ -329,6 +331,16 @@ export default function BusinessPortal({ slug, subPath, initialData }: BusinessP
                   <AvailabilityHints />
                 </div>
               </div>
+            </TabsContent>
+            
+            {/* Store Tab */}
+            <TabsContent value="store">
+              <StorePage business={business} services={services} slug={slug} />
+            </TabsContent>
+            
+            {/* About Us Tab */}
+            <TabsContent value="about">
+              <AboutPage business={business} slug={slug} />
             </TabsContent>
             
             {/* My Appointments Tab */}
