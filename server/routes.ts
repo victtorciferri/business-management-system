@@ -451,6 +451,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Availability analysis endpoint
+  app.get("/api/availability-analysis", async (req: Request, res: Response) => {
+    try {
+      // For customer portal, default to user 1
+      const userIdParam = req.query.userId as string;
+      let userId = 1; // Default to first business user
+      
+      if (userIdParam) {
+        userId = parseInt(userIdParam);
+        if (isNaN(userId)) {
+          return res.status(400).json({ message: "Invalid user ID" });
+        }
+      }
+      
+      // Get all appointments for analysis
+      const appointments = await storage.getAppointmentsByUserId(userId);
+      
+      // Initialize data structures for analysis
+      const hourlyCount: Record<string, number> = {};
+      const dayOfWeekCount: Record<string, number> = {};
+      const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      
+      // Initialize with zeros
+      for (let hour = 8; hour < 20; hour++) {
+        hourlyCount[hour] = 0;
+      }
+      
+      for (const day of daysOfWeek) {
+        dayOfWeekCount[day] = 0;
+      }
+      
+      // Count appointments by hour and day of week
+      appointments.forEach(appointment => {
+        const date = new Date(appointment.date);
+        const hour = date.getHours();
+        const dayOfWeek = daysOfWeek[date.getDay()];
+        
+        if (hourlyCount[hour] !== undefined) {
+          hourlyCount[hour]++;
+        }
+        
+        dayOfWeekCount[dayOfWeek]++;
+      });
+      
+      // Determine peak hours (top 30% of hours by appointment count)
+      const hourEntries = Object.entries(hourlyCount);
+      const sortedHourEntries = hourEntries.sort((a, b) => b[1] - a[1]);
+      const peakHourCount = Math.ceil(sortedHourEntries.length * 0.3);
+      const peakHours = sortedHourEntries.slice(0, peakHourCount).map(entry => parseInt(entry[0]));
+      
+      // Determine peak days (top 40% of days by appointment count)
+      const dayEntries = Object.entries(dayOfWeekCount);
+      const sortedDayEntries = dayEntries.sort((a, b) => b[1] - a[1]);
+      const peakDayCount = Math.ceil(sortedDayEntries.length * 0.4);
+      const peakDays = sortedDayEntries.slice(0, peakDayCount).map(entry => entry[0]);
+      
+      // Return the analysis
+      res.json({
+        hourlyCount,
+        dayOfWeekCount,
+        peakHours,
+        peakDays,
+        offPeakHours: sortedHourEntries.slice(peakHourCount).map(entry => parseInt(entry[0])),
+        offPeakDays: sortedDayEntries.slice(peakDayCount).map(entry => entry[0]),
+        totalAppointments: appointments.length
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to analyze availability" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

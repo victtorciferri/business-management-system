@@ -115,6 +115,67 @@ export async function seedDatabase() {
       nextWeek.setDate(nextWeek.getDate() + 7);
       nextWeek.setHours(14, 30, 0, 0);
       
+      // Create a range of past appointments to analyze availability patterns
+      const pastAppointments = [];
+      const now = new Date();
+      
+      // Create appointments for the past 90 days
+      for (let i = 1; i <= 90; i++) {
+        const pastDate = new Date();
+        pastDate.setDate(now.getDate() - i);
+        
+        // Create a more realistic distribution of appointments
+        // More appointments on weekends, fewer on weekdays
+        // More in the morning and evening, fewer in the middle of the day
+        const day = pastDate.getDay(); // 0 = Sunday, 6 = Saturday
+        const isWeekend = day === 0 || day === 6;
+        
+        // Skip some weekdays to make the distribution realistic
+        if (!isWeekend && Math.random() > 0.4) {
+          continue;
+        }
+        
+        // Create 1-3 appointments per day
+        const appointmentsPerDay = isWeekend ? 
+          Math.floor(Math.random() * 3) + 2 : // 2-4 on weekends
+          Math.floor(Math.random() * 2) + 1;  // 1-2 on weekdays
+        
+        for (let j = 0; j < appointmentsPerDay; j++) {
+          // Distribute throughout the day, with peaks in the morning and evening
+          let hour;
+          const timeSlot = Math.random();
+          if (timeSlot < 0.4) {
+            // Morning peak (9-11)
+            hour = Math.floor(Math.random() * 3) + 9;
+          } else if (timeSlot < 0.7) {
+            // Afternoon (12-3)
+            hour = Math.floor(Math.random() * 4) + 12;
+          } else {
+            // Evening peak (4-7)
+            hour = Math.floor(Math.random() * 4) + 16;
+          }
+          
+          pastDate.setHours(hour, Math.random() < 0.5 ? 0 : 30, 0, 0);
+          
+          // Rotate between customers and services
+          const customerId = (j % 3) + 1;
+          const serviceId = (j % 3) + 1;
+          
+          pastAppointments.push({
+            userId: 1,
+            customerId,
+            serviceId,
+            date: new Date(pastDate),
+            duration: serviceId === 3 ? 90 : (serviceId === 2 ? 30 : 45),
+            status: "completed",
+            notes: "",
+            reminderSent: true,
+            paymentStatus: "paid"
+          });
+        }
+      }
+      
+      // Add current and future appointments
       await db.insert(appointments).values([
         {
           userId: 1,
@@ -137,7 +198,8 @@ export async function seedDatabase() {
           notes: "First time getting highlights",
           reminderSent: false,
           paymentStatus: "pending"
-        }
+        },
+        ...pastAppointments
       ]);
     }
     
