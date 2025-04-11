@@ -19,6 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 interface BusinessPortalData {
   business: Omit<User, "password">;
   services: Service[];
+  isPreview?: boolean;
 }
 
 interface BusinessPortalProps {

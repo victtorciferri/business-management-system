@@ -12,6 +12,7 @@ import CustomerPortalSimple from "@/pages/customer-portal-simple";
 import BusinessPortal from "@/pages/business-portal";
 import DomainSetupInstructions from "@/pages/domain-setup";
 import CustomDomain from "@/pages/custom-domain";
+import PreviewBusiness from "@/pages/preview-business";
 import { useState, useEffect } from "react";
 import { User } from "@shared/schema";
 
@@ -152,6 +153,9 @@ function App() {
             <Route path="/instructions/domain-setup" component={DomainSetupInstructions} />
             <Route path="/checkout/:appointmentId">
               {params => <Checkout appointmentId={Number(params.appointmentId)} />}
+            </Route>
+            <Route path="/preview/:businessId">
+              <PreviewBusiness />
             </Route>
             <Route component={NotFound} />
           </Switch>

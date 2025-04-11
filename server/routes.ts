@@ -249,7 +249,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // New API endpoint to get business data by slug or domain
+  // API endpoint to get business data by slug or domain
   app.get("/api/business-data/:slug", async (req: Request, res: Response) => {
     try {
       const { slug } = req.params;
@@ -301,6 +301,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error(`Error fetching business data for ${req.params.slug}:`, error);
       res.status(500).json({ message: "Failed to fetch business data" });
+    }
+  });
+  
+  // API endpoint to get business data by ID for preview purposes
+  app.get("/api/preview-business/:id", async (req: Request, res: Response) => {
+    try {
+      const id = Number(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid business ID" });
+      }
+      
+      console.log(`Fetching business preview data for ID: ${id}`);
+      
+      // Get the business by ID
+      const business = await storage.getUser(id);
+      
+      if (!business) {
+        console.log(`No business found with ID: ${id}`);
+        return res.status(404).json({ message: "Business not found" });
+      }
+      
+      // Get services for this business
+      const services = await storage.getServicesByUserId(business.id);
+      const activeServices = services.filter(service => service.active);
+      
+      // Remove sensitive data
+      const { password: _, ...businessData } = business;
+      
+      // Return the business data with preview flag
+      res.json({
+        business: businessData,
+        services: activeServices,
+        isPreview: true
+      });
+      
+      console.log(`Returned preview business data for ID: ${id}`);
+    } catch (error) {
+      console.error(`Error fetching preview business data for ID: ${req.params.id}:`, error);
+      res.status(500).json({ message: "Failed to fetch business preview data" });
     }
   });
 
