@@ -10,6 +10,7 @@ import Checkout from "@/pages/checkout";
 import NotFound from "@/pages/not-found";
 import CustomerPortalSimple from "@/pages/customer-portal-simple";
 import BusinessPortal from "@/pages/business-portal";
+import DomainSetupInstructions from "@/pages/domain-setup";
 import { useState, useEffect } from "react";
 import { User } from "@shared/schema";
 
@@ -143,6 +144,7 @@ function App() {
             <Route path="/appointments" component={Appointments} />
             <Route path="/customers" component={Customers} />
             <Route path="/services" component={Services} />
+            <Route path="/instructions/domain-setup" component={DomainSetupInstructions} />
             <Route path="/checkout/:appointmentId">
               {params => <Checkout appointmentId={Number(params.appointmentId)} />}
             </Route>
