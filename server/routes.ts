@@ -1110,8 +1110,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // In a real app, we would check for admin authentication
       // For now, we'll just return all users (assuming they're businesses)
       
-      // Get all business users from the database using direct SQL
-      // Note: We're not filtering by role since we're troubleshooting
+      // Get only business users (not admin users)
       const businessesResult = await db.execute(sql`
         SELECT 
           id, 
@@ -1126,6 +1125,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           subscription_status,
           created_at
         FROM users 
+        WHERE role = 'business'
         ORDER BY id DESC
       `);
       
