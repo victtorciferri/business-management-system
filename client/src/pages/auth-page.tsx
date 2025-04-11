@@ -1,19 +1,31 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { apiRequest } from "@/lib/queryClient";
+import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import { User } from "@shared/schema";
 
 export default function AuthPage() {
   const [activeTab, setActiveTab] = useState("login");
-  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const { login, register, isLoading, user } = useAuth();
+  
+  // Redirect if user is already logged in
+  useEffect(() => {
+    if (user) {
+      if (user.role === "admin") {
+        setLocation("/admin");
+      } else {
+        setLocation("/");
+      }
+    }
+  }, [user, setLocation]);
 
   // Login form state
   const [loginForm, setLoginForm] = useState({ username: "", password: "" });

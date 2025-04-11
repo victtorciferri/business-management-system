@@ -17,28 +17,11 @@ import AdminDashboard from "@/pages/admin-dashboard";
 import AuthPage from "@/pages/auth-page";
 import { useState, useEffect } from "react";
 import { User } from "@shared/schema";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
 
-function App() {
-  // Use state to track the current user
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+function AppContent() {
+  const { user: currentUser, isLoading: authLoading } = useAuth();
   
-  // Check if user is logged in on app load
-  useEffect(() => {
-    const checkAuthStatus = async () => {
-      try {
-        const response = await fetch('/api/user');
-        if (response.ok) {
-          const userData = await response.json();
-          setCurrentUser(userData);
-        }
-      } catch (error) {
-        console.error('Error checking auth status:', error);
-      }
-    };
-    
-    checkAuthStatus();
-  }, []);
-
   // Check if we're on a custom domain or subdomain
   const [businessData, setBusinessData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -106,9 +89,10 @@ function App() {
   console.log("isCustomerPortal:", isCustomerPortal);
   console.log("businessData:", businessData);
   console.log("window.BUSINESS_DATA:", typeof window !== "undefined" ? (window as any).BUSINESS_DATA : "Not available");
+  console.log("currentUser:", currentUser);
   
-  // If we're still loading, show a simple loading state
-  if (isLoading) {
+  // If we're still loading or auth is loading, show a simple loading state
+  if (isLoading || authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
@@ -117,62 +101,70 @@ function App() {
   }
   
   return (
+    isCustomerPortal ? (
+      <div className="min-h-screen bg-background">
+        <Switch>
+          <Route path="/customer-portal" component={CustomerPortalSimple} />
+          <Route component={NotFound} />
+        </Switch>
+      </div>
+    ) : isBusinessPortal ? (
+      <div className="min-h-screen bg-background">
+        <Switch>
+          {/* For business subpages like /:slug/services */}
+          <Route path="/:slug/:subPath*">
+            {(params: { slug: string, 'subPath*'?: string }) => (
+              <BusinessPortal 
+                slug={params.slug} 
+                subPath={params['subPath*'] || ''} 
+                initialData={businessData}
+              />
+            )}
+          </Route>
+          {/* For main business page /:slug */}
+          <Route path="/:slug">
+            {(params: { slug: string }) => (
+              <BusinessPortal 
+                slug={params.slug}
+                initialData={businessData}
+              />
+            )}
+          </Route>
+          <Route component={NotFound} />
+        </Switch>
+      </div>
+    ) : (
+      <Layout currentUser={currentUser}>
+        <Switch>
+          <Route path="/" component={Dashboard} />
+          <Route path="/auth" component={AuthPage} />
+          <Route path="/appointments" component={Appointments} />
+          <Route path="/customers" component={Customers} />
+          <Route path="/services" component={Services} />
+          <Route path="/custom-domain" component={CustomDomain} />
+          <Route path="/instructions/domain-setup" component={DomainSetupInstructions} />
+          <Route path="/admin">
+            {currentUser?.role === 'admin' ? <AdminDashboard /> : <Redirect to="/auth" />}
+          </Route>
+          <Route path="/checkout/:appointmentId">
+            {params => <Checkout appointmentId={Number(params.appointmentId)} />}
+          </Route>
+          <Route path="/preview/:businessId">
+            <PreviewBusiness />
+          </Route>
+          <Route component={NotFound} />
+        </Switch>
+      </Layout>
+    )
+  );
+}
+
+function App() {
+  return (
     <QueryClientProvider client={queryClient}>
-      {isCustomerPortal ? (
-        <div className="min-h-screen bg-background">
-          <Switch>
-            <Route path="/customer-portal" component={CustomerPortalSimple} />
-            <Route component={NotFound} />
-          </Switch>
-        </div>
-      ) : isBusinessPortal ? (
-        <div className="min-h-screen bg-background">
-          <Switch>
-            {/* For business subpages like /:slug/services */}
-            <Route path="/:slug/:subPath*">
-              {(params: { slug: string, 'subPath*'?: string }) => (
-                <BusinessPortal 
-                  slug={params.slug} 
-                  subPath={params['subPath*'] || ''} 
-                  initialData={businessData}
-                />
-              )}
-            </Route>
-            {/* For main business page /:slug */}
-            <Route path="/:slug">
-              {(params: { slug: string }) => (
-                <BusinessPortal 
-                  slug={params.slug}
-                  initialData={businessData}
-                />
-              )}
-            </Route>
-            <Route component={NotFound} />
-          </Switch>
-        </div>
-      ) : (
-        <Layout currentUser={currentUser}>
-          <Switch>
-            <Route path="/" component={Dashboard} />
-            <Route path="/auth" component={AuthPage} />
-            <Route path="/appointments" component={Appointments} />
-            <Route path="/customers" component={Customers} />
-            <Route path="/services" component={Services} />
-            <Route path="/custom-domain" component={CustomDomain} />
-            <Route path="/instructions/domain-setup" component={DomainSetupInstructions} />
-            <Route path="/admin">
-              {currentUser?.role === 'admin' ? <AdminDashboard /> : <Redirect to="/auth" />}
-            </Route>
-            <Route path="/checkout/:appointmentId">
-              {params => <Checkout appointmentId={Number(params.appointmentId)} />}
-            </Route>
-            <Route path="/preview/:businessId">
-              <PreviewBusiness />
-            </Route>
-            <Route component={NotFound} />
-          </Switch>
-        </Layout>
-      )}
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
