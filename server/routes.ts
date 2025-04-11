@@ -8,6 +8,7 @@ import {
   insertCustomerSchema, 
   insertAppointmentSchema,
   insertPaymentSchema,
+  insertProductSchema,
   users
 } from "@shared/schema";
 import { eq, sql, desc } from "drizzle-orm";
