@@ -42,10 +42,11 @@ app.use((req, res, next) => {
   // Seed the database with initial data
   await seedDatabase();
   
-  // Register business data injector middleware
-  app.use(businessDataInjector);
-  
   const server = await registerRoutes(app);
+  
+  // Register business data injector middleware after routes are set up
+  // but before Vite middleware
+  app.use(businessDataInjector);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

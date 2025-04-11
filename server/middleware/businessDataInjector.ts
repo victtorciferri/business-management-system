@@ -8,8 +8,11 @@ import path from "path";
  * This runs after the business is extracted and before Vite processes the HTML
  */
 export async function businessDataInjector(req: Request, res: Response, next: NextFunction) {
+  console.log(`[BusinessDataInjector] Called for path: ${req.path}, method: ${req.method}, business: ${req.business?.businessSlug || 'none'}`);
+  
   // Only inject data for non-api routes
   if (req.path.startsWith('/api/')) {
+    console.log(`[BusinessDataInjector] Skipping API route: ${req.path}`);
     return next();
   }
 
@@ -49,18 +52,44 @@ export async function businessDataInjector(req: Request, res: Response, next: Ne
   // Create a wrapper for res.send to intercept HTML responses
   const originalSend = res.send;
   res.send = function(body) {
+    // Add debugging
+    console.log(`BusinessDataInjector: Handling response for ${req.path}, has business: ${!!req.business}, content type: ${res.getHeader('content-type')}`);
+    
     // Only modify HTML responses that have business data
-    if (typeof body === 'string' && body.includes('<!DOCTYPE html>') && res.locals.BUSINESS_DATA) {
-      console.log(`Injecting business data into HTML response for: ${req.path}`);
+    if (typeof body === 'string' && body.includes('<!DOCTYPE html>')) {
+      // For debugging
+      if (req.business) {
+        console.log(`Business data available for ${req.path}, business: ${req.business.businessName}`);
+      }
       
-      // Create the script tag with business data
-      const businessDataScript = `
+      if (res.locals.BUSINESS_DATA) {
+        console.log(`Injecting business data into HTML response for: ${req.path}`);
+        
+        // Create the script tag with business data
+        const businessDataScript = `
 <script>
   window.BUSINESS_DATA = ${JSON.stringify(res.locals.BUSINESS_DATA)};
 </script>`;
-      
-      // Insert the script right before the closing head tag
-      body = body.replace('</head>', `${businessDataScript}\n</head>`);
+        
+        // Insert the script right before the closing head tag
+        body = body.replace('</head>', `${businessDataScript}\n</head>`);
+      } else if (req.business) {
+        // If we have business data on req but not in res.locals, add it
+        console.log(`Business data not in res.locals, adding it for: ${req.path}`);
+        
+        // Create the script tag with business data
+        const businessDataScript = `
+<script>
+  window.BUSINESS_DATA = ${JSON.stringify({
+    business: req.business,
+    services: [], // We'll fetch these on the client side
+    subPath: ""
+  })};
+</script>`;
+        
+        // Insert the script right before the closing head tag
+        body = body.replace('</head>', `${businessDataScript}\n</head>`);
+      }
     }
     
     // Call the original send method
