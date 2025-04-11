@@ -822,8 +822,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Business not found" });
       }
       
-      // Calculate platform fee (15% by default)
-      const platformFeePercentage = 15.00; // Can be adjusted per business or globally
+      // Get platform fee from business settings (defaults to 2% if not set)
+      const platformFeePercentage = parseFloat(business.platformFeePercentage?.toString() || "2.00");
       const amount = parseFloat(service.price.toString());
       const platformFeeAmount = (amount * platformFeePercentage) / 100;
       const businessAmount = amount - platformFeeAmount;
@@ -1045,6 +1045,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // API endpoint to update a business's platform fee percentage
+  app.patch("/api/business/platform-fee", async (req: Request, res: Response) => {
+    try {
+      const { userId, platformFeePercentage } = req.body;
+      
+      if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
+      }
+      
+      if (platformFeePercentage === undefined || platformFeePercentage === null) {
+        return res.status(400).json({ message: "Platform fee percentage is required" });
+      }
+      
+      // Validate the platform fee percentage (must be a number between 0 and 100)
+      const feePercentage = parseFloat(platformFeePercentage);
+      if (isNaN(feePercentage) || feePercentage < 0 || feePercentage > 100) {
+        return res.status(400).json({ message: "Platform fee percentage must be a number between 0 and 100" });
+      }
+      
+      // Update the user's platform fee percentage
+      const user = await storage.getUser(parseInt(userId.toString()));
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Update using raw SQL
+      await db.execute(sql`
+        UPDATE users 
+        SET platform_fee_percentage = ${feePercentage.toString()} 
+        WHERE id = ${parseInt(userId.toString())}
+      `);
+      
+      res.json({ 
+        message: "Platform fee percentage updated successfully",
+        platformFeePercentage: feePercentage 
+      });
+    } catch (error) {
+      console.error("Error updating platform fee percentage:", error);
+      res.status(500).json({ message: "Failed to update platform fee percentage" });
+    }
+  });
+
   // Create the HTTP server
   const httpServer = createServer(app);
   return httpServer;

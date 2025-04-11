@@ -20,6 +20,8 @@ export const users = pgTable("users", {
   maxServiceCount: integer("max_service_count").default(10),
   maxCustomerCount: integer("max_customer_count").default(100),
   maxAppointmentCount: integer("max_appointment_count").default(500),
+  // Payment processing and marketplace configuration
+  platformFeePercentage: numeric("platform_fee_percentage").default("2.00"), // Default platform fee percentage (can be adjusted per business)
   // MercadoPago integration fields for marketplace payment split
   mercadopagoAccountId: text("mercadopago_account_id"), // MercadoPago account for the business
   mercadopagoIntegrationEnabled: boolean("mercadopago_integration_enabled").default(false),
@@ -52,6 +54,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
   subscription: true,
   subscriptionStatus: true,
   subscriptionExpiresAt: true,
+  platformFeePercentage: true,
   mercadopagoAccountId: true,
   mercadopagoIntegrationEnabled: true,
   emailConfirmed: true,
@@ -157,7 +160,7 @@ export const payments = pgTable("payments", {
   merchantAccountId: text("merchant_account_id"), // Business-specific payment processor account ID
   
   // Marketplace payment split fields
-  platformFeePercentage: numeric("platform_fee_percentage").default("15.00"), // AppointEase's percentage (e.g., 15%)
+  platformFeePercentage: numeric("platform_fee_percentage").default("2.00"), // AppointEase's percentage (default: 2%)
   platformFeeAmount: numeric("platform_fee_amount"), // Calculated amount for AppointEase
   businessAmount: numeric("business_amount"), // Amount going to the business after platform fee
   
