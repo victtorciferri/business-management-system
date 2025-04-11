@@ -11,5 +11,8 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
+// Create a connection pool to the database
 export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+
+// Create a Drizzle ORM instance with our schema
 export const db = drizzle(pool, { schema });
