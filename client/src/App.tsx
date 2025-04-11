@@ -23,6 +23,7 @@ function App() {
     email: "owner@example.com",
     businessName: "Salon Elegante",
     businessSlug: "salonelegante",
+    customDomain: "salonelegante.cl",
     phone: "+56 9 9876 5432",
     createdAt: new Date()
   });

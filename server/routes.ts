@@ -152,12 +152,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Use the verified working approach from our test endpoint
       const { Pool } = await import('@neondatabase/serverless');
       const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-      const result = await pool.query('SELECT * FROM users WHERE business_slug = $1', [slug]);
+      
+      // First try to find by slug
+      let result = await pool.query('SELECT * FROM users WHERE business_slug = $1', [slug]);
+      
+      // If not found by slug, try by custom domain
+      if (!result.rows || result.rows.length === 0) {
+        console.log(`Business with slug ${slug} not found, trying by custom domain...`);
+        result = await pool.query('SELECT * FROM users WHERE custom_domain = $1', [slug]);
+      }
       
       console.log(`Raw SQL business data for '${slug}':`, result.rows);
       
       if (!result.rows || result.rows.length === 0) {
-        console.log(`Business with slug ${slug} not found in database`);
+        console.log(`Business with slug or domain ${slug} not found in database`);
         return res.status(404).json({ message: "Business not found" });
       }
       
@@ -169,6 +177,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: result.rows[0].email,
         businessName: result.rows[0].business_name,
         businessSlug: result.rows[0].business_slug,
+        customDomain: result.rows[0].custom_domain,
         phone: result.rows[0].phone,
         createdAt: new Date(result.rows[0].created_at)
       };
@@ -237,18 +246,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // New API endpoint to get business data by slug
+  // New API endpoint to get business data by slug or domain
   app.get("/api/business-data/:slug", async (req: Request, res: Response) => {
     try {
       const { slug } = req.params;
       console.log(`Fetching business data for slug: ${slug} from API endpoint`);
       
-      // Get the business by slug
-      const business = await storage.getUserByBusinessSlug(slug);
-      console.log(`API endpoint - Business lookup result for ${slug}:`, business ? `Found: ${business.businessName}` : 'Not found');
+      // First try to get the business by slug
+      let business = await storage.getUserByBusinessSlug(slug);
+      
+      // If not found by slug, try by custom domain
+      if (!business) {
+        console.log(`Business not found by slug ${slug}, trying as custom domain...`);
+        business = await storage.getUserByCustomDomain(slug);
+      }
+      
+      console.log(`API endpoint - Business lookup result:`, business ? `Found: ${business.businessName}` : 'Not found');
       
       if (!business) {
-        console.log(`No business found for slug: ${slug}`);
+        console.log(`No business found for slug or domain: ${slug}`);
         return res.status(404).json({ message: "Business not found" });
       }
       
