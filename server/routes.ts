@@ -11,6 +11,7 @@ import {
 import { z } from "zod";
 import Stripe from "stripe";
 import nodemailer from "nodemailer";
+import { businessExtractor } from "./middleware/businessExtractor";
 
 // Initialize Stripe if secret key is available
 let stripe: Stripe | undefined;
@@ -32,6 +33,18 @@ const transporter = nodemailer.createTransport({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Apply the business extractor middleware to all routes
+  app.use(businessExtractor);
+  
+  // Add an endpoint to get the current business (for debugging)
+  app.get("/api/current-business", (req, res) => {
+    if (req.business) {
+      res.json({ business: req.business });
+    } else {
+      res.status(404).json({ message: "No business context found" });
+    }
+  });
+  
   // User routes
   app.get("/api/business/:slug", async (req: Request, res: Response) => {
     try {
