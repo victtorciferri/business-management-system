@@ -17,14 +17,23 @@ export default function Layout({ children, currentUser }: LayoutProps) {
     setMobileMenuOpen(!mobileMenuOpen);
   };
 
-  const navItems = [
+  // Different navigation items based on user role
+  const businessNavItems = [
     { name: "Dashboard", path: "/" },
     { name: "Appointments", path: "/appointments" },
     { name: "Customers", path: "/customers" },
     { name: "Services", path: "/services" },
     { name: "Custom Domain", path: "/custom-domain" },
-    { name: "Admin", path: "/admin" },
   ];
+  
+  const adminNavItems = [
+    { name: "Admin Dashboard", path: "/admin" },
+  ];
+  
+  // Select navigation items based on user role
+  const navItems = currentUser?.role === 'admin' 
+    ? adminNavItems 
+    : businessNavItems;
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800">
