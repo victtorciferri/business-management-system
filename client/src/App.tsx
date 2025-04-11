@@ -31,31 +31,58 @@ function App() {
   const [businessData, setBusinessData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   
+  // Get current location
+  const [location] = useLocation();
+  const isCustomerPortal = location.startsWith('/customer-portal');
+  
+  // Check if the URL looks like a business portal URL (e.g., /salonelegante)
+  const businessPortalRegex = /^\/([a-zA-Z0-9_-]+)(?:\/.*)?$/;
+  const match = location.match(businessPortalRegex);
+  const potentialBusinessSlug = match && match[1] !== 'customer-portal' && match[1] !== 'api' ? match[1] : null;
+  
   useEffect(() => {
-    // Check if we have BUSINESS_DATA from window (for custom domains)
+    // First check if we have business data from window
     if (typeof window !== "undefined" && (window as any).BUSINESS_DATA) {
       setBusinessData((window as any).BUSINESS_DATA);
       setIsLoading(false);
       return;
     }
     
-    // Otherwise make an API call to check the current domain/path
-    fetch('/api/current-business')
-      .then(response => response.json())
-      .then(data => {
-        if (data.business) {
-          setBusinessData({ business: data.business });
-        }
-      })
-      .catch(error => console.error('Error checking business context:', error))
-      .finally(() => setIsLoading(false));
-  }, []);
+    // If we're on a potential business URL, try to fetch business data by slug
+    if (potentialBusinessSlug) {
+      console.log(`Detected potential business slug: ${potentialBusinessSlug}, fetching data...`);
+      
+      fetch(`/api/business-data/${potentialBusinessSlug}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Failed to fetch business data: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          console.log(`Successfully fetched business data for ${potentialBusinessSlug}:`, data);
+          setBusinessData(data);
+        })
+        .catch(error => {
+          console.error(`Error fetching business data for ${potentialBusinessSlug}:`, error);
+        })
+        .finally(() => setIsLoading(false));
+    } else {
+      // Otherwise make an API call to check the current domain context
+      fetch('/api/current-business')
+        .then(response => response.json())
+        .then(data => {
+          if (data.business) {
+            setBusinessData({ business: data.business, services: data.services || [] });
+          }
+        })
+        .catch(error => console.error('Error checking business context:', error))
+        .finally(() => setIsLoading(false));
+    }
+  }, [potentialBusinessSlug]);
   
-  const [location] = useLocation();
-  const isCustomerPortal = location.startsWith('/customer-portal');
-  
-  // If we have businessData from the API call, we're on a business portal
-  const isBusinessPortal = businessData?.business || /^\/[^/]+$/.test(location) && location !== '/';
+  // Determine if this is a business portal based on the data we have
+  const isBusinessPortal = !!businessData?.business || !!potentialBusinessSlug;
   
   // Debug information to help troubleshoot
   console.log("App.tsx is rendering");

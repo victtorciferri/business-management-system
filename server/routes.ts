@@ -241,10 +241,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/business-data/:slug", async (req: Request, res: Response) => {
     try {
       const { slug } = req.params;
-      console.log(`Fetching business data for slug: ${slug}`);
+      console.log(`Fetching business data for slug: ${slug} from API endpoint`);
       
       // Get the business by slug
       const business = await storage.getUserByBusinessSlug(slug);
+      console.log(`API endpoint - Business lookup result for ${slug}:`, business ? `Found: ${business.businessName}` : 'Not found');
       
       if (!business) {
         console.log(`No business found for slug: ${slug}`);
