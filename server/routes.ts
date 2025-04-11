@@ -99,7 +99,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const activeServices = services.filter(service => service.active);
       
       // Return the business portal page with business data and subpage information
-      const subPath = req.params[0] as string; // This captures the part after /:slug/
+      const subPath = req.params['0'] as string; // This captures the part after /:slug/
       
       res.send(`
         <!DOCTYPE html>
