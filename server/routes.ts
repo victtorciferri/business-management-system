@@ -7,8 +7,10 @@ import {
   insertServiceSchema, 
   insertCustomerSchema, 
   insertAppointmentSchema,
-  insertPaymentSchema 
+  insertPaymentSchema,
+  users
 } from "@shared/schema";
+import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import Stripe from "stripe";
 import nodemailer from "nodemailer";
@@ -911,6 +913,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Custom domain and SSL management routes
+  app.get("/api/domains", async (req: Request, res: Response) => {
+    try {
+      // Check if the user is part of request context (from businessExtractor)
+      // Or if the request has a specific user ID
+      const userId = req.body.userId || req.query.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "User ID required" });
+      }
+      
+      // Get the registered domains for this user from the database
+      const registeredDomains = await getRegisteredDomains();
+      const userDomains = registeredDomains.filter(domain => domain.user_id === Number(userId));
+      
+      // Return the domains
+      res.json({ domains: userDomains });
+    } catch (error) {
+      console.error("Error fetching domains:", error);
+      res.status(500).json({ message: "Failed to fetch domains" });
+    }
+  });
+  
+  // Route to register a new custom domain
+  app.post("/api/domains", async (req: Request, res: Response) => {
+    try {
+      // Get the user ID from the request body
+      const { userId, domain } = req.body;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "User ID required" });
+      }
+      
+      if (!domain) {
+        return res.status(400).json({ message: "Domain is required" });
+      }
+      
+      // Validate domain format with a regex
+      const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$/;
+      if (!domainRegex.test(domain)) {
+        return res.status(400).json({ message: "Invalid domain format" });
+      }
+      
+      // Register the domain
+      const registered = await manuallyRegisterDomain(domain, Number(userId));
+      
+      // Update the user's customDomain field
+      if (registered) {
+        const user = await storage.getUser(Number(userId));
+        if (user) {
+          // Update using raw SQL for now - more compatible with different DB setups
+          await db.execute(sql`
+            UPDATE users 
+            SET custom_domain = ${domain} 
+            WHERE id = ${Number(userId)}
+          `);
+          
+          res.status(201).json({ message: "Domain registered successfully", domain });
+        } else {
+          res.status(404).json({ message: "User not found" });
+        }
+      } else {
+        res.status(400).json({ message: "Domain already registered" });
+      }
+    } catch (error) {
+      console.error("Error registering domain:", error);
+      res.status(500).json({ message: "Failed to register domain" });
+    }
+  });
+  
+  // Create the HTTP server
   const httpServer = createServer(app);
   return httpServer;
 }
