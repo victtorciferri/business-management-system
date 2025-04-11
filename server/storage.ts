@@ -70,7 +70,77 @@ export class MemStorage implements IStorage {
     this.appointmentIdCounter = 1;
     this.paymentIdCounter = 1;
     
-    // Add some sample services for testing
+    // Create a test user
+    this.createUser({
+      username: "businessowner",
+      email: "owner@example.com",
+      password: "password123", // In a real app, this would be hashed
+      businessName: "Salon Elegante",
+      phone: "+56 9 9876 5432",
+    });
+    
+    // Add sample customers for testing
+    this.createCustomer({
+      userId: 1,
+      firstName: "Maria",
+      lastName: "González",
+      email: "maria@example.com",
+      phone: "+56 9 1234 5678",
+      notes: "Regular client, prefers appointments in the afternoon"
+    });
+    
+    this.createCustomer({
+      userId: 1,
+      firstName: "Juan",
+      lastName: "Pérez",
+      email: "juan@example.com",
+      phone: "+56 9 8765 4321",
+      notes: "Allergic to certain hair products"
+    });
+    
+    this.createCustomer({
+      userId: 1,
+      firstName: "Camila",
+      lastName: "Silva",
+      email: "camila@example.com",
+      phone: "+56 9 2468 1357",
+      notes: ""
+    });
+    
+    // Add sample appointments for testing
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(10, 0, 0, 0);
+    
+    this.createAppointment({
+      userId: 1,
+      customerId: 1,
+      serviceId: 1,
+      date: tomorrow,
+      duration: 45,
+      status: "scheduled",
+      notes: "",
+      reminderSent: false,
+      paymentStatus: "pending"
+    });
+    
+    const nextWeek = new Date();
+    nextWeek.setDate(nextWeek.getDate() + 7);
+    nextWeek.setHours(14, 30, 0, 0);
+    
+    this.createAppointment({
+      userId: 1,
+      customerId: 2,
+      serviceId: 3,
+      date: nextWeek,
+      duration: 90,
+      status: "scheduled",
+      notes: "First time getting highlights",
+      reminderSent: false,
+      paymentStatus: "pending"
+    });
+    
+    // Add sample services for testing
     this.createService({
       userId: 1,
       name: "Haircut & Style",
