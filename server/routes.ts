@@ -1088,6 +1088,149 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to update platform fee percentage" });
     }
   });
+  
+  // Product routes
+  app.get("/api/products", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated || !req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const userId = req.user.id;
+      let products;
+      
+      if (req.query.category) {
+        products = await storage.getProductsByCategory(userId, req.query.category as string);
+      } else {
+        products = await storage.getProductsByUserId(userId);
+      }
+      
+      return res.json(products);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      return res.status(500).json({ message: "Failed to fetch products" });
+    }
+  });
+
+  app.post("/api/products", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated || !req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const userId = req.user.id;
+      const productData = insertProductSchema.parse({
+        ...req.body,
+        userId
+      });
+      
+      const product = await storage.createProduct(productData);
+      return res.status(201).json(product);
+    } catch (error) {
+      console.error("Error creating product:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid product data", errors: error.errors });
+      }
+      return res.status(500).json({ message: "Failed to create product" });
+    }
+  });
+
+  app.get("/api/products/:id", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated || !req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const productId = parseInt(req.params.id);
+      if (isNaN(productId)) {
+        return res.status(400).json({ message: "Invalid product ID" });
+      }
+      
+      const product = await storage.getProduct(productId);
+      
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      
+      // Ensure user can only access their own products
+      if (product.userId !== req.user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      return res.json(product);
+    } catch (error) {
+      console.error("Error fetching product:", error);
+      return res.status(500).json({ message: "Failed to fetch product" });
+    }
+  });
+
+  app.put("/api/products/:id", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated || !req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const productId = parseInt(req.params.id);
+      if (isNaN(productId)) {
+        return res.status(400).json({ message: "Invalid product ID" });
+      }
+      
+      const product = await storage.getProduct(productId);
+      
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      
+      // Ensure user can only update their own products
+      if (product.userId !== req.user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const productData = insertProductSchema.partial().parse(req.body);
+      
+      // Prevent changing the userId
+      delete productData.userId;
+      
+      const updatedProduct = await storage.updateProduct(productId, productData);
+      return res.json(updatedProduct);
+    } catch (error) {
+      console.error("Error updating product:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid product data", errors: error.errors });
+      }
+      return res.status(500).json({ message: "Failed to update product" });
+    }
+  });
+
+  app.delete("/api/products/:id", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated || !req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const productId = parseInt(req.params.id);
+      if (isNaN(productId)) {
+        return res.status(400).json({ message: "Invalid product ID" });
+      }
+      
+      const product = await storage.getProduct(productId);
+      
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      
+      // Ensure user can only delete their own products
+      if (product.userId !== req.user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      await storage.deleteProduct(productId);
+      return res.status(204).end();
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      return res.status(500).json({ message: "Failed to delete product" });
+    }
+  });
 
   // Admin API routes - middleware to check admin role
   const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
