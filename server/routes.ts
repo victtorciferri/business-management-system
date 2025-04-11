@@ -72,9 +72,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Service routes
   app.get("/api/services", async (req: Request, res: Response) => {
     try {
-      const userId = parseInt(req.query.userId as string);
-      if (isNaN(userId)) {
-        return res.status(400).json({ message: "Invalid user ID" });
+      // For customer portal, if no userId is provided, default to user 1
+      const userIdParam = req.query.userId as string;
+      let userId = 1; // Default to first business user
+      
+      if (userIdParam) {
+        userId = parseInt(userIdParam);
+        if (isNaN(userId)) {
+          return res.status(400).json({ message: "Invalid user ID" });
+        }
       }
       
       const services = await storage.getServicesByUserId(userId);
@@ -142,9 +148,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Customer routes
   app.get("/api/customers", async (req: Request, res: Response) => {
     try {
-      const userId = parseInt(req.query.userId as string);
-      if (isNaN(userId)) {
-        return res.status(400).json({ message: "Invalid user ID" });
+      // For customer portal, if no userId is provided, default to user 1
+      const userIdParam = req.query.userId as string;
+      let userId = 1; // Default to first business user
+      
+      if (userIdParam) {
+        userId = parseInt(userIdParam);
+        if (isNaN(userId)) {
+          return res.status(400).json({ message: "Invalid user ID" });
+        }
       }
       
       const customers = await storage.getCustomersByUserId(userId);
@@ -212,9 +224,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Appointment routes
   app.get("/api/appointments", async (req: Request, res: Response) => {
     try {
-      const userId = parseInt(req.query.userId as string);
-      if (isNaN(userId)) {
-        return res.status(400).json({ message: "Invalid user ID" });
+      // For customer portal, if no userId is provided, default to user 1
+      const userIdParam = req.query.userId as string;
+      let userId = 1; // Default to first business user
+      
+      if (userIdParam) {
+        userId = parseInt(userIdParam);
+        if (isNaN(userId)) {
+          return res.status(400).json({ message: "Invalid user ID" });
+        }
       }
       
       let appointments;
@@ -222,6 +240,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const startDate = new Date(req.query.startDate as string);
         const endDate = new Date(req.query.endDate as string);
         appointments = await storage.getAppointmentsByDateRange(userId, startDate, endDate);
+      } else if (req.query.customerId) {
+        // For customer portal, allow fetching by customer ID
+        const customerId = parseInt(req.query.customerId as string);
+        if (!isNaN(customerId)) {
+          appointments = await storage.getAppointmentsByCustomerId(customerId);
+        } else {
+          appointments = await storage.getAppointmentsByUserId(userId);
+        }
       } else {
         appointments = await storage.getAppointmentsByUserId(userId);
       }
