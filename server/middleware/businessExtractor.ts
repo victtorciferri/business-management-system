@@ -30,6 +30,14 @@ export async function businessExtractor(req: Request, res: Response, next: NextF
       console.log(`Found slug parameter: ${req.params.slug}`);
       businessSlug = req.params.slug;
     }
+    // Special handling for /api/business/:slug endpoint
+    else if (req.path.startsWith('/api/business/')) {
+      const pathSegments = req.path.split('/').filter(Boolean);
+      if (pathSegments.length >= 3 && pathSegments[0] === 'api' && pathSegments[1] === 'business') {
+        businessSlug = pathSegments[2];
+        console.log(`Extracted business slug from API path: ${businessSlug}`);
+      }
+    }
     // Check if the URL path starts with a potential business slug
     // This handles URLs like /salonelegante or /salonelegante/services
     else if (req.path !== '/' && req.path !== '/business-portal') {
@@ -39,11 +47,13 @@ export async function businessExtractor(req: Request, res: Response, next: NextF
         const potentialSlug = pathSegments[0];
         console.log(`Extracted potential slug from path: ${potentialSlug}`);
         
-        // Skip if it starts with "api", "assets", "src", or other known routes
+        // Skip if it starts with special characters or known routes
         if (!potentialSlug.startsWith('api') && 
             !potentialSlug.startsWith('assets') && 
             !potentialSlug.startsWith('src') && 
-            !potentialSlug.startsWith('components')) {
+            !potentialSlug.startsWith('components') &&
+            !potentialSlug.startsWith('@') &&
+            !potentialSlug.includes('.')) {
           businessSlug = potentialSlug;
           console.log(`Using path segment as business slug: ${businessSlug}`);
         } else {

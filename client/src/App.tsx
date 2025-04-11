@@ -57,6 +57,14 @@ function App() {
   // If we have businessData from the API call, we're on a business portal
   const isBusinessPortal = businessData?.business || /^\/[^/]+$/.test(location) && location !== '/';
   
+  // Debug information to help troubleshoot
+  console.log("App.tsx is rendering");
+  console.log("Location:", location);
+  console.log("isBusinessPortal:", isBusinessPortal);
+  console.log("isCustomerPortal:", isCustomerPortal);
+  console.log("businessData:", businessData);
+  console.log("window.BUSINESS_DATA:", typeof window !== "undefined" ? (window as any).BUSINESS_DATA : "Not available");
+  
   // If we're still loading, show a simple loading state
   if (isLoading) {
     return (

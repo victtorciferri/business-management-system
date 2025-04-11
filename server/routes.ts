@@ -37,6 +37,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Apply the business extractor middleware to all routes
   app.use(businessExtractor);
   
+  /**************************************
+   * API ROUTES - MUST COME FIRST
+   **************************************/
+  
   // Add an endpoint to get the current business (for debugging)
   app.get("/api/current-business", (req, res) => {
     if (req.business) {
@@ -78,116 +82,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Business public portal route - works with both /:slug and custom domains
-  app.get("/business-portal", async (req, res) => {
-    try {
-      // Check if we have a business context from the middleware
-      if (!req.business) {
-        return res.status(404).send("Business not found");
-      }
-      
-      // Get services for this business
-      const services = await storage.getServicesByUserId(req.business.id);
-      const activeServices = services.filter(service => service.active);
-      
-      // Return the business portal page with business data
-      res.send(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>${req.business.businessName || 'Business Portal'}</title>
-          <link rel="stylesheet" href="/assets/main.css">
-          <script>
-            window.BUSINESS_DATA = ${JSON.stringify({
-              business: req.business,
-              services: activeServices
-            })};
-          </script>
-        </head>
-        <body>
-          <div id="root"></div>
-          <script type="module" src="/src/main.tsx"></script>
-        </body>
-        </html>
-      `);
-    } catch (error) {
-      console.error("Error rendering business portal:", error);
-      res.status(500).send("Error loading business portal");
-    }
-  });
-  
-  // Catch-all route for business-specific pages
-  // This will handle URLs like /:slug/services, /:slug/appointments, etc.
-  app.get("/:slug/*", async (req, res) => {
-    // The businessExtractor middleware should have already attached the business to req.business
-    if (!req.business) {
-      return res.status(404).send("Business not found");
-    }
-    
-    try {
-      // Get services for this business
-      const services = await storage.getServicesByUserId(req.business.id);
-      const activeServices = services.filter(service => service.active);
-      
-      // Return the business portal page with business data and subpage information
-      const subPath = req.params['0'] as string; // This captures the part after /:slug/
-      
-      res.send(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>${req.business.businessName || 'Business Portal'} - ${subPath.charAt(0).toUpperCase() + subPath.slice(1)}</title>
-          <link rel="stylesheet" href="/assets/main.css">
-          <script>
-            window.BUSINESS_DATA = ${JSON.stringify({
-              business: req.business,
-              services: activeServices,
-              subPath: subPath // Pass the subpath to the frontend for routing
-            })};
-          </script>
-        </head>
-        <body>
-          <div id="root"></div>
-          <script type="module" src="/src/main.tsx"></script>
-        </body>
-        </html>
-      `);
-    } catch (error) {
-      console.error("Error rendering business page:", error);
-      res.status(500).send("Error loading business page");
-    }
-  });
-  
-  // Catch-all route for the root path that redirects to business-portal if a business context exists
-  app.get("/", (req, res) => {
-    if (req.business) {
-      // If accessed via custom domain or a subdomain, redirect to the business portal
-      res.redirect("/business-portal");
-    } else {
-      // If no business context, serve the main application
-      res.send(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>AppointEase - Appointment Scheduling Platform</title>
-          <link rel="stylesheet" href="/assets/main.css">
-        </head>
-        <body>
-          <div id="root"></div>
-          <script type="module" src="/src/main.tsx"></script>
-        </body>
-        </html>
-      `);
-    }
-  });
-  
-  // User routes
+  // User routes - these need to be defined before the catch-all routes
   app.get("/api/business/:slug", async (req: Request, res: Response) => {
     try {
       const { slug } = req.params;
@@ -254,6 +149,123 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error(`Error fetching business data: ${error}`);
       res.status(500).json({ message: "Failed to fetch business data" });
     }
+  });
+  
+  // Endpoint for the frontend to check current business context
+  app.get("/api/current-business", async (req: Request, res: Response) => {
+    try {
+      if (req.business) {
+        // Get services for this business
+        const services = await storage.getServicesByUserId(req.business.id);
+        const activeServices = services.filter(service => service.active);
+        
+        // Return the business data without password
+        const { password: _, ...businessData } = req.business;
+        
+        res.json({
+          business: businessData,
+          services: activeServices
+        });
+      } else {
+        // No business context found
+        res.json({ business: null });
+      }
+    } catch (error) {
+      console.error("Error checking business context:", error);
+      res.status(500).json({ message: "Failed to check business context" });
+    }
+  });
+
+  /**************************************
+   * HTML ROUTES - COME AFTER API ROUTES
+   **************************************/
+  
+  // Business public portal route - works with both /:slug and custom domains
+  app.get("/business-portal", async (req, res) => {
+    try {
+      // Check if we have a business context from the middleware
+      if (!req.business) {
+        return res.status(404).send("Business not found");
+      }
+      
+      // Get services for this business
+      const services = await storage.getServicesByUserId(req.business.id);
+      const activeServices = services.filter(service => service.active);
+      
+      // Return the business portal page with business data
+      res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>${req.business.businessName || 'Business Portal'}</title>
+          <link rel="stylesheet" href="/assets/main.css">
+          <script>
+            window.BUSINESS_DATA = ${JSON.stringify({
+              business: req.business,
+              services: activeServices
+            })};
+          </script>
+        </head>
+        <body>
+          <div id="root"></div>
+          <script type="module" src="/src/main.tsx"></script>
+        </body>
+        </html>
+      `);
+    } catch (error) {
+      console.error("Error rendering business portal:", error);
+      res.status(500).send("Error loading business portal");
+    }
+  });
+  
+  // Route for direct business slug - e.g., /salonelegante
+  app.get("/:slug", async (req, res, next) => {
+    console.log(`Processing /:slug route for ${req.params.slug}`);
+    
+    // The businessExtractor middleware should have already attached the business to req.business
+    if (!req.business) {
+      console.log(`No business found for slug ${req.params.slug}, passing to next handler`);
+      return next(); // Let Vite handle this request if it's not a business
+    }
+    
+    // Let Vite handle the request - our businessDataInjector middleware will add the data
+    console.log(`Found business for slug ${req.params.slug}, sending to Vite`);
+    next();
+  });
+
+  // Catch-all route for business-specific pages
+  // This will handle URLs like /:slug/services, /:slug/appointments, etc.
+  app.get("/:slug/*", async (req, res, next) => {
+    console.log(`Processing /:slug/* route for ${req.params.slug} with subpath ${req.params['0']}`);
+    
+    // The businessExtractor middleware should have already attached the business to req.business
+    if (!req.business) {
+      console.log(`No business found for slug ${req.params.slug}, passing to next handler`);
+      return next(); // Let Vite handle this request if it's not a business
+    }
+    
+    // Let Vite handle the request - our businessDataInjector middleware will add the data
+    console.log(`Found business for slug ${req.params.slug} with subpath ${req.params['0']}, sending to Vite`);
+    next();
+  });
+  
+  // Catch-all route for the root path that redirects to business-portal if a business context exists
+  app.get("/", (req, res, next) => {
+    console.log(`Processing / route, business context: ${!!req.business}`);
+    
+    if (req.business) {
+      // Set business data as a local property on the request for Vite to use
+      req.app.locals.BUSINESS_DATA = {
+        business: req.business,
+        services: [], // We'll fetch these on the client side
+        subPath: "dashboard" // Default to dashboard for main business 
+      };
+    }
+    
+    // Let Vite handle the request
+    next();
   });
   
   app.post("/api/users", async (req: Request, res: Response) => {

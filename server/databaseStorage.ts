@@ -31,33 +31,25 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log(`Looking up business with slug: ${slug}`);
       
-      // Use regular Drizzle query syntax
-      const result = await db.select().from(users).where(eq(users.businessSlug, slug));
-      console.log(`Business lookup result for slug '${slug}':`, result);
+      // Use direct parameterized query with Pool - the proven working approach
+      const { Pool } = await import('@neondatabase/serverless');
+      const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+      const result = await pool.query('SELECT * FROM users WHERE business_slug = $1', [slug]);
       
-      // If we found a user
-      if (result && result.length > 0) {
-        return result[0];
-      }
+      console.log(`Direct SQL query result for slug '${slug}':`, result.rows);
       
-      // Try using raw SQL as a fallback due to potential snake_case/camelCase mismatch
-      const { rows } = await db.execute(`
-        SELECT * FROM users WHERE business_slug = '${slug}'
-      `);
-      
-      console.log(`Fallback SQL query result for '${slug}':`, rows);
-      
-      if (rows && rows.length > 0) {
-        // Convert snake_case to camelCase
+      if (result.rows.length > 0) {
+        // Convert snake_case to camelCase with proper type handling
+        const row = result.rows[0];
         const user: User = {
-          id: rows[0].id,
-          username: rows[0].username,
-          password: rows[0].password,
-          email: rows[0].email,
-          businessName: rows[0].business_name,
-          businessSlug: rows[0].business_slug,
-          phone: rows[0].phone,
-          createdAt: new Date(rows[0].created_at)
+          id: Number(row.id),
+          username: String(row.username),
+          password: String(row.password),
+          email: String(row.email),
+          businessName: String(row.business_name),
+          businessSlug: String(row.business_slug),
+          phone: row.phone ? String(row.phone) : null,
+          createdAt: new Date(String(row.created_at))
         };
         return user;
       }
