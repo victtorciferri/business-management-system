@@ -1,4 +1,4 @@
-import { Switch, Route, useLocation } from "wouter";
+import { Switch, Route, useLocation, Redirect } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import Layout from "@/components/layout/header";
@@ -29,7 +29,13 @@ function App() {
     businessSlug: "salonelegante",
     customDomain: "salonelegante.cl",
     phone: "+56 9 9876 5432",
-    createdAt: new Date()
+    role: "admin", // Set as admin for development purposes
+    subscription: null,
+    subscriptionStatus: "free",
+    subscriptionExpiresAt: null,
+    platformFeePercentage: 2,
+    createdAt: new Date(),
+    updatedAt: new Date()
   });
 
   // Check if we're on a custom domain or subdomain
@@ -152,7 +158,9 @@ function App() {
             <Route path="/services" component={Services} />
             <Route path="/custom-domain" component={CustomDomain} />
             <Route path="/instructions/domain-setup" component={DomainSetupInstructions} />
-            <Route path="/admin" component={AdminDashboard} />
+            <Route path="/admin">
+              {currentUser?.role === 'admin' ? <AdminDashboard /> : <Redirect to="/" />}
+            </Route>
             <Route path="/checkout/:appointmentId">
               {params => <Checkout appointmentId={Number(params.appointmentId)} />}
             </Route>

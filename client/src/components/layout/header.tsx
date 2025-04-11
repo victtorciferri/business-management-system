@@ -23,6 +23,7 @@ export default function Layout({ children, currentUser }: LayoutProps) {
     { name: "Customers", path: "/customers" },
     { name: "Services", path: "/services" },
     { name: "Custom Domain", path: "/custom-domain" },
+    { name: "Admin", path: "/admin" },
   ];
 
   return (

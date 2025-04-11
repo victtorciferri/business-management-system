@@ -44,12 +44,18 @@ export default function AdminDashboard() {
   const [platformFeePercentage, setPlatformFeePercentage] = useState<string>("2.00");
 
   // Fetch all businesses
-  const { data: businesses, isLoading: isLoadingBusinesses } = useQuery<User[]>({
+  const { data: businesses, isLoading: isLoadingBusinesses, error: businessesError } = useQuery<User[]>({
     queryKey: ["/api/admin/businesses"],
     queryFn: async () => {
       const response = await apiRequest("GET", "/api/admin/businesses");
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Error fetching businesses:", errorText);
+        throw new Error(`Failed to fetch businesses: ${response.status} ${errorText}`);
+      }
       return response.json();
-    }
+    },
+    retry: 1
   });
 
   // Fetch customers for a specific business
@@ -174,6 +180,16 @@ export default function AdminDashboard() {
           </p>
         </div>
       </div>
+      
+      {businessesError && (
+        <div className="bg-destructive/15 text-destructive p-4 rounded-md mb-6">
+          <h3 className="font-medium mb-1">Error loading businesses</h3>
+          <p className="text-sm">{businessesError instanceof Error ? businessesError.message : 'Unknown error occurred'}</p>
+          <p className="text-sm mt-2">
+            This could be due to missing database columns if your schema has changed. Try running a database migration.
+          </p>
+        </div>
+      )}
 
       {selectedBusinessId ? (
         <>
