@@ -1162,7 +1162,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { businessId } = req.query;
       
       if (!businessId) {
-        return res.status(400).json({ message: "Business ID is required" });
+        // If no businessId is provided, return an empty array (for initial admin dashboard load)
+        return res.json([]);
       }
       
       // Get all customers for the specified business
@@ -1180,7 +1181,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { businessId } = req.query;
       
       if (!businessId) {
-        return res.status(400).json({ message: "Business ID is required" });
+        // If no businessId is provided, return an empty array (for initial admin dashboard load)
+        return res.json([]);
       }
       
       // Get all appointments for the specified business
@@ -1198,7 +1200,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { businessId } = req.query;
       
       if (!businessId) {
-        return res.status(400).json({ message: "Business ID is required" });
+        // If no businessId is provided, return an empty array (for initial admin dashboard load)
+        return res.json([]);
       }
       
       // Get all appointments for the business
