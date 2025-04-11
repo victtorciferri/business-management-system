@@ -20,8 +20,15 @@ export const users = pgTable("users", {
   maxServiceCount: integer("max_service_count").default(10),
   maxCustomerCount: integer("max_customer_count").default(100),
   maxAppointmentCount: integer("max_appointment_count").default(500),
+  // MercadoPago integration fields for marketplace payment split
   mercadopagoAccountId: text("mercadopago_account_id"), // MercadoPago account for the business
   mercadopagoIntegrationEnabled: boolean("mercadopago_integration_enabled").default(false),
+  mercadopagoSellerId: text("mercadopago_seller_id"), // Seller ID for marketplace integration
+  mercadopagoApplicationId: text("mercadopago_application_id"), // Application ID for OAuth
+  mercadopagoClientId: text("mercadopago_client_id"), // OAuth client ID
+  mercadopagoClientSecret: text("mercadopago_client_secret"), // OAuth client secret
+  mercadopagoRefreshToken: text("mercadopago_refresh_token"), // OAuth refresh token
+  mercadopagoAccessToken: text("mercadopago_access_token"), // OAuth access token
   emailConfirmed: boolean("email_confirmed").default(false),
   businessTimeZone: text("business_time_zone").default("America/Santiago"), // Default to Chile time zone
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -148,9 +155,18 @@ export const payments = pgTable("payments", {
   paymentProcessor: text("payment_processor").default("mercadopago"), // mercadopago, manual, etc.
   processorPaymentId: text("processor_payment_id"), // ID from Mercadopago or other processor
   merchantAccountId: text("merchant_account_id"), // Business-specific payment processor account ID
+  
+  // Marketplace payment split fields
+  platformFeePercentage: numeric("platform_fee_percentage").default("15.00"), // AppointEase's percentage (e.g., 15%)
+  platformFeeAmount: numeric("platform_fee_amount"), // Calculated amount for AppointEase
+  businessAmount: numeric("business_amount"), // Amount going to the business after platform fee
+  
+  // Payment processing fields
   metadata: text("metadata"), // JSON string with additional payment details
   paymentUrl: text("payment_url"), // URL for payment checkout (Mercadopago generated URL)
   paymentMethod: text("payment_method"), // credit_card, debit_card, bank_transfer, etc.
+  preferenceId: text("preference_id"), // Mercadopago preference ID for the payment
+  
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => {
@@ -167,9 +183,17 @@ export const insertPaymentSchema = createInsertSchema(payments).pick({
   paymentProcessor: true,
   processorPaymentId: true,
   merchantAccountId: true,
+  
+  // Marketplace payment split fields
+  platformFeePercentage: true,
+  platformFeeAmount: true,
+  businessAmount: true,
+  
+  // Payment processing fields
   metadata: true,
   paymentUrl: true,
   paymentMethod: true,
+  preferenceId: true,
 });
 
 // Define relationships between tables for Drizzle ORM
