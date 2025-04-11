@@ -13,6 +13,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserByBusinessSlug(slug: string): Promise<User | undefined>;
+  getUserByCustomDomain(domain: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   
   // Service methods

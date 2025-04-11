@@ -10,6 +10,7 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   businessName: text("business_name"),
   businessSlug: text("business_slug").unique(),
+  customDomain: text("custom_domain").unique(),
   phone: text("phone"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -20,6 +21,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
   businessName: true,
   businessSlug: true,
+  customDomain: true,
   phone: true,
 });
 

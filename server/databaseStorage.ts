@@ -48,6 +48,7 @@ export class DatabaseStorage implements IStorage {
           email: String(row.email),
           businessName: String(row.business_name),
           businessSlug: String(row.business_slug),
+          customDomain: row.custom_domain ? String(row.custom_domain) : null,
           phone: row.phone ? String(row.phone) : null,
           createdAt: new Date(String(row.created_at))
         };
@@ -57,6 +58,41 @@ export class DatabaseStorage implements IStorage {
       return undefined;
     } catch (error) {
       console.error(`Error finding business by slug ${slug}:`, error);
+      return undefined;
+    }
+  }
+  
+  async getUserByCustomDomain(domain: string): Promise<User | undefined> {
+    try {
+      console.log(`Looking up business with custom domain: ${domain}`);
+      
+      // Use direct parameterized query with Pool
+      const { Pool } = await import('@neondatabase/serverless');
+      const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+      const result = await pool.query('SELECT * FROM users WHERE custom_domain = $1', [domain]);
+      
+      console.log(`Direct SQL query result for custom domain '${domain}':`, result.rows);
+      
+      if (result.rows.length > 0) {
+        // Convert snake_case to camelCase with proper type handling
+        const row = result.rows[0];
+        const user: User = {
+          id: Number(row.id),
+          username: String(row.username),
+          password: String(row.password),
+          email: String(row.email),
+          businessName: String(row.business_name),
+          businessSlug: String(row.business_slug),
+          customDomain: row.custom_domain ? String(row.custom_domain) : null,
+          phone: row.phone ? String(row.phone) : null,
+          createdAt: new Date(String(row.created_at))
+        };
+        return user;
+      }
+      
+      return undefined;
+    } catch (error) {
+      console.error(`Error finding business by custom domain ${domain}:`, error);
       return undefined;
     }
   }

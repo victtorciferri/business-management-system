@@ -66,21 +66,43 @@ export async function businessExtractor(req: Request, res: Response, next: NextF
       const host = req.headers.host.toLowerCase();
       console.log(`Checking host header: ${host}`);
       
-      // Skip localhost, IP addresses, and our main domain
+      // Check if this is a custom domain first
       if (!host.includes('localhost') && 
           !host.includes('127.0.0.1') && 
-          !host.includes('appointease.com') && 
           !host.match(/^\d+\.\d+\.\d+\.\d+/)) {
+          
+        // Try to look up the business by custom domain first
+        console.log(`Looking up business by custom domain: ${host}`);
+        // Remove port if present
+        const cleanedHost = host.split(':')[0];
+        const businessByDomain = await storage.getUserByCustomDomain(cleanedHost);
         
-        // Extract subdomain or domain
-        const domainParts = host.split('.');
-        
-        // For subdomains like businessname.example.com
-        // For custom domains like businessname.com
-        if (domainParts.length >= 1) {
-          // Use the first part as the slug (businessname)
-          businessSlug = domainParts[0];
-          console.log(`Using domain part as business slug: ${businessSlug}`);
+        if (businessByDomain) {
+          console.log(`Business found for custom domain ${cleanedHost}: ${businessByDomain.businessName}`);
+          // Remove sensitive information before attaching to request
+          const { password, ...sanitizedBusiness } = businessByDomain;
+          req.business = sanitizedBusiness;
+          // No need to look up by slug anymore
+          businessSlug = undefined;
+          next();
+          return;
+        } else {
+          console.log(`No business found for custom domain: ${cleanedHost}`);
+          
+          // Fallback to subdomain/slug logic if custom domain lookup fails
+          // Skip our main domain
+          if (!host.includes('appointease.com')) {
+            // Extract subdomain or domain
+            const domainParts = host.split('.');
+            
+            // For subdomains like businessname.example.com
+            // For custom domains like businessname.com
+            if (domainParts.length >= 1) {
+              // Use the first part as the slug (businessname)
+              businessSlug = domainParts[0];
+              console.log(`Using domain part as business slug: ${businessSlug}`);
+            }
+          }
         }
       } else {
         console.log(`Skipping host as business source (local/main domain): ${host}`);
