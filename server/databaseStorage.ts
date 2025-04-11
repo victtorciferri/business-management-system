@@ -28,8 +28,45 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByBusinessSlug(slug: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.businessSlug, slug));
-    return user || undefined;
+    try {
+      console.log(`Looking up business with slug: ${slug}`);
+      
+      // Use regular Drizzle query syntax
+      const result = await db.select().from(users).where(eq(users.businessSlug, slug));
+      console.log(`Business lookup result for slug '${slug}':`, result);
+      
+      // If we found a user
+      if (result && result.length > 0) {
+        return result[0];
+      }
+      
+      // Try using raw SQL as a fallback due to potential snake_case/camelCase mismatch
+      const { rows } = await db.execute(`
+        SELECT * FROM users WHERE business_slug = '${slug}'
+      `);
+      
+      console.log(`Fallback SQL query result for '${slug}':`, rows);
+      
+      if (rows && rows.length > 0) {
+        // Convert snake_case to camelCase
+        const user: User = {
+          id: rows[0].id,
+          username: rows[0].username,
+          password: rows[0].password,
+          email: rows[0].email,
+          businessName: rows[0].business_name,
+          businessSlug: rows[0].business_slug,
+          phone: rows[0].phone,
+          createdAt: new Date(rows[0].created_at)
+        };
+        return user;
+      }
+      
+      return undefined;
+    } catch (error) {
+      console.error(`Error finding business by slug ${slug}:`, error);
+      return undefined;
+    }
   }
 
   async createUser(user: InsertUser): Promise<User> {

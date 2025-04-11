@@ -22,8 +22,12 @@ export async function businessExtractor(req: Request, res: Response, next: NextF
   try {
     let businessSlug: string | undefined;
     
+    // Log incoming request path for debugging
+    console.log(`Business extractor middleware processing path: ${req.path}`);
+    
     // Check if we have a path parameter slug
     if (req.params.slug) {
+      console.log(`Found slug parameter: ${req.params.slug}`);
       businessSlug = req.params.slug;
     }
     // Check if the URL path starts with a potential business slug
@@ -33,6 +37,7 @@ export async function businessExtractor(req: Request, res: Response, next: NextF
       const pathSegments = req.path.split('/').filter(Boolean);
       if (pathSegments.length > 0) {
         const potentialSlug = pathSegments[0];
+        console.log(`Extracted potential slug from path: ${potentialSlug}`);
         
         // Skip if it starts with "api", "assets", "src", or other known routes
         if (!potentialSlug.startsWith('api') && 
@@ -40,12 +45,16 @@ export async function businessExtractor(req: Request, res: Response, next: NextF
             !potentialSlug.startsWith('src') && 
             !potentialSlug.startsWith('components')) {
           businessSlug = potentialSlug;
+          console.log(`Using path segment as business slug: ${businessSlug}`);
+        } else {
+          console.log(`Skipping path segment as business slug (reserved word): ${potentialSlug}`);
         }
       }
     }
     // Check if we have a custom domain (excluding localhost and default domains)
     else if (req.headers.host) {
       const host = req.headers.host.toLowerCase();
+      console.log(`Checking host header: ${host}`);
       
       // Skip localhost, IP addresses, and our main domain
       if (!host.includes('localhost') && 
@@ -61,19 +70,28 @@ export async function businessExtractor(req: Request, res: Response, next: NextF
         if (domainParts.length >= 1) {
           // Use the first part as the slug (businessname)
           businessSlug = domainParts[0];
+          console.log(`Using domain part as business slug: ${businessSlug}`);
         }
+      } else {
+        console.log(`Skipping host as business source (local/main domain): ${host}`);
       }
     }
     
     // If we found a potential business slug, look it up in the database
     if (businessSlug) {
+      console.log(`Looking up business slug in middleware: ${businessSlug}`);
       const business = await storage.getUserByBusinessSlug(businessSlug);
       
       if (business) {
+        console.log(`Business found for slug ${businessSlug}: ${business.businessName}`);
         // Remove sensitive information before attaching to request
         const { password, ...sanitizedBusiness } = business;
         req.business = sanitizedBusiness;
+      } else {
+        console.log(`No business found for slug: ${businessSlug}`);
       }
+    } else {
+      console.log('No business slug identified for this request');
     }
     
     // Continue to the next middleware/route handler

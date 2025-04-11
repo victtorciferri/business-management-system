@@ -1,6 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { db } from "./db";
 import { 
   insertUserSchema, 
   insertServiceSchema, 
@@ -42,6 +43,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ business: req.business });
     } else {
       res.status(404).json({ message: "No business context found" });
+    }
+  });
+  
+  // Test endpoint to check database connectivity
+  app.get("/api/db-test", async (req, res) => {
+    try {
+      // Try direct SQL query
+      const { Pool } = await import('@neondatabase/serverless');
+      const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+      const result = await pool.query('SELECT * FROM users WHERE business_slug = $1', ['salonelegante']);
+      
+      console.log('Direct database query result:', result.rows);
+      
+      if (result.rows.length > 0) {
+        res.json({ 
+          message: "Database connection successful", 
+          user: result.rows[0],
+          connectionString: process.env.DATABASE_URL ? "Database URL is set" : "No Database URL found"
+        });
+      } else {
+        res.json({ 
+          message: "No business found with slug 'salonelegante'",
+          connectionString: process.env.DATABASE_URL ? "Database URL is set" : "No Database URL found"
+        });
+      }
+    } catch (error) {
+      console.error('Database test error:', error);
+      res.status(500).json({ 
+        message: "Database test failed", 
+        error: error.message,
+        connectionString: process.env.DATABASE_URL ? "Database URL is set" : "No Database URL found"
+      });
     }
   });
   
@@ -158,23 +191,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/business/:slug", async (req: Request, res: Response) => {
     try {
       const { slug } = req.params;
-      const business = await storage.getUserByBusinessSlug(slug);
+      console.log(`API request for business with slug: ${slug}`);
       
-      if (!business) {
+      // Use the verified working approach from our test endpoint
+      const { Pool } = await import('@neondatabase/serverless');
+      const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+      const result = await pool.query('SELECT * FROM users WHERE business_slug = $1', [slug]);
+      
+      console.log(`Raw SQL business data for '${slug}':`, result.rows);
+      
+      if (!result.rows || result.rows.length === 0) {
+        console.log(`Business with slug ${slug} not found in database`);
         return res.status(404).json({ message: "Business not found" });
       }
       
-      // Get services for this business
-      const services = await storage.getServicesByUserId(business.id);
+      // Convert snake_case to camelCase
+      const business = {
+        id: result.rows[0].id,
+        username: result.rows[0].username,
+        password: result.rows[0].password,
+        email: result.rows[0].email,
+        businessName: result.rows[0].business_name,
+        businessSlug: result.rows[0].business_slug,
+        phone: result.rows[0].phone,
+        createdAt: new Date(result.rows[0].created_at)
+      };
+      
+      console.log(`Mapped business object:`, business);
+      
+      // Get services for this business using parameterized query
+      const servicesResult = await pool.query(
+        'SELECT * FROM services WHERE user_id = $1 AND active = true',
+        [business.id]
+      );
+      
+      console.log(`Raw SQL services for business:`, servicesResult.rows);
+      
+      // Map service rows to camelCase properties
+      const services = servicesResult.rows.map(row => ({
+        id: row.id,
+        userId: row.user_id,
+        name: row.name,
+        description: row.description,
+        duration: row.duration,
+        price: row.price,
+        color: row.color,
+        active: row.active
+      }));
       
       // Return business data excluding sensitive information
-      const { password, ...businessData } = business;
+      const { password: _, ...businessData } = business;
       
-      res.json({
+      // Return JSON response
+      const response = {
         business: businessData,
-        services: services.filter(service => service.active)
-      });
+        services: services
+      };
+      
+      console.log(`Returning business response: ${JSON.stringify(response, null, 2)}`);
+      res.json(response);
     } catch (error) {
+      console.error(`Error fetching business data: ${error}`);
       res.status(500).json({ message: "Failed to fetch business data" });
     }
   });
