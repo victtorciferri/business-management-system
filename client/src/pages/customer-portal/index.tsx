@@ -38,8 +38,8 @@ export default function CustomerPortal() {
                 className="w-full text-lg py-6" 
                 size="lg"
                 onClick={() => navigate(businessId 
-                  ? `/customer-portal/zero-friction?businessId=${businessId}` 
-                  : "/customer-portal/zero-friction")}
+                  ? `/customer-portal/my-appointments?businessId=${businessId}` 
+                  : "/customer-portal/my-appointments")}
               >
                 Find My Appointment
               </Button>
