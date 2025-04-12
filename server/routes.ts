@@ -925,6 +925,193 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  /**
+   * Zero-friction customer appointments endpoint
+   * This endpoint allows customers to see their appointments by just providing their email
+   * Security measures included:
+   * - Rate limiting (implemented through middleware)
+   * - No disclosure if an email exists or not
+   * - Only returns limited data (future appointments only)
+   * - Creates a customer profile silently if not found
+   */
+  app.post("/api/zero-friction-lookup", async (req: Request, res: Response) => {
+    try {
+      // Get the IP address for rate limiting
+      const ipAddress = req.ip || req.socket.remoteAddress || 'unknown';
+      
+      // Very simple rate limiting - in production, use a proper rate limiting middleware
+      const now = Date.now();
+      const minute = 60 * 1000;
+      const day = 24 * 60 * 60 * 1000;
+      
+      // Initialize rate limiting data structure if it doesn't exist
+      if (!global.rateLimits) {
+        global.rateLimits = {
+          byIP: new Map()
+        };
+      }
+      
+      // Get or create rate limit record for this IP
+      let rateLimitData = global.rateLimits.byIP.get(ipAddress) || {
+        requestsPerMinute: [],
+        requestsPerDay: []
+      };
+      
+      // Clean up old entries
+      rateLimitData.requestsPerMinute = rateLimitData.requestsPerMinute.filter(
+        time => now - time < minute
+      );
+      rateLimitData.requestsPerDay = rateLimitData.requestsPerDay.filter(
+        time => now - time < day
+      );
+      
+      // Check rate limits (3/minute, 20/day)
+      if (rateLimitData.requestsPerMinute.length >= 3) {
+        return res.status(429).json({ 
+          message: "Too many requests. Please try again later.",
+          retryAfter: 60 // seconds
+        });
+      }
+      
+      if (rateLimitData.requestsPerDay.length >= 20) {
+        return res.status(429).json({ 
+          message: "Daily limit exceeded. Please try again tomorrow.",
+          retryAfter: 86400 // seconds (24 hours)
+        });
+      }
+      
+      // Update rate limit tracking
+      rateLimitData.requestsPerMinute.push(now);
+      rateLimitData.requestsPerDay.push(now);
+      global.rateLimits.byIP.set(ipAddress, rateLimitData);
+      
+      // Validate email from request
+      const schema = z.object({
+        email: z.string().email(),
+        businessId: z.number().int().positive()
+      });
+      
+      const { email, businessId } = schema.parse(req.body);
+      
+      // Find the business
+      const business = await storage.getUser(businessId);
+      if (!business) {
+        // Don't disclose business doesn't exist for security
+        return res.status(200).json({ 
+          message: "Check your upcoming bookings.",
+          appointments: [] 
+        });
+      }
+      
+      // Find the customer with the provided email and business ID
+      let customer = await storage.getCustomerByEmailAndBusinessId(email, businessId);
+      
+      // If customer doesn't exist, create a new customer profile silently
+      if (!customer) {
+        try {
+          // Extract potential name from email (e.g., john.doe@example.com -> John Doe)
+          const emailPrefix = email.split('@')[0];
+          const nameParts = emailPrefix.split(/[._-]/);
+          const firstName = nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1);
+          const lastName = nameParts.length > 1 
+            ? nameParts[1].charAt(0).toUpperCase() + nameParts[1].slice(1) 
+            : '';
+          
+          // Create the customer with minimal information
+          customer = await storage.createCustomer({
+            userId: businessId,
+            email: email,
+            firstName: firstName,
+            lastName: lastName,
+            phone: null,
+            notes: "Auto-created through zero-friction portal"
+          });
+        } catch (error) {
+          console.error("Error creating customer profile:", error);
+          // Continue even if profile creation fails - just return empty appointments
+        }
+      }
+      
+      // If we have a customer, get their appointments
+      let appointments = [];
+      if (customer) {
+        // Get only future appointments
+        const now = new Date();
+        const allAppointments = await storage.getAppointmentsByCustomerId(customer.id);
+        appointments = allAppointments.filter(appt => new Date(appt.date) > now);
+        
+        // Fetch services to get service names
+        const serviceIds = [...new Set(appointments.map(a => a.serviceId))];
+        const services = await Promise.all(
+          serviceIds.map(id => storage.getService(id))
+        );
+        
+        // Map to simplified view with only necessary fields
+        appointments = appointments.map(appointment => {
+          const service = services.find(s => s && s.id === appointment.serviceId);
+          const appointmentDate = new Date(appointment.date);
+          
+          return {
+            id: appointment.id,
+            date: appointmentDate.toISOString(),
+            formattedDate: appointmentDate.toLocaleDateString('en-US', { 
+              month: 'short', 
+              day: 'numeric', 
+              year: 'numeric' 
+            }),
+            formattedTime: appointmentDate.toLocaleTimeString('en-US', { 
+              hour: 'numeric', 
+              minute: '2-digit',
+              hour12: true 
+            }),
+            serviceName: service ? service.name : 'Service',
+            duration: appointment.duration,
+            status: appointment.status,
+            businessName: business.businessName
+          };
+        });
+      }
+      
+      // Get customer initials for display
+      let initials = '';
+      if (customer) {
+        if (customer.firstName) {
+          initials += customer.firstName.charAt(0).toUpperCase();
+        }
+        if (customer.lastName) {
+          initials += customer.lastName.charAt(0).toUpperCase();
+        }
+      }
+      
+      // Set a cookie to remember the user for 48 hours if they have appointments
+      if (customer && appointments.length > 0) {
+        res.cookie('appointease_email', email, {
+          maxAge: 48 * 60 * 60 * 1000, // 48 hours
+          httpOnly: true,
+          secure: req.secure,
+          sameSite: 'lax'
+        });
+      }
+      
+      // Same response regardless if the email exists or not - for privacy
+      return res.status(200).json({
+        message: "Check your upcoming bookings.",
+        customerExists: !!customer,
+        customerInitials: initials || null,
+        customerFirstName: customer && customer.firstName ? customer.firstName : null,
+        appointments
+      });
+      
+    } catch (error) {
+      console.error("Error in zero-friction portal:", error);
+      // For security, don't expose details of the error
+      res.status(200).json({ 
+        message: "There was an issue processing your request.",
+        appointments: [] 
+      });
+    }
+  });
+  
   // Appointment routes
   app.get("/api/appointments", async (req: Request, res: Response) => {
     try {

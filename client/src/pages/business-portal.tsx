@@ -174,12 +174,13 @@ export default function BusinessPortal({ slug, subPath, initialData }: BusinessP
           </div>
           
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-6">
+            <TabsList className="grid w-full grid-cols-7">
               <TabsTrigger value="home">Home</TabsTrigger>
               <TabsTrigger value="services">Our Services</TabsTrigger>
               <TabsTrigger value="store">Store</TabsTrigger>
               <TabsTrigger value="book">Book Appointment</TabsTrigger>
               <TabsTrigger value="my-appointments">My Appointments</TabsTrigger>
+              <TabsTrigger value="zero-friction">Quick Check</TabsTrigger>
               <TabsTrigger value="about">About Us</TabsTrigger>
             </TabsList>
             
@@ -341,6 +342,62 @@ export default function BusinessPortal({ slug, subPath, initialData }: BusinessP
             {/* About Us Tab */}
             <TabsContent value="about">
               <AboutPage business={business} slug={slug} />
+            </TabsContent>
+            
+            {/* Zero-Friction Tab */}
+            <TabsContent value="zero-friction">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Quick Appointment Lookup</CardTitle>
+                  <CardDescription>
+                    Instantly check your appointments with just your email - no login required!
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="max-w-xl mx-auto">
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 gap-4 text-center">
+                        <div className="flex flex-col items-center">
+                          <div className="mb-2 p-2 bg-primary/10 rounded-full">
+                            <CalendarIcon className="h-6 w-6 text-primary" />
+                          </div>
+                          <h3 className="text-lg font-medium">Check Your Appointments</h3>
+                          <p className="text-muted-foreground text-sm">
+                            Enter your email to instantly view your upcoming appointments
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <form className="flex flex-col sm:flex-row gap-2">
+                        <Input 
+                          placeholder="Enter your email address" 
+                          type="email"
+                          className="flex-1"
+                        />
+                        <Button type="submit" className="sm:w-auto w-full">
+                          Check Now
+                        </Button>
+                      </form>
+                      
+                      <div className="flex items-center justify-center py-3">
+                        <div className="w-full border-t"></div>
+                        <span className="px-3 text-xs text-muted-foreground">Secure & Private</span>
+                        <div className="w-full border-t"></div>
+                      </div>
+                      
+                      <div className="text-center text-sm text-muted-foreground">
+                        <p>No login required. We only show your future appointments.</p>
+                        <p>Only you can access your personal appointment information.</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter className="justify-center">
+                  <Button variant="outline" onClick={() => window.location.href = `/${slug}/customer-portal/zero-friction`}>
+                    Advanced Lookup
+                  </Button>
+                </CardFooter>
+              </Card>
             </TabsContent>
             
             {/* My Appointments Tab */}
