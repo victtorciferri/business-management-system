@@ -21,7 +21,7 @@ export function Toaster() {
               {title && <ToastTitle>{title}</ToastTitle>}
               {description && (
                 <ToastDescription
-                  className={isError ? "user-select-text whitespace-pre-wrap font-mono text-xs" : ""}
+                  className={isError ? "select-text whitespace-pre-wrap font-mono text-xs" : ""}
                 >
                   {description}
                 </ToastDescription>
