@@ -13,7 +13,8 @@ export const users = pgTable("users", {
   businessSlug: text("business_slug").unique(),
   customDomain: text("custom_domain").unique(),
   phone: text("phone"),
-  role: text("role").notNull().default("business"), // "business", "admin", "customer"
+  role: text("role").notNull().default("business"), // "business", "admin", "staff", "customer"
+  businessId: integer("business_id").references(() => users.id), // For staff accounts to link to the business
   subscription: text("subscription").default("free"), // "free", "basic", "premium", etc.
   subscriptionStatus: text("subscription_status").default("active"), // "active", "trial", "canceled", "expired"
   subscriptionExpiresAt: timestamp("subscription_expires_at"),
@@ -120,6 +121,7 @@ export const appointments = pgTable("appointments", {
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   customerId: integer("customer_id").notNull().references(() => customers.id, { onDelete: 'cascade' }),
   serviceId: integer("service_id").notNull().references(() => services.id, { onDelete: 'cascade' }),
+  staffId: integer("staff_id").references(() => users.id), // Staff member assigned to this appointment
   date: timestamp("date").notNull(),
   duration: integer("duration").notNull(), // in minutes
   status: text("status").notNull().default("scheduled"), // scheduled, completed, cancelled
@@ -141,6 +143,7 @@ export const insertAppointmentSchema = createInsertSchema(appointments).pick({
   userId: true,
   customerId: true,
   serviceId: true,
+  staffId: true,
   date: true,
   duration: true,
   status: true,
@@ -312,12 +315,38 @@ export const insertCartItemSchema = createInsertSchema(cartItems).pick({
   price: true,
 });
 
+// Staff Availability schema
+export const staffAvailability = pgTable("staff_availability", {
+  id: serial("id").primaryKey(),
+  staffId: integer("staff_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  dayOfWeek: integer("day_of_week").notNull(), // 0 = Sunday, 1 = Monday, etc.
+  startTime: text("start_time").notNull(), // Format: "HH:MM" in 24-hour format
+  endTime: text("end_time").notNull(), // Format: "HH:MM" in 24-hour format
+  isAvailable: boolean("is_available").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    staffIdIdx: index("staff_availability_staff_id_idx").on(table.staffId),
+    dayOfWeekIdx: index("staff_availability_day_of_week_idx").on(table.dayOfWeek),
+  };
+});
+
+export const insertStaffAvailabilitySchema = createInsertSchema(staffAvailability).pick({
+  staffId: true,
+  dayOfWeek: true,
+  startTime: true,
+  endTime: true,
+  isAvailable: true,
+});
+
 // Define relationships between tables for Drizzle ORM
 export const usersRelations = relations(users, ({ many }) => ({
   services: many(services),
   customers: many(customers),
   appointments: many(appointments),
   products: many(products),
+  availability: many(staffAvailability),
 }));
 
 export const servicesRelations = relations(services, ({ one, many }) => ({
@@ -348,6 +377,10 @@ export const appointmentsRelations = relations(appointments, ({ one, many }) => 
   service: one(services, {
     fields: [appointments.serviceId],
     references: [services.id],
+  }),
+  staff: one(users, {
+    fields: [appointments.staffId],
+    references: [users.id],
   }),
   payments: many(payments),
 }));
@@ -403,6 +436,13 @@ export const cartItemsRelations = relations(cartItems, ({ one }) => ({
   }),
 }));
 
+export const staffAvailabilityRelations = relations(staffAvailability, ({ one }) => ({
+  staff: one(users, {
+    fields: [staffAvailability.staffId],
+    references: [users.id],
+  }),
+}));
+
 // Types for export
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -430,3 +470,6 @@ export type InsertCart = z.infer<typeof insertCartSchema>;
 
 export type CartItem = typeof cartItems.$inferSelect;
 export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
+
+export type StaffAvailability = typeof staffAvailability.$inferSelect;
+export type InsertStaffAvailability = z.infer<typeof insertStaffAvailabilitySchema>;
