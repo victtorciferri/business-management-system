@@ -159,7 +159,7 @@ export default function ErrorTestingPage() {
             <CardDescription>Test a real API error from backend</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={testApiError} disabled={isLoading}>
+            <Button onClick={testApiError} disabled={isLoading} className="w-full">
               {isLoading ? "Loading..." : "Trigger API Error"}
             </Button>
           </CardContent>
@@ -171,9 +171,89 @@ export default function ErrorTestingPage() {
             <CardDescription>Test displaying a complex error object</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={testObjectError}>Show Object Error</Button>
+            <Button onClick={testObjectError} className="w-full">Show Object Error</Button>
           </CardContent>
         </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Detailed Error</CardTitle>
+            <CardDescription>Test detailed error with stack trace</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={testDetailedError} disabled={isLoading} className="w-full">
+              {isLoading ? "Loading..." : "Show Detailed Error"}
+            </Button>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>HTTP 400 Error</CardTitle>
+            <CardDescription>Test Bad Request error</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button 
+              onClick={() => testStatusCodeError(400)} 
+              disabled={isLoading}
+              className="w-full"
+            >
+              {isLoading ? "Loading..." : "Show 400 Error"}
+            </Button>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>HTTP 404 Error</CardTitle>
+            <CardDescription>Test Not Found error</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button 
+              onClick={() => testStatusCodeError(404)} 
+              disabled={isLoading}
+              className="w-full"
+            >
+              {isLoading ? "Loading..." : "Show 404 Error"}
+            </Button>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>HTTP 500 Error</CardTitle>
+            <CardDescription>Test Server error</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button 
+              onClick={() => testStatusCodeError(500)} 
+              disabled={isLoading}
+              className="w-full"
+            >
+              {isLoading ? "Loading..." : "Show 500 Error"}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+      
+      <div className="mt-12">
+        <h2 className="text-2xl font-bold mb-4">Error Display Guidelines</h2>
+        <div className="p-6 border rounded-lg bg-card">
+          <ul className="space-y-2 list-disc pl-6">
+            <li>Error messages should be <span className="font-semibold">selectable</span> so users can copy error details</li>
+            <li>Detailed error information should be displayed in <span className="font-mono text-xs bg-muted p-1 rounded">monospace font</span> with proper formatting</li>
+            <li>Server-side error responses include:
+              <ul className="pl-6 mt-2 space-y-1 list-disc">
+                <li>Message - A clear description of what went wrong</li>
+                <li>Error type/name - The class of error that occurred</li>
+                <li>Stack trace - For detailed debugging (development only)</li>
+                <li>Request path and method - Where the error occurred</li>
+                <li>Timestamp - When the error occurred</li>
+              </ul>
+            </li>
+            <li>All error notifications automatically dismiss after 10 seconds</li>
+          </ul>
+        </div>
       </div>
     </div>
   )

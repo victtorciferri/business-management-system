@@ -47,7 +47,7 @@ function AppContent() {
     'api', 'auth', 'admin', 'checkout', 'preview', 'instructions',
     'products', 'services', 'dashboard', 'appointments', 'customers',
     'staff-management', 'staff-profile', 'staff', 'staff-schedule',
-    'zero-friction', 'new-appointment', 'customer-portal'
+    'zero-friction', 'new-appointment', 'customer-portal', 'error-testing'
   ];
   
   const potentialBusinessSlug = match && 
