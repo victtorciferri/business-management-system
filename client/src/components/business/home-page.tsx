@@ -51,7 +51,7 @@ export default function HomePage({ business, services, slug }: HomePageProps) {
             <Button 
               size="lg" 
               className="gap-2"
-              onClick={() => setLocation(`/${slug}/schedule`)}
+              onClick={() => window.location.href = `/customer-portal/new-appointment?businessId=${business.id}`}
             >
               <Calendar className="h-5 w-5" />
               Book Appointment
@@ -101,7 +101,7 @@ export default function HomePage({ business, services, slug }: HomePageProps) {
                 <Button 
                   variant="secondary"
                   className="w-full"
-                  onClick={() => setLocation(`/${slug}/schedule?service=${service.id}`)}
+                  onClick={() => window.location.href = `/customer-portal/new-appointment?businessId=${business.id}&serviceId=${service.id}`}
                 >
                   Book Now
                 </Button>
@@ -216,7 +216,7 @@ export default function HomePage({ business, services, slug }: HomePageProps) {
             size="lg" 
             variant="secondary"
             className="gap-2"
-            onClick={() => setLocation(`/${slug}/schedule`)}
+            onClick={() => window.location.href = `/customer-portal/new-appointment?businessId=${business.id}`}
           >
             <Calendar className="h-5 w-5" />
             Book Your Appointment

@@ -91,9 +91,6 @@ export default function BusinessPortal({ slug, subPath, initialData }: BusinessP
     // Set active tab based on subPath
     if (subPath) {
       switch (subPath) {
-        case "schedule":
-          setActiveTab("book");
-          break;
         case "about":
           setActiveTab("about");
           break;
@@ -409,118 +406,9 @@ export default function BusinessPortal({ slug, subPath, initialData }: BusinessP
         // When accessed with a subpath, render the appropriate content
         <>
           {subPath === "about" && <AboutPage business={business} slug={slug} />}
-          {subPath === "schedule" && (
-            <div className="container mx-auto py-10">
-              {/* Book appointment content (same as book tab) */}
-              <div className="grid gap-8 md:grid-cols-3">
-                <div className="space-y-6 md:col-span-2">
-                  <div className="grid gap-8 md:grid-cols-2">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Select Date</CardTitle>
-                        <CardDescription>Choose when you'd like to schedule your appointment</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <Calendar
-                          mode="single"
-                          selected={selectedDate}
-                          onSelect={setSelectedDate}
-                          disabled={(date) => date < new Date() || date > addDays(new Date(), 60)}
-                          className="rounded-md border mx-auto"
-                        />
-                      </CardContent>
-                    </Card>
-                    
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Your Information</CardTitle>
-                        <CardDescription>
-                          {selectedService 
-                            ? `Booking for ${selectedService.name} (${selectedService.duration} mins)` 
-                            : "Please select a service first"}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <form className="space-y-4">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <label htmlFor="firstName" className="text-sm font-medium">First Name</label>
-                              <Input 
-                                id="firstName" 
-                                name="firstName" 
-                                placeholder="John"  
-                                value={formData.firstName}
-                                onChange={handleInputChange}
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <label htmlFor="lastName" className="text-sm font-medium">Last Name</label>
-                              <Input 
-                                id="lastName" 
-                                name="lastName" 
-                                placeholder="Doe"  
-                                value={formData.lastName}
-                                onChange={handleInputChange}
-                              />
-                            </div>
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <label htmlFor="email" className="text-sm font-medium">Email</label>
-                            <Input 
-                              id="email" 
-                              name="email" 
-                              type="email" 
-                              placeholder="johndoe@example.com"  
-                              value={formData.email}
-                              onChange={handleInputChange}
-                            />
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <label htmlFor="phone" className="text-sm font-medium">Phone Number</label>
-                            <Input 
-                              id="phone" 
-                              name="phone" 
-                              placeholder="+56 9 XXXX XXXX"  
-                              value={formData.phone}
-                              onChange={handleInputChange}
-                            />
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <label htmlFor="notes" className="text-sm font-medium">Special Requests or Notes</label>
-                            <Textarea 
-                              id="notes" 
-                              name="notes" 
-                              placeholder="Any special requests or information we should know" 
-                              value={formData.notes}
-                              onChange={handleInputChange}
-                            />
-                          </div>
-                        </form>
-                      </CardContent>
-                      <CardFooter>
-                        <Button 
-                          className="w-full" 
-                          disabled={!selectedDate || !selectedService}
-                        >
-                          Book Appointment
-                        </Button>
-                      </CardFooter>
-                    </Card>
-                  </div>
-                </div>
-                
-                {/* Availability hints column */}
-                <div>
-                  <AvailabilityHints />
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Removed old scheduling system */}
           {subPath === "store" && <StorePage business={business} services={services} slug={slug} />}
-          {!["about", "schedule", "store"].includes(subPath as string) && <HomePage business={business} services={services} slug={slug} />}
+          {!["about", "store"].includes(subPath as string) && <HomePage business={business} services={services} slug={slug} />}
         </>
       )}
     </BusinessLayout>
