@@ -45,7 +45,7 @@ function AppContent() {
     'api', 'auth', 'admin', 'checkout', 'preview', 'instructions',
     'products', 'services', 'dashboard', 'appointments', 'customers',
     'staff-management', 'staff-profile', 'staff', 'staff-schedule',
-    'zero-friction', 'new-appointment'
+    'zero-friction', 'new-appointment', 'customer-portal'
   ];
   
   const potentialBusinessSlug = match && 
@@ -103,7 +103,8 @@ function AppContent() {
   const isBusinessPortal = (!!businessData?.business || !!potentialBusinessSlug) && 
                           !location.startsWith('/auth') && 
                           !location.startsWith('/admin') &&
-                          !location.startsWith('/zero-friction');
+                          !location.startsWith('/zero-friction') &&
+                          !location.startsWith('/customer-portal');
   
   // Debug information to help troubleshoot
   console.log("App.tsx is rendering");
