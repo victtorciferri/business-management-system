@@ -42,7 +42,8 @@ function AppContent() {
   const reservedPaths = [
     'api', 'auth', 'admin', 'checkout', 'preview', 'instructions',
     'products', 'services', 'dashboard', 'appointments', 'customers',
-    'staff-management', 'staff-profile', 'staff', 'staff-schedule'
+    'staff-management', 'staff-profile', 'staff', 'staff-schedule',
+    'zero-friction'
   ];
   
   const potentialBusinessSlug = match && 
@@ -105,7 +106,8 @@ function AppContent() {
   // Determine if this is a business portal based on the data we have
   const isBusinessPortal = (!!businessData?.business || !!potentialBusinessSlug) && 
                           !location.startsWith('/auth') && 
-                          !location.startsWith('/admin');
+                          !location.startsWith('/admin') &&
+                          !location.startsWith('/zero-friction');
   
   // Debug information to help troubleshoot
   console.log("App.tsx is rendering");
