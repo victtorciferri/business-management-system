@@ -514,7 +514,7 @@ export default function StaffSchedule() {
               ) : (
                 <div className="p-6 text-center border rounded-lg bg-muted/10">
                   <p className="text-muted-foreground">
-                    No tiene citas programadas en este momento.
+                    You don't have any scheduled appointments at this time.
                   </p>
                 </div>
               )}
@@ -527,15 +527,15 @@ export default function StaffSchedule() {
       <Dialog open={showBreakDialog} onOpenChange={setShowBreakDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Agregar descanso</DialogTitle>
+            <DialogTitle>Add Break</DialogTitle>
             <DialogDescription>
-              Configure un período de descanso para este día.
+              Configure a break period for this day.
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="dayName">Día</Label>
+              <Label htmlFor="dayName">Day</Label>
               <Input 
                 id="dayName" 
                 value={scheduleState.find(day => day.dayId === selectedDayForBreak)?.dayName || ''} 
@@ -545,13 +545,13 @@ export default function StaffSchedule() {
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="breakStartTime">Hora de inicio</Label>
+                <Label htmlFor="breakStartTime">Start Time</Label>
                 <Select 
                   value={newBreak.startTime} 
                   onValueChange={(value) => setNewBreak({...newBreak, startTime: value})}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Inicio del descanso" />
+                    <SelectValue placeholder="Break start time" />
                   </SelectTrigger>
                   <SelectContent>
                     {timeSlots.map(time => (
@@ -564,13 +564,13 @@ export default function StaffSchedule() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="breakEndTime">Hora de fin</Label>
+                <Label htmlFor="breakEndTime">End Time</Label>
                 <Select 
                   value={newBreak.endTime} 
                   onValueChange={(value) => setNewBreak({...newBreak, endTime: value})}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Fin del descanso" />
+                    <SelectValue placeholder="Break end time" />
                   </SelectTrigger>
                   <SelectContent>
                     {timeSlots.map(time => (
@@ -586,10 +586,10 @@ export default function StaffSchedule() {
           
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowBreakDialog(false)}>
-              Cancelar
+              Cancel
             </Button>
             <Button onClick={handleSaveBreak}>
-              Guardar
+              Save
             </Button>
           </DialogFooter>
         </DialogContent>
