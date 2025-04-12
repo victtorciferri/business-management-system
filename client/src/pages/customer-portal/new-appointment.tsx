@@ -300,7 +300,7 @@ export default function NewAppointment() {
         staffId: parseInt(data.staffId),
         date: appointmentDate.toISOString(),
         duration: service.duration,
-        status: "scheduled",
+        status: "pending", // Changed to pending since it requires payment
         notes: data.notes || "",
         reminderSent: false,
         paymentStatus: "pending"
@@ -317,22 +317,28 @@ export default function NewAppointment() {
         });
         
         const tokenData = await tokenResponse.json();
+        // Store token locally but don't use useState as it won't be available immediately
+        const newToken = tokenData.token;
         
-        // Redirect to the appointment details page with the new token
+        // Redirect to payment page
         toast({
-          title: "Success!",
-          description: "Your appointment has been booked successfully. An email has been sent with your booking details."
+          title: "Almost done!",
+          description: "Please complete the payment to confirm your appointment."
         });
         
-        navigate(`/customer-portal/my-appointments?token=${tokenData.token}&businessId=${businessId}`);
+        // For development/testing, use the mock payment page
+        // In production with MercadoPago credentials, this would redirect to /checkout/:appointmentId
+        navigate(`/payment/mock?appointmentId=${appointment.id}&token=${tokenData.token}&businessId=${businessId}`);
       } else {
         // Use existing token for redirect
         toast({
-          title: "Success!",
-          description: "Your appointment has been booked successfully."
+          title: "Almost done!",
+          description: "Please complete the payment to confirm your appointment."
         });
         
-        navigate(`/customer-portal/my-appointments?token=${accessToken}&businessId=${businessId}`);
+        // For development/testing, use the mock payment page
+        // In production with MercadoPago credentials, this would redirect to /checkout/:appointmentId
+        navigate(`/payment/mock?appointmentId=${appointment.id}&token=${accessToken}&businessId=${businessId}`);
       }
       
       // Invalidate queries to refresh data
