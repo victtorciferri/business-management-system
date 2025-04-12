@@ -37,7 +37,8 @@ export default function Layout({ children, currentUser }: LayoutProps) {
   
   const staffNavItems = [
     { name: "Dashboard", path: "/" },
-    { name: "My Schedule", path: `/staff/${currentUser?.id}/profile` },
+    { name: "My Schedule", path: "/staff/schedule" },
+    { name: "My Profile", path: `/staff/${currentUser?.id}/profile` },
     { name: "Appointments", path: "/appointments" },
     { name: "Customers", path: "/customers" },
   ];

@@ -17,6 +17,7 @@ import AdminDashboard from "@/pages/admin-dashboard";
 import AuthPage from "@/pages/auth-page";
 import StaffManagement from "@/pages/staff-management";
 import StaffProfile from "@/pages/staff-profile";
+import StaffSchedule from "@/pages/staff-schedule";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useState, useEffect } from "react";
 import { User } from "@shared/schema";
@@ -40,7 +41,7 @@ function AppContent() {
   const reservedPaths = [
     'api', 'auth', 'admin', 'checkout', 'preview', 'instructions',
     'products', 'services', 'dashboard', 'appointments', 'customers',
-    'staff-management', 'staff-profile'
+    'staff-management', 'staff-profile', 'staff', 'staff-schedule'
   ];
   
   const potentialBusinessSlug = match && 
@@ -209,6 +210,11 @@ function AppContent() {
                 <StaffProfile staffId={params.id} />
               </ProtectedRoute>
             )}
+          </Route>
+          <Route path="/staff/schedule">
+            <ProtectedRoute>
+              <StaffSchedule />
+            </ProtectedRoute>
           </Route>
           <Route component={NotFound} />
         </Switch>
