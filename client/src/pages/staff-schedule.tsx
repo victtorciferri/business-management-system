@@ -50,6 +50,14 @@ export default function StaffSchedule() {
     isLoading: availabilityLoading 
   } = useQuery({
     queryKey: ['/api/staff', user?.id, 'availability'],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const res = await fetch(`/api/staff/${user.id}/availability`);
+      if (!res.ok) {
+        throw new Error('Failed to fetch availability');
+      }
+      return res.json();
+    },
     enabled: !!user?.id
   });
 
@@ -59,13 +67,33 @@ export default function StaffSchedule() {
     isLoading: appointmentsLoading 
   } = useQuery({
     queryKey: ['/api/staff', user?.id, 'appointments'],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const res = await fetch(`/api/staff/${user.id}/appointments`);
+      if (!res.ok) {
+        throw new Error('Failed to fetch appointments');
+      }
+      return res.json();
+    },
     enabled: !!user?.id
   });
 
   // Create availability mutation
   const createAvailabilityMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await apiRequest('POST', `/api/staff/${user?.id}/availability`, data);
+      const response = await fetch(`/api/staff/${user?.id}/availability`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to add availability');
+      }
+      
       return response.json();
     },
     onSuccess: () => {
@@ -73,6 +101,7 @@ export default function StaffSchedule() {
         title: "Horario agregado",
         description: "Su disponibilidad ha sido actualizada correctamente",
       });
+      // Force refetch the availability data
       queryClient.invalidateQueries({ queryKey: ['/api/staff', user?.id, 'availability'] });
       setShowAvailabilityDialog(false);
     },
@@ -88,7 +117,19 @@ export default function StaffSchedule() {
   // Update availability mutation
   const updateAvailabilityMutation = useMutation({
     mutationFn: async ({id, data}: {id: number, data: any}) => {
-      const response = await apiRequest('PUT', `/api/staff/availability/${id}`, data);
+      const response = await fetch(`/api/staff/availability/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update availability');
+      }
+      
       return response.json();
     },
     onSuccess: () => {
@@ -112,7 +153,18 @@ export default function StaffSchedule() {
   // Delete availability mutation
   const deleteAvailabilityMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await apiRequest('DELETE', `/api/staff/availability/${id}`);
+      const response = await fetch(`/api/staff/availability/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete availability');
+      }
+      
       return response.json();
     },
     onSuccess: () => {
