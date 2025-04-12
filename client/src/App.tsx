@@ -20,6 +20,7 @@ import StaffProfile from "@/pages/staff-profile";
 import StaffSchedule from "@/pages/staff-schedule";
 import ZeroFriction from "@/pages/customer-portal/zero-friction";
 import NewAppointment from "@/pages/customer-portal/new-appointment";
+import CustomerPortal from "@/pages/customer-portal/index";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useState, useEffect } from "react";
 import { User } from "@shared/schema";
@@ -50,15 +51,12 @@ function AppContent() {
   const potentialBusinessSlug = match && 
     !reservedPaths.includes(match[1]) ? match[1] : null;
   
-  // Handle customer portal routes
+  // Handle customer portal routes - retain as separate routes
   useEffect(() => {
-    if (location === '/customer-portal') {
-      setLocation('/salonelegante');
-    } else if (location.startsWith('/customer-portal/')) {
-      const subPath = location.replace('/customer-portal/', '');
-      setLocation(`/salonelegante/${subPath}`);
-    }
-  }, [location, setLocation]);
+    // Don't automatically redirect customer portal routes
+    // This allows us to have a dedicated customer portal distinct from business portals
+    console.log("Customer portal route detected:", location);
+  }, [location]);
   
   useEffect(() => {
     // First check if we have business data from window
@@ -165,6 +163,8 @@ function AppContent() {
           <Route path="/new-appointment">
             <Redirect to="/customer-portal/new-appointment" />
           </Route>
+          <Route path="/customer-portal" component={CustomerPortal} />
+          <Route path="/customer-portal/zero-friction" component={ZeroFriction} />
           <Route path="/customer-portal/new-appointment" component={NewAppointment} />
           <Route path="/appointments">
             <ProtectedRoute>

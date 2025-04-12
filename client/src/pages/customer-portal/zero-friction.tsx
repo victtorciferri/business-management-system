@@ -283,7 +283,7 @@ export default function ZeroFriction() {
               <div className="mt-6 flex justify-center">
                 <Button 
                   variant="outline" 
-                  onClick={() => navigate("/customer-portal/book")}
+                  onClick={() => navigate("/customer-portal/new-appointment")}
                 >
                   Book Another Appointment
                 </Button>
@@ -299,7 +299,7 @@ export default function ZeroFriction() {
             <p className="text-muted-foreground mb-4">
               You don't have any upcoming appointments scheduled with us.
             </p>
-            <Button onClick={() => navigate("/customer-portal/book")}>
+            <Button onClick={() => navigate("/customer-portal/new-appointment")}>
               Book Your First Appointment
             </Button>
           </div>
