@@ -44,7 +44,7 @@ const formSchema = z.object({
   userId: z.number(),
   customerId: z.string().min(1, { message: "Customer is required" }),
   serviceId: z.string().min(1, { message: "Service is required" }),
-  staffId: z.string().optional(),
+  staffId: z.string().default("none"),
   date: z.date({ required_error: "Date is required" }),
   time: z.string({ required_error: "Time is required" }),
   notes: z.string().optional(),

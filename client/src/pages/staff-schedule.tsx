@@ -484,9 +484,9 @@ export default function StaffSchedule() {
                   return (
                     <Card key={appointment.id}>
                       <CardHeader className="pb-2">
-                        <CardTitle>{appointment.serviceName}</CardTitle>
+                        <CardTitle>Appointment #{appointment.id}</CardTitle>
                         <CardDescription>
-                          Cliente: {appointment.customerName}
+                          Service ID: {appointment.serviceId} | Customer ID: {appointment.customerId}
                         </CardDescription>
                       </CardHeader>
                       <CardContent className="space-y-2">

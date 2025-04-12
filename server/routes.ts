@@ -1812,8 +1812,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Staff Management Routes
   app.get("/api/staff", async (req: Request, res: Response) => {
     try {
-      if (!req.isAuthenticated() || (req.user.role !== "business" && req.user.role !== "admin")) {
-        return res.status(403).json({ message: "Not authorized to view staff" });
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      // If user is a staff member, they can only see themselves
+      if (req.user.role === "staff") {
+        const staffMember = await storage.getUser(req.user.id);
+        if (staffMember) {
+          return res.json([staffMember]);
+        } else {
+          return res.status(404).json({ message: "Staff member not found" });
+        }
+      }
+      
+      // For business owners and admins, get all staff
+      if (req.user.role !== "business" && req.user.role !== "admin") {
+        return res.status(403).json({ message: "Not authorized to view all staff" });
       }
       
       const businessId = req.user.role === "business" ? req.user.id : undefined;
