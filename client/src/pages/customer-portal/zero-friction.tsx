@@ -42,6 +42,11 @@ export default function ZeroFriction() {
   const [email, setEmail] = useState("");
   const [customerData, setCustomerData] = useState<any>(null);
   
+  // Get businessId from URL params
+  const params = new URLSearchParams(window.location.search);
+  const businessId = params.get("businessId") ? parseInt(params.get("businessId")!) : 1;
+  const emailFromParams = params.get("email");
+  
   // Check for saved email in cookies
   useEffect(() => {
     const getCookie = (name: string) => {
@@ -75,8 +80,7 @@ export default function ZeroFriction() {
       setEmail(values.email);
       setHasSearched(true);
       
-      // Default to business ID 1 if no business context
-      const businessId = 1;
+      // Use the businessId from URL params, already defined above
       
       // Call the zero-friction API endpoint
       const response = await apiRequest("POST", "/api/zero-friction-lookup", {
@@ -158,7 +162,7 @@ export default function ZeroFriction() {
         <Button 
           variant="ghost" 
           size="icon" 
-          onClick={() => navigate("/")} 
+          onClick={() => navigate(businessId ? `/customer-portal?businessId=${businessId}` : "/customer-portal")} 
           className="mr-2"
         >
           <ArrowLeftIcon className="h-5 w-5" />
@@ -283,7 +287,9 @@ export default function ZeroFriction() {
               <div className="mt-6 flex justify-center">
                 <Button 
                   variant="outline" 
-                  onClick={() => navigate("/customer-portal/new-appointment")}
+                  onClick={() => navigate(businessId 
+                    ? `/customer-portal/new-appointment?businessId=${businessId}` 
+                    : "/customer-portal/new-appointment")}
                 >
                   Book Another Appointment
                 </Button>
@@ -299,7 +305,9 @@ export default function ZeroFriction() {
             <p className="text-muted-foreground mb-4">
               You don't have any upcoming appointments scheduled with us.
             </p>
-            <Button onClick={() => navigate("/customer-portal/new-appointment")}>
+            <Button onClick={() => navigate(businessId 
+              ? `/customer-portal/new-appointment?businessId=${businessId}` 
+              : "/customer-portal/new-appointment")}>
               Book Your First Appointment
             </Button>
           </div>

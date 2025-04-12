@@ -60,7 +60,9 @@ export default function CustomerPortal() {
               <Button 
                 className="w-full text-lg py-6" 
                 size="lg"
-                onClick={() => navigate("/customer-portal/new-appointment")}
+                onClick={() => navigate(businessId 
+                  ? `/customer-portal/new-appointment?businessId=${businessId}` 
+                  : "/customer-portal/new-appointment")}
               >
                 Book Now
               </Button>
@@ -84,11 +86,14 @@ export default function CustomerPortal() {
             <p className="mb-4 text-sm">
               Browse through our wide range of professional services tailored to meet your needs.
             </p>
-            <Button className="w-full" onClick={() => 
-              navigate(accessToken 
-                ? `/customer-portal/services?token=${accessToken}` 
-                : "/customer-portal/services")
-            }>
+            <Button className="w-full" onClick={() => {
+              let url = "/customer-portal/services";
+              const params = [];
+              if (accessToken) params.push(`token=${accessToken}`);
+              if (businessId) params.push(`businessId=${businessId}`);
+              if (params.length > 0) url += `?${params.join('&')}`;
+              navigate(url);
+            }}>
               View Services
             </Button>
           </CardContent>
@@ -108,11 +113,14 @@ export default function CustomerPortal() {
             <p className="mb-4 text-sm">
               Check the status of your upcoming appointments and view your appointment history.
             </p>
-            <Button className="w-full" onClick={() => 
-              navigate(accessToken 
-                ? `/customer-portal/my-appointments?token=${accessToken}` 
-                : "/customer-portal/my-appointments")
-            }>
+            <Button className="w-full" onClick={() => {
+              let url = "/customer-portal/my-appointments";
+              const params = [];
+              if (accessToken) params.push(`token=${accessToken}`);
+              if (businessId) params.push(`businessId=${businessId}`);
+              if (params.length > 0) url += `?${params.join('&')}`;
+              navigate(url);
+            }}>
               View Appointments
             </Button>
           </CardContent>
@@ -132,11 +140,14 @@ export default function CustomerPortal() {
             <p className="mb-4 text-sm">
               Discover our story, our team, and the high-quality services we provide to our clients.
             </p>
-            <Button variant="outline" className="w-full" onClick={() => 
-              navigate(accessToken 
-                ? `/customer-portal/about?token=${accessToken}` 
-                : "/customer-portal/about")
-            }>
+            <Button variant="outline" className="w-full" onClick={() => {
+              let url = "/customer-portal/about";
+              const params = [];
+              if (accessToken) params.push(`token=${accessToken}`);
+              if (businessId) params.push(`businessId=${businessId}`);
+              if (params.length > 0) url += `?${params.join('&')}`;
+              navigate(url);
+            }}>
               Read More
             </Button>
           </CardContent>
