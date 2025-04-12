@@ -1534,18 +1534,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      // Get the price from the product or variant
+      let price = product.price;
+      
+      if (variantId) {
+        const variant = await storage.getProductVariant(variantId);
+        if (variant && variant.additionalPrice) {
+          // The variant price is added to the base product price
+          // We need to parse them as floats to ensure proper addition
+          const basePrice = parseFloat(product.price);
+          const additionalPrice = parseFloat(variant.additionalPrice);
+          price = (basePrice + additionalPrice).toString();
+        }
+      }
+      
       // Create cart item
       const cartItem = await storage.addCartItem({
         cartId,
         productId,
         variantId,
         quantity,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        price
       });
       
-      // Update cart's updatedAt timestamp
-      await storage.updateCart(cartId, { updatedAt: new Date() });
+      // Update cart's status if needed
+      await storage.updateCart(cartId, { status: 'active' });
       
       return res.status(201).json(cartItem);
     } catch (error) {
@@ -1586,14 +1599,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "You do not have permission to update this cart item" });
       }
       
-      // Update the cart item
+      // Update the cart item with just the quantity
       const updatedCartItem = await storage.updateCartItem(itemId, {
-        quantity,
-        updatedAt: new Date()
+        quantity
       });
       
-      // Update cart's updatedAt timestamp
-      await storage.updateCart(cartItem.cartId, { updatedAt: new Date() });
+      // Update cart status if needed
+      await storage.updateCart(cartItem.cartId, { status: 'active' });
       
       return res.json(updatedCartItem);
     } catch (error) {
@@ -1632,8 +1644,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Remove the cart item
       await storage.removeCartItem(itemId);
       
-      // Update cart's updatedAt timestamp
-      await storage.updateCart(cartItem.cartId, { updatedAt: new Date() });
+      // Update cart status if needed
+      await storage.updateCart(cartItem.cartId, { status: 'active' });
       
       return res.status(204).end();
     } catch (error) {
@@ -1698,7 +1710,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           subscription: row.subscription,
           subscriptionStatus: row.subscription_status,
           platformFeePercentage: row.platform_fee_percentage,
-          createdAt: row.created_at ? new Date(row.created_at) : new Date(),
+          createdAt: typeof row.created_at === 'string' ? new Date(row.created_at) : new Date(),
           role: "business" // We're assuming all users are businesses for now
         };
         return business;
