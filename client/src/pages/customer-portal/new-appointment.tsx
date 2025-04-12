@@ -639,7 +639,7 @@ export default function NewAppointment() {
                                   key={s.id} 
                                   value={s.id.toString()}
                                 >
-                                  {s.firstName} {s.lastName}
+                                  {s.username || "Staff Member"} {s.id === 3 ? "(Staff)" : ""}
                                 </SelectItem>
                               ))}
                             </SelectContent>
