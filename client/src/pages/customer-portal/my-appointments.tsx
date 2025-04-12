@@ -401,7 +401,11 @@ export default function MyAppointments() {
               <p className="text-muted-foreground mb-4">
                 We couldn't find a customer with the email address <span className="font-medium">{email}</span>.
               </p>
-              <Button onClick={() => navigate("/customer-portal/book")}>
+              <Button onClick={() => navigate(
+                accessToken 
+                  ? `/customer-portal/book?token=${accessToken}` 
+                  : "/customer-portal/book"
+              )}>
                 Book Your First Appointment
               </Button>
             </div>
@@ -415,7 +419,11 @@ export default function MyAppointments() {
                 You don't have any appointments scheduled with us.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Button onClick={() => navigate("/customer-portal/book")}>
+                <Button onClick={() => navigate(
+                  accessToken 
+                    ? `/customer-portal/book?token=${accessToken}` 
+                    : "/customer-portal/book"
+                )}>
                   Book an Appointment
                 </Button>
                 <Button 
