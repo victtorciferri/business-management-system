@@ -158,7 +158,7 @@ export default function ZeroFriction() {
         <Button 
           variant="ghost" 
           size="icon" 
-          onClick={() => navigate("/customer-portal")} 
+          onClick={() => navigate("/")} 
           className="mr-2"
         >
           <ArrowLeftIcon className="h-5 w-5" />

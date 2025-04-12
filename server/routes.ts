@@ -2,6 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db } from "./db";
+import rateLimit from 'express-rate-limit';
 import { 
   insertUserSchema, 
   insertServiceSchema, 
@@ -934,7 +935,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
    * - Only returns limited data (future appointments only)
    * - Creates a customer profile silently if not found
    */
-  app.post("/api/zero-friction-lookup", async (req: Request, res: Response) => {
+  app.post("/api/zero-friction-lookup", rateLimit({
+    windowMs: 60 * 1000, // 1 minute window
+    max: 3, // 3 requests per window
+    standardHeaders: true, 
+    message: { message: 'Too many requests, please try again later.', retryAfter: 60 }
+  }), async (req: Request, res: Response) => {
     try {
       // Get the IP address for rate limiting
       const ipAddress = req.ip || req.socket.remoteAddress || 'unknown';

@@ -18,6 +18,7 @@ import AuthPage from "@/pages/auth-page";
 import StaffManagement from "@/pages/staff-management";
 import StaffProfile from "@/pages/staff-profile";
 import StaffSchedule from "@/pages/staff-schedule";
+import ZeroFriction from "@/pages/customer-portal/zero-friction";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useState, useEffect } from "react";
 import { User } from "@shared/schema";
@@ -47,10 +48,16 @@ function AppContent() {
   const potentialBusinessSlug = match && 
     !reservedPaths.includes(match[1]) ? match[1] : null;
   
-  // Redirect /customer-portal to the default business page
+  // Handle customer portal routes
   useEffect(() => {
-    if (location.startsWith('/customer-portal')) {
+    if (location === '/customer-portal') {
       setLocation('/salonelegante');
+    } else if (location === '/customer-portal/zero-friction') {
+      // Keep zero-friction route as is, it doesn't need redirection
+      return;
+    } else if (location.startsWith('/customer-portal/')) {
+      const subPath = location.replace('/customer-portal/', '');
+      setLocation(`/salonelegante/${subPath}`);
     }
   }, [location, setLocation]);
   
@@ -152,6 +159,7 @@ function AppContent() {
             </ProtectedRoute>
           </Route>
           <Route path="/auth" component={AuthPage} />
+          <Route path="/zero-friction" component={ZeroFriction} />
           <Route path="/appointments">
             <ProtectedRoute>
               <Appointments />

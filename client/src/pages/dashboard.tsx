@@ -32,6 +32,9 @@ export default function Dashboard() {
             <a href="/customer-portal" className="text-primary hover:underline font-medium" target="_blank">
               View Customer Portal →
             </a>
+            <a href="/zero-friction" className="text-primary hover:underline font-medium" target="_blank">
+              Quick Appointment Lookup →
+            </a>
             <a href="/preview/1" className="text-primary hover:underline font-medium" target="_blank">
               Preview Business Page →
             </a>
