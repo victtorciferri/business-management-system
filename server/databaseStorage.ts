@@ -10,8 +10,9 @@ import {
   Cart, InsertCart,
   CartItem, InsertCartItem,
   StaffAvailability, InsertStaffAvailability,
+  CustomerAccessToken, InsertCustomerAccessToken,
   users, services, customers, appointments, payments, products,
-  productVariants, carts, cartItems, staffAvailability
+  productVariants, carts, cartItems, staffAvailability, customerAccessTokens
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, desc } from "drizzle-orm";

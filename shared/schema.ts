@@ -478,3 +478,26 @@ export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
 
 export type StaffAvailability = typeof staffAvailability.$inferSelect;
 export type InsertStaffAvailability = z.infer<typeof insertStaffAvailabilitySchema>;
+
+// Customer access token schema
+export const customerAccessTokens = pgTable("customer_access_tokens", {
+  id: serial("id").primaryKey(),
+  customerId: integer("customer_id").notNull().references(() => customers.id, { onDelete: 'cascade' }),
+  token: text("token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    customerIdIdx: index("customer_tokens_customer_id_idx").on(table.customerId),
+    tokenIdx: index("customer_tokens_token_idx").on(table.token),
+  };
+});
+
+export const insertCustomerAccessTokenSchema = createInsertSchema(customerAccessTokens).pick({
+  customerId: true,
+  token: true,
+  expiresAt: true,
+});
+
+export type CustomerAccessToken = typeof customerAccessTokens.$inferSelect;
+export type InsertCustomerAccessToken = z.infer<typeof insertCustomerAccessTokenSchema>;

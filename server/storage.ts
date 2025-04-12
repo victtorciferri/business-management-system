@@ -8,7 +8,8 @@ import {
   ProductVariant, InsertProductVariant,
   Cart, InsertCart,
   CartItem, InsertCartItem,
-  StaffAvailability, InsertStaffAvailability
+  StaffAvailability, InsertStaffAvailability,
+  CustomerAccessToken, InsertCustomerAccessToken
 } from "@shared/schema";
 import { DatabaseStorage } from "./databaseStorage";
 
@@ -94,6 +95,13 @@ export interface IStorage {
   
   // Staff Appointments
   getStaffAppointments(staffId: number): Promise<Appointment[]>;
+  
+  // Customer Access Token methods
+  createCustomerAccessToken(token: InsertCustomerAccessToken): Promise<CustomerAccessToken>;
+  getCustomerAccessToken(token: string): Promise<CustomerAccessToken | undefined>;
+  getCustomerByAccessToken(token: string): Promise<Customer | undefined>;
+  deleteCustomerAccessToken(token: string): Promise<boolean>;
+  getCustomerByEmailAndBusinessId(email: string, businessId: number): Promise<Customer | undefined>;
 }
 
 // Create a database storage instance
