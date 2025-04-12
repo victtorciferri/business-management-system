@@ -174,6 +174,15 @@ export default function BookAppointment() {
       
       const appointment: Appointment = await appointmentResponse.json();
       
+      // Create a customer access token
+      const tokenResponse = await apiRequest("POST", "/api/customer-access-token", {
+        email: values.email,
+        businessId: 1, // Use business owner's ID
+        sendEmail: true // Send the access link via email
+      });
+      
+      const tokenData = await tokenResponse.json();
+      
       // Invalidate queries to refresh the data
       queryClient.invalidateQueries({
         queryKey: ['/api/appointments']
@@ -181,11 +190,11 @@ export default function BookAppointment() {
       
       toast({
         title: "Success!",
-        description: "Your appointment has been booked successfully."
+        description: "Your appointment has been booked successfully. Check your email for access to your customer portal."
       });
       
-      // Redirect to the appointment details or thank you page
-      navigate(`/customer-portal/my-appointments?email=${encodeURIComponent(values.email)}`);
+      // Redirect to the appointment details page with access token
+      navigate(`/customer-portal/my-appointments?token=${tokenData.token}`);
       
     } catch (error) {
       console.error("Error booking appointment:", error);

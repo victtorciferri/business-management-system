@@ -4,7 +4,9 @@ import { useLocation } from "wouter";
 import { CalendarIcon, ClipboardListIcon, ShoppingBagIcon } from "lucide-react";
 
 export default function CustomerPortal() {
-  const [_, navigate] = useLocation();
+  const [location, navigate] = useLocation();
+  const params = new URLSearchParams(window.location.search);
+  const accessToken = params.get("token");
   
   return (
     <div className="container mx-auto py-10">
@@ -34,7 +36,11 @@ export default function CustomerPortal() {
             <p className="mb-4 text-sm">
               Browse through our wide range of professional services tailored to meet your needs.
             </p>
-            <Button className="w-full" onClick={() => navigate("/customer-portal/services")}>
+            <Button className="w-full" onClick={() => 
+              navigate(accessToken 
+                ? `/customer-portal/services?token=${accessToken}` 
+                : "/customer-portal/services")
+            }>
               View Services
             </Button>
           </CardContent>
@@ -54,7 +60,11 @@ export default function CustomerPortal() {
             <p className="mb-4 text-sm">
               Easily book your next appointment with our convenient online scheduling system.
             </p>
-            <Button className="w-full" onClick={() => navigate("/customer-portal/book")}>
+            <Button className="w-full" onClick={() => 
+              navigate(accessToken 
+                ? `/customer-portal/book?token=${accessToken}` 
+                : "/customer-portal/book")
+            }>
               Book Now
             </Button>
           </CardContent>
