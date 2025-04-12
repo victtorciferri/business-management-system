@@ -401,82 +401,7 @@ export function AppointmentForm({
           )}
         />
         
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="date"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Date</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        {field.value ? (
-                          format(field.value, "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="time"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Time</FormLabel>
-                <FormControl>
-                  <TimePicker 
-                    value={field.value}
-                    onChange={field.onChange}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        
-        <FormField
-          control={form.control}
-          name="notes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Notes</FormLabel>
-              <FormControl>
-                <Textarea 
-                  placeholder="Add any special notes or requests"
-                  className="resize-none"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
+        {/* Staff selection field moved up in the order for better UX */}
         <FormField
           control={form.control}
           name="staffId"
@@ -501,6 +426,132 @@ export function AppointmentForm({
                   ))}
                 </SelectContent>
               </Select>
+              <FormMessage />
+              {selectedStaffId !== "none" && selectedStaffId && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Scheduling will be based on this staff member's availability
+                </p>
+              )}
+            </FormItem>
+          )}
+        />
+        
+        {selectedStaffId !== "none" && selectedStaffId && selectedStaffAvailableDays.length === 0 && staffAvailability.length > 0 && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>No availability</AlertTitle>
+            <AlertDescription>
+              This staff member has no available time slots in the next 30 days. Please select another staff member.
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <FormField
+            control={form.control}
+            name="date"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Date</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "pl-3 text-left font-normal",
+                          !field.value && "text-muted-foreground"
+                        )}
+                        disabled={selectedStaffId !== "none" && selectedStaffAvailableDays.length === 0}
+                      >
+                        {field.value ? (
+                          format(field.value, "PPP")
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      initialFocus
+                      disabled={(date) => {
+                        // If no staff is selected, allow all dates
+                        if (selectedStaffId === "none") return false;
+                        
+                        // If a staff is selected, only enable dates in their available days
+                        if (selectedStaffAvailableDays.length === 0) return true;
+                        
+                        // Check if the date is in the available days
+                        return !selectedStaffAvailableDays.some(
+                          (availableDay) => isSameDay(availableDay, date)
+                        );
+                      }}
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="time"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Time</FormLabel>
+                <FormControl>
+                  {selectedStaffId !== "none" && availableTimeSlots.length > 0 ? (
+                    <Select 
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      disabled={isStaffAvailabilityLoading}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={isStaffAvailabilityLoading ? "Loading..." : "Select a time"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableTimeSlots.map((time) => (
+                          <SelectItem key={time} value={time}>
+                            {time}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <TimePicker 
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                  )}
+                </FormControl>
+                {selectedStaffId !== "none" && availableTimeSlots.length === 0 && selectedDate && (
+                  <p className="text-xs text-destructive mt-1">No available time slots for this date</p>
+                )}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        
+        <FormField
+          control={form.control}
+          name="notes"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Notes</FormLabel>
+              <FormControl>
+                <Textarea 
+                  placeholder="Add any special notes or requests"
+                  className="resize-none"
+                  {...field}
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

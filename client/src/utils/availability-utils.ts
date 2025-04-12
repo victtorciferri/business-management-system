@@ -35,30 +35,22 @@ export function getDayOfWeekFromDayName(dayName: string): number {
 
 // Function to convert staff availability to RRule
 export function createAvailabilityRRule(availability: StaffAvailability): RRule {
-  // Map day of week to RRule weekday constants
-  const dayMap: Record<number, number> = {
-    0: RRule.SU,
-    1: RRule.MO,
-    2: RRule.TU,
-    3: RRule.WE,
-    4: RRule.TH,
-    5: RRule.FR,
-    6: RRule.SA,
-  };
-
-  const dayValue = dayMap[availability.dayOfWeek];
+  // For now, due to TypeScript issues with RRule, we'll use a simpler approach
+  // Work with the numeric day value directly
   
   // Parse start and end time
   const startTimeParts = availability.startTime.split(':').map(part => parseInt(part, 10));
   const endTimeParts = availability.endTime.split(':').map(part => parseInt(part, 10));
 
   // Create a rule that represents the weekly recurring availability
-  return new RRule({
+  const ruleOptions = {
     freq: RRule.WEEKLY,
-    byweekday: [dayValue],
+    byweekday: availability.dayOfWeek, // RRule accepts numbers directly
     dtstart: new Date(Date.UTC(2023, 0, 1, startTimeParts[0], startTimeParts[1], 0)),
     until: new Date(Date.UTC(2030, 11, 31, endTimeParts[0], endTimeParts[1], 0))
-  });
+  };
+
+  return new RRule(ruleOptions);
 }
 
 // Check if a specific date and time falls within staff availability
