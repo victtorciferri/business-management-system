@@ -44,6 +44,7 @@ const formSchema = z.object({
   userId: z.number(),
   customerId: z.string().min(1, { message: "Customer is required" }),
   serviceId: z.string().min(1, { message: "Service is required" }),
+  staffId: z.string().optional(),
   date: z.date({ required_error: "Date is required" }),
   time: z.string({ required_error: "Time is required" }),
   notes: z.string().optional(),
@@ -81,20 +82,26 @@ export function AppointmentForm({
       userId: userId,
       customerId: existingAppointment?.customerId.toString() || "",
       serviceId: existingAppointment?.serviceId.toString() || "",
+      staffId: existingAppointment?.staffId?.toString() || "",
       date: existingAppointment ? new Date(existingAppointment.date) : initialDate,
       time: getInitialTime(),
       notes: existingAppointment?.notes || "",
-      sendReminder: existingAppointment ? existingAppointment.reminderSent : true,
+      sendReminder: existingAppointment ? (existingAppointment.reminderSent || false) : true,
     },
   });
 
-  // Fetch customers and services
+  // Fetch customers, services, and staff members
   const { data: customers = [] } = useQuery<Customer[]>({
     queryKey: [`/api/customers?userId=${userId}`],
   });
 
   const { data: services = [] } = useQuery<Service[]>({
     queryKey: [`/api/services?userId=${userId}`],
+  });
+  
+  // Fetch staff members
+  const { data: staffMembers = [] } = useQuery<any[]>({
+    queryKey: [`/api/staff?userId=${userId}`],
   });
 
   // Handle form submission
@@ -112,6 +119,7 @@ export function AppointmentForm({
         userId: values.userId,
         customerId: parseInt(values.customerId),
         serviceId: parseInt(values.serviceId),
+        staffId: values.staffId ? parseInt(values.staffId) : null,
         date: appointmentDate.toISOString(),
         duration,
         status: "scheduled",
@@ -295,6 +303,35 @@ export function AppointmentForm({
                   {...field}
                 />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="staffId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Staff Member</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select staff (optional)" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="">No staff assigned</SelectItem>
+                  {staffMembers.map((staff) => (
+                    <SelectItem 
+                      key={staff.id} 
+                      value={staff.id.toString()}
+                    >
+                      {staff.username}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
