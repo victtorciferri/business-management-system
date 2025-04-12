@@ -1263,10 +1263,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Product Variants routes
   app.get("/api/products/:productId/variants", async (req: Request, res: Response) => {
     try {
+      if (!req.isAuthenticated || !req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
       const productId = parseInt(req.params.productId);
       
       if (isNaN(productId)) {
         return res.status(400).json({ message: "Invalid product ID" });
+      }
+      
+      // Get the product to verify ownership
+      const product = await storage.getProduct(productId);
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      
+      // Ensure user can only access variants of their own products
+      if (product.userId !== req.user.id) {
+        return res.status(403).json({ message: "Access denied" });
       }
       
       const variants = await storage.getProductVariantsByProductId(productId);

@@ -1,16 +1,27 @@
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { Product } from "@shared/schema";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, Tag, Package, DollarSign, Layers, ArrowLeft } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Product, ProductVariant } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  ArrowLeft, 
+  Layers, 
+  Plus, 
+  DollarSign, 
+  Tag, 
+  Clock, 
+  ShoppingBag, 
+  Edit, 
+  Trash2,
+  Loader2
+} from "lucide-react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import ProductForm from "./product-form";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import VariantManager from "./variant-manager";
+import { format } from "date-fns";
 
 interface ProductDetailProps {
   product: Product;
@@ -19,22 +30,62 @@ interface ProductDetailProps {
 }
 
 export default function ProductDetail({ product, onBack, onDelete }: ProductDetailProps) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [hasVariants, setHasVariants] = useState(product.hasVariants || false);
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState<string>("details");
+  const [isVariantsModalOpen, setIsVariantsModalOpen] = useState(false);
+  
+  // Fetch product variants
+  const { 
+    data: variants = [], 
+    isLoading: isLoadingVariants,
+    error: variantsError
+  } = useQuery({
+    queryKey: [`/api/products/${product.id}/variants`],
+    enabled: !!product.id
+  });
 
-  // Update product mutation
-  const updateProductMutation = useMutation({
-    mutationFn: async (data: Partial<Product>) => {
-      const response = await apiRequest("PUT", `/api/products/${product.id}`, data);
+  // Delete variant mutation
+  const deleteVariantMutation = useMutation({
+    mutationFn: async (variantId: number) => {
+      const response = await apiRequest("DELETE", `/api/product-variants/${variantId}`);
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to update product");
+        throw new Error("Failed to delete variant");
       }
-      return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/products/${product.id}/variants`] });
+      toast({
+        title: "Success",
+        description: "Variant deleted successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Toggle product's hasVariants flag
+  const toggleVariantsMutation = useMutation({
+    mutationFn: async (hasVariants: boolean) => {
+      const response = await apiRequest(
+        "PUT", 
+        `/api/products/${product.id}`, 
+        { hasVariants }
+      );
+      
+      if (!response.ok) {
+        throw new Error("Failed to update product");
+      }
+      
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/products`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/products/${product.id}`] });
       toast({
         title: "Success",
         description: "Product updated successfully",
@@ -49,133 +100,276 @@ export default function ProductDetail({ product, onBack, onDelete }: ProductDeta
     },
   });
 
-  const handleFormSuccess = () => {
-    setIsEditing(false);
-    queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+  // Handle variant deletion with confirmation
+  const handleDeleteVariant = (variant: ProductVariant) => {
+    if (window.confirm(`Are you sure you want to delete this variant?`)) {
+      deleteVariantMutation.mutate(variant.id);
+    }
   };
 
-  const handleToggleVariants = (newVariantStatus: boolean) => {
-    setHasVariants(newVariantStatus);
+  // Handle toggling product variants mode
+  const handleToggleVariantsMode = (hasVariants: boolean) => {
+    toggleVariantsMutation.mutate(hasVariants);
   };
+
+  // Format variant data for display
+  const formattedVariants = Array.isArray(variants) ? variants : [];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <Button variant="ghost" onClick={onBack} className="pl-1">
-          <ArrowLeft className="h-4 w-4 mr-2" /> Back to Products
-        </Button>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setIsEditing(true)}>
-            <Pencil className="h-4 w-4 mr-2" /> Edit
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={onBack}>
+            <ArrowLeft className="h-5 w-5" />
           </Button>
-          <Button variant="destructive" onClick={() => onDelete(product)}>
-            <Trash2 className="h-4 w-4 mr-2" /> Delete
+          <h1 className="text-2xl font-bold">{product.name}</h1>
+          {product.hasVariants && (
+            <Badge variant="outline" className="ml-2">
+              <Layers className="h-3.5 w-3.5 mr-1" />
+              Has Variants
+            </Badge>
+          )}
+        </div>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline"
+            onClick={() => setIsVariantsModalOpen(true)}
+          >
+            <Layers className="h-4 w-4 mr-2" />
+            Manage Variants
+          </Button>
+          <Button 
+            variant="destructive" 
+            onClick={() => onDelete(product)}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete Product
           </Button>
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-start">
-            <div>
-              <Badge variant="outline" className="mb-2">
-                {product.category || "General"}
-              </Badge>
-              <CardTitle className="text-2xl">{product.name}</CardTitle>
-              <CardDescription className="mt-2">
-                {product.description || "No description available"}
-              </CardDescription>
-            </div>
-            {product.imageUrl && (
-              <div className="w-20 h-20 rounded-md overflow-hidden">
-                <img 
-                  src={product.imageUrl} 
-                  alt={product.name} 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-            <div className="flex flex-col p-4 bg-muted/30 rounded-lg">
-              <span className="text-sm text-muted-foreground flex items-center">
-                <DollarSign className="h-4 w-4 mr-1" /> Price
-              </span>
-              <span className="text-xl font-medium mt-1">
-                ${Number(product.price).toFixed(2)}
-              </span>
-            </div>
-            <div className="flex flex-col p-4 bg-muted/30 rounded-lg">
-              <span className="text-sm text-muted-foreground flex items-center">
-                <Package className="h-4 w-4 mr-1" /> Stock
-              </span>
-              <span className="text-xl font-medium mt-1">
-                {product.hasVariants ? "See variants" : product.stock || 0}
-              </span>
-            </div>
-            <div className="flex flex-col p-4 bg-muted/30 rounded-lg">
-              <span className="text-sm text-muted-foreground flex items-center">
-                <Layers className="h-4 w-4 mr-1" /> Variants
-              </span>
-              <span className="text-xl font-medium mt-1">
-                {product.hasVariants ? "Enabled" : "Disabled"}
-              </span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Tabs defaultValue="variants" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="variants">Variants</TabsTrigger>
-          <TabsTrigger value="details">Additional Details</TabsTrigger>
+          <TabsTrigger value="details">Product Details</TabsTrigger>
+          <TabsTrigger value="variants">
+            Variants
+            {formattedVariants.length > 0 && (
+              <Badge variant="secondary" className="ml-2">
+                {formattedVariants.length}
+              </Badge>
+            )}
+          </TabsTrigger>
         </TabsList>
-        <TabsContent value="variants" className="pt-4">
-          <VariantManager 
-            product={product} 
-            onToggleVariants={handleToggleVariants}
-          />
+        
+        <TabsContent value="details" className="space-y-4 pt-4">
+          <div className="grid md:grid-cols-3 gap-6">
+            <Card className="md:col-span-2">
+              <CardHeader>
+                <CardTitle>Basic Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <h3 className="font-medium mb-1">Description</h3>
+                  <p className="text-muted-foreground">
+                    {product.description || "No description provided"}
+                  </p>
+                </div>
+                
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <h3 className="font-medium text-sm mb-1 flex items-center">
+                      <DollarSign className="h-4 w-4 mr-1 text-muted-foreground" />
+                      Price
+                    </h3>
+                    <p className="text-lg font-semibold">
+                      ${typeof product.price === 'number' 
+                        ? product.price.toFixed(2) 
+                        : parseFloat(String(product.price || 0)).toFixed(2)}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <h3 className="font-medium text-sm mb-1 flex items-center">
+                      <Tag className="h-4 w-4 mr-1 text-muted-foreground" />
+                      Category
+                    </h3>
+                    <p>{product.category || "Uncategorized"}</p>
+                  </div>
+                  
+                  <div>
+                    <h3 className="font-medium text-sm mb-1 flex items-center">
+                      <ShoppingBag className="h-4 w-4 mr-1 text-muted-foreground" />
+                      Stock
+                    </h3>
+                    <p>{product.stock || 0} units</p>
+                  </div>
+                  
+                  <div>
+                    <h3 className="font-medium text-sm mb-1 flex items-center">
+                      <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
+                      Created
+                    </h3>
+                    <p>{product.createdAt ? format(new Date(product.createdAt), 'MMM d, yyyy') : 'N/A'}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Product Image</CardTitle>
+              </CardHeader>
+              <CardContent className="flex items-center justify-center">
+                {product.imageUrl ? (
+                  <img 
+                    src={product.imageUrl} 
+                    alt={product.name} 
+                    className="rounded-md max-h-52 object-contain"
+                  />
+                ) : (
+                  <div className="bg-muted rounded-md h-52 w-full flex items-center justify-center">
+                    <p className="text-muted-foreground">No image</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
-        <TabsContent value="details" className="pt-4">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground mb-1">ID</h3>
-                  <p>{product.id}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground mb-1">Created At</h3>
-                  <p>{new Date(product.createdAt).toLocaleString()}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground mb-1">Updated At</h3>
-                  <p>{new Date(product.updatedAt).toLocaleString()}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground mb-1">Status</h3>
-                  <Badge variant={product.isActive ? "default" : "secondary"}>
-                    {product.isActive ? "Active" : "Inactive"}
-                  </Badge>
-                </div>
+        
+        <TabsContent value="variants" className="pt-4">
+          {isLoadingVariants ? (
+            <div className="flex justify-center p-8">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : variantsError ? (
+            <div className="text-center p-8 text-destructive">
+              <p>Failed to load variants</p>
+            </div>
+          ) : formattedVariants.length === 0 ? (
+            <div className="text-center p-8 border rounded-lg">
+              <Layers className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium mb-2">No Variants Available</h3>
+              <p className="text-muted-foreground mb-4">
+                {product.hasVariants 
+                  ? "This product is set up for variants, but none have been created yet."
+                  : "This product does not have variants enabled."}
+              </p>
+              <Button 
+                onClick={() => setIsVariantsModalOpen(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                {product.hasVariants ? "Add Variants" : "Enable Variants"}
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-medium">Product Variants</h3>
+                <Button 
+                  variant="outline"
+                  onClick={() => setIsVariantsModalOpen(true)}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Variant
+                </Button>
               </div>
-            </CardContent>
-          </Card>
+              
+              <div className="overflow-x-auto border rounded-lg">
+                <table className="w-full min-w-full divide-y divide-border">
+                  <thead className="bg-muted/50">
+                    <tr>
+                      <th className="py-3 px-4 text-left text-sm font-medium">Variant</th>
+                      <th className="py-3 px-4 text-left text-sm font-medium">SKU</th>
+                      <th className="py-3 px-4 text-left text-sm font-medium">Size</th>
+                      <th className="py-3 px-4 text-left text-sm font-medium">Color</th>
+                      <th className="py-3 px-4 text-left text-sm font-medium">Price Adjustment</th>
+                      <th className="py-3 px-4 text-left text-sm font-medium">Stock</th>
+                      <th className="py-3 px-4 text-right text-sm font-medium">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-card divide-y divide-border">
+                    {formattedVariants.map((variant: ProductVariant) => (
+                      <tr key={variant.id}>
+                        <td className="py-3 px-4">
+                          {variant.imageUrl && (
+                            <div className="flex items-center gap-2">
+                              <div className="h-10 w-10 rounded overflow-hidden">
+                                <img 
+                                  src={variant.imageUrl} 
+                                  alt={`Variant ${variant.id}`} 
+                                  className="h-full w-full object-cover"
+                                />
+                              </div>
+                              <span>Variant {variant.id}</span>
+                            </div>
+                          )}
+                          {!variant.imageUrl && (
+                            <span>Variant {variant.id}</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4">{variant.sku || '-'}</td>
+                        <td className="py-3 px-4">{variant.size || '-'}</td>
+                        <td className="py-3 px-4">
+                          {variant.color && (
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className="h-4 w-4 rounded-full border" 
+                                style={{ backgroundColor: variant.color }}
+                              />
+                              {variant.color}
+                            </div>
+                          )}
+                          {!variant.color && '-'}
+                        </td>
+                        <td className="py-3 px-4">
+                          {variant.additionalPrice 
+                            ? `+$${parseFloat(variant.additionalPrice).toFixed(2)}` 
+                            : '-'}
+                        </td>
+                        <td className="py-3 px-4">{variant.inventory || 0}</td>
+                        <td className="py-3 px-4 text-right">
+                          <div className="flex justify-end space-x-1">
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8"
+                              onClick={() => setIsVariantsModalOpen(true)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 text-destructive"
+                              onClick={() => handleDeleteVariant(variant)}
+                              disabled={deleteVariantMutation.isPending}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
 
-      {/* Edit Product Dialog */}
-      <Dialog open={isEditing} onOpenChange={setIsEditing}>
-        <DialogContent className="sm:max-w-[600px]">
+      {/* Variants Management Modal */}
+      <Dialog 
+        open={isVariantsModalOpen}
+        onOpenChange={setIsVariantsModalOpen}
+      >
+        <DialogContent className="max-w-3xl">
           <DialogHeader>
-            <DialogTitle>Edit Product</DialogTitle>
+            <DialogTitle>Manage Product Variants</DialogTitle>
           </DialogHeader>
-          <ProductForm 
+          <VariantManager 
             product={product}
-            onSuccess={handleFormSuccess}
-            onCancel={() => setIsEditing(false)}
+            onToggleVariants={handleToggleVariantsMode}
           />
         </DialogContent>
       </Dialog>

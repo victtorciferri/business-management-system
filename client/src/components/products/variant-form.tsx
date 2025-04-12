@@ -2,21 +2,23 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useMutation } from "@tanstack/react-query";
 import { ProductVariant } from "@shared/schema";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useToast } from "@/hooks/use-toast";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
-// Form schema with validation
+// Form validation schema
 const variantSchema = z.object({
-  sku: z.string().min(1, "SKU is required"),
+  sku: z.string().optional(),
   size: z.string().optional(),
   color: z.string().optional(),
-  additionalPrice: z.coerce.number().min(0, "Additional price must be at least 0"),
-  inventory: z.coerce.number().int().min(0, "Inventory must be at least 0"),
-  imageUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  additionalPrice: z.string().optional(),
+  inventory: z.number().int().min(0).optional(),
+  imageUrl: z.string().optional()
 });
 
 type VariantFormValues = z.infer<typeof variantSchema>;
@@ -29,158 +31,102 @@ interface VariantFormProps {
 }
 
 export default function VariantForm({ productId, variant, onSuccess, onCancel }: VariantFormProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Initialize form with existing variant data or defaults
+  // Initialize form with default values or variant data if editing
   const form = useForm<VariantFormValues>({
     resolver: zodResolver(variantSchema),
-    defaultValues: variant ? {
-      sku: variant.sku,
-      size: variant.size || "",
-      color: variant.color || "",
-      additionalPrice: Number(variant.additionalPrice) || 0,
-      inventory: variant.inventory || 0,
-      imageUrl: variant.imageUrl || "",
-    } : {
-      sku: "",
-      size: "",
-      color: "",
-      additionalPrice: 0,
-      inventory: 0,
-      imageUrl: "",
-    },
+    defaultValues: {
+      sku: variant?.sku || "",
+      size: variant?.size || "",
+      color: variant?.color || "",
+      additionalPrice: variant?.additionalPrice || "",
+      inventory: variant?.inventory || 0,
+      imageUrl: variant?.imageUrl || ""
+    }
   });
-
-  const onSubmit = async (data: VariantFormValues) => {
-    try {
-      setIsSubmitting(true);
-
-      // Clean up imageUrl if empty
-      if (data.imageUrl === "") {
-        data.imageUrl = undefined;
-      }
-      
-      // Convert numeric values to strings as expected by the API
-      const formattedData = {
-        ...data,
-        additionalPrice: data.additionalPrice.toString(),  // Convert price number to string
-      };
-
-      // Format data and determine if it's a new variant or an update
+  
+  // Create or update variant mutation
+  const variantMutation = useMutation({
+    mutationFn: async (data: VariantFormValues) => {
       if (variant) {
         // Update existing variant
         const response = await apiRequest(
           "PUT", 
           `/api/product-variants/${variant.id}`, 
-          formattedData
+          data
         );
         
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || "Failed to update variant");
+          throw new Error("Failed to update variant");
         }
         
-        toast({
-          title: "Success",
-          description: "Variant updated successfully",
-        });
+        return await response.json();
       } else {
         // Create new variant
         const response = await apiRequest(
           "POST", 
           `/api/products/${productId}/variants`, 
-          formattedData
+          data
         );
         
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || "Failed to create variant");
+          throw new Error("Failed to create variant");
         }
         
-        toast({
-          title: "Success",
-          description: "Variant created successfully",
-        });
+        return await response.json();
       }
+    },
+    onSuccess: () => {
+      // Invalidate queries to refetch the latest data
+      queryClient.invalidateQueries({ queryKey: [`/api/products/${productId}/variants`] });
       
-      // Call success callback
+      toast({
+        title: "Success",
+        description: variant 
+          ? "Variant updated successfully" 
+          : "Variant created successfully",
+      });
+      
+      // Call the onSuccess callback from parent
       onSuccess();
-    } catch (error) {
-      console.error("Error submitting variant:", error);
+    },
+    onError: (error: Error) => {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Something went wrong",
+        description: error.message,
         variant: "destructive",
       });
-    } finally {
+    },
+    onSettled: () => {
+      // Always set isSubmitting to false when completed
       setIsSubmitting(false);
     }
+  });
+  
+  // Handle form submission
+  const onSubmit = async (data: VariantFormValues) => {
+    setIsSubmitting(true);
+    variantMutation.mutate(data);
   };
-
+  
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="sku"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>SKU (Stock Keeping Unit)</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter SKU" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
             control={form.control}
-            name="size"
+            name="sku"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Size (Optional)</FormLabel>
+                <FormLabel>SKU (Stock Keeping Unit)</FormLabel>
                 <FormControl>
-                  <Input placeholder="S, M, L, XL, etc." {...field} />
+                  <Input placeholder="SKU-12345" {...field} />
                 </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="color"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Color (Optional)</FormLabel>
-                <FormControl>
-                  <Input placeholder="Red, Blue, etc." {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="additionalPrice"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Additional Price ($)</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="number" 
-                    placeholder="0.00" 
-                    step="0.01" 
-                    min="0"
-                    {...field} 
-                  />
-                </FormControl>
+                <FormDescription>
+                  Unique identifier for inventory management
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -195,37 +141,110 @@ export default function VariantForm({ productId, variant, onSuccess, onCancel }:
                 <FormControl>
                   <Input 
                     type="number" 
+                    min="0" 
                     placeholder="0" 
-                    min="0"
-                    step="1"
-                    {...field} 
+                    {...field}
+                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                   />
                 </FormControl>
+                <FormDescription>
+                  Number of items in stock
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="size"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Size</FormLabel>
+                <FormControl>
+                  <Input placeholder="S, M, L, XL, etc." {...field} />
+                </FormControl>
+                <FormDescription>
+                  Size variant (optional)
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="color"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Color</FormLabel>
+                <FormControl>
+                  <div className="flex gap-2">
+                    <Input 
+                      type="color" 
+                      className="w-12 p-1 h-10" 
+                      value={field.value || "#000000"}
+                      onChange={(e) => field.onChange(e.target.value)}
+                    />
+                    <Input 
+                      placeholder="Red, Blue, etc." 
+                      value={field.value || ""}
+                      onChange={(e) => field.onChange(e.target.value)}
+                    />
+                  </div>
+                </FormControl>
+                <FormDescription>
+                  Color variant (optional)
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="additionalPrice"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Additional Price</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="text" 
+                    placeholder="0.00" 
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Extra cost added to base price (e.g., 5.99)
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="imageUrl"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Image URL</FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="https://example.com/image.jpg" 
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>
+                  URL for variant-specific image (optional)
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
         
-        <FormField
-          control={form.control}
-          name="imageUrl"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Variant Image URL (Optional)</FormLabel>
-              <FormControl>
-                <Input 
-                  placeholder="https://example.com/image.jpg" 
-                  {...field} 
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <div className="flex gap-3 justify-end pt-2">
-          <Button
+        <div className="flex justify-end gap-2">
+          <Button 
             type="button" 
             variant="outline" 
             onClick={onCancel}
@@ -233,8 +252,18 @@ export default function VariantForm({ productId, variant, onSuccess, onCancel }:
           >
             Cancel
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Saving..." : variant ? "Update Variant" : "Add Variant"}
+          <Button 
+            type="submit" 
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {variant ? "Updating..." : "Creating..."}
+              </>
+            ) : (
+              variant ? "Update Variant" : "Create Variant"
+            )}
           </Button>
         </div>
       </form>
