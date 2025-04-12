@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { format, addDays, startOfDay, setHours, setMinutes, addMinutes } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,24 +16,22 @@ import { type Service, type Customer, type Appointment } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { CustomerCheck } from "@/components/appointments/customer-check";
 
 const formSchema = z.object({
-  firstName: z.string().min(2, { message: "First name must be at least 2 characters" }),
-  lastName: z.string().min(2, { message: "Last name must be at least 2 characters" }),
-  email: z.string().email({ message: "Please enter a valid email" }),
-  phone: z.string().min(7, { message: "Please enter a valid phone number" }),
   notes: z.string().optional(),
   date: z.date({ required_error: "Please select a date" }),
   time: z.string({ required_error: "Please select a time" }),
 });
 
 export default function BookAppointment() {
-  const navigate = useNavigate();
-  const location = useLocation();
+  const [location, navigate] = useLocation();
   const { toast } = useToast();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [availableTimes, setAvailableTimes] = useState<string[]>([]);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const [customerData, setCustomerData] = useState<Customer | null>(null);
+  const [step, setStep] = useState<'customer-check' | 'booking-details'>('customer-check');
   
   // Get URL parameters
   const params = new URLSearchParams(window.location.search);
@@ -110,41 +108,87 @@ export default function BookAppointment() {
     }
   }, [selectedDate, appointments, selectedService]);
   
+  // Handle existing customer continuation
+  const handleExistingCustomer = async (customer: any) => {
+    try {
+      // For existing customers, we use the ID if provided, otherwise look them up by email
+      if (customer.id) {
+        setCustomerData(customer);
+        setStep('booking-details');
+      } else {
+        // Look up customer by email
+        const response = await apiRequest("POST", "/api/check-customer-exists", {
+          email: customer.email,
+          businessId: 1 // Use business owner's ID
+        });
+        
+        const data = await response.json();
+        if (data.exists && data.customer) {
+          setCustomerData(data.customer);
+          setStep('booking-details');
+        } else {
+          toast({
+            title: "Error",
+            description: "Could not find customer information. Please try again.",
+            variant: "destructive"
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error getting customer data:", error);
+      toast({
+        title: "Error",
+        description: "There was a problem retrieving customer information.",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  // Handle new customer data submission
+  const handleNewCustomer = async (customerFormData: any) => {
+    try {
+      // Create new customer
+      const customerResponse = await apiRequest("POST", "/api/customers", {
+        userId: 1, // Use business owner's ID for all customer-created appointments
+        firstName: customerFormData.firstName,
+        lastName: customerFormData.lastName,
+        email: customerFormData.email,
+        phone: customerFormData.phone || "",
+        notes: ""
+      });
+      
+      const customer: Customer = await customerResponse.json();
+      setCustomerData(customer);
+      setStep('booking-details');
+    } catch (error) {
+      console.error("Error creating customer:", error);
+      toast({
+        title: "Error",
+        description: "There was a problem creating your customer profile. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+  
   // Initialize form with default values
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      firstName: "",
-      lastName: "",
-      email: "",
-      phone: "",
       notes: "",
     }
   });
   
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!selectedService) {
+    if (!selectedService || !customerData) {
       toast({
         title: "Error",
-        description: "Please select a service",
+        description: "Missing required information. Please try again.",
         variant: "destructive"
       });
       return;
     }
     
     try {
-      // Create or get customer
-      const customerResponse = await apiRequest("POST", "/api/customers", {
-        userId: 1, // Use business owner's ID for all customer-created appointments
-        firstName: values.firstName,
-        lastName: values.lastName,
-        email: values.email,
-        phone: values.phone,
-        notes: values.notes || ""
-      });
-      
-      const customer: Customer = await customerResponse.json();
-      
       // Parse the time and create a full date object
       const [hours, minutes] = values.time.split(':');
       const [hourValue, meridiem] = hours.split(' ');
@@ -163,7 +207,7 @@ export default function BookAppointment() {
       // Create appointment
       const appointmentResponse = await apiRequest("POST", "/api/appointments", {
         userId: 1, // Use business owner's ID
-        customerId: customer.id,
+        customerId: customerData.id,
         serviceId: selectedService.id,
         date: appointmentDate.toISOString(),
         duration: selectedService.duration,
@@ -177,7 +221,7 @@ export default function BookAppointment() {
       
       // Create a customer access token
       const tokenResponse = await apiRequest("POST", "/api/customer-access-token", {
-        email: values.email,
+        email: customerData.email,
         businessId: 1, // Use business owner's ID
         sendEmail: true // Send the access link via email
       });
@@ -242,7 +286,17 @@ export default function BookAppointment() {
             View Services
           </Button>
         </div>
+      ) : step === 'customer-check' ? (
+        // Step 1: Check if customer exists
+        <div className="max-w-md mx-auto">
+          <CustomerCheck 
+            businessId={1} // Using business owner's ID
+            onExistingCustomer={handleExistingCustomer}
+            onNewCustomer={handleNewCustomer}
+          />
+        </div>
       ) : (
+        // Step 2: Booking details after customer is identified
         <div className="grid gap-8 md:grid-cols-2">
           <Card>
             <CardHeader>
@@ -291,69 +345,18 @@ export default function BookAppointment() {
           
           <Card>
             <CardHeader>
-              <CardTitle>Your Information</CardTitle>
-              <CardDescription>Provide your details to book the appointment</CardDescription>
+              <CardTitle>Appointment Details</CardTitle>
+              <CardDescription>
+                {customerData && (
+                  <div className="mt-2 p-3 bg-green-50 text-green-700 rounded-md">
+                    Booking as: <span className="font-medium">{customerData.firstName} {customerData.lastName}</span> ({customerData.email})
+                  </div>
+                )}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="firstName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>First Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="John" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="lastName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Last Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Doe" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input placeholder="johndoe@example.com" type="email" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Phone Number</FormLabel>
-                        <FormControl>
-                          <Input placeholder="+56 9 XXXX XXXX" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
                   <FormField
                     control={form.control}
                     name="notes"
@@ -385,10 +388,16 @@ export default function BookAppointment() {
                     )}
                   />
                   
-                  <div className="pt-4">
+                  <div className="pt-4 flex justify-between">
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      onClick={() => setStep('customer-check')}
+                    >
+                      Back to Customer Info
+                    </Button>
                     <Button 
                       type="submit" 
-                      className="w-full"
                       disabled={!selectedDate || !form.getValues("time")}
                     >
                       Book Appointment

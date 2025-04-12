@@ -927,6 +927,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   /**
+   * Check if a customer exists by email for a business
+   * Used during appointment booking to identify existing customers
+   */
+  app.post("/api/check-customer-exists", async (req: Request, res: Response) => {
+    try {
+      // Validate required fields
+      const schema = z.object({
+        email: z.string().email(),
+        businessId: z.number().int().positive()
+      });
+      
+      const { email, businessId } = schema.parse(req.body);
+      
+      // Find the customer with the provided email and business ID
+      const customer = await storage.getCustomerByEmailAndBusinessId(email, businessId);
+      
+      if (customer) {
+        // Return customer data without sensitive information
+        return res.json({
+          exists: true,
+          customer: {
+            id: customer.id,
+            firstName: customer.firstName,
+            lastName: customer.lastName,
+            email: customer.email,
+            phone: customer.phone
+          }
+        });
+      } else {
+        // Return exists: false if no customer found
+        return res.json({
+          exists: false
+        });
+      }
+    } catch (error) {
+      console.error("Error checking if customer exists:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid input data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to check if customer exists" });
+    }
+  });
+  
+  /**
    * Zero-friction customer appointments endpoint
    * This endpoint allows customers to see their appointments by just providing their email
    * Security measures included:
