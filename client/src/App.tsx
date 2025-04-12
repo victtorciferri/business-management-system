@@ -19,6 +19,12 @@ import StaffManagement from "@/pages/staff-management";
 import StaffProfile from "@/pages/staff-profile";
 import StaffSchedule from "@/pages/staff-schedule";
 
+// Payment-related pages
+import PaymentSuccess from "@/pages/payment/success";
+import PaymentFailure from "@/pages/payment/failure";
+import PaymentPending from "@/pages/payment/pending";
+import MockPayment from "@/pages/payment/mock";
+
 import NewAppointment from "@/pages/customer-portal/new-appointment";
 import CustomerPortal from "@/pages/customer-portal/index";
 import MyAppointments from "@/pages/customer-portal/my-appointments";
@@ -229,6 +235,12 @@ function AppContent() {
               <StaffSchedule />
             </ProtectedRoute>
           </Route>
+          {/* Payment related routes */}
+          <Route path="/payment/success" component={PaymentSuccess} />
+          <Route path="/payment/failure" component={PaymentFailure} />
+          <Route path="/payment/pending" component={PaymentPending} />
+          <Route path="/payment/mock" component={MockPayment} />
+          
           <Route path="/error-testing" component={ErrorTestingPage} />
           <Route component={NotFound} />
         </Switch>

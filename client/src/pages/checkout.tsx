@@ -7,18 +7,23 @@ import { Appointment, Customer, Service } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { ArrowLeft, CreditCard } from "lucide-react";
 import { CheckoutForm } from "@/components/payment/checkout-form";
-
-// Payment provider will be implemented with MercadoPago later
-// This is a temporary stub
-const PAYMENT_PROVIDER = "mercadopago";
+import { useToast } from "@/hooks/use-toast";
 
 interface CheckoutProps {
   appointmentId: number;
 }
 
+interface PaymentIntentResponse {
+  clientSecret: string;
+  paymentUrl: string | null;
+  preferenceId: string | null;
+  isMockPayment: boolean;
+}
+
 export default function Checkout({ appointmentId }: CheckoutProps) {
   const [_, setLocation] = useLocation();
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [paymentData, setPaymentData] = useState<PaymentIntentResponse | null>(null);
+  const { toast } = useToast();
   
   // In a real app, this would come from an auth context
   const userId = 1;
@@ -61,9 +66,20 @@ export default function Checkout({ appointmentId }: CheckoutProps) {
         });
         
         const data = await response.json();
-        setClientSecret(data.clientSecret);
+        setPaymentData(data);
+        
+        // If the response includes a direct payment URL and it's not a mock payment,
+        // we could automatically redirect the user
+        if (data.paymentUrl && !data.isMockPayment && false) { // Set to true to enable auto-redirect
+          window.location.href = data.paymentUrl;
+        }
       } catch (error) {
         console.error("Error creating payment intent:", error);
+        toast({
+          title: "Error",
+          description: "Failed to initialize payment. Please try again.",
+          variant: "destructive"
+        });
       }
     };
     
@@ -138,13 +154,21 @@ export default function Checkout({ appointmentId }: CheckoutProps) {
       <Card>
         <CardHeader className="border-b">
           <CardTitle className="text-xl">Process Payment</CardTitle>
+          {paymentData?.isMockPayment && (
+            <p className="text-sm text-muted-foreground">
+              Development Mode: Using simulated payment process
+            </p>
+          )}
         </CardHeader>
         <CardContent className="p-6">
-          {clientSecret ? (
+          {paymentData ? (
             <CheckoutForm 
               appointment={appointment} 
               customer={customer} 
-              service={service} 
+              service={service}
+              paymentUrl={paymentData.paymentUrl}
+              preferenceId={paymentData.preferenceId}
+              isMockPayment={paymentData.isMockPayment}
             />
           ) : (
             <div className="flex justify-center py-8">
