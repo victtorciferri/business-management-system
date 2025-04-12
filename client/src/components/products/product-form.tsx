@@ -3,11 +3,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Product } from "@shared/schema";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Layers, Info } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -32,6 +35,7 @@ const productSchema = z.object({
   stock: z.coerce.number().int().min(0, "Stock must be at least 0"),
   category: z.string().min(1, "Category is required"),
   imageUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  hasVariants: z.boolean().default(false),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -56,6 +60,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
       stock: product.stock,
       category: product.category,
       imageUrl: product.imageUrl || "",
+      hasVariants: product.hasVariants || false,
     } : {
       name: "",
       description: "",
@@ -63,8 +68,12 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
       stock: 0,
       category: "",
       imageUrl: "",
+      hasVariants: false,
     },
   });
+  
+  // Track the hasVariants value for conditional UI rendering
+  const hasVariants = form.watch("hasVariants");
 
   const onSubmit = async (data: ProductFormValues) => {
     try {
@@ -246,6 +255,40 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
             </FormItem>
           )}
         />
+        
+        <FormField
+          control={form.control}
+          name="hasVariants"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <FormLabel className="text-base flex items-center">
+                  <Layers className="mr-2 h-4 w-4" />
+                  Product Variants
+                </FormLabel>
+                <FormDescription>
+                  Enable variants for different sizes, colors, etc.
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+        
+        {hasVariants && (
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertTitle>Product Variants Enabled</AlertTitle>
+            <AlertDescription>
+              After creating this product, you'll be able to add different variants with specific attributes like size, color, etc.
+            </AlertDescription>
+          </Alert>
+        )}
         
         <div className="flex gap-3 justify-end">
           <Button
