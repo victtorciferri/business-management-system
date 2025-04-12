@@ -513,4 +513,87 @@ export class DatabaseStorage implements IStorage {
       return [];
     }
   }
+
+  // Customer Access Token methods
+  async createCustomerAccessToken(token: InsertCustomerAccessToken): Promise<CustomerAccessToken> {
+    try {
+      const [newToken] = await db.insert(customerAccessTokens).values(token).returning();
+      return newToken;
+    } catch (error) {
+      console.error("Error creating customer access token:", error);
+      throw error;
+    }
+  }
+
+  async getCustomerAccessToken(token: string): Promise<CustomerAccessToken | undefined> {
+    try {
+      const [accessToken] = await db
+        .select()
+        .from(customerAccessTokens)
+        .where(eq(customerAccessTokens.token, token));
+      
+      return accessToken || undefined;
+    } catch (error) {
+      console.error("Error fetching customer access token:", error);
+      return undefined;
+    }
+  }
+
+  async getCustomerByAccessToken(token: string): Promise<Customer | undefined> {
+    try {
+      // First get the token and make sure it's not expired
+      const [accessToken] = await db
+        .select()
+        .from(customerAccessTokens)
+        .where(and(
+          eq(customerAccessTokens.token, token),
+          gte(customerAccessTokens.expiresAt, new Date())
+        ));
+      
+      if (!accessToken) {
+        return undefined;
+      }
+      
+      // Then get the customer
+      const [customer] = await db
+        .select()
+        .from(customers)
+        .where(eq(customers.id, accessToken.customerId));
+      
+      return customer || undefined;
+    } catch (error) {
+      console.error("Error fetching customer by access token:", error);
+      return undefined;
+    }
+  }
+
+  async deleteCustomerAccessToken(token: string): Promise<boolean> {
+    try {
+      const result = await db
+        .delete(customerAccessTokens)
+        .where(eq(customerAccessTokens.token, token));
+      
+      return !!result;
+    } catch (error) {
+      console.error("Error deleting customer access token:", error);
+      return false;
+    }
+  }
+
+  async getCustomerByEmailAndBusinessId(email: string, businessId: number): Promise<Customer | undefined> {
+    try {
+      const [customer] = await db
+        .select()
+        .from(customers)
+        .where(and(
+          eq(customers.email, email),
+          eq(customers.userId, businessId)
+        ));
+      
+      return customer || undefined;
+    } catch (error) {
+      console.error("Error fetching customer by email and business ID:", error);
+      return undefined;
+    }
+  }
 }

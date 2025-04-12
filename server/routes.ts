@@ -12,6 +12,7 @@ import {
   insertProductVariantSchema,
   insertCartSchema,
   insertCartItemSchema,
+  insertCustomerAccessTokenSchema,
   users
 } from "@shared/schema";
 import { eq, sql, desc } from "drizzle-orm";
@@ -667,6 +668,260 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).end();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete customer" });
+    }
+  });
+  
+  // Customer Access Token routes
+  app.post("/api/customer-access-token", async (req: Request, res: Response) => {
+    try {
+      // Validate email and businessId from request
+      const schema = z.object({
+        email: z.string().email(),
+        businessId: z.number().int().positive(),
+        sendEmail: z.boolean().optional().default(false)
+      });
+      
+      const { email, businessId, sendEmail } = schema.parse(req.body);
+      
+      // Find the customer with the provided email and business ID
+      const customer = await storage.getCustomerByEmailAndBusinessId(email, businessId);
+      
+      if (!customer) {
+        return res.status(404).json({ message: "Customer not found with the provided email for this business" });
+      }
+      
+      // Generate a random token
+      const token = crypto.randomBytes(32).toString('hex');
+      
+      // Set expiration to 7 days from now
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7);
+      
+      // Create the access token in the database
+      const accessToken = await storage.createCustomerAccessToken({
+        customerId: customer.id,
+        token,
+        expiresAt
+      });
+      
+      // Get the business information
+      const business = await storage.getUser(businessId);
+      
+      if (sendEmail && business) {
+        try {
+          // Get the base URL from request
+          let baseUrl = `${req.protocol}://${req.get('host')}`;
+          
+          // If it's a custom domain or business slug access, adjust the URL
+          if (req.business) {
+            if (req.business.customDomain) {
+              baseUrl = `https://${req.business.customDomain}`;
+            } else if (req.business.businessSlug) {
+              baseUrl = `${req.protocol}://${req.get('host')}/${req.business.businessSlug}`;
+            }
+          }
+          
+          // Create the access URL
+          const accessUrl = `${baseUrl}/customer-portal?token=${token}`;
+          
+          // Send email to the customer
+          await transporter.sendMail({
+            from: process.env.EMAIL_FROM || 'noreply@appointease.com',
+            to: customer.email,
+            subject: `Access Your ${business.businessName} Customer Portal`,
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2>Access Your Customer Portal</h2>
+                <p>Hello ${customer.firstName},</p>
+                <p>You can now access your customer portal for ${business.businessName} by clicking the button below.</p>
+                <div style="margin: 30px 0;">
+                  <a href="${accessUrl}" style="background-color: #4f46e5; color: white; padding: 12px 20px; border-radius: 4px; text-decoration: none; font-weight: bold;">
+                    Access Customer Portal
+                  </a>
+                </div>
+                <p>This link will expire in 7 days.</p>
+                <p>If you didn't request this email, you can safely ignore it.</p>
+                <hr style="border: none; border-top: 1px solid #eaeaea; margin: 20px 0;" />
+                <p style="color: #666; font-size: 12px;">
+                  Powered by AppointEase - Intelligent appointment scheduling for small businesses
+                </p>
+              </div>
+            `,
+            text: `
+              Hello ${customer.firstName},
+              
+              You can now access your customer portal for ${business.businessName} by clicking the link below:
+              
+              ${accessUrl}
+              
+              This link will expire in 7 days.
+              
+              If you didn't request this email, you can safely ignore it.
+              
+              Powered by AppointEase - Intelligent appointment scheduling for small businesses
+            `
+          });
+          
+          console.log(`Access token email sent to ${customer.email}`);
+        } catch (emailError) {
+          console.error("Error sending access token email:", emailError);
+          // Continue processing even if email fails - we'll still return the token
+        }
+      }
+      
+      // Return the token
+      res.status(201).json({ 
+        token: accessToken.token,
+        expiresAt: accessToken.expiresAt 
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid input data", errors: error.errors });
+      }
+      console.error("Error creating customer access token:", error);
+      res.status(500).json({ message: "Failed to create customer access token" });
+    }
+  });
+  
+  app.get("/api/customer-profile", async (req: Request, res: Response) => {
+    try {
+      // Get the token from the Authorization header or query parameter
+      const authHeader = req.headers.authorization;
+      const token = authHeader?.startsWith('Bearer ') 
+        ? authHeader.substring(7) 
+        : req.query.token as string;
+      
+      if (!token) {
+        return res.status(401).json({ message: "Access token is required" });
+      }
+      
+      // Get the customer using the access token
+      const customer = await storage.getCustomerByAccessToken(token);
+      
+      if (!customer) {
+        return res.status(401).json({ message: "Invalid or expired access token" });
+      }
+      
+      // Get the customer's appointments
+      const appointments = await storage.getAppointmentsByCustomerId(customer.id);
+      
+      // Return the customer profile with appointments
+      res.json({
+        customer,
+        appointments
+      });
+    } catch (error) {
+      console.error("Error fetching customer profile:", error);
+      res.status(500).json({ message: "Failed to fetch customer profile" });
+    }
+  });
+  
+  // Send an access link to customer via email
+  app.post("/api/send-customer-access-link", async (req: Request, res: Response) => {
+    try {
+      // Validate required fields
+      const schema = z.object({
+        email: z.string().email(),
+        businessId: z.number().int().positive()
+      });
+      
+      const { email, businessId } = schema.parse(req.body);
+      
+      // Find the customer with the provided email and business ID
+      const customer = await storage.getCustomerByEmailAndBusinessId(email, businessId);
+      
+      if (!customer) {
+        return res.status(404).json({ message: "Customer not found with the provided email for this business" });
+      }
+      
+      // Get the business information
+      const business = await storage.getUser(businessId);
+      
+      if (!business) {
+        return res.status(404).json({ message: "Business not found" });
+      }
+      
+      // Generate a new access token
+      const token = crypto.randomBytes(32).toString('hex');
+      
+      // Set expiration to 7 days from now
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7);
+      
+      // Create the access token in the database
+      await storage.createCustomerAccessToken({
+        customerId: customer.id,
+        token,
+        expiresAt
+      });
+      
+      // Get the base URL from request
+      let baseUrl = `${req.protocol}://${req.get('host')}`;
+      
+      // If it's a custom domain or business slug access, adjust the URL
+      if (req.business) {
+        if (req.business.customDomain) {
+          baseUrl = `https://${req.business.customDomain}`;
+        } else if (req.business.businessSlug) {
+          baseUrl = `${req.protocol}://${req.get('host')}/${req.business.businessSlug}`;
+        }
+      } else if (business.customDomain) {
+        baseUrl = `https://${business.customDomain}`;
+      } else if (business.businessSlug) {
+        baseUrl = `${req.protocol}://${req.get('host')}/${business.businessSlug}`;
+      }
+      
+      // Create the access URL
+      const accessUrl = `${baseUrl}/customer-portal?token=${token}`;
+      
+      // Send email to the customer
+      await transporter.sendMail({
+        from: process.env.EMAIL_FROM || 'noreply@appointease.com',
+        to: customer.email,
+        subject: `Access Your ${business.businessName} Customer Portal`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2>Access Your Customer Portal</h2>
+            <p>Hello ${customer.firstName},</p>
+            <p>You can now access your customer portal for ${business.businessName} by clicking the button below.</p>
+            <div style="margin: 30px 0;">
+              <a href="${accessUrl}" style="background-color: #4f46e5; color: white; padding: 12px 20px; border-radius: 4px; text-decoration: none; font-weight: bold;">
+                Access Customer Portal
+              </a>
+            </div>
+            <p>This link will expire in 7 days.</p>
+            <p>If you didn't request this email, you can safely ignore it.</p>
+            <hr style="border: none; border-top: 1px solid #eaeaea; margin: 20px 0;" />
+            <p style="color: #666; font-size: 12px;">
+              Powered by AppointEase - Intelligent appointment scheduling for small businesses
+            </p>
+          </div>
+        `,
+        text: `
+          Hello ${customer.firstName},
+          
+          You can now access your customer portal for ${business.businessName} by clicking the link below:
+          
+          ${accessUrl}
+          
+          This link will expire in 7 days.
+          
+          If you didn't request this email, you can safely ignore it.
+          
+          Powered by AppointEase - Intelligent appointment scheduling for small businesses
+        `
+      });
+      
+      res.json({ 
+        message: "Access link sent successfully",
+        email: customer.email
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid input data", errors: error.errors });
+      }
+      console.error("Error sending customer access link:", error);
+      res.status(500).json({ message: "Failed to send customer access link" });
     }
   });
   
