@@ -84,7 +84,11 @@ export default function CustomerPortal() {
             <p className="mb-4 text-sm">
               Check the status of your upcoming appointments and view your appointment history.
             </p>
-            <Button className="w-full" onClick={() => navigate("/customer-portal/my-appointments")}>
+            <Button className="w-full" onClick={() => 
+              navigate(accessToken 
+                ? `/customer-portal/my-appointments?token=${accessToken}` 
+                : "/customer-portal/my-appointments")
+            }>
               View Appointments
             </Button>
           </CardContent>

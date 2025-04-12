@@ -7,7 +7,9 @@ import { ArrowLeftIcon, Clock, DollarSign } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function CustomerServices() {
-  const [_, navigate] = useLocation();
+  const [location, navigate] = useLocation();
+  const params = new URLSearchParams(window.location.search);
+  const accessToken = params.get("token");
   
   const { data: services, isLoading } = useQuery({
     queryKey: ['/api/services'],
@@ -17,7 +19,12 @@ export default function CustomerServices() {
   return (
     <div className="container mx-auto py-10">
       <div className="mb-8 flex items-center">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/customer-portal")} className="mr-2">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => navigate(accessToken ? `/customer-portal?token=${accessToken}` : "/customer-portal")} 
+          className="mr-2"
+        >
           <ArrowLeftIcon className="h-5 w-5" />
         </Button>
         <div>
@@ -72,7 +79,11 @@ export default function CustomerServices() {
               <CardFooter>
                 <Button 
                   className="w-full" 
-                  onClick={() => navigate(`/customer-portal/book?serviceId=${service.id}`)}
+                  onClick={() => navigate(
+                    accessToken 
+                      ? `/customer-portal/book?serviceId=${service.id}&token=${accessToken}` 
+                      : `/customer-portal/book?serviceId=${service.id}`
+                  )}
                 >
                   Book Now
                 </Button>

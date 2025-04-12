@@ -35,9 +35,10 @@ export default function BookAppointment() {
   const [availableTimes, setAvailableTimes] = useState<string[]>([]);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   
-  // Get serviceId from URL query parameter
-  const params = new URLSearchParams(location.search);
+  // Get URL parameters
+  const params = new URLSearchParams(window.location.search);
   const serviceId = parseInt(params.get("serviceId") || "0");
+  const accessToken = params.get("token");
   
   // Fetch the service details
   const { data: services } = useQuery({
@@ -194,7 +195,8 @@ export default function BookAppointment() {
       });
       
       // Redirect to the appointment details page with access token
-      navigate(`/customer-portal/my-appointments?token=${tokenData.token}`);
+      // Use existing token if available, otherwise use the new one
+      navigate(`/customer-portal/my-appointments?token=${accessToken || tokenData.token}`);
       
     } catch (error) {
       console.error("Error booking appointment:", error);
@@ -209,7 +211,12 @@ export default function BookAppointment() {
   return (
     <div className="container mx-auto py-10">
       <div className="mb-8 flex items-center">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/customer-portal")} className="mr-2">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => navigate(accessToken ? `/customer-portal?token=${accessToken}` : "/customer-portal")} 
+          className="mr-2"
+        >
           <ArrowLeftIcon className="h-5 w-5" />
         </Button>
         <div>
@@ -225,7 +232,13 @@ export default function BookAppointment() {
       {!selectedService ? (
         <div className="flex flex-col items-center justify-center py-10">
           <p className="text-muted-foreground mb-4">Please select a service from our services page first.</p>
-          <Button onClick={() => navigate("/customer-portal/services")}>
+          <Button 
+            onClick={() => navigate(
+              accessToken 
+                ? `/customer-portal/services?token=${accessToken}` 
+                : "/customer-portal/services"
+            )}
+          >
             View Services
           </Button>
         </div>
