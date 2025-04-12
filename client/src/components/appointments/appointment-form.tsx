@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useState, useEffect, useMemo } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -17,12 +17,20 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Calendar } from "@/components/ui/calendar";
 import { TimePicker } from "@/components/ui/time-picker";
-import { Appointment, Customer, Service, insertAppointmentSchema } from "@shared/schema";
+import { Appointment, Customer, Service, StaffAvailability, insertAppointmentSchema } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { Switch } from "@/components/ui/switch";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
-import { format, set } from "date-fns";
+import { AlertCircle, CalendarIcon, InfoIcon } from "lucide-react";
+import { 
+  addDays, 
+  format, 
+  isBefore, 
+  set, 
+  startOfMonth, 
+  endOfMonth, 
+  isSameDay 
+} from "date-fns";
 import { cn } from "@/lib/utils";
 import {
   Select,
@@ -31,6 +39,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { 
+  generateAvailableTimeSlots, 
+  getAvailableDays, 
+  isTimeSlotAvailable, 
+  isTimeWithinAvailability 
+} from "@/utils/availability-utils";
 
 interface AppointmentFormProps {
   userId: number;
@@ -61,6 +76,9 @@ export function AppointmentForm({
 }: AppointmentFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [availableTimeSlots, setAvailableTimeSlots] = useState<string[]>([]);
+  const [isStaffAvailabilityLoading, setIsStaffAvailabilityLoading] = useState(false);
+  const [selectedStaffAvailableDays, setSelectedStaffAvailableDays] = useState<Date[]>([]);
   
   // Format initial time
   const getInitialTime = () => {
@@ -90,6 +108,22 @@ export function AppointmentForm({
     },
   });
 
+  // Use form watch to track selected values
+  const selectedStaffId = useWatch({
+    control: form.control,
+    name: "staffId",
+  });
+  
+  const selectedDate = useWatch({
+    control: form.control,
+    name: "date",
+  });
+  
+  const selectedServiceId = useWatch({
+    control: form.control,
+    name: "serviceId",
+  });
+
   // Fetch customers, services, and staff members
   const { data: customers = [] } = useQuery<Customer[]>({
     queryKey: [`/api/customers?userId=${userId}`],
@@ -103,6 +137,94 @@ export function AppointmentForm({
   const { data: staffMembers = [] } = useQuery<any[]>({
     queryKey: [`/api/staff?userId=${userId}`],
   });
+  
+  // Fetch all appointments (filtered by staff if a staff is selected)
+  const { data: appointments = [] } = useQuery<Appointment[]>({
+    queryKey: [`/api/appointments`, { staffId: selectedStaffId !== "none" ? selectedStaffId : null }],
+    enabled: selectedStaffId !== undefined,
+  });
+  
+  // Fetch staff availability
+  const { data: staffAvailability = [] } = useQuery<StaffAvailability[]>({
+    queryKey: [`/api/staff/${selectedStaffId}/availability`],
+    enabled: selectedStaffId !== "none" && selectedStaffId !== undefined,
+  });
+  
+  // Calculate available time slots when staff, date, or service changes
+  useEffect(() => {
+    if (
+      selectedStaffId === "none" || 
+      !selectedDate || 
+      !selectedServiceId || 
+      !services.length
+    ) {
+      setAvailableTimeSlots([]);
+      return;
+    }
+    
+    setIsStaffAvailabilityLoading(true);
+    
+    try {
+      // Get the selected service duration
+      const service = services.find(s => s.id === parseInt(selectedServiceId));
+      if (!service) {
+        setAvailableTimeSlots([]);
+        return;
+      }
+      
+      // Filter appointments for the selected staff
+      const staffAppointments = appointments.filter(
+        appt => appt.staffId === parseInt(selectedStaffId)
+      );
+      
+      // Generate available time slots
+      const timeSlots = generateAvailableTimeSlots(
+        selectedDate,
+        staffAvailability,
+        staffAppointments,
+        service.duration,
+        15 // 15-minute intervals
+      );
+      
+      setAvailableTimeSlots(timeSlots);
+      
+      // If the current selected time is not available, reset it
+      const currentTime = form.getValues("time");
+      if (timeSlots.length > 0 && !timeSlots.includes(currentTime)) {
+        form.setValue("time", timeSlots[0]);
+      }
+    } catch (error) {
+      console.error("Error calculating available time slots:", error);
+    } finally {
+      setIsStaffAvailabilityLoading(false);
+    }
+  }, [selectedStaffId, selectedDate, selectedServiceId, services, staffAvailability, appointments, form]);
+  
+  // Calculate available days for the selected staff
+  useEffect(() => {
+    if (selectedStaffId === "none" || !staffAvailability.length) {
+      setSelectedStaffAvailableDays([]);
+      return;
+    }
+    
+    // Get available days for the next 30 days
+    const startDate = new Date();
+    const endDate = addDays(startDate, 30);
+    const availableDays = getAvailableDays(startDate, endDate, staffAvailability);
+    
+    setSelectedStaffAvailableDays(availableDays);
+    
+    // If the current selected date is not available, reset it to the first available day
+    if (availableDays.length > 0) {
+      const isCurrentDateAvailable = availableDays.some(
+        day => isSameDay(day, selectedDate)
+      );
+      
+      if (!isCurrentDateAvailable) {
+        form.setValue("date", availableDays[0]);
+      }
+    }
+  }, [selectedStaffId, staffAvailability, form, selectedDate]);
 
   // Handle form submission
   const onSubmit = async (values: FormValues) => {
