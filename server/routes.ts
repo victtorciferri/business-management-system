@@ -714,14 +714,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/appointments", async (req: Request, res: Response) => {
     try {
-      const appointmentData = insertAppointmentSchema.parse(req.body);
-      const appointment = await storage.createAppointment(appointmentData);
-      res.status(201).json(appointment);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid appointment data", errors: error.errors });
+      console.log("Received appointment data:", JSON.stringify(req.body));
+      
+      // Validate appointment data
+      try {
+        const appointmentData = insertAppointmentSchema.parse(req.body);
+        console.log("Validated appointment data:", JSON.stringify(appointmentData));
+        
+        // Create appointment
+        const appointment = await storage.createAppointment(appointmentData);
+        console.log("Created appointment:", JSON.stringify(appointment));
+        
+        res.status(201).json(appointment);
+      } catch (validationError) {
+        console.error("Validation error:", validationError);
+        if (validationError instanceof z.ZodError) {
+          return res.status(400).json({ 
+            message: "Invalid appointment data", 
+            errors: validationError.errors,
+            formattedErrors: validationError.errors.map(err => `${err.path.join('.')}: ${err.message}`) 
+          });
+        }
+        throw validationError; // Re-throw for the outer catch block
       }
-      res.status(500).json({ message: "Failed to create appointment" });
+    } catch (error) {
+      console.error("Failed to create appointment:", error);
+      res.status(500).json({ message: "Failed to create appointment", error: String(error) });
     }
   });
   

@@ -137,11 +137,22 @@ export function AppointmentForm({
         });
       } else {
         // Create new appointment
-        await apiRequest("POST", "/api/appointments", appointmentData);
-        toast({
-          title: "Appointment created",
-          description: "New appointment has been scheduled.",
-        });
+        try {
+          const response = await apiRequest("POST", "/api/appointments", appointmentData);
+          const data = await response.json();
+          
+          if (!response.ok) {
+            throw new Error(data.message || 'Unknown error');
+          }
+          
+          toast({
+            title: "Appointment created",
+            description: "New appointment has been scheduled.",
+          });
+        } catch (error: any) {
+          console.error("Appointment creation error details:", error, appointmentData);
+          throw error; // Re-throw to be caught by the outer catch block
+        }
       }
       
       // Send email reminder if requested
@@ -160,10 +171,22 @@ export function AppointmentForm({
       if (onSubmitSuccess) {
         onSubmitSuccess();
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Appointment submission error:", error);
+      
+      let errorMessage = "Failed to save the appointment. Please try again.";
+      if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      // If error contains detailed validation errors, display them
+      if (error.errors) {
+        errorMessage += ": " + Object.values(error.errors).join(", ");
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to save the appointment. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     }
