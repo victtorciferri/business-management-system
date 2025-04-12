@@ -816,6 +816,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { appointmentId } = req.body;
       
+      console.log("Sending reminder for appointment ID:", appointmentId);
+      
       if (!appointmentId) {
         return res.status(400).json({ message: "Appointment ID is required" });
       }
@@ -838,31 +840,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const formattedDate = appointmentDate.toLocaleDateString();
       const formattedTime = appointmentDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       
-      // Send email notification
-      const info = await transporter.sendMail({
-        from: process.env.EMAIL_FROM || '"AppointEase" <noreply@appointease.com>',
-        to: customer.email,
-        subject: `Appointment Reminder: ${service.name} on ${formattedDate}`,
-        html: `
-          <h2>Appointment Reminder</h2>
-          <p>Hello ${customer.firstName},</p>
-          <p>This is a reminder for your upcoming appointment:</p>
-          <ul>
-            <li><strong>Service:</strong> ${service.name}</li>
-            <li><strong>Date:</strong> ${formattedDate}</li>
-            <li><strong>Time:</strong> ${formattedTime}</li>
-            <li><strong>Duration:</strong> ${service.duration} minutes</li>
-          </ul>
-          <p>If you need to reschedule or cancel, please contact us as soon as possible.</p>
-          <p>Thank you!</p>
-        `,
-      });
+      // For development: Just log the email we would send
+      // In production, we would use a service like SendGrid or use a configured SMTP server
+      console.log("Would send email reminder with the following details:");
+      console.log(`To: ${customer.email}`);
+      console.log(`Subject: Appointment Reminder: ${service.name} on ${formattedDate}`);
+      console.log(`Content: Reminder for ${customer.firstName} ${customer.lastName} about ${service.name} on ${formattedDate} at ${formattedTime}`);
+      
+      // In a real implementation, we would use:
+      // const info = await transporter.sendMail({...}); 
+      
+      // Mock successful email sending
+      const mockMessageId = `mock_${Date.now()}_${appointmentId}@appointease.com`;
       
       // Update appointment to mark reminder as sent
       await storage.updateAppointment(appointmentId, { reminderSent: true });
       
-      res.json({ message: "Reminder sent successfully", messageId: info.messageId });
+      res.json({ 
+        message: "Reminder sent successfully (simulated for development)",
+        messageId: mockMessageId,
+        details: {
+          recipient: customer.email,
+          subject: `Appointment Reminder: ${service.name} on ${formattedDate}`,
+          appointmentDate: formattedDate,
+          appointmentTime: formattedTime
+        }
+      });
     } catch (error) {
+      console.error("Error sending reminder:", error);
       res.status(500).json({ message: "Failed to send reminder" });
     }
   });
