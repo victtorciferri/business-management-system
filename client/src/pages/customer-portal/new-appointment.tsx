@@ -287,7 +287,7 @@ export default function NewAppointment() {
       
       // Create appointment
       const appointmentResponse = await apiRequest("POST", "/api/appointments", {
-        userId: 1, // Using business owner's ID
+        userId: businessId,
         customerId: customer.id,
         serviceId: parseInt(data.serviceId),
         staffId: parseInt(data.staffId),
@@ -317,7 +317,7 @@ export default function NewAppointment() {
           description: "Your appointment has been booked successfully. An email has been sent with your booking details."
         });
         
-        navigate(`/customer-portal/my-appointments?token=${tokenData.token}`);
+        navigate(`/customer-portal/my-appointments?token=${tokenData.token}&businessId=${businessId}`);
       } else {
         // Use existing token for redirect
         toast({
@@ -325,7 +325,7 @@ export default function NewAppointment() {
           description: "Your appointment has been booked successfully."
         });
         
-        navigate(`/customer-portal/my-appointments?token=${accessToken}`);
+        navigate(`/customer-portal/my-appointments?token=${accessToken}&businessId=${businessId}`);
       }
       
       // Invalidate queries to refresh data
@@ -351,7 +351,7 @@ export default function NewAppointment() {
         <Button 
           variant="ghost" 
           size="icon" 
-          onClick={() => navigate("/")} 
+          onClick={() => navigate(`/customer-portal?businessId=${businessId}`)} 
           className="mr-2"
         >
           <ArrowLeftIcon className="h-5 w-5" />
