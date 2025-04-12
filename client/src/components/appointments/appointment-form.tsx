@@ -82,7 +82,7 @@ export function AppointmentForm({
       userId: userId,
       customerId: existingAppointment?.customerId.toString() || "",
       serviceId: existingAppointment?.serviceId.toString() || "",
-      staffId: existingAppointment?.staffId?.toString() || "",
+      staffId: existingAppointment?.staffId?.toString() || "none",
       date: existingAppointment ? new Date(existingAppointment.date) : initialDate,
       time: getInitialTime(),
       notes: existingAppointment?.notes || "",
@@ -119,7 +119,7 @@ export function AppointmentForm({
         userId: values.userId,
         customerId: parseInt(values.customerId),
         serviceId: parseInt(values.serviceId),
-        staffId: values.staffId ? parseInt(values.staffId) : null,
+        staffId: values.staffId && values.staffId !== "none" ? parseInt(values.staffId) : null,
         date: appointmentDate.toISOString(),
         duration,
         status: "scheduled",
@@ -321,7 +321,7 @@ export function AppointmentForm({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="">No staff assigned</SelectItem>
+                  <SelectItem value="none">No staff assigned</SelectItem>
                   {staffMembers.map((staff) => (
                     <SelectItem 
                       key={staff.id} 
