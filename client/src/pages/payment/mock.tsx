@@ -165,7 +165,7 @@ export default function MockPayment() {
                 
                 <div className="flex justify-between items-center pt-2 border-t mt-2">
                   <span className="font-medium">Amount</span>
-                  <span className="font-bold text-lg">${appointment.servicePrice.toFixed(2)}</span>
+                  <span className="font-bold text-lg">${typeof appointment.servicePrice === 'number' ? appointment.servicePrice.toFixed(2) : appointment.servicePrice}</span>
                 </div>
               </div>
               
