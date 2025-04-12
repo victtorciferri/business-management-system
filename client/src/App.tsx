@@ -203,10 +203,10 @@ function AppContent() {
               <StaffManagement />
             </ProtectedRoute>
           </Route>
-          <Route path="/staff-profile/:id">
+          <Route path="/staff/:id/profile">
             {params => (
               <ProtectedRoute>
-                <StaffProfile />
+                <StaffProfile staffId={params.id} />
               </ProtectedRoute>
             )}
           </Route>

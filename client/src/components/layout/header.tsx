@@ -25,7 +25,7 @@ export default function Layout({ children, currentUser }: LayoutProps) {
   };
 
   // Different navigation items based on user role
-  const businessNavItems = [
+  const businessOwnerNavItems = [
     { name: "Dashboard", path: "/" },
     { name: "Appointments", path: "/appointments" },
     { name: "Customers", path: "/customers" },
@@ -35,14 +35,26 @@ export default function Layout({ children, currentUser }: LayoutProps) {
     { name: "Custom Domain", path: "/custom-domain" },
   ];
   
+  const staffNavItems = [
+    { name: "Dashboard", path: "/" },
+    { name: "My Schedule", path: `/staff/${currentUser?.id}/profile` },
+    { name: "Appointments", path: "/appointments" },
+    { name: "Customers", path: "/customers" },
+  ];
+  
   const adminNavItems = [
     { name: "Admin Dashboard", path: "/admin" },
   ];
   
   // Select navigation items based on user role
-  const navItems = currentUser?.role === 'admin' 
-    ? adminNavItems 
-    : businessNavItems;
+  let navItems;
+  if (currentUser?.role === 'admin') {
+    navItems = adminNavItems;
+  } else if (currentUser?.role === 'staff') {
+    navItems = staffNavItems;
+  } else {
+    navItems = businessOwnerNavItems;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800">

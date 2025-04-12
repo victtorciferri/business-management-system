@@ -30,8 +30,13 @@ type AvailabilityFormValues = z.infer<typeof availabilityFormSchema>;
 // Day names for reference
 const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-export default function StaffProfile() {
-  const { id } = useParams<{ id: string }>();
+interface StaffProfileProps {
+  staffId?: string;
+}
+
+export default function StaffProfile({ staffId: propStaffId }: StaffProfileProps = {}) {
+  const params = useParams<{ id: string }>();
+  const id = propStaffId || params.id;
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [isAvailabilityDialogOpen, setIsAvailabilityDialogOpen] = useState(false);
