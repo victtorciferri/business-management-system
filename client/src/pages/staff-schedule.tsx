@@ -3,7 +3,6 @@ import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { format, parseISO, addMinutes } from "date-fns";
-import { es } from "date-fns/locale";
 import { Calendar, Clock, Check, X, Edit, Copy, Plus, Trash2, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

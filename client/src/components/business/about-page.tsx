@@ -54,17 +54,17 @@ export default function AboutPage({ business, slug }: AboutPageProps) {
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="text-center">
                   <div className="w-32 h-32 mx-auto mb-4 rounded-full bg-gray-200 flex items-center justify-center">
-                    <span className="text-4xl font-bold text-gray-500">JP</span>
+                    <span className="text-4xl font-bold text-gray-500">JD</span>
                   </div>
-                  <h3 className="font-medium text-lg">Juan Pérez</h3>
+                  <h3 className="font-medium text-lg">John Davis</h3>
                   <p className="text-muted-foreground">Founder & Lead Stylist</p>
                 </div>
                 
                 <div className="text-center">
                   <div className="w-32 h-32 mx-auto mb-4 rounded-full bg-gray-200 flex items-center justify-center">
-                    <span className="text-4xl font-bold text-gray-500">MC</span>
+                    <span className="text-4xl font-bold text-gray-500">SM</span>
                   </div>
-                  <h3 className="font-medium text-lg">María Contreras</h3>
+                  <h3 className="font-medium text-lg">Sarah Miller</h3>
                   <p className="text-muted-foreground">Senior Stylist</p>
                 </div>
               </div>
@@ -80,9 +80,9 @@ export default function AboutPage({ business, slug }: AboutPageProps) {
               <div className="grid gap-6 md:grid-cols-2">
                 <div>
                   <h3 className="font-medium mb-2">Address</h3>
-                  <p className="text-muted-foreground mb-1">Av. Providencia 1208</p>
-                  <p className="text-muted-foreground mb-1">Providencia, Santiago</p>
-                  <p className="text-muted-foreground">Chile</p>
+                  <p className="text-muted-foreground mb-1">123 Main Street</p>
+                  <p className="text-muted-foreground mb-1">Midtown, New York</p>
+                  <p className="text-muted-foreground">USA</p>
                 </div>
                 
                 <div>
@@ -100,8 +100,8 @@ export default function AboutPage({ business, slug }: AboutPageProps) {
               
               <div className="mt-6">
                 <h3 className="font-medium mb-2">Contact</h3>
-                <p className="text-muted-foreground mb-1">Phone: {business.phone || "+56 9 9876 5432"}</p>
-                <p className="text-muted-foreground">Email: contact@{business.businessSlug}.cl</p>
+                <p className="text-muted-foreground mb-1">Phone: {business.phone || "(555) 123-4567"}</p>
+                <p className="text-muted-foreground">Email: contact@{business.businessSlug}.com</p>
               </div>
             </CardContent>
           </Card>
