@@ -2360,6 +2360,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Staff Management Routes
   app.get("/api/staff", async (req: Request, res: Response) => {
     try {
+      // For customer portal case - access via businessId query parameter (doesn't require authentication)
+      if (req.query.businessId) {
+        const businessId = parseInt(req.query.businessId as string);
+        if (isNaN(businessId)) {
+          return res.status(400).json({ message: "Invalid business ID" });
+        }
+        // Find the business to validate it exists
+        const business = await storage.getUser(businessId);
+        if (!business || business.role !== "business") {
+          return res.status(404).json({ message: "Business not found" });
+        }
+        
+        // Get staff for this business with limited fields for public view
+        const staffMembers = await storage.getStaffByBusinessId(businessId);
+        // Filter out sensitive information for public view
+        const publicStaffInfo = staffMembers.map(staff => ({
+          id: staff.id,
+          username: staff.username,
+          email: staff.email,
+          phone: staff.phone,
+          role: staff.role
+        }));
+        return res.json(publicStaffInfo);
+      }
+      
+      // For authenticated access (admin/business owner/staff)
       if (!req.isAuthenticated()) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -2508,6 +2534,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Staff Availability Routes
   app.get("/api/staff/:id/availability", async (req: Request, res: Response) => {
     try {
+      // For customer portal - allow public access with businessId validation
+      if (req.query.businessId) {
+        const businessId = parseInt(req.query.businessId as string);
+        const staffId = parseInt(req.params.id);
+        
+        if (isNaN(businessId) || isNaN(staffId)) {
+          return res.status(400).json({ message: "Invalid parameters" });
+        }
+        
+        // Validate both staff and business exist
+        const staff = await storage.getUser(staffId);
+        const business = await storage.getUser(businessId);
+        
+        if (!staff || !business || business.role !== "business") {
+          return res.status(404).json({ message: "Staff or business not found" });
+        }
+        
+        // Verify staff belongs to this business
+        if (staff.businessId !== businessId) {
+          return res.status(403).json({ message: "Staff not associated with this business" });
+        }
+        
+        // Return availability for public view
+        const availability = await storage.getStaffAvailability(staffId);
+        return res.json(availability);
+      }
+      
+      // For authenticated users (admin, business owner, staff)
       if (!req.isAuthenticated()) {
         return res.status(401).json({ message: "Not authenticated" });
       }

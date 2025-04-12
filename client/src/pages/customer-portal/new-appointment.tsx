@@ -95,9 +95,16 @@ export default function NewAppointment() {
     enabled: true
   });
   
-  // Query to fetch staff members
+  // Query to fetch staff members for this business
   const { data: staff } = useQuery({
-    queryKey: ['/api/staff'],
+    queryKey: ['/api/staff', businessId],
+    queryFn: async () => {
+      const response = await fetch(`/api/staff?businessId=${businessId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch staff members');
+      }
+      return response.json();
+    },
     enabled: currentStep === 'appointment-details'
   });
   
