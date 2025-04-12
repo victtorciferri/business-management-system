@@ -20,13 +20,13 @@ import { Appointment, StaffAvailability } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 
 const weekDays = [
-  { id: 0, name: "Domingo" },
-  { id: 1, name: "Lunes" },
-  { id: 2, name: "Martes" },
-  { id: 3, name: "Miércoles" },
-  { id: 4, name: "Jueves" },
-  { id: 5, name: "Viernes" },
-  { id: 6, name: "Sábado" }
+  { id: 0, name: "Sunday" },
+  { id: 1, name: "Monday" },
+  { id: 2, name: "Tuesday" },
+  { id: 3, name: "Wednesday" },
+  { id: 4, name: "Thursday" },
+  { id: 5, name: "Friday" },
+  { id: 6, name: "Saturday" }
 ];
 
 const timeSlots = Array.from({ length: 24 * 4 }, (_, i) => {
@@ -303,7 +303,7 @@ export default function StaffSchedule() {
         : new Date(appointment.date);
       
       // Format the date string
-      const dateStr = format(appointmentDate, "EEEE d 'de' MMMM", { locale: es });
+      const dateStr = format(appointmentDate, "EEEE, MMMM d");
       
       // Calculate the end time by adding duration minutes to the start time
       const endTime = addMinutes(appointmentDate, appointment.duration);
@@ -314,30 +314,30 @@ export default function StaffSchedule() {
       return { date: dateStr, time: timeStr };
     } catch (error) {
       console.error("Error formatting date:", error);
-      return { date: "Fecha inválida", time: "Hora inválida" };
+      return { date: "Invalid date", time: "Invalid time" };
     }
   };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight">Mi Horario</h1>
+        <h1 className="text-3xl font-bold tracking-tight">My Schedule</h1>
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid grid-cols-2 w-[400px]">
-          <TabsTrigger value="availability">Disponibilidad</TabsTrigger>
-          <TabsTrigger value="appointments">Citas</TabsTrigger>
+          <TabsTrigger value="availability">Availability</TabsTrigger>
+          <TabsTrigger value="appointments">Appointments</TabsTrigger>
         </TabsList>
         
         {/* Availability Tab */}
         <TabsContent value="availability" className="space-y-4">
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Mi Disponibilidad</h2>
+            <h2 className="text-xl font-semibold">My Availability</h2>
             {hasPendingChanges && (
               <Badge variant="outline" className="text-amber-500 border-amber-500 mr-4 px-2">
                 <AlertCircle className="h-4 w-4 mr-1 inline" />
-                Cambios pendientes
+                Pending changes
               </Badge>
             )}
             <Button 
@@ -347,7 +347,7 @@ export default function StaffSchedule() {
               {saveAvailabilityMutation.isPending && (
                 <div className="animate-spin mr-2 h-4 w-4 border-2 border-background border-t-transparent rounded-full" />
               )}
-              Guardar Cambios
+              Save Changes
             </Button>
           </div>
           
@@ -360,12 +360,12 @@ export default function StaffSchedule() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[150px]">Día</TableHead>
-                    <TableHead className="w-[70px] text-center">Disponible</TableHead>
-                    <TableHead className="w-[160px]">Hora inicio</TableHead>
-                    <TableHead className="w-[160px]">Hora fin</TableHead>
-                    <TableHead>Descansos</TableHead>
-                    <TableHead className="w-[120px] text-right">Acciones</TableHead>
+                    <TableHead className="w-[150px]">Day</TableHead>
+                    <TableHead className="w-[70px] text-center">Available</TableHead>
+                    <TableHead className="w-[160px]">Start Time</TableHead>
+                    <TableHead className="w-[160px]">End Time</TableHead>
+                    <TableHead>Breaks</TableHead>
+                    <TableHead className="w-[120px] text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -387,7 +387,7 @@ export default function StaffSchedule() {
                           disabled={!day.isEnabled}
                         >
                           <SelectTrigger className="w-[130px]">
-                            <SelectValue placeholder="Inicio" />
+                            <SelectValue placeholder="Start" />
                           </SelectTrigger>
                           <SelectContent>
                             {timeSlots.map(time => (
@@ -405,7 +405,7 @@ export default function StaffSchedule() {
                           disabled={!day.isEnabled}
                         >
                           <SelectTrigger className="w-[130px]">
-                            <SelectValue placeholder="Fin" />
+                            <SelectValue placeholder="End" />
                           </SelectTrigger>
                           <SelectContent>
                             {timeSlots.map(time => (
@@ -443,7 +443,7 @@ export default function StaffSchedule() {
                             disabled={!day.isEnabled}
                           >
                             <Plus className="h-3 w-3 mr-1" />
-                            Descanso
+                            Break
                           </Button>
                         </div>
                       </TableCell>
@@ -456,7 +456,7 @@ export default function StaffSchedule() {
                           className="h-7"
                         >
                           <Copy className="h-3 w-3 mr-1" />
-                          Copiar a todos
+                          Copy to all
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -469,7 +469,7 @@ export default function StaffSchedule() {
         
         {/* Appointments Tab */}
         <TabsContent value="appointments" className="space-y-4">
-          <h2 className="text-xl font-semibold">Mis Citas</h2>
+          <h2 className="text-xl font-semibold">My Appointments</h2>
           
           {appointmentsLoading ? (
             <div className="flex justify-center p-8">
