@@ -184,7 +184,12 @@ export default function MyAppointments() {
   return (
     <div className="container mx-auto py-10">
       <div className="mb-8 flex items-center">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/customer-portal")} className="mr-2">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => navigate(accessToken ? `/customer-portal?token=${accessToken}` : "/customer-portal")} 
+          className="mr-2"
+        >
           <ArrowLeftIcon className="h-5 w-5" />
         </Button>
         <div>
@@ -250,7 +255,11 @@ export default function MyAppointments() {
                 Your access token is invalid or has expired.
               </p>
               <div className="flex flex-col gap-3 items-center">
-                <Button onClick={() => navigate("/customer-portal/book")}>
+                <Button onClick={() => navigate(
+                  accessToken 
+                    ? `/customer-portal/book?token=${accessToken}` 
+                    : "/customer-portal/book"
+                )}>
                   Book a New Appointment
                 </Button>
                 <Button variant="outline" onClick={() => {
@@ -318,7 +327,11 @@ export default function MyAppointments() {
               <p className="text-muted-foreground mb-4">
                 Hello {customerProfile?.customer.firstName}, you don't have any appointments scheduled with us.
               </p>
-              <Button onClick={() => navigate("/customer-portal/book")}>
+              <Button onClick={() => navigate(
+                accessToken 
+                  ? `/customer-portal/book?token=${accessToken}` 
+                  : "/customer-portal/book"
+              )}>
                 Book an Appointment
               </Button>
             </div>
