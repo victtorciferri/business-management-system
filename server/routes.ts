@@ -702,7 +702,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const accessToken = await storage.createCustomerAccessToken({
         customerId: customer.id,
         token,
-        expiresAt
+        expiresAt,
+        businessId: businessId
       });
       
       // Get the business information

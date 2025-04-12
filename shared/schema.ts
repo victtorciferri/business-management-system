@@ -484,18 +484,22 @@ export const customerAccessTokens = pgTable("customer_access_tokens", {
   id: serial("id").primaryKey(),
   customerId: integer("customer_id").notNull().references(() => customers.id, { onDelete: 'cascade' }),
   token: text("token").notNull().unique(),
+  businessId: integer("business_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  lastUsedAt: timestamp("last_used_at"),
 }, (table) => {
   return {
     customerIdIdx: index("customer_tokens_customer_id_idx").on(table.customerId),
     tokenIdx: index("customer_tokens_token_idx").on(table.token),
+    businessIdIdx: index("customer_tokens_business_id_idx").on(table.businessId),
   };
 });
 
 export const insertCustomerAccessTokenSchema = createInsertSchema(customerAccessTokens).pick({
   customerId: true,
   token: true,
+  businessId: true,
   expiresAt: true,
 });
 
