@@ -1809,6 +1809,263 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Staff Management Routes
+  app.get("/api/staff", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated() || (req.user.role !== "business" && req.user.role !== "admin")) {
+        return res.status(403).json({ message: "Not authorized to view staff" });
+      }
+      
+      const businessId = req.user.role === "business" ? req.user.id : undefined;
+      const staffMembers = await storage.getStaffByBusinessId(businessId || req.user.id);
+      
+      // Get appointment counts for each staff member
+      const staffWithCounts = await Promise.all(
+        staffMembers.map(async (staff) => {
+          const appointments = await storage.getStaffAppointments(staff.id);
+          return {
+            ...staff,
+            appointmentsCount: appointments.length,
+            availability: await storage.getStaffAvailability(staff.id)
+          };
+        })
+      );
+      
+      res.json(staffWithCounts);
+    } catch (error) {
+      console.error("Error fetching staff:", error);
+      res.status(500).json({ message: "Failed to fetch staff members" });
+    }
+  });
+
+  app.get("/api/staff/:id", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated() || (req.user.role !== "business" && req.user.role !== "admin" && req.user.id !== parseInt(req.params.id))) {
+        return res.status(403).json({ message: "Not authorized to view this staff profile" });
+      }
+      
+      const staffId = parseInt(req.params.id);
+      const staff = await storage.getUser(staffId);
+      
+      if (!staff) {
+        return res.status(404).json({ message: "Staff member not found" });
+      }
+      
+      // Check if the staff belongs to the current business (if current user is a business)
+      if (req.user.role === "business" && staff.businessId !== req.user.id) {
+        return res.status(403).json({ message: "This staff member does not belong to your business" });
+      }
+      
+      // Remove sensitive data
+      const { password, ...staffData } = staff;
+      
+      res.json(staffData);
+    } catch (error) {
+      console.error("Error fetching staff profile:", error);
+      res.status(500).json({ message: "Failed to fetch staff profile" });
+    }
+  });
+
+  app.post("/api/staff", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated() || (req.user.role !== "business" && req.user.role !== "admin")) {
+        return res.status(403).json({ message: "Not authorized to create staff members" });
+      }
+      
+      const { username, email, password, role } = req.body;
+      
+      if (role !== "staff") {
+        return res.status(400).json({ message: "Invalid role for staff member" });
+      }
+      
+      // Check if username or email already exists
+      const existingUser = await storage.getUserByUsername(username);
+      if (existingUser) {
+        return res.status(400).json({ message: "Username already exists" });
+      }
+      
+      const existingEmail = await storage.getUserByEmail(email);
+      if (existingEmail) {
+        return res.status(400).json({ message: "Email already exists" });
+      }
+      
+      // Hash password
+      const bcrypt = require('bcrypt');
+      const hashedPassword = await bcrypt.hash(password, 10);
+      
+      // Create staff member
+      const businessId = req.user.role === "business" ? req.user.id : req.body.businessId;
+      
+      const staffMember = await storage.createStaffMember({
+        username,
+        email,
+        password: hashedPassword,
+        role: "staff",
+        businessId
+      }, businessId);
+      
+      // Remove sensitive data
+      const { password: pw, ...staffData } = staffMember;
+      
+      res.status(201).json(staffData);
+    } catch (error) {
+      console.error("Error creating staff member:", error);
+      res.status(500).json({ message: "Failed to create staff member" });
+    }
+  });
+
+  app.delete("/api/staff/:id", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated() || (req.user.role !== "business" && req.user.role !== "admin")) {
+        return res.status(403).json({ message: "Not authorized to delete staff members" });
+      }
+      
+      const staffId = parseInt(req.params.id);
+      const staff = await storage.getUser(staffId);
+      
+      if (!staff) {
+        return res.status(404).json({ message: "Staff member not found" });
+      }
+      
+      // Check if the staff belongs to the current business (if current user is a business)
+      if (req.user.role === "business" && staff.businessId !== req.user.id) {
+        return res.status(403).json({ message: "This staff member does not belong to your business" });
+      }
+      
+      // Delete staff member
+      await storage.deleteStaffMember(staffId);
+      
+      res.status(200).json({ message: "Staff member deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting staff member:", error);
+      res.status(500).json({ message: "Failed to delete staff member" });
+    }
+  });
+
+  // Staff Availability Routes
+  app.get("/api/staff/:id/availability", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const staffId = parseInt(req.params.id);
+      const staff = await storage.getUser(staffId);
+      
+      if (!staff) {
+        return res.status(404).json({ message: "Staff member not found" });
+      }
+      
+      // Check permissions
+      if (req.user.role === "business" && staff.businessId !== req.user.id && req.user.id !== staffId) {
+        return res.status(403).json({ message: "Not authorized to view this staff's availability" });
+      }
+      
+      const availability = await storage.getStaffAvailability(staffId);
+      res.json(availability);
+    } catch (error) {
+      console.error("Error fetching staff availability:", error);
+      res.status(500).json({ message: "Failed to fetch staff availability" });
+    }
+  });
+
+  app.post("/api/staff/:id/availability", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const staffId = parseInt(req.params.id);
+      const staff = await storage.getUser(staffId);
+      
+      if (!staff) {
+        return res.status(404).json({ message: "Staff member not found" });
+      }
+      
+      // Check permissions
+      if (req.user.role === "business" && staff.businessId !== req.user.id && req.user.id !== staffId) {
+        return res.status(403).json({ message: "Not authorized to manage this staff's availability" });
+      }
+      
+      const { dayOfWeek, startTime, endTime, isAvailable } = req.body;
+      
+      // Validate input
+      if (dayOfWeek < 0 || dayOfWeek > 6) {
+        return res.status(400).json({ message: "Invalid day of week" });
+      }
+      
+      // Create availability
+      const availability = await storage.createStaffAvailability({
+        staffId,
+        dayOfWeek,
+        startTime,
+        endTime,
+        isAvailable: isAvailable !== undefined ? isAvailable : true
+      });
+      
+      res.status(201).json(availability);
+    } catch (error) {
+      console.error("Error creating staff availability:", error);
+      res.status(500).json({ message: "Failed to create staff availability" });
+    }
+  });
+
+  app.delete("/api/staff/availability/:id", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const availabilityId = parseInt(req.params.id);
+      const availability = await storage.getStaffAvailabilityById(availabilityId);
+      
+      if (!availability) {
+        return res.status(404).json({ message: "Availability slot not found" });
+      }
+      
+      const staff = await storage.getUser(availability.staffId);
+      
+      // Check permissions
+      if (req.user.role === "business" && staff?.businessId !== req.user.id && req.user.id !== availability.staffId) {
+        return res.status(403).json({ message: "Not authorized to manage this staff's availability" });
+      }
+      
+      // Delete availability
+      await storage.deleteStaffAvailability(availabilityId);
+      
+      res.status(200).json({ message: "Availability slot deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting staff availability:", error);
+      res.status(500).json({ message: "Failed to delete staff availability" });
+    }
+  });
+
+  app.get("/api/staff/:id/appointments", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const staffId = parseInt(req.params.id);
+      const staff = await storage.getUser(staffId);
+      
+      if (!staff) {
+        return res.status(404).json({ message: "Staff member not found" });
+      }
+      
+      // Check permissions
+      if (req.user.role === "business" && staff.businessId !== req.user.id && req.user.id !== staffId) {
+        return res.status(403).json({ message: "Not authorized to view this staff's appointments" });
+      }
+      
+      const appointments = await storage.getStaffAppointments(staffId);
+      res.json(appointments);
+    } catch (error) {
+      console.error("Error fetching staff appointments:", error);
+      res.status(500).json({ message: "Failed to fetch staff appointments" });
+    }
+  });
+
   // Create the HTTP server
   const httpServer = createServer(app);
   return httpServer;

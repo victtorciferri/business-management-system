@@ -78,6 +78,21 @@ export interface IStorage {
   addCartItem(item: InsertCartItem): Promise<CartItem>;
   updateCartItem(id: number, item: Partial<InsertCartItem>): Promise<CartItem | undefined>;
   removeCartItem(id: number): Promise<boolean>;
+  
+  // Staff methods
+  getStaffByBusinessId(businessId: number): Promise<User[]>;
+  createStaffMember(staffData: InsertUser, businessId: number): Promise<User>;
+  deleteStaffMember(staffId: number): Promise<boolean>;
+  
+  // Staff Availability methods
+  getStaffAvailability(staffId: number): Promise<StaffAvailability[]>;
+  getStaffAvailabilityById(id: number): Promise<StaffAvailability | undefined>;
+  createStaffAvailability(availability: InsertStaffAvailability): Promise<StaffAvailability>;
+  updateStaffAvailability(id: number, availability: Partial<InsertStaffAvailability>): Promise<StaffAvailability | undefined>;
+  deleteStaffAvailability(id: number): Promise<boolean>;
+  
+  // Staff Appointments
+  getStaffAppointments(staffId: number): Promise<Appointment[]>;
 }
 
 // Create a database storage instance
