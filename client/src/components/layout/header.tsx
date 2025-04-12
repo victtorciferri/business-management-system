@@ -13,14 +13,14 @@ interface LayoutProps {
 export default function Layout({ children, currentUser }: LayoutProps) {
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { logout } = useAuth();
+  const { logoutMutation } = useAuth();
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
   
   const handleLogout = async () => {
-    await logout();
+    await logoutMutation.mutate();
     window.location.href = '/auth';
   };
 
@@ -31,6 +31,7 @@ export default function Layout({ children, currentUser }: LayoutProps) {
     { name: "Customers", path: "/customers" },
     { name: "Services", path: "/services" },
     { name: "Products", path: "/products" },
+    { name: "Staff", path: "/staff-management" },
     { name: "Custom Domain", path: "/custom-domain" },
   ];
   

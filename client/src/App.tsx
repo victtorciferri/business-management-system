@@ -15,6 +15,8 @@ import CustomDomain from "@/pages/custom-domain";
 import PreviewBusiness from "@/pages/preview-business";
 import AdminDashboard from "@/pages/admin-dashboard";
 import AuthPage from "@/pages/auth-page";
+import StaffManagement from "@/pages/staff-management";
+import StaffProfile from "@/pages/staff-profile";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useState, useEffect } from "react";
 import { User } from "@shared/schema";
@@ -37,7 +39,8 @@ function AppContent() {
   // Define reserved paths that should not be treated as business slugs
   const reservedPaths = [
     'api', 'auth', 'admin', 'checkout', 'preview', 'instructions',
-    'products', 'services', 'dashboard', 'appointments', 'customers'
+    'products', 'services', 'dashboard', 'appointments', 'customers',
+    'staff-management', 'staff-profile'
   ];
   
   const potentialBusinessSlug = match && 
@@ -194,6 +197,18 @@ function AppContent() {
             <ProtectedRoute>
               <PreviewBusiness />
             </ProtectedRoute>
+          </Route>
+          <Route path="/staff-management">
+            <ProtectedRoute>
+              <StaffManagement />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/staff-profile/:id">
+            {params => (
+              <ProtectedRoute>
+                <StaffProfile />
+              </ProtectedRoute>
+            )}
           </Route>
           <Route component={NotFound} />
         </Switch>
