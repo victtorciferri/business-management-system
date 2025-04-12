@@ -268,4 +268,109 @@ export class DatabaseStorage implements IStorage {
     const result = await db.delete(products).where(eq(products.id, id));
     return !!result;
   }
+  
+  // Product Variant methods
+  async getProductVariant(id: number): Promise<ProductVariant | undefined> {
+    const [variant] = await db.select().from(productVariants).where(eq(productVariants.id, id));
+    return variant || undefined;
+  }
+  
+  async getProductVariantsByProductId(productId: number): Promise<ProductVariant[]> {
+    return db.select().from(productVariants).where(eq(productVariants.productId, productId));
+  }
+  
+  async createProductVariant(variant: InsertProductVariant): Promise<ProductVariant> {
+    const [newVariant] = await db.insert(productVariants).values(variant).returning();
+    return newVariant;
+  }
+  
+  async updateProductVariant(id: number, variantUpdate: Partial<InsertProductVariant>): Promise<ProductVariant | undefined> {
+    const [updatedVariant] = await db
+      .update(productVariants)
+      .set(variantUpdate)
+      .where(eq(productVariants.id, id))
+      .returning();
+    return updatedVariant || undefined;
+  }
+  
+  async deleteProductVariant(id: number): Promise<boolean> {
+    const result = await db.delete(productVariants).where(eq(productVariants.id, id));
+    return !!result;
+  }
+  
+  // Cart methods
+  async getCart(id: number): Promise<Cart | undefined> {
+    const [cart] = await db.select().from(carts).where(eq(carts.id, id));
+    return cart || undefined;
+  }
+  
+  async getCartByUserId(userId: number): Promise<Cart | undefined> {
+    const [cart] = await db.select().from(carts)
+      .where(and(
+        eq(carts.userId, userId),
+        eq(carts.status, "active")
+      ));
+    return cart || undefined;
+  }
+  
+  async getCartByCustomerId(customerId: number): Promise<Cart | undefined> {
+    const [cart] = await db.select().from(carts)
+      .where(and(
+        eq(carts.customerId, customerId),
+        eq(carts.status, "active")
+      ));
+    return cart || undefined;
+  }
+  
+  async getCartByGuestId(guestId: string): Promise<Cart | undefined> {
+    const [cart] = await db.select().from(carts)
+      .where(and(
+        eq(carts.guestId, guestId),
+        eq(carts.status, "active")
+      ));
+    return cart || undefined;
+  }
+  
+  async createCart(cart: InsertCart): Promise<Cart> {
+    const [newCart] = await db.insert(carts).values(cart).returning();
+    return newCart;
+  }
+  
+  async updateCart(id: number, cartUpdate: Partial<InsertCart>): Promise<Cart | undefined> {
+    const [updatedCart] = await db
+      .update(carts)
+      .set(cartUpdate)
+      .where(eq(carts.id, id))
+      .returning();
+    return updatedCart || undefined;
+  }
+  
+  // Cart Item methods
+  async getCartItem(id: number): Promise<CartItem | undefined> {
+    const [item] = await db.select().from(cartItems).where(eq(cartItems.id, id));
+    return item || undefined;
+  }
+  
+  async getCartItemsByCartId(cartId: number): Promise<CartItem[]> {
+    return db.select().from(cartItems).where(eq(cartItems.cartId, cartId));
+  }
+  
+  async addCartItem(item: InsertCartItem): Promise<CartItem> {
+    const [newItem] = await db.insert(cartItems).values(item).returning();
+    return newItem;
+  }
+  
+  async updateCartItem(id: number, itemUpdate: Partial<InsertCartItem>): Promise<CartItem | undefined> {
+    const [updatedItem] = await db
+      .update(cartItems)
+      .set(itemUpdate)
+      .where(eq(cartItems.id, id))
+      .returning();
+    return updatedItem || undefined;
+  }
+  
+  async removeCartItem(id: number): Promise<boolean> {
+    const result = await db.delete(cartItems).where(eq(cartItems.id, id));
+    return !!result;
+  }
 }
