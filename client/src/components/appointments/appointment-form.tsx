@@ -156,10 +156,25 @@ export function AppointmentForm({
       }
       
       // Send email reminder if requested
-      if (values.sendReminder && !existingAppointment?.reminderSent) {
-        // In a real application, we would schedule this for later
-        // For the MVP, we'll just call the API to simulate sending immediately
-        await apiRequest("POST", "/api/send-reminder", { appointmentId: existingAppointment?.id });
+      if (values.sendReminder) {
+        // Get the appointment ID - either the existing one or the newly created one
+        let appointmentId;
+        
+        if (existingAppointment) {
+          // For existing appointments
+          appointmentId = existingAppointment.id;
+        } else {
+          // For newly created appointments, we need to use the response from the create operation
+          // The appointment ID is now stored in the response from the create request
+          appointmentId = appointment.id;
+        }
+        
+        if (appointmentId && (!existingAppointment || !existingAppointment.reminderSent)) {
+          // In a real application, we would schedule this for later
+          // For the MVP, we'll just call the API to simulate sending immediately
+          console.log("Sending reminder for appointment ID:", appointmentId);
+          await apiRequest("POST", "/api/send-reminder", { appointmentId });
+        }
       }
       
       // Invalidate appointments query to refresh the data
