@@ -151,6 +151,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/business/:slug", async (req: Request, res: Response) => {
     try {
       const { slug } = req.params;
+      
+      // Skip reserved words for API endpoints
+      const reservedWords = [
+        'products', 'services', 'dashboard', 'appointments', 
+        'customers', 'admin', 'auth', 'checkout'
+      ];
+      
+      if (reservedWords.includes(slug)) {
+        console.log(`Skipping business lookup for reserved word: ${slug}`);
+        return res.status(404).json({ message: "Not a valid business slug" });
+      }
+      
       console.log(`API request for business with slug: ${slug}`);
       
       // Use the verified working approach from our test endpoint
