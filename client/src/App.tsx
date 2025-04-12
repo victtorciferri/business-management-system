@@ -21,6 +21,7 @@ import StaffSchedule from "@/pages/staff-schedule";
 import ZeroFriction from "@/pages/customer-portal/zero-friction";
 import NewAppointment from "@/pages/customer-portal/new-appointment";
 import CustomerPortal from "@/pages/customer-portal/index";
+import MyAppointments from "@/pages/customer-portal/my-appointments";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useState, useEffect } from "react";
 import { User } from "@shared/schema";
@@ -167,6 +168,7 @@ function AppContent() {
           <Route path="/customer-portal" component={CustomerPortal} />
           <Route path="/customer-portal/zero-friction" component={ZeroFriction} />
           <Route path="/customer-portal/new-appointment" component={NewAppointment} />
+          <Route path="/customer-portal/my-appointments" component={MyAppointments} />
           <Route path="/appointments">
             <ProtectedRoute>
               <Appointments />
