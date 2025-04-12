@@ -22,8 +22,8 @@ export default function BusinessHeader({ business, slug, currentPath }: Business
     { name: "Home", path: `/${slug}`, value: "home", icon: <Home className="h-4 w-4 mr-2" /> },
     { name: "Our Services", path: `/${slug}/store`, value: "services", icon: <Store className="h-4 w-4 mr-2" /> },
     { name: "About Us", path: `/${slug}/about`, value: "about", icon: <Info className="h-4 w-4 mr-2" /> },
-    { name: "Book Appointment", path: `/${slug}/schedule`, value: "book", icon: <Calendar className="h-4 w-4 mr-2" /> },
-    { name: "My Appointments", path: `/${slug}?tab=my-appointments`, value: "my-appointments", icon: <Clock className="h-4 w-4 mr-2" /> },
+    { name: "Book Appointment", path: `/customer-portal/new-appointment?businessId=${business.id}`, value: "book", icon: <Calendar className="h-4 w-4 mr-2" /> },
+    { name: "My Appointments", path: `/customer-portal/my-appointments`, value: "my-appointments", icon: <Clock className="h-4 w-4 mr-2" /> },
   ];
 
   // Determine the active path
@@ -66,10 +66,10 @@ export default function BusinessHeader({ business, slug, currentPath }: Business
         setLocation(`/${slug}/store`);
         break;
       case 'book':
-        setLocation(`/${slug}/schedule`);
+        window.location.href = `/customer-portal/new-appointment?businessId=${business.id}`;
         break;
       case 'my-appointments':
-        setLocation(`/${slug}?tab=my-appointments`);
+        window.location.href = `/customer-portal/my-appointments`;
         break;
       case 'about':
         setLocation(`/${slug}/about`);

@@ -18,7 +18,7 @@ import AuthPage from "@/pages/auth-page";
 import StaffManagement from "@/pages/staff-management";
 import StaffProfile from "@/pages/staff-profile";
 import StaffSchedule from "@/pages/staff-schedule";
-import ZeroFriction from "@/pages/customer-portal/zero-friction";
+
 import NewAppointment from "@/pages/customer-portal/new-appointment";
 import CustomerPortal from "@/pages/customer-portal/index";
 import MyAppointments from "@/pages/customer-portal/my-appointments";
@@ -160,14 +160,10 @@ function AppContent() {
             </ProtectedRoute>
           </Route>
           <Route path="/auth" component={AuthPage} />
-          <Route path="/zero-friction">
-            <Redirect to="/customer-portal/zero-friction" />
-          </Route>
           <Route path="/new-appointment">
             <Redirect to="/customer-portal/new-appointment" />
           </Route>
           <Route path="/customer-portal" component={CustomerPortal} />
-          <Route path="/customer-portal/zero-friction" component={ZeroFriction} />
           <Route path="/customer-portal/new-appointment" component={NewAppointment} />
           <Route path="/customer-portal/my-appointments" component={MyAppointments} />
           <Route path="/appointments">
