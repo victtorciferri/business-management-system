@@ -9,12 +9,16 @@ import {
   insertAppointmentSchema,
   insertPaymentSchema,
   insertProductSchema,
+  insertProductVariantSchema,
+  insertCartSchema,
+  insertCartItemSchema,
   users
 } from "@shared/schema";
 import { eq, sql, desc } from "drizzle-orm";
 import { z } from "zod";
 import Stripe from "stripe";
 import nodemailer from "nodemailer";
+import crypto from "crypto";
 import { businessExtractor } from "./middleware/businessExtractor";
 import { manuallyRegisterDomain, getRegisteredDomains } from "./ssl";
 
@@ -1253,6 +1257,388 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting product:", error);
       return res.status(500).json({ message: "Failed to delete product" });
+    }
+  });
+  
+  // Product Variants routes
+  app.get("/api/products/:productId/variants", async (req: Request, res: Response) => {
+    try {
+      const productId = parseInt(req.params.productId);
+      
+      if (isNaN(productId)) {
+        return res.status(400).json({ message: "Invalid product ID" });
+      }
+      
+      const variants = await storage.getProductVariantsByProductId(productId);
+      return res.json(variants);
+    } catch (error) {
+      console.error("Error fetching product variants:", error);
+      return res.status(500).json({ message: "Failed to fetch product variants" });
+    }
+  });
+  
+  app.post("/api/products/:productId/variants", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated || !req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const productId = parseInt(req.params.productId);
+      
+      if (isNaN(productId)) {
+        return res.status(400).json({ message: "Invalid product ID" });
+      }
+      
+      const product = await storage.getProduct(productId);
+      
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      
+      // Ensure user can only add variants to their own products
+      if (product.userId !== req.user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const variantData = {
+        ...req.body,
+        productId
+      };
+      
+      const newVariant = await storage.createProductVariant(variantData);
+      
+      // Update product to indicate it has variants
+      if (!product.hasVariants) {
+        await storage.updateProduct(productId, { hasVariants: true });
+      }
+      
+      return res.status(201).json(newVariant);
+    } catch (error) {
+      console.error("Error creating product variant:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid variant data", errors: error.errors });
+      }
+      return res.status(500).json({ message: "Failed to create product variant" });
+    }
+  });
+  
+  app.put("/api/product-variants/:id", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated || !req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const variantId = parseInt(req.params.id);
+      
+      if (isNaN(variantId)) {
+        return res.status(400).json({ message: "Invalid variant ID" });
+      }
+      
+      const variant = await storage.getProductVariant(variantId);
+      
+      if (!variant) {
+        return res.status(404).json({ message: "Product variant not found" });
+      }
+      
+      const product = await storage.getProduct(variant.productId);
+      
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      
+      // Ensure user can only update variants of their own products
+      if (product.userId !== req.user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const updatedVariant = await storage.updateProductVariant(variantId, req.body);
+      return res.json(updatedVariant);
+    } catch (error) {
+      console.error("Error updating product variant:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid variant data", errors: error.errors });
+      }
+      return res.status(500).json({ message: "Failed to update product variant" });
+    }
+  });
+  
+  app.delete("/api/product-variants/:id", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated || !req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const variantId = parseInt(req.params.id);
+      
+      if (isNaN(variantId)) {
+        return res.status(400).json({ message: "Invalid variant ID" });
+      }
+      
+      const variant = await storage.getProductVariant(variantId);
+      
+      if (!variant) {
+        return res.status(404).json({ message: "Product variant not found" });
+      }
+      
+      const product = await storage.getProduct(variant.productId);
+      
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      
+      // Ensure user can only delete variants of their own products
+      if (product.userId !== req.user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      await storage.deleteProductVariant(variantId);
+      
+      // Check if there are any remaining variants
+      const remainingVariants = await storage.getProductVariantsByProductId(variant.productId);
+      
+      // If no variants are left, update the product to indicate it no longer has variants
+      if (remainingVariants.length === 0) {
+        await storage.updateProduct(variant.productId, { hasVariants: false });
+      }
+      
+      return res.status(204).end();
+    } catch (error) {
+      console.error("Error deleting product variant:", error);
+      return res.status(500).json({ message: "Failed to delete product variant" });
+    }
+  });
+  
+  // Shopping Cart routes
+  app.get("/api/cart", async (req: Request, res: Response) => {
+    try {
+      let cart;
+      
+      if (req.isAuthenticated && req.isAuthenticated()) {
+        // If user is logged in, get cart by user ID
+        cart = await storage.getCartByUserId(req.user.id);
+      } else if (req.query.guestId) {
+        // If user is not logged in but has a guest ID, get cart by guest ID
+        cart = await storage.getCartByGuestId(req.query.guestId as string);
+      } else if (req.query.customerId) {
+        // If accessing as a customer, get cart by customer ID
+        cart = await storage.getCartByCustomerId(parseInt(req.query.customerId as string));
+      } else {
+        // No identifiers provided
+        return res.status(400).json({ message: "Missing identifier for cart retrieval" });
+      }
+      
+      if (!cart) {
+        return res.status(404).json({ message: "Cart not found" });
+      }
+      
+      // Get cart items
+      const cartItems = await storage.getCartItemsByCartId(cart.id);
+      
+      return res.json({
+        ...cart,
+        items: cartItems
+      });
+    } catch (error) {
+      console.error("Error fetching cart:", error);
+      return res.status(500).json({ message: "Failed to fetch cart" });
+    }
+  });
+  
+  app.post("/api/cart", async (req: Request, res: Response) => {
+    try {
+      let userId = null;
+      let customerId = null;
+      let guestId = null;
+      
+      if (req.isAuthenticated && req.isAuthenticated()) {
+        userId = req.user.id;
+      } else if (req.body.customerId) {
+        customerId = parseInt(req.body.customerId);
+      } else if (req.body.guestId) {
+        guestId = req.body.guestId;
+      } else {
+        // Generate a new guest ID if none provided
+        guestId = crypto.randomUUID();
+      }
+      
+      // Check if cart already exists
+      let cart;
+      if (userId) {
+        cart = await storage.getCartByUserId(userId);
+      } else if (customerId) {
+        cart = await storage.getCartByCustomerId(customerId);
+      } else if (guestId) {
+        cart = await storage.getCartByGuestId(guestId);
+      }
+      
+      // If cart already exists, return it
+      if (cart) {
+        const cartItems = await storage.getCartItemsByCartId(cart.id);
+        return res.json({
+          ...cart,
+          items: cartItems
+        });
+      }
+      
+      // Create new cart
+      const newCart = await storage.createCart({
+        userId,
+        customerId,
+        guestId,
+        status: 'active'
+      });
+      
+      return res.status(201).json({
+        ...newCart,
+        items: []
+      });
+    } catch (error) {
+      console.error("Error creating cart:", error);
+      return res.status(500).json({ message: "Failed to create cart" });
+    }
+  });
+  
+  app.post("/api/cart/items", async (req: Request, res: Response) => {
+    try {
+      const { cartId, productId, variantId, quantity } = req.body;
+      
+      if (!cartId || !productId || !quantity) {
+        return res.status(400).json({ message: "Cart ID, product ID, and quantity are required" });
+      }
+      
+      // Fetch the cart to ensure it exists
+      const cart = await storage.getCart(cartId);
+      
+      if (!cart) {
+        return res.status(404).json({ message: "Cart not found" });
+      }
+      
+      // Check if the product exists
+      const product = await storage.getProduct(productId);
+      
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      
+      // If variantId is provided, check if the variant exists
+      if (variantId) {
+        const variant = await storage.getProductVariant(variantId);
+        
+        if (!variant) {
+          return res.status(404).json({ message: "Product variant not found" });
+        }
+        
+        // Check if the variant belongs to the product
+        if (variant.productId !== productId) {
+          return res.status(400).json({ message: "Variant does not belong to the specified product" });
+        }
+      }
+      
+      // Create cart item
+      const cartItem = await storage.addCartItem({
+        cartId,
+        productId,
+        variantId,
+        quantity,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+      
+      // Update cart's updatedAt timestamp
+      await storage.updateCart(cartId, { updatedAt: new Date() });
+      
+      return res.status(201).json(cartItem);
+    } catch (error) {
+      console.error("Error adding item to cart:", error);
+      return res.status(500).json({ message: "Failed to add item to cart" });
+    }
+  });
+  
+  app.put("/api/cart/items/:id", async (req: Request, res: Response) => {
+    try {
+      const itemId = parseInt(req.params.id);
+      const { quantity } = req.body;
+      
+      if (isNaN(itemId)) {
+        return res.status(400).json({ message: "Invalid cart item ID" });
+      }
+      
+      if (quantity === undefined) {
+        return res.status(400).json({ message: "Quantity is required" });
+      }
+      
+      // Get the cart item
+      const cartItem = await storage.getCartItem(itemId);
+      
+      if (!cartItem) {
+        return res.status(404).json({ message: "Cart item not found" });
+      }
+      
+      // Get the cart
+      const cart = await storage.getCart(cartItem.cartId);
+      
+      if (!cart) {
+        return res.status(404).json({ message: "Cart not found" });
+      }
+      
+      // Check if the authenticated user owns the cart
+      if (req.isAuthenticated && req.isAuthenticated() && cart.userId && cart.userId !== req.user.id) {
+        return res.status(403).json({ message: "You do not have permission to update this cart item" });
+      }
+      
+      // Update the cart item
+      const updatedCartItem = await storage.updateCartItem(itemId, {
+        quantity,
+        updatedAt: new Date()
+      });
+      
+      // Update cart's updatedAt timestamp
+      await storage.updateCart(cartItem.cartId, { updatedAt: new Date() });
+      
+      return res.json(updatedCartItem);
+    } catch (error) {
+      console.error("Error updating cart item:", error);
+      return res.status(500).json({ message: "Failed to update cart item" });
+    }
+  });
+  
+  app.delete("/api/cart/items/:id", async (req: Request, res: Response) => {
+    try {
+      const itemId = parseInt(req.params.id);
+      
+      if (isNaN(itemId)) {
+        return res.status(400).json({ message: "Invalid cart item ID" });
+      }
+      
+      // Get the cart item
+      const cartItem = await storage.getCartItem(itemId);
+      
+      if (!cartItem) {
+        return res.status(404).json({ message: "Cart item not found" });
+      }
+      
+      // Get the cart
+      const cart = await storage.getCart(cartItem.cartId);
+      
+      if (!cart) {
+        return res.status(404).json({ message: "Cart not found" });
+      }
+      
+      // Check if the authenticated user owns the cart
+      if (req.isAuthenticated && req.isAuthenticated() && cart.userId && cart.userId !== req.user.id) {
+        return res.status(403).json({ message: "You do not have permission to delete this cart item" });
+      }
+      
+      // Remove the cart item
+      await storage.removeCartItem(itemId);
+      
+      // Update cart's updatedAt timestamp
+      await storage.updateCart(cartItem.cartId, { updatedAt: new Date() });
+      
+      return res.status(204).end();
+    } catch (error) {
+      console.error("Error removing cart item:", error);
+      return res.status(500).json({ message: "Failed to remove cart item" });
     }
   });
 
