@@ -721,8 +721,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const appointmentData = insertAppointmentSchema.parse(req.body);
         console.log("Validated appointment data:", JSON.stringify(appointmentData));
         
+        // Create an appointment object with correct date type
+        const processedAppointmentData = {
+          ...appointmentData,
+          // Convert date string to Date object if it's a string
+          date: typeof appointmentData.date === 'string' 
+            ? new Date(appointmentData.date) 
+            : appointmentData.date
+        };
+        
+        console.log("Processed appointment data:", JSON.stringify({
+          ...processedAppointmentData,
+          date: processedAppointmentData.date.toISOString()
+        }));
+        
         // Create appointment
-        const appointment = await storage.createAppointment(appointmentData);
+        const appointment = await storage.createAppointment(processedAppointmentData);
         console.log("Created appointment:", JSON.stringify(appointment));
         
         res.status(201).json(appointment);
@@ -751,7 +765,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const appointmentData = insertAppointmentSchema.partial().parse(req.body);
-      const appointment = await storage.updateAppointment(id, appointmentData);
+      
+      // Create updated appointment data with proper date conversion
+      const processedAppointmentData = appointmentData.date
+        ? {
+            ...appointmentData,
+            // Convert date string to Date object if it's a string
+            date: typeof appointmentData.date === 'string'
+              ? new Date(appointmentData.date)
+              : appointmentData.date
+          }
+        : appointmentData;
+        
+      const appointment = await storage.updateAppointment(id, processedAppointmentData);
       
       if (!appointment) {
         return res.status(404).json({ message: "Appointment not found" });

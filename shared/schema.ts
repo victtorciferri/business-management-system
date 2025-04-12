@@ -139,18 +139,23 @@ export const appointments = pgTable("appointments", {
   };
 });
 
-export const insertAppointmentSchema = createInsertSchema(appointments).pick({
-  userId: true,
-  customerId: true,
-  serviceId: true,
-  staffId: true,
-  date: true,
-  duration: true,
-  status: true,
-  notes: true,
-  reminderSent: true,
-  paymentStatus: true,
-});
+export const insertAppointmentSchema = createInsertSchema(appointments)
+  .pick({
+    userId: true,
+    customerId: true,
+    serviceId: true,
+    staffId: true,
+    date: true,
+    duration: true,
+    status: true,
+    notes: true,
+    reminderSent: true,
+    paymentStatus: true,
+  })
+  .extend({
+    // Accept string for date (ISO format) instead of requiring a Date object
+    date: z.string().or(z.date()),
+  });
 
 // Payment schema
 export const payments = pgTable("payments", {
