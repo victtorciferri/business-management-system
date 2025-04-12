@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { format, addDays } from "date-fns";
-import { Clock, CalendarIcon, DollarSign } from "lucide-react";
+import { Clock, CalendarIcon, DollarSign, CalendarPlus } from "lucide-react";
 import { User, Service, Customer, Appointment } from "@shared/schema";
 
 // Import business components
@@ -112,8 +112,8 @@ export default function BusinessPortal({ slug, subPath, initialData }: BusinessP
   };
   
   const handleServiceSelect = (service: Service) => {
-    // Redirect to new appointment flow
-    window.location.href = `/customer-portal/new-appointment`;
+    // Redirect to new appointment flow with context
+    window.location.href = `/customer-portal/new-appointment?businessId=${business.id}&serviceId=${service.id}`;
   };
   
   const handleSearchSubmit = (e: React.FormEvent) => {
