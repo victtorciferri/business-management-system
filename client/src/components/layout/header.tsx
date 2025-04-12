@@ -13,14 +13,14 @@ interface LayoutProps {
 export default function Layout({ children, currentUser }: LayoutProps) {
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { logoutMutation } = useAuth();
+  const { logout } = useAuth();
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
   
   const handleLogout = async () => {
-    await logoutMutation.mutate();
+    await logout();
     window.location.href = '/auth';
   };
 
