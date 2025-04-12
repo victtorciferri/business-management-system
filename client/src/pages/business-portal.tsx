@@ -112,8 +112,8 @@ export default function BusinessPortal({ slug, subPath, initialData }: BusinessP
   };
   
   const handleServiceSelect = (service: Service) => {
-    setSelectedService(service);
-    setActiveTab("book");
+    // Redirect to new appointment flow
+    window.location.href = `/customer-portal/new-appointment`;
   };
   
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -227,111 +227,32 @@ export default function BusinessPortal({ slug, subPath, initialData }: BusinessP
             
             {/* Book Appointment Tab */}
             <TabsContent value="book">
-              <div className="grid gap-8 md:grid-cols-3">
-                <div className="space-y-6 md:col-span-2">
-                  <div className="grid gap-8 md:grid-cols-2">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Select Date</CardTitle>
-                        <CardDescription>Choose when you'd like to schedule your appointment</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <Calendar
-                          mode="single"
-                          selected={selectedDate}
-                          onSelect={setSelectedDate}
-                          disabled={(date) => date < new Date() || date > addDays(new Date(), 60)}
-                          className="rounded-md border mx-auto"
-                        />
-                      </CardContent>
-                    </Card>
-                    
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Your Information</CardTitle>
-                        <CardDescription>
-                          {selectedService 
-                            ? `Booking for ${selectedService.name} (${selectedService.duration} mins)` 
-                            : "Please select a service first"}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <form className="space-y-4">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <label htmlFor="firstName" className="text-sm font-medium">First Name</label>
-                              <Input 
-                                id="firstName" 
-                                name="firstName" 
-                                placeholder="John"  
-                                value={formData.firstName}
-                                onChange={handleInputChange}
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <label htmlFor="lastName" className="text-sm font-medium">Last Name</label>
-                              <Input 
-                                id="lastName" 
-                                name="lastName" 
-                                placeholder="Doe"  
-                                value={formData.lastName}
-                                onChange={handleInputChange}
-                              />
-                            </div>
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <label htmlFor="email" className="text-sm font-medium">Email</label>
-                            <Input 
-                              id="email" 
-                              name="email" 
-                              type="email" 
-                              placeholder="johndoe@example.com"  
-                              value={formData.email}
-                              onChange={handleInputChange}
-                            />
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <label htmlFor="phone" className="text-sm font-medium">Phone Number</label>
-                            <Input 
-                              id="phone" 
-                              name="phone" 
-                              placeholder="+56 9 XXXX XXXX"  
-                              value={formData.phone}
-                              onChange={handleInputChange}
-                            />
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <label htmlFor="notes" className="text-sm font-medium">Special Requests or Notes</label>
-                            <Textarea 
-                              id="notes" 
-                              name="notes" 
-                              placeholder="Any special requests or information we should know" 
-                              value={formData.notes}
-                              onChange={handleInputChange}
-                            />
-                          </div>
-                        </form>
-                      </CardContent>
-                      <CardFooter>
-                        <Button 
-                          className="w-full" 
-                          disabled={!selectedDate || !selectedService}
-                        >
-                          Book Appointment
-                        </Button>
-                      </CardFooter>
-                    </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>New Appointment Booking</CardTitle>
+                  <CardDescription>Book your appointment with our new streamlined system</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center space-y-6 py-4">
+                    <div className="mx-auto bg-primary/10 w-16 h-16 flex items-center justify-center rounded-full">
+                      <CalendarPlus className="w-8 h-8 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-semibold mb-2">Our New Booking Experience</h3>
+                      <p className="text-muted-foreground max-w-md mx-auto">
+                        We've improved our appointment booking system to make scheduling easier for you.
+                      </p>
+                    </div>
+                    <Button 
+                      size="lg"
+                      onClick={() => window.location.href = `/customer-portal/new-appointment?businessId=${business.id}`}
+                      className="mt-4"
+                    >
+                      Start Booking Process
+                    </Button>
                   </div>
-                </div>
-                
-                {/* Availability hints column */}
-                <div>
-                  <AvailabilityHints />
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             </TabsContent>
             
             {/* Store Tab */}
@@ -368,16 +289,28 @@ export default function BusinessPortal({ slug, subPath, initialData }: BusinessP
                         </div>
                       </div>
                       
-                      <form className="flex flex-col sm:flex-row gap-2">
-                        <Input 
-                          placeholder="Enter your email address" 
-                          type="email"
-                          className="flex-1"
-                        />
-                        <Button type="submit" className="sm:w-auto w-full">
-                          Check Now
-                        </Button>
-                      </form>
+                      <div className="flex flex-col gap-4">
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <Input 
+                            placeholder="Enter your email address" 
+                            type="email"
+                            className="flex-1"
+                            value={searchEmail}
+                            onChange={(e) => setSearchEmail(e.target.value)}
+                          />
+                          <Button 
+                            onClick={() => window.location.href = `/customer-portal/zero-friction?email=${searchEmail}`}
+                            className="sm:w-auto w-full"
+                          >
+                            Check Appointments
+                          </Button>
+                        </div>
+                        <div className="text-center">
+                          <Button variant="outline" onClick={() => window.location.href = `/customer-portal/new-appointment?businessId=${business.id}`}>
+                            Book New Appointment
+                          </Button>
+                        </div>
+                      </div>
                       
                       <div className="flex items-center justify-center py-3">
                         <div className="w-full border-t"></div>
