@@ -58,6 +58,7 @@ export default function NewAppointment() {
   
   const params = new URLSearchParams(window.location.search);
   const accessToken = params.get("token");
+  const businessId = params.get("businessId") ? parseInt(params.get("businessId")!) : 1;
   
   // Email form for the first step
   const emailForm = useForm<z.infer<typeof emailSchema>>({
@@ -186,7 +187,7 @@ export default function NewAppointment() {
     try {
       const response = await apiRequest("POST", "/api/check-customer-exists", {
         email: data.email,
-        businessId: 1 // Using business owner's ID
+        businessId: businessId
       });
       
       const responseData = await response.json();
@@ -221,7 +222,7 @@ export default function NewAppointment() {
     setIsSubmitting(true);
     try {
       const response = await apiRequest("POST", "/api/customers", {
-        userId: 1, // Using business owner's ID
+        userId: businessId,
         firstName: data.firstName,
         lastName: data.lastName,
         email: data.email,
@@ -304,7 +305,7 @@ export default function NewAppointment() {
       if (!accessToken) {
         const tokenResponse = await apiRequest("POST", "/api/customer-access-token", {
           email: customer.email,
-          businessId: 1,
+          businessId: businessId,
           sendEmail: true
         });
         
