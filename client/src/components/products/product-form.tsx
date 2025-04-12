@@ -74,11 +74,18 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
       if (data.imageUrl === "") {
         data.imageUrl = undefined;
       }
+      
+      // Convert numeric values to strings as expected by the API
+      const formattedData = {
+        ...data,
+        price: data.price.toString(),  // Convert price number to string
+        stock: data.stock,             // Keep stock as a number
+      };
 
       // Format data and determine if it's a new product or an update
       if (product) {
         // Update existing product
-        const response = await apiRequest("PUT", `/api/products/${product.id}`, data);
+        const response = await apiRequest("PUT", `/api/products/${product.id}`, formattedData);
         
         if (!response.ok) {
           const errorData = await response.json();
@@ -91,7 +98,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
         });
       } else {
         // Create new product
-        const response = await apiRequest("POST", "/api/products", data);
+        const response = await apiRequest("POST", "/api/products", formattedData);
         
         if (!response.ok) {
           const errorData = await response.json();
