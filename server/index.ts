@@ -73,9 +73,19 @@ app.use((req, res, next) => {
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
+    const stack = process.env.NODE_ENV === "development" ? err.stack : undefined;
+    const errorDetails = {
+      message,
+      error: err.name || "Error",
+      stack,
+      details: err.details || err.errors || undefined,
+      code: err.code,
+      path: _req.path,
+      method: _req.method
+    };
 
-    res.status(status).json({ message });
-    throw err;
+    console.error("Server error:", errorDetails);
+    res.status(status).json(errorDetails);
   });
 
   // importantly only setup vite in development and after
