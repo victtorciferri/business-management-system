@@ -128,9 +128,14 @@ export function AppointmentForm({
         paymentStatus: "pending",
       };
       
+      // Variable to store the appointment data (either new or updated)
+      let createdOrUpdatedAppointment;
+
       if (existingAppointment) {
         // Update existing appointment
-        await apiRequest("PUT", `/api/appointments/${existingAppointment.id}`, appointmentData);
+        const response = await apiRequest("PUT", `/api/appointments/${existingAppointment.id}`, appointmentData);
+        createdOrUpdatedAppointment = existingAppointment;
+        
         toast({
           title: "Appointment updated",
           description: "The appointment has been updated successfully.",
@@ -139,11 +144,15 @@ export function AppointmentForm({
         // Create new appointment
         try {
           const response = await apiRequest("POST", "/api/appointments", appointmentData);
-          const data = await response.json();
           
           if (!response.ok) {
+            const data = await response.json();
             throw new Error(data.message || 'Unknown error');
           }
+          
+          // Store the created appointment data
+          createdOrUpdatedAppointment = await response.json();
+          console.log("Created appointment:", createdOrUpdatedAppointment);
           
           toast({
             title: "Appointment created",
@@ -166,7 +175,7 @@ export function AppointmentForm({
         } else {
           // For newly created appointments, we need to use the response from the create operation
           // The appointment ID is now stored in the response from the create request
-          appointmentId = appointment.id;
+          appointmentId = createdOrUpdatedAppointment?.id;
         }
         
         if (appointmentId && (!existingAppointment || !existingAppointment.reminderSent)) {
