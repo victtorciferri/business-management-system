@@ -22,6 +22,7 @@ import ZeroFriction from "@/pages/customer-portal/zero-friction";
 import NewAppointment from "@/pages/customer-portal/new-appointment";
 import CustomerPortal from "@/pages/customer-portal/index";
 import MyAppointments from "@/pages/customer-portal/my-appointments";
+import ErrorTestingPage from "@/pages/error-testing";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useState, useEffect } from "react";
 import { User } from "@shared/schema";
@@ -233,6 +234,7 @@ function AppContent() {
               <StaffSchedule />
             </ProtectedRoute>
           </Route>
+          <Route path="/error-testing" component={ErrorTestingPage} />
           <Route component={NotFound} />
         </Switch>
       </Layout>
