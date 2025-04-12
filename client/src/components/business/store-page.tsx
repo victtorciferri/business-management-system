@@ -135,8 +135,8 @@ export default function StorePage({ business, services, slug }: StorePageProps) 
                     <Button 
                       className="w-full"
                       onClick={() => {
-                        // Logic to navigate to book page with this service pre-selected
-                        window.location.href = `/${slug}/schedule?service=${service.id}`;
+                        // Logic to navigate to new appointment flow with this service pre-selected
+                        window.location.href = `/customer-portal/new-appointment?businessId=${business.id}&serviceId=${service.id}`;
                       }}
                     >
                       Book This Service
@@ -155,7 +155,7 @@ export default function StorePage({ business, services, slug }: StorePageProps) 
                 variant="outline" 
                 size="lg"
                 onClick={() => {
-                  window.location.href = `/${slug}/schedule`;
+                  window.location.href = `/customer-portal/new-appointment?businessId=${business.id}`;
                 }}
               >
                 View All Appointment Times
