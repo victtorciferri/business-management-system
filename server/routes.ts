@@ -854,7 +854,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.createCustomerAccessToken({
         customerId: customer.id,
         token,
-        expiresAt
+        expiresAt,
+        businessId: businessId
       });
       
       // Get the base URL from request
