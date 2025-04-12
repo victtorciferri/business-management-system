@@ -7,7 +7,8 @@ import {
   Product, InsertProduct,
   ProductVariant, InsertProductVariant,
   Cart, InsertCart,
-  CartItem, InsertCartItem
+  CartItem, InsertCartItem,
+  StaffAvailability, InsertStaffAvailability
 } from "@shared/schema";
 import { DatabaseStorage } from "./databaseStorage";
 

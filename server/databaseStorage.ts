@@ -9,11 +9,12 @@ import {
   ProductVariant, InsertProductVariant,
   Cart, InsertCart,
   CartItem, InsertCartItem,
+  StaffAvailability, InsertStaffAvailability,
   users, services, customers, appointments, payments, products,
-  productVariants, carts, cartItems
+  productVariants, carts, cartItems, staffAvailability
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, gte, lte } from "drizzle-orm";
+import { eq, and, gte, lte, desc } from "drizzle-orm";
 
 export class DatabaseStorage implements IStorage {
   // User methods
@@ -372,5 +373,143 @@ export class DatabaseStorage implements IStorage {
   async removeCartItem(id: number): Promise<boolean> {
     const result = await db.delete(cartItems).where(eq(cartItems.id, id));
     return !!result;
+  }
+
+  // Staff methods
+  async getStaffByBusinessId(businessId: number): Promise<User[]> {
+    try {
+      const staff = await db
+        .select()
+        .from(users)
+        .where(and(
+          eq(users.role, "staff"),
+          eq(users.businessId, businessId)
+        ));
+      
+      return staff;
+    } catch (error) {
+      console.error("Error fetching staff by business ID:", error);
+      return [];
+    }
+  }
+
+  async createStaffMember(staffData: InsertUser, businessId: number): Promise<User> {
+    try {
+      const [newStaff] = await db
+        .insert(users)
+        .values({
+          ...staffData,
+          businessId,
+          role: "staff",
+        })
+        .returning();
+      
+      return newStaff;
+    } catch (error) {
+      console.error("Error creating staff member:", error);
+      throw error;
+    }
+  }
+
+  async deleteStaffMember(staffId: number): Promise<boolean> {
+    try {
+      // First delete all availability entries
+      await db.delete(staffAvailability).where(eq(staffAvailability.staffId, staffId));
+      
+      // Then delete the staff member
+      const result = await db.delete(users).where(eq(users.id, staffId));
+      
+      return !!result;
+    } catch (error) {
+      console.error("Error deleting staff member:", error);
+      return false;
+    }
+  }
+  
+  // Staff Availability methods
+  async getStaffAvailability(staffId: number): Promise<StaffAvailability[]> {
+    try {
+      const availability = await db
+        .select()
+        .from(staffAvailability)
+        .where(eq(staffAvailability.staffId, staffId));
+      
+      return availability;
+    } catch (error) {
+      console.error("Error fetching staff availability:", error);
+      return [];
+    }
+  }
+
+  async getStaffAvailabilityById(id: number): Promise<StaffAvailability | undefined> {
+    try {
+      const [availability] = await db
+        .select()
+        .from(staffAvailability)
+        .where(eq(staffAvailability.id, id));
+      
+      return availability || undefined;
+    } catch (error) {
+      console.error("Error fetching staff availability by ID:", error);
+      return undefined;
+    }
+  }
+
+  async createStaffAvailability(availability: InsertStaffAvailability): Promise<StaffAvailability> {
+    try {
+      const [newAvailability] = await db
+        .insert(staffAvailability)
+        .values(availability)
+        .returning();
+      
+      return newAvailability;
+    } catch (error) {
+      console.error("Error creating staff availability:", error);
+      throw error;
+    }
+  }
+
+  async updateStaffAvailability(id: number, availability: Partial<InsertStaffAvailability>): Promise<StaffAvailability | undefined> {
+    try {
+      const [updatedAvailability] = await db
+        .update(staffAvailability)
+        .set(availability)
+        .where(eq(staffAvailability.id, id))
+        .returning();
+      
+      return updatedAvailability || undefined;
+    } catch (error) {
+      console.error("Error updating staff availability:", error);
+      return undefined;
+    }
+  }
+
+  async deleteStaffAvailability(id: number): Promise<boolean> {
+    try {
+      const result = await db
+        .delete(staffAvailability)
+        .where(eq(staffAvailability.id, id));
+      
+      return !!result;
+    } catch (error) {
+      console.error("Error deleting staff availability:", error);
+      return false;
+    }
+  }
+  
+  // Staff Appointments
+  async getStaffAppointments(staffId: number): Promise<Appointment[]> {
+    try {
+      const staffAppointments = await db
+        .select()
+        .from(appointments)
+        .where(eq(appointments.staffId, staffId))
+        .orderBy(desc(appointments.date));
+      
+      return staffAppointments;
+    } catch (error) {
+      console.error("Error fetching staff appointments:", error);
+      return [];
+    }
   }
 }
