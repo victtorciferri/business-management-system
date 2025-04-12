@@ -33,13 +33,15 @@ function AppContent() {
   // Check if the URL looks like a business portal URL (e.g., /salonelegante)
   const businessPortalRegex = /^\/([a-zA-Z0-9_-]+)(?:\/.*)?$/;
   const match = location.match(businessPortalRegex);
+  
+  // Define reserved paths that should not be treated as business slugs
+  const reservedPaths = [
+    'api', 'auth', 'admin', 'checkout', 'preview', 'instructions',
+    'products', 'services', 'dashboard', 'appointments', 'customers'
+  ];
+  
   const potentialBusinessSlug = match && 
-    match[1] !== 'api' && 
-    match[1] !== 'auth' &&
-    match[1] !== 'admin' &&
-    match[1] !== 'checkout' &&
-    match[1] !== 'preview' &&
-    match[1] !== 'instructions' ? match[1] : null;
+    !reservedPaths.includes(match[1]) ? match[1] : null;
   
   // Redirect /customer-portal to the default business page
   useEffect(() => {
