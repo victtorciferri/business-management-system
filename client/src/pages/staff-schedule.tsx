@@ -278,11 +278,16 @@ export default function StaffSchedule() {
           isEnabled: sourceDay.isEnabled,
           startTime: sourceDay.startTime,
           endTime: sourceDay.endTime,
-          // Don't copy breaks as they might be different per day
+          breaks: [...sourceDay.breaks] // Copy the breaks too
         } : day
       )
     );
     setHasPendingChanges(true);
+    
+    toast({
+      title: "Configuración copiada",
+      description: "La configuración ha sido copiada a todos los días"
+    });
   };
   
   // Save all changes
