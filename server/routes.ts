@@ -1041,10 +1041,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // If we have a customer, get their appointments
       let appointments = [];
       if (customer) {
-        // Get only future appointments
+        // Get current and future appointments
         const now = new Date();
+        // Set time to beginning of day to include today's appointments
+        now.setHours(0, 0, 0, 0);
         const allAppointments = await storage.getAppointmentsByCustomerId(customer.id);
-        appointments = allAppointments.filter(appt => new Date(appt.date) > now);
+        
+        // Filter for future and today's appointments that are scheduled or pending
+        appointments = allAppointments.filter(appt => {
+          const apptDate = new Date(appt.date);
+          return apptDate >= now && (appt.status === 'scheduled' || appt.status === 'pending');
+        });
         
         // Fetch services to get service names
         const serviceIds = [...new Set(appointments.map(a => a.serviceId))];
