@@ -36,17 +36,17 @@ const emailSchema = z.object({
 });
 
 export default function MyAppointments() {
-  const navigate = useNavigate();
-  const location = useLocation();
+  const [location, navigate] = useLocation();
   const { toast } = useToast();
   const [email, setEmail] = useState<string>("");
   const [hasSearched, setHasSearched] = useState(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoadingToken, setIsLoadingToken] = useState(false);
   
-  const params = new URLSearchParams(location.search);
-  const urlEmail = params.get("email");
-  const urlToken = params.get("token");
+  // Extract query parameters from the URL
+  const searchParams = new URLSearchParams(window.location.search);
+  const urlEmail = searchParams.get("email");
+  const urlToken = searchParams.get("token");
   
   // Initialize with either token or email from URL
   useEffect(() => {
