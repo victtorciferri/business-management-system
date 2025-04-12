@@ -132,11 +132,12 @@ export default function ProductDetail({ product, onBack, onDelete }: ProductDeta
         </div>
         <div className="flex gap-2">
           <Button 
-            variant="outline"
+            variant={product.hasVariants ? "default" : "outline"}
             onClick={() => setIsVariantsModalOpen(true)}
+            className={product.hasVariants ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""}
           >
             <Layers className="h-4 w-4 mr-2" />
-            Manage Variants
+            {product.hasVariants ? "Manage Variants" : "Enable Variants"}
           </Button>
           <Button 
             variant="destructive" 

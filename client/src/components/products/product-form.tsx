@@ -260,32 +260,39 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
           control={form.control}
           name="hasVariants"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+            <FormItem className={`flex flex-row items-center justify-between rounded-lg border p-4 ${field.value ? 'bg-primary/5 border-primary/30' : ''}`}>
               <div className="space-y-0.5">
                 <FormLabel className="text-base flex items-center">
-                  <Layers className="mr-2 h-4 w-4" />
-                  Product Variants
+                  <Layers className={`mr-2 h-5 w-5 ${field.value ? 'text-primary' : ''}`} />
+                  <span className={field.value ? 'font-medium' : ''}>Product Variants</span>
                 </FormLabel>
                 <FormDescription>
                   Enable variants for different sizes, colors, etc.
                 </FormDescription>
               </div>
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
+              <div className="flex items-center gap-2">
+                <span className={`text-sm ${field.value ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
+                  {field.value ? 'Enabled' : 'Disabled'}
+                </span>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    className={field.value ? 'data-[state=checked]:bg-primary' : ''}
+                  />
+                </FormControl>
+              </div>
             </FormItem>
           )}
         />
         
         {hasVariants && (
-          <Alert>
+          <Alert className="bg-primary/5 border-primary/30 text-primary">
             <Info className="h-4 w-4" />
             <AlertTitle>Product Variants Enabled</AlertTitle>
-            <AlertDescription>
+            <AlertDescription className="text-foreground/80">
               After creating this product, you'll be able to add different variants with specific attributes like size, color, etc.
+              <strong className="block mt-1">Note: You'll manage variants after saving this product.</strong>
             </AlertDescription>
           </Alert>
         )}

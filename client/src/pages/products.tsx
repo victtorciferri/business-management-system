@@ -233,6 +233,20 @@ export default function ProductsPage() {
                       )}
                       
                       <div className="flex space-x-2 ml-auto" onClick={(e) => e.stopPropagation()}>
+                        {product.hasVariants && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-primary"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewProduct(product);
+                            }}
+                            title="Manage Variants"
+                          >
+                            <Layers className="w-4 h-4" />
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="sm"
@@ -240,6 +254,7 @@ export default function ProductsPage() {
                             e.stopPropagation();
                             setEditingProduct(product);
                           }}
+                          title="Edit Product"
                         >
                           <Pencil className="w-4 h-4" />
                         </Button>
@@ -252,6 +267,7 @@ export default function ProductsPage() {
                             handleDeleteProduct(product);
                           }}
                           disabled={deleteProductMutation.isPending}
+                          title="Delete Product"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
