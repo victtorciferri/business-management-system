@@ -7,15 +7,25 @@ import { apiRequest } from "@/lib/queryClient";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
-import { CreditCard, AlertCircle } from "lucide-react";
+import { CreditCard, AlertCircle, ExternalLink } from "lucide-react";
 
 interface CheckoutFormProps {
   appointment: Appointment;
   customer: Customer;
   service: Service;
+  paymentUrl?: string | null;
+  preferenceId?: string | null;
+  isMockPayment?: boolean;
 }
 
-export function CheckoutForm({ appointment, customer, service }: CheckoutFormProps) {
+export function CheckoutForm({ 
+  appointment, 
+  customer, 
+  service, 
+  paymentUrl, 
+  preferenceId,
+  isMockPayment = false
+}: CheckoutFormProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -25,50 +35,72 @@ export function CheckoutForm({ appointment, customer, service }: CheckoutFormPro
   const formattedDate = format(appointmentDate, "MMMM d, yyyy");
   const formattedTime = format(appointmentDate, "h:mm a");
 
-  // This is a placeholder for the Mercadopago implementation
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Handle direct payment via MercadoPago
+  const handleMercadopagoPayment = () => {
+    if (paymentUrl) {
+      // Redirect to MercadoPago payment page
+      window.location.href = paymentUrl;
+    } else {
+      toast({
+        title: "Payment Error",
+        description: "Unable to initialize payment. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle mock payment (for development without MercadoPago credentials)
+  const handleMockPayment = async () => {
     setIsProcessing(true);
 
     try {
-      // Simulating a payment process for now
-      // This will be replaced with Mercadopago integration
-      
-      // In a real implementation, we would:
-      // 1. Create a Mercadopago preference
-      // 2. Redirect user to Mercadopago checkout or render embedded form
-      // 3. Handle the callback/webhook when payment completes
-      
-      setTimeout(async () => {
-        // Mock successful payment
-        // Update the appointment payment status on our backend
-        await apiRequest("POST", "/api/confirm-payment", {
-          paymentIntentId: "mercadopago_placeholder_id",
-          appointmentId: appointment.id,
-        });
-
-        // Invalidate appointments query to refresh the data
-        queryClient.invalidateQueries({
-          queryKey: [`/api/appointments`],
-        });
-
-        toast({
-          title: "Payment Successful",
-          description: `Payment of $${service.price} has been processed.`,
-        });
-
-        // Redirect back to appointments page
-        setLocation("/appointments");
-        
-        setIsProcessing(false);
-      }, 2000);
-    } catch (error) {
+      // Simulate a successful payment process
       toast({
-        title: "Payment Error",
-        description: "An unexpected error occurred. Please try again.",
+        title: "Processing Payment",
+        description: "Please wait while we process your payment...",
+      });
+      
+      // Wait for 2 seconds to simulate payment processing
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Call our confirm-payment endpoint
+      await apiRequest("POST", "/api/confirm-payment", {
+        paymentIntentId: preferenceId || "mercadopago_mock_id",
+        appointmentId: appointment.id,
+      });
+
+      // Invalidate appointments query to refresh the data
+      queryClient.invalidateQueries({
+        queryKey: [`/api/appointments`],
+      });
+
+      toast({
+        title: "Payment Successful",
+        description: `Payment of $${service.price} has been processed.`,
+      });
+
+      // Redirect to the appointments page
+      setLocation("/appointments");
+    } catch (error) {
+      console.error("Payment error:", error);
+      toast({
+        title: "Payment Failed",
+        description: "There was an error processing your payment. Please try again.",
         variant: "destructive",
       });
+    } finally {
       setIsProcessing(false);
+    }
+  };
+
+  // Main form submission handler
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (isMockPayment) {
+      handleMockPayment();
+    } else {
+      handleMercadopagoPayment();
     }
   };
 
@@ -96,15 +128,35 @@ export function CheckoutForm({ appointment, customer, service }: CheckoutFormPro
       <Card>
         <CardContent className="p-4 flex flex-col items-center justify-center">
           <div className="text-center p-6">
-            <AlertCircle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">Mercadopago Integration Pending</h3>
-            <p className="text-gray-500 mb-4">
-              Payment processing with Mercadopago will be implemented soon. This is a placeholder for the payment form.
-            </p>
-            <div className="flex items-center justify-center gap-2 mb-4 text-sm text-gray-500">
-              <CreditCard className="h-4 w-4" />
-              <span>Supports credit/debit cards and local payment methods</span>
-            </div>
+            {isMockPayment ? (
+              <>
+                <CreditCard className="h-12 w-12 text-primary mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">Development Mode Payment</h3>
+                <p className="text-gray-500 mb-4">
+                  You're using a simulated payment process. In production, this would redirect to MercadoPago.
+                </p>
+              </>
+            ) : !paymentUrl ? (
+              <>
+                <AlertCircle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">Payment Not Initialized</h3>
+                <p className="text-gray-500 mb-4">
+                  Unable to initialize payment. The business needs to configure MercadoPago integration.
+                </p>
+              </>
+            ) : (
+              <>
+                <CreditCard className="h-12 w-12 text-primary mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">MercadoPago Checkout</h3>
+                <p className="text-gray-500 mb-4">
+                  You'll be redirected to MercadoPago's secure payment page to complete your payment.
+                </p>
+                <div className="flex items-center justify-center gap-2 mb-4 text-sm text-gray-500">
+                  <ExternalLink className="h-4 w-4" />
+                  <span>You'll be redirected to MercadoPago for secure payment</span>
+                </div>
+              </>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -112,7 +164,7 @@ export function CheckoutForm({ appointment, customer, service }: CheckoutFormPro
       <div className="flex justify-end">
         <Button 
           type="submit" 
-          disabled={isProcessing}
+          disabled={isProcessing || (!paymentUrl && !isMockPayment)}
           className="w-full sm:w-auto"
         >
           {isProcessing ? "Processing..." : `Pay $${service.price}`}

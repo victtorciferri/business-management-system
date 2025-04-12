@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db } from "./db";
 import rateLimit from 'express-rate-limit';
+import { createPreference, processWebhook } from './mercadopago';
 import { 
   insertUserSchema, 
   insertServiceSchema, 
@@ -1373,6 +1374,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Using MercadoPago helpers imported at the top of the file
+  
   // Payment routes
   app.post("/api/create-payment-intent", async (req: Request, res: Response) => {
     try {
@@ -1401,44 +1404,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Business not found" });
       }
       
-      // Get platform fee from business settings (defaults to 2% if not set)
+      // Get the customer information
+      const customer = await storage.getCustomer(appointment.customerId);
+      
+      if (!customer) {
+        return res.status(404).json({ message: "Customer not found" });
+      }
+      
+      // Calculate platform fee
       const platformFeePercentage = parseFloat(business.platformFeePercentage?.toString() || "2.00");
       const amount = parseFloat(service.price.toString());
       const platformFeeAmount = (amount * platformFeePercentage) / 100;
       const businessAmount = amount - platformFeeAmount;
       
-      // Create a placeholder for payment processing (will be replaced by Mercadopago)
-      // In a real implementation, we would:
-      // 1. Create a Mercadopago preference with the payment details
-      // 2. Set up payment split between AppointEase platform and the business
-      // 3. Return the preference ID and init point URL
-      
-      // For now, just generate a mock client secret
-      const mockClientSecret = `mp_test_${Date.now()}_${appointmentId}`;
-      
-      // Save payment information with marketplace split details
-      await storage.createPayment({
-        appointmentId: appointment.id,
-        amount: service.price,
-        status: "pending",
-        paymentProcessor: "mercadopago",
-        processorPaymentId: mockClientSecret,
-        merchantAccountId: business.mercadopagoAccountId || null,
+      try {
+        // Create a MercadoPago preference with payment details
+        // Check if business has MercadoPago configured
+        if (!business.mercadopagoAccessToken) {
+          // No MercadoPago integration, use mock for development
+          console.log("MercadoPago not configured for business, using mock payment flow");
+          
+          // For development: generate a mock preference
+          const mockClientSecret = `mp_test_${Date.now()}_${appointmentId}`;
+          const mockPreferenceId = `pref_${Date.now()}`;
+          
+          // Create a payment record
+          await storage.createPayment({
+            appointmentId: appointment.id,
+            amount: service.price,
+            status: "pending",
+            paymentProcessor: "mercadopago",
+            processorPaymentId: mockClientSecret,
+            merchantAccountId: business.mercadopagoAccountId || null,
+            platformFeePercentage: platformFeePercentage.toString(),
+            platformFeeAmount: platformFeeAmount.toString(),
+            businessAmount: businessAmount.toString(),
+            preferenceId: mockPreferenceId,
+          });
+          
+          // Return mock data
+          return res.json({
+            clientSecret: mockClientSecret,
+            paymentUrl: `/payment/mock?appointmentId=${appointmentId}`,
+            preferenceId: mockPreferenceId,
+            isMockPayment: true
+          });
+        }
         
-        // Marketplace payment split fields
-        platformFeePercentage: platformFeePercentage.toString(),
-        platformFeeAmount: platformFeeAmount.toString(),
-        businessAmount: businessAmount.toString(),
+        // Using real MercadoPago integration
+        const preferenceResult = await createPreference(business, service, customer, appointment);
         
-        // Additional Mercadopago-specific fields can be added here
-        preferenceId: null, // Will contain the Mercadopago preference ID
-      });
-      
-      // Return client secret and payment URL for the frontend
-      res.json({ 
-        clientSecret: mockClientSecret,
-        paymentUrl: null, // Will be the redirect URL from Mercadopago
-      });
+        if (!preferenceResult) {
+          throw new Error("Failed to create MercadoPago preference");
+        }
+        
+        // Save payment information with marketplace split details
+        await storage.createPayment({
+          appointmentId: appointment.id,
+          amount: service.price,
+          status: "pending",
+          paymentProcessor: "mercadopago",
+          processorPaymentId: preferenceResult.preference.id,
+          merchantAccountId: business.mercadopagoAccountId || null,
+          platformFeePercentage: platformFeePercentage.toString(),
+          platformFeeAmount: preferenceResult.platformFeeAmount.toString(),
+          businessAmount: preferenceResult.businessAmount.toString(),
+          preferenceId: preferenceResult.preference.id,
+          paymentUrl: preferenceResult.preference.init_point,
+          metadata: JSON.stringify({
+            externalReference: preferenceResult.externalReference
+          })
+        });
+        
+        // Return client secret and payment URL for the frontend
+        res.json({ 
+          clientSecret: preferenceResult.preference.id,
+          paymentUrl: preferenceResult.preference.init_point,
+          preferenceId: preferenceResult.preference.id,
+          isMockPayment: false
+        });
+      } catch (mpError) {
+        console.error("MercadoPago error:", mpError);
+        return res.status(500).json({ message: "Payment processing failed: " + mpError.message });
+      }
     } catch (error) {
       console.error("Payment processing error:", error);
       res.status(500).json({ message: "Payment processing failed" });
@@ -1475,6 +1523,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ message: "Failed to confirm payment" });
+    }
+  });
+  
+  // MercadoPago webhook handler
+  app.post("/api/webhooks/mercadopago", async (req: Request, res: Response) => {
+    try {
+      const data = req.body;
+      console.log("Received MercadoPago webhook:", JSON.stringify(data));
+      
+      // Process the webhook data
+      const result = await processWebhook(data);
+      
+      if (!result) {
+        return res.status(200).end(); // Acknowledge receipt even if not a payment notification
+      }
+      
+      // Extract appointment ID from the external reference (format: app_APPOINTMENTID_TIMESTAMP)
+      const externalRefParts = result.externalReference.split('_');
+      if (externalRefParts.length < 2) {
+        return res.status(400).json({ message: "Invalid external reference format" });
+      }
+      
+      const appointmentId = parseInt(externalRefParts[1]);
+      
+      if (isNaN(appointmentId)) {
+        return res.status(400).json({ message: "Invalid appointment ID in external reference" });
+      }
+      
+      // Find the appointment
+      const appointment = await storage.getAppointment(appointmentId);
+      
+      if (!appointment) {
+        return res.status(404).json({ message: "Appointment not found" });
+      }
+      
+      // Update appointment status based on payment status
+      if (result.status === "approved") {
+        await storage.updateAppointment(appointmentId, {
+          paymentStatus: "paid",
+        });
+        
+        // Update payment record
+        const payments = await storage.getPaymentsByAppointmentId(appointmentId);
+        
+        if (payments.length > 0) {
+          const payment = payments[0];
+          await storage.updatePayment(payment.id, {
+            status: "completed",
+            processorPaymentId: result.paymentId.toString()
+          });
+        }
+      }
+      
+      // Return success response
+      res.status(200).json({ success: true });
+    } catch (error) {
+      console.error("Error processing MercadoPago webhook:", error);
+      res.status(500).json({ message: "Failed to process webhook" });
     }
   });
 

@@ -1,5 +1,33 @@
-import mercadopago from 'mercadopago';
 import { User, Service, Customer, Appointment } from '@shared/schema';
+import MercadoPagoConfig from 'mercadopago';
+
+// This is to work around TypeScript types for MercadoPago
+const mercadopago = MercadoPagoConfig as any;
+
+interface MercadoPagoPaymentPreference {
+  id: string;
+  init_point: string;
+  external_reference: string;
+  [key: string]: any;
+}
+
+interface MercadoPagoResponse {
+  body: MercadoPagoPaymentPreference;
+  [key: string]: any;
+}
+
+interface PreferenceResult {
+  preference: MercadoPagoPaymentPreference;
+  externalReference: string;
+  platformFeeAmount: number;
+  businessAmount: number;
+}
+
+interface WebhookResult {
+  paymentId: string;
+  externalReference: string;
+  status: string;
+}
 
 /**
  * Initialize MercadoPago configuration with business credentials
@@ -23,7 +51,7 @@ export async function createPreference(
   service: Service,
   customer: Customer,
   appointment: Appointment
-) {
+): Promise<PreferenceResult> {
   // Initialize MercadoPago
   initMercadoPago(business);
 
@@ -81,29 +109,29 @@ export async function createPreference(
   };
 
   try {
-    const response = await mercadopago.preferences.create(preference);
+    const response = await mercadopago.preferences.create(preference) as MercadoPagoResponse;
     return {
       preference: response.body,
       externalReference,
       platformFeeAmount,
       businessAmount
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating MercadoPago preference:', error);
-    throw new Error('Failed to create payment preference');
+    throw new Error('Failed to create payment preference: ' + (error.message || 'Unknown error'));
   }
 }
 
 /**
  * Process a MercadoPago webhook notification
  */
-export async function processWebhook(data: any) {
+export async function processWebhook(data: any): Promise<WebhookResult | null> {
   if (data.type === 'payment') {
     const paymentId = data.data.id;
     
     try {
       // Get payment details
-      const payment = await mercadopago.payment.findById(paymentId);
+      const payment = await mercadopago.payment.findById(paymentId) as MercadoPagoResponse;
       const status = payment.body.status;
       const externalReference = payment.body.external_reference;
       
@@ -112,9 +140,9 @@ export async function processWebhook(data: any) {
         externalReference,
         status
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error processing webhook:', error);
-      throw new Error('Failed to process payment webhook');
+      throw new Error('Failed to process payment webhook: ' + (error.message || 'Unknown error'));
     }
   }
   
