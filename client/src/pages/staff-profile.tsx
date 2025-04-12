@@ -34,7 +34,7 @@ interface StaffProfileProps {
   staffId?: string;
 }
 
-export default function StaffProfile({ staffId: propStaffId }: StaffProfileProps = {}) {
+export default function StaffProfile({ staffId: propStaffId }: StaffProfileProps) {
   const params = useParams<{ id: string }>();
   const id = propStaffId || params.id;
   const [, navigate] = useLocation();
