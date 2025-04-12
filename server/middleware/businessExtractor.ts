@@ -34,8 +34,18 @@ export async function businessExtractor(req: Request, res: Response, next: NextF
     else if (req.path.startsWith('/api/business/')) {
       const pathSegments = req.path.split('/').filter(Boolean);
       if (pathSegments.length >= 3 && pathSegments[0] === 'api' && pathSegments[1] === 'business') {
-        businessSlug = pathSegments[2];
-        console.log(`Extracted business slug from API path: ${businessSlug}`);
+        // Skip reserved words for API endpoints too
+        const reservedWords = [
+          'products', 'services', 'dashboard', 'appointments', 
+          'customers', 'admin', 'auth', 'checkout'
+        ];
+        
+        if (!reservedWords.includes(pathSegments[2])) {
+          businessSlug = pathSegments[2];
+          console.log(`Extracted business slug from API path: ${businessSlug}`);
+        } else {
+          console.log(`Skipping business slug extraction for reserved API path: ${pathSegments[2]}`);
+        }
       }
     }
     // Check if the URL path starts with a potential business slug
@@ -48,12 +58,15 @@ export async function businessExtractor(req: Request, res: Response, next: NextF
         console.log(`Extracted potential slug from path: ${potentialSlug}`);
         
         // Skip if it starts with special characters or known routes
-        if (!potentialSlug.startsWith('api') && 
-            !potentialSlug.startsWith('assets') && 
-            !potentialSlug.startsWith('src') && 
-            !potentialSlug.startsWith('components') &&
-            !potentialSlug.startsWith('@') &&
-            !potentialSlug.includes('.')) {
+        // List of reserved words that should not be treated as business slugs
+        const reservedWords = [
+          'api', 'assets', 'src', 'components', 'products', 'services', 
+          'dashboard', 'appointments', 'customers', 'admin', 'auth', 'checkout'
+        ];
+        
+        if (!potentialSlug.startsWith('@') && 
+            !potentialSlug.includes('.') && 
+            !reservedWords.includes(potentialSlug)) {
           businessSlug = potentialSlug;
           console.log(`Using path segment as business slug: ${businessSlug}`);
         } else {
