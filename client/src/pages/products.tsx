@@ -29,6 +29,8 @@ export default function ProductsPage() {
   } = useQuery({
     queryKey: ['/api/products'],
     enabled: !!user,
+    retry: 1,
+    retryDelay: 1000
   });
 
   // Extract unique categories from products
@@ -63,11 +65,14 @@ export default function ProductsPage() {
     },
   });
 
+  // Ensure products is an array
+  const productsArray = Array.isArray(products) ? products : [];
+  
   // Filter products based on search term and category
-  const filteredProducts = products.filter((product: Product) => {
+  const filteredProducts = productsArray.filter((product: Product) => {
     const matchesSearch = 
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchTerm.toLowerCase());
+      (product.description?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
     
     const matchesCategory = selectedCategory === "all" || product.category === selectedCategory;
     
@@ -97,17 +102,30 @@ export default function ProductsPage() {
   }
 
   if (error) {
+    // Check if it's an authentication error
+    const isAuthError = (error as any)?.response?.status === 401;
+    
     return (
       <div className="flex flex-col items-center justify-center min-h-[70vh] p-6">
-        <h2 className="text-2xl font-bold text-destructive mb-2">Error Loading Products</h2>
+        <h2 className="text-2xl font-bold text-destructive mb-2">
+          {isAuthError ? "Authentication Required" : "Error Loading Products"}
+        </h2>
         <p className="text-muted-foreground mb-4">
-          There was a problem loading your products. Please try again.
+          {isAuthError 
+            ? "You must be logged in to view your products. Please log in and try again."
+            : "There was a problem loading your products. Please try again."}
         </p>
-        <Button 
-          onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/products'] })}
-        >
-          Try Again
-        </Button>
+        {isAuthError ? (
+          <Button onClick={() => window.location.href = '/auth'}>
+            Go to Login
+          </Button>
+        ) : (
+          <Button 
+            onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/products'] })}
+          >
+            Try Again
+          </Button>
+        )}
       </div>
     );
   }
@@ -171,11 +189,17 @@ export default function ProductsPage() {
                   <div className="flex justify-between items-center mb-4">
                     <div className="flex items-center">
                       <DollarSign className="w-4 h-4 mr-1 text-muted-foreground" />
-                      <span className="font-medium">${product.price.toFixed(2)}</span>
+                      <span className="font-medium">
+                        ${typeof product.price === 'number' 
+                          ? product.price.toFixed(2) 
+                          : parseFloat(String(product.price || 0)).toFixed(2)}
+                      </span>
                     </div>
                     <div className="flex items-center">
                       <ShoppingBag className="w-4 h-4 mr-1 text-muted-foreground" />
-                      <span>{product.stock} in stock</span>
+                      <span>
+                        {product.inventory ?? product.stock ?? 0} in stock
+                      </span>
                     </div>
                   </div>
                   
@@ -210,11 +234,11 @@ export default function ProductsPage() {
           <ShoppingBag className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
           <h3 className="text-xl font-semibold mb-2">No Products Found</h3>
           <p className="text-muted-foreground max-w-md mx-auto mb-6">
-            {products.length === 0
+            {productsArray.length === 0
               ? "You haven't added any products yet. Add your first product to start selling."
               : "No products match your current search or filter."}
           </p>
-          {products.length === 0 && (
+          {productsArray.length === 0 && (
             <Button onClick={() => setIsAddDialogOpen(true)}>
               <PlusCircle className="w-4 h-4 mr-2" />
               Add Your First Product
