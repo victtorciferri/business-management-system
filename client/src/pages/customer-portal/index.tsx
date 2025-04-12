@@ -7,6 +7,7 @@ export default function CustomerPortal() {
   const [location, navigate] = useLocation();
   const params = new URLSearchParams(window.location.search);
   const accessToken = params.get("token");
+  const businessId = params.get("businessId");
   
   return (
     <div className="container mx-auto py-10">
@@ -36,7 +37,9 @@ export default function CustomerPortal() {
               <Button 
                 className="w-full text-lg py-6" 
                 size="lg"
-                onClick={() => navigate("/customer-portal/zero-friction")}
+                onClick={() => navigate(businessId 
+                  ? `/customer-portal/zero-friction?businessId=${businessId}` 
+                  : "/customer-portal/zero-friction")}
               >
                 Find My Appointment
               </Button>

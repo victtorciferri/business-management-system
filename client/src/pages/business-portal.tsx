@@ -118,7 +118,8 @@ export default function BusinessPortal({ slug, subPath, initialData }: BusinessP
   
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // This would trigger the customers query
+    // Redirect to customer portal zero-friction page with email and businessId
+    window.location.href = `/customer-portal/zero-friction?email=${searchEmail}&businessId=${business.id}`;
   };
   
   // Status badges
@@ -299,7 +300,7 @@ export default function BusinessPortal({ slug, subPath, initialData }: BusinessP
                             onChange={(e) => setSearchEmail(e.target.value)}
                           />
                           <Button 
-                            onClick={() => window.location.href = `/customer-portal/zero-friction?email=${searchEmail}`}
+                            onClick={() => window.location.href = `/customer-portal/zero-friction?email=${searchEmail}&businessId=${business.id}`}
                             className="sm:w-auto w-full"
                           >
                             Check Appointments
@@ -326,7 +327,7 @@ export default function BusinessPortal({ slug, subPath, initialData }: BusinessP
                   </div>
                 </CardContent>
                 <CardFooter className="justify-center">
-                  <Button variant="outline" onClick={() => window.location.href = `/${slug}/customer-portal/zero-friction`}>
+                  <Button variant="outline" onClick={() => window.location.href = `/customer-portal/zero-friction?businessId=${business.id}`}>
                     Advanced Lookup
                   </Button>
                 </CardFooter>
@@ -349,7 +350,7 @@ export default function BusinessPortal({ slug, subPath, initialData }: BusinessP
                       onChange={(e) => setSearchEmail(e.target.value)}
                       className="flex-1"
                     />
-                    <Button type="submit">
+                    <Button onClick={() => window.location.href = `/customer-portal/zero-friction?email=${searchEmail}&businessId=${business.id}`}>
                       Find Appointments
                     </Button>
                   </form>
