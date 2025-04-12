@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { CalendarIcon, ClipboardListIcon, ShoppingBagIcon } from "lucide-react";
+import { CalendarIcon, ClipboardListIcon, ShoppingBagIcon, SearchIcon } from "lucide-react";
 
 export default function CustomerPortal() {
   const [location, navigate] = useLocation();
@@ -21,7 +21,7 @@ export default function CustomerPortal() {
         </p>
       </div>
       
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card className="transition-all hover:shadow-md">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -90,6 +90,30 @@ export default function CustomerPortal() {
                 : "/customer-portal/my-appointments")
             }>
               View Appointments
+            </Button>
+          </CardContent>
+        </Card>
+        
+        <Card className="transition-all hover:shadow-md">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <SearchIcon className="h-5 w-5 text-primary" />
+              Quick Lookup
+            </CardTitle>
+            <CardDescription>
+              Check appointments with just your email
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4 text-sm">
+              No login required - use our zero-friction lookup to find your appointments instantly.
+            </p>
+            <Button className="w-full" onClick={() => 
+              navigate(accessToken 
+                ? `/customer-portal/zero-friction?token=${accessToken}` 
+                : "/customer-portal/zero-friction")
+            }>
+              Quick Lookup
             </Button>
           </CardContent>
         </Card>

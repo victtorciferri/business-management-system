@@ -53,9 +53,6 @@ function AppContent() {
   useEffect(() => {
     if (location === '/customer-portal') {
       setLocation('/salonelegante');
-    } else if (location === '/customer-portal/zero-friction') {
-      // Keep zero-friction route as is, it doesn't need redirection
-      return;
     } else if (location.startsWith('/customer-portal/')) {
       const subPath = location.replace('/customer-portal/', '');
       setLocation(`/salonelegante/${subPath}`);
@@ -161,7 +158,9 @@ function AppContent() {
             </ProtectedRoute>
           </Route>
           <Route path="/auth" component={AuthPage} />
-          <Route path="/zero-friction" component={ZeroFriction} />
+          <Route path="/zero-friction">
+            <Redirect to="/customer-portal/zero-friction" />
+          </Route>
           <Route path="/appointments">
             <ProtectedRoute>
               <Appointments />
