@@ -6,7 +6,11 @@ import {
   Appointment, InsertAppointment, 
   Payment, InsertPayment,
   Product, InsertProduct,
-  users, services, customers, appointments, payments, products
+  ProductVariant, InsertProductVariant,
+  Cart, InsertCart,
+  CartItem, InsertCartItem,
+  users, services, customers, appointments, payments, products,
+  productVariants, carts, cartItems
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte } from "drizzle-orm";

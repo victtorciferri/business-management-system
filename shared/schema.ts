@@ -207,7 +207,7 @@ export const products = pgTable("products", {
   description: text("description"),
   price: numeric("price").notNull(),
   imageUrl: text("image_url"),
-  inventory: integer("inventory").default(0),
+  hasVariants: boolean("has_variants").default(false),
   category: text("category").default("general"),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -225,9 +225,89 @@ export const insertProductSchema = createInsertSchema(products).pick({
   description: true,
   price: true,
   imageUrl: true,
-  inventory: true,
+  hasVariants: true,
   category: true,
   isActive: true,
+});
+
+// Product Variants schema (for colors, sizes, etc.)
+export const productVariants = pgTable("product_variants", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").notNull().references(() => products.id, { onDelete: 'cascade' }),
+  sku: text("sku").notNull(),
+  size: text("size"), // S, M, L, XL, etc.
+  color: text("color"), // Red, Blue, etc.
+  additionalPrice: numeric("additional_price").default("0.00"), // Extra cost for this variant
+  inventory: integer("inventory").default(0),
+  imageUrl: text("image_url"), // Optional variant-specific image
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    productIdIdx: index("product_variants_product_id_idx").on(table.productId),
+    skuIdx: index("product_variants_sku_idx").on(table.sku),
+  };
+});
+
+export const insertProductVariantSchema = createInsertSchema(productVariants).pick({
+  productId: true,
+  sku: true,
+  size: true,
+  color: true,
+  additionalPrice: true,
+  inventory: true,
+  imageUrl: true,
+  isActive: true,
+});
+
+// Shopping Cart schema
+export const carts = pgTable("carts", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id), // Can be null for guest carts
+  customerId: integer("customer_id").references(() => customers.id), // Link to customer if logged in
+  guestId: text("guest_id"), // Session ID for guest carts
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  status: text("status").default("active").notNull(), // active, completed, abandoned
+}, (table) => {
+  return {
+    userIdIdx: index("carts_user_id_idx").on(table.userId),
+    customerIdIdx: index("carts_customer_id_idx").on(table.customerId),
+    guestIdIdx: index("carts_guest_id_idx").on(table.guestId),
+  };
+});
+
+export const insertCartSchema = createInsertSchema(carts).pick({
+  userId: true,
+  customerId: true,
+  guestId: true,
+  status: true,
+});
+
+// Cart Items schema
+export const cartItems = pgTable("cart_items", {
+  id: serial("id").primaryKey(),
+  cartId: integer("cart_id").notNull().references(() => carts.id, { onDelete: 'cascade' }),
+  productId: integer("product_id").notNull().references(() => products.id),
+  variantId: integer("variant_id").references(() => productVariants.id),
+  quantity: integer("quantity").notNull().default(1),
+  price: numeric("price").notNull(), // Price at the time of adding to cart
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    cartIdIdx: index("cart_items_cart_id_idx").on(table.cartId),
+    productIdIdx: index("cart_items_product_id_idx").on(table.productId),
+    variantIdIdx: index("cart_items_variant_id_idx").on(table.variantId),
+  };
+});
+
+export const insertCartItemSchema = createInsertSchema(cartItems).pick({
+  cartId: true,
+  productId: true,
+  variantId: true,
+  quantity: true,
+  price: true,
 });
 
 // Define relationships between tables for Drizzle ORM
@@ -277,10 +357,47 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
   }),
 }));
 
-export const productsRelations = relations(products, ({ one }) => ({
+export const productsRelations = relations(products, ({ one, many }) => ({
   business: one(users, {
     fields: [products.userId],
     references: [users.id],
+  }),
+  variants: many(productVariants),
+  cartItems: many(cartItems),
+}));
+
+export const productVariantsRelations = relations(productVariants, ({ one, many }) => ({
+  product: one(products, {
+    fields: [productVariants.productId],
+    references: [products.id],
+  }),
+  cartItems: many(cartItems),
+}));
+
+export const cartsRelations = relations(carts, ({ one, many }) => ({
+  user: one(users, {
+    fields: [carts.userId],
+    references: [users.id],
+  }),
+  customer: one(customers, {
+    fields: [carts.customerId],
+    references: [customers.id],
+  }),
+  items: many(cartItems),
+}));
+
+export const cartItemsRelations = relations(cartItems, ({ one }) => ({
+  cart: one(carts, {
+    fields: [cartItems.cartId],
+    references: [carts.id],
+  }),
+  product: one(products, {
+    fields: [cartItems.productId],
+    references: [products.id],
+  }),
+  variant: one(productVariants, {
+    fields: [cartItems.variantId],
+    references: [productVariants.id],
   }),
 }));
 
@@ -302,3 +419,12 @@ export type InsertPayment = z.infer<typeof insertPaymentSchema>;
 
 export type Product = typeof products.$inferSelect;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
+
+export type ProductVariant = typeof productVariants.$inferSelect;
+export type InsertProductVariant = z.infer<typeof insertProductVariantSchema>;
+
+export type Cart = typeof carts.$inferSelect;
+export type InsertCart = z.infer<typeof insertCartSchema>;
+
+export type CartItem = typeof cartItems.$inferSelect;
+export type InsertCartItem = z.infer<typeof insertCartItemSchema>;

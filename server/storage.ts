@@ -4,6 +4,10 @@ import {
   Customer, InsertCustomer,
   Appointment, InsertAppointment,
   Payment, InsertPayment,
+  Product, InsertProduct,
+  ProductVariant, InsertProductVariant,
+  Cart, InsertCart,
+  CartItem, InsertCartItem
 } from "@shared/schema";
 import { DatabaseStorage } from "./databaseStorage";
 
@@ -52,6 +56,28 @@ export interface IStorage {
   createProduct(product: InsertProduct): Promise<Product>;
   updateProduct(id: number, product: Partial<InsertProduct>): Promise<Product | undefined>;
   deleteProduct(id: number): Promise<boolean>;
+  
+  // Product Variant methods
+  getProductVariant(id: number): Promise<ProductVariant | undefined>;
+  getProductVariantsByProductId(productId: number): Promise<ProductVariant[]>;
+  createProductVariant(variant: InsertProductVariant): Promise<ProductVariant>;
+  updateProductVariant(id: number, variant: Partial<InsertProductVariant>): Promise<ProductVariant | undefined>;
+  deleteProductVariant(id: number): Promise<boolean>;
+  
+  // Cart methods
+  getCart(id: number): Promise<Cart | undefined>;
+  getCartByUserId(userId: number): Promise<Cart | undefined>;
+  getCartByCustomerId(customerId: number): Promise<Cart | undefined>;
+  getCartByGuestId(guestId: string): Promise<Cart | undefined>;
+  createCart(cart: InsertCart): Promise<Cart>;
+  updateCart(id: number, cart: Partial<InsertCart>): Promise<Cart | undefined>;
+  
+  // Cart Item methods
+  getCartItem(id: number): Promise<CartItem | undefined>;
+  getCartItemsByCartId(cartId: number): Promise<CartItem[]>;
+  addCartItem(item: InsertCartItem): Promise<CartItem>;
+  updateCartItem(id: number, item: Partial<InsertCartItem>): Promise<CartItem | undefined>;
+  removeCartItem(id: number): Promise<boolean>;
 }
 
 // Create a database storage instance
