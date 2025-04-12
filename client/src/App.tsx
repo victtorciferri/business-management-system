@@ -19,6 +19,7 @@ import StaffManagement from "@/pages/staff-management";
 import StaffProfile from "@/pages/staff-profile";
 import StaffSchedule from "@/pages/staff-schedule";
 import ZeroFriction from "@/pages/customer-portal/zero-friction";
+import NewAppointment from "@/pages/customer-portal/new-appointment";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useState, useEffect } from "react";
 import { User } from "@shared/schema";
@@ -43,7 +44,7 @@ function AppContent() {
     'api', 'auth', 'admin', 'checkout', 'preview', 'instructions',
     'products', 'services', 'dashboard', 'appointments', 'customers',
     'staff-management', 'staff-profile', 'staff', 'staff-schedule',
-    'zero-friction'
+    'zero-friction', 'new-appointment'
   ];
   
   const potentialBusinessSlug = match && 
@@ -161,6 +162,10 @@ function AppContent() {
           <Route path="/zero-friction">
             <Redirect to="/customer-portal/zero-friction" />
           </Route>
+          <Route path="/new-appointment">
+            <Redirect to="/customer-portal/new-appointment" />
+          </Route>
+          <Route path="/customer-portal/new-appointment" component={NewAppointment} />
           <Route path="/appointments">
             <ProtectedRoute>
               <Appointments />

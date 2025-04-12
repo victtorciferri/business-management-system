@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { CalendarIcon, ClipboardListIcon, ShoppingBagIcon, SearchIcon } from "lucide-react";
+import { CalendarIcon, ClipboardListIcon, ShoppingBagIcon, SearchIcon, CheckIcon } from "lucide-react";
 
 export default function CustomerPortal() {
   const [location, navigate] = useLocation();
@@ -16,12 +16,57 @@ export default function CustomerPortal() {
             Salon Elegante
           </span>
         </h1>
-        <p className="text-lg text-muted-foreground max-w-xl">
+        <p className="text-lg text-muted-foreground max-w-xl mb-8">
           Book your next appointment online and enjoy the best beauty and wellness services
         </p>
+        
+        {/* Main call to action buttons */}
+        <div className="grid gap-6 md:grid-cols-2 max-w-3xl w-full mb-12">
+          <Card className="transition-all hover:shadow-md border-2 border-primary/20">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-center gap-2 text-xl">
+                <SearchIcon className="h-6 w-6 text-primary" />
+                Look for Appointment
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-center">
+              <p className="mb-6 text-muted-foreground">
+                Already have an appointment? Check your appointment details by entering your email.
+              </p>
+              <Button 
+                className="w-full text-lg py-6" 
+                size="lg"
+                onClick={() => navigate("/customer-portal/zero-friction")}
+              >
+                Find My Appointment
+              </Button>
+            </CardContent>
+          </Card>
+          
+          <Card className="transition-all hover:shadow-md border-2 border-primary/20">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-center gap-2 text-xl">
+                <CalendarIcon className="h-6 w-6 text-primary" />
+                New Appointment
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-center">
+              <p className="mb-6 text-muted-foreground">
+                Schedule a new appointment with our simple booking process.
+              </p>
+              <Button 
+                className="w-full text-lg py-6" 
+                size="lg"
+                onClick={() => navigate("/customer-portal/new-appointment")}
+              >
+                Book Now
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
       
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-3">
         <Card className="transition-all hover:shadow-md">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -42,30 +87,6 @@ export default function CustomerPortal() {
                 : "/customer-portal/services")
             }>
               View Services
-            </Button>
-          </CardContent>
-        </Card>
-        
-        <Card className="transition-all hover:shadow-md">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CalendarIcon className="h-5 w-5 text-primary" />
-              Book Appointment
-            </CardTitle>
-            <CardDescription>
-              Schedule a new appointment
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4 text-sm">
-              Easily book your next appointment with our convenient online scheduling system.
-            </p>
-            <Button className="w-full" onClick={() => 
-              navigate(accessToken 
-                ? `/customer-portal/book?token=${accessToken}` 
-                : "/customer-portal/book")
-            }>
-              Book Now
             </Button>
           </CardContent>
         </Card>
@@ -97,23 +118,23 @@ export default function CustomerPortal() {
         <Card className="transition-all hover:shadow-md">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <SearchIcon className="h-5 w-5 text-primary" />
-              Quick Lookup
+              <CheckIcon className="h-5 w-5 text-primary" />
+              About Us
             </CardTitle>
             <CardDescription>
-              Check appointments with just your email
+              Learn more about our salon
             </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="mb-4 text-sm">
-              No login required - use our zero-friction lookup to find your appointments instantly.
+              Discover our story, our team, and the high-quality services we provide to our clients.
             </p>
-            <Button className="w-full" onClick={() => 
+            <Button variant="outline" className="w-full" onClick={() => 
               navigate(accessToken 
-                ? `/customer-portal/zero-friction?token=${accessToken}` 
-                : "/customer-portal/zero-friction")
+                ? `/customer-portal/about?token=${accessToken}` 
+                : "/customer-portal/about")
             }>
-              Quick Lookup
+              Read More
             </Button>
           </CardContent>
         </Card>
