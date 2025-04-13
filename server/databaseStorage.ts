@@ -57,6 +57,15 @@ export class DatabaseStorage implements IStorage {
           businessSlug: String(row.business_slug),
           customDomain: row.custom_domain ? String(row.custom_domain) : null,
           phone: row.phone ? String(row.phone) : null,
+          role: String(row.role),
+          // Add address fields
+          address: row.address ? String(row.address) : null,
+          city: row.city ? String(row.city) : null,
+          state: row.state ? String(row.state) : null,
+          postalCode: row.postal_code ? String(row.postal_code) : null,
+          country: row.country ? String(row.country) : null,
+          latitude: row.latitude ? String(row.latitude) : null,
+          longitude: row.longitude ? String(row.longitude) : null,
           createdAt: new Date(String(row.created_at))
         };
         return user;
@@ -92,6 +101,15 @@ export class DatabaseStorage implements IStorage {
           businessSlug: String(row.business_slug),
           customDomain: row.custom_domain ? String(row.custom_domain) : null,
           phone: row.phone ? String(row.phone) : null,
+          role: String(row.role),
+          // Add address fields
+          address: row.address ? String(row.address) : null,
+          city: row.city ? String(row.city) : null,
+          state: row.state ? String(row.state) : null,
+          postalCode: row.postal_code ? String(row.postal_code) : null,
+          country: row.country ? String(row.country) : null,
+          latitude: row.latitude ? String(row.latitude) : null,
+          longitude: row.longitude ? String(row.longitude) : null,
           createdAt: new Date(String(row.created_at))
         };
         return user;
