@@ -13,6 +13,13 @@ export const users = pgTable("users", {
   businessSlug: text("business_slug").unique(),
   customDomain: text("custom_domain").unique(),
   phone: text("phone"),
+  address: text("address"), // Business address for map integration
+  city: text("city"), // City
+  state: text("state"), // State or province
+  postalCode: text("postal_code"), // ZIP or postal code
+  country: text("country"), // Country
+  latitude: text("latitude"), // Latitude for map coordinates
+  longitude: text("longitude"), // Longitude for map coordinates
   role: text("role").notNull().default("business"), // "business", "admin", "staff", "customer"
   businessId: integer("business_id").references(() => users.id), // For staff accounts to link to the business
   subscription: text("subscription").default("free"), // "free", "basic", "premium", etc.
@@ -51,6 +58,13 @@ export const insertUserSchema = createInsertSchema(users).pick({
   businessSlug: true,
   customDomain: true,
   phone: true,
+  address: true,
+  city: true,
+  state: true,
+  postalCode: true,
+  country: true,
+  latitude: true,
+  longitude: true,
   role: true,
   subscription: true,
   subscriptionStatus: true,
