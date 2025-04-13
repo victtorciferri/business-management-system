@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Clock, DollarSign, BadgeCheck, Calendar, Heart, Star } from "lucide-react";
 import { useLocation } from "wouter";
+import { BusinessMap } from "@/components/maps/BusinessMap";
 
 interface HomePageProps {
   business: Omit<User, "password">;
@@ -221,6 +222,17 @@ export default function HomePage({ business, services, slug }: HomePageProps) {
             <Calendar className="h-5 w-5" />
             Book Your Appointment
           </Button>
+        </div>
+      </section>
+      
+      {/* Business Location Map */}
+      <section className="max-w-5xl mx-auto px-4 py-8">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-bold mb-4">Visit Us</h2>
+          <p className="text-muted-foreground">Find us at our convenient location</p>
+        </div>
+        <div className="max-w-3xl mx-auto">
+          <BusinessMap business={business} />
         </div>
       </section>
     </div>
