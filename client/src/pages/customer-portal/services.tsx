@@ -17,8 +17,23 @@ export default function CustomerServices() {
     enabled: true
   });
   
+  // Get the business data to pass to the layout
+  const { data: businessData } = useQuery<{
+    business: any;
+    services: any[];
+  }>({
+    queryKey: ['/api/business-data/salonelegante'],
+    enabled: true
+  });
+  
+  const businessId = params.get("businessId");
+  
   return (
-    <div className="container mx-auto py-10">
+    <CustomerPortalLayout 
+      business={businessData?.business} 
+      businessId={businessId} 
+      accessToken={accessToken}
+    >
       <div className="mb-8 flex items-center">
         <Button 
           variant="ghost" 
@@ -93,6 +108,6 @@ export default function CustomerServices() {
           ))}
         </div>
       )}
-    </div>
+    </CustomerPortalLayout>
   );
 }

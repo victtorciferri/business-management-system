@@ -18,6 +18,7 @@ import { type Service, type Customer, type Appointment } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import CustomerPortalLayout from "@/components/customer-portal/layout";
 
 // Define email schema for the first step
 const emailSchema = z.object({
@@ -358,8 +359,21 @@ export default function NewAppointment() {
     }
   };
   
+  // Get the business data to pass to the layout
+  const { data: businessData } = useQuery<{
+    business: any;
+    services: any[];
+  }>({
+    queryKey: ['/api/business-data/salonelegante'],
+    enabled: true
+  });
+  
   return (
-    <div className="container mx-auto py-10">
+    <CustomerPortalLayout 
+      business={businessData?.business} 
+      businessId={businessId?.toString()} 
+      accessToken={accessToken}
+    >
       <div className="mb-8 flex items-center">
         <Button 
           variant="ghost" 
@@ -840,6 +854,6 @@ export default function NewAppointment() {
           </div>
         </div>
       )}
-    </div>
+    </CustomerPortalLayout>
   );
 }
