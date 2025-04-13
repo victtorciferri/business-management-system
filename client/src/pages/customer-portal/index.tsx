@@ -2,12 +2,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { CalendarIcon, ClipboardListIcon, ShoppingBagIcon, SearchIcon, CheckIcon } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { BusinessMap } from "@/components/maps/BusinessMap";
 
 export default function CustomerPortal() {
   const [location, navigate] = useLocation();
   const params = new URLSearchParams(window.location.search);
   const accessToken = params.get("token");
   const businessId = params.get("businessId");
+  
+  // Get the business data to pass to the map component
+  const { data: businessData } = useQuery<{
+    business: any;
+    services: any[];
+  }>({
+    queryKey: ['/api/business-data/salonelegante'],
+    enabled: true
+  });
   
   return (
     <div className="container mx-auto py-10">
@@ -152,6 +163,13 @@ export default function CustomerPortal() {
             </Button>
           </CardContent>
         </Card>
+      </div>
+      
+      {/* Business location map section */}
+      <div className="mt-12">
+        {businessData?.business && (
+          <BusinessMap business={businessData.business} />
+        )}
       </div>
       
       <div className="mt-12 text-center">
