@@ -1,6 +1,5 @@
 // Migration script to add address fields to the users table
 
-import { db } from './server/db.js';
 import pg from 'pg';
 const { Pool } = pg;
 
