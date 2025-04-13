@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { type Service } from "@shared/schema";
 import { ArrowLeftIcon, Clock, DollarSign } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import CustomerPortalLayout from "@/components/customer-portal/layout";
 
 export default function CustomerServices() {
   const [location, navigate] = useLocation();

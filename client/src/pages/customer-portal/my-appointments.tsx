@@ -30,6 +30,7 @@ import { useForm } from "react-hook-form";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import CustomerPortalLayout from "@/components/customer-portal/layout";
 
 const emailSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" })
@@ -181,8 +182,23 @@ export default function MyAppointments() {
     return service?.name || "Unknown service";
   };
   
+  // Get the business data to pass to the layout
+  const { data: businessData } = useQuery<{
+    business: any;
+    services: any[];
+  }>({
+    queryKey: ['/api/business-data/salonelegante'],
+    enabled: true
+  });
+  
+  const businessId = searchParams.get("businessId");
+  
   return (
-    <div className="container mx-auto py-10">
+    <CustomerPortalLayout 
+      business={businessData?.business} 
+      businessId={businessId} 
+      accessToken={accessToken}
+    >
       <div className="mb-8 flex items-center">
         <Button 
           variant="ghost" 
@@ -459,6 +475,6 @@ export default function MyAppointments() {
           </p>
         </div>
       )}
-    </div>
+    </CustomerPortalLayout>
   );
 }
