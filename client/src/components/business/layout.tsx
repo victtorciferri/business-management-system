@@ -1,6 +1,15 @@
 import { User } from "@shared/schema";
-import BusinessHeader from "./header";
 import { useLocation } from "wouter";
+import BaseLayout from "@/components/shared/base-layout";
+import { NavigationItem } from "@/components/shared/base-header";
+import { 
+  HomeIcon, 
+  ShoppingBagIcon, 
+  CalendarIcon, 
+  ClipboardListIcon, 
+  InfoIcon,
+  LayoutDashboard
+} from "lucide-react";
 
 interface BusinessLayoutProps {
   children: React.ReactNode;
@@ -11,28 +20,55 @@ interface BusinessLayoutProps {
 export default function BusinessLayout({ children, business, slug }: BusinessLayoutProps) {
   const [location] = useLocation();
   
+  // Define business portal navigation items
+  const navigationItems: NavigationItem[] = [
+    {
+      label: "Home",
+      path: `/${slug}`,
+      icon: <HomeIcon className="h-4 w-4 mr-2" />,
+      isActive: location === `/${slug}` || location.startsWith(`/${slug}/home`)
+    },
+    {
+      label: "Services",
+      path: `/${slug}/services`,
+      icon: <ShoppingBagIcon className="h-4 w-4 mr-2" />,
+      isActive: location.startsWith(`/${slug}/services`)
+    },
+    {
+      label: "Store",
+      path: `/${slug}/store`,
+      icon: <LayoutDashboard className="h-4 w-4 mr-2" />,
+      isActive: location.startsWith(`/${slug}/store`)
+    },
+    {
+      label: "Book",
+      path: `/${slug}/book`,
+      icon: <CalendarIcon className="h-4 w-4 mr-2" />,
+      isActive: location.startsWith(`/${slug}/book`)
+    },
+    {
+      label: "My Appointments",
+      path: `/${slug}/my-appointments`,
+      icon: <ClipboardListIcon className="h-4 w-4 mr-2" />,
+      isActive: location.startsWith(`/${slug}/my-appointments`)
+    },
+    {
+      label: "About",
+      path: `/${slug}/about`,
+      icon: <InfoIcon className="h-4 w-4 mr-2" />,
+      isActive: location.startsWith(`/${slug}/about`)
+    }
+  ];
+  
   return (
-    <div className="min-h-screen bg-gray-50">
-      <BusinessHeader 
-        business={business} 
-        slug={slug} 
-        currentPath={location} 
-      />
-      <main className="container mx-auto px-4 py-8">
-        {children}
-      </main>
-      <footer className="bg-white border-t py-6">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-sm text-gray-500">
-              &copy; {new Date().getFullYear()} {business.businessName}. All rights reserved.
-            </p>
-            <p className="text-sm text-gray-400 mt-2 md:mt-0">
-              Powered by <span className="text-primary-600 font-medium">AppointEase</span>
-            </p>
-          </div>
-        </div>
-      </footer>
-    </div>
+    <BaseLayout
+      business={business}
+      navigationItems={navigationItems}
+      slug={slug}
+      portalType="business"
+      logoText={business.businessName}
+    >
+      {children}
+    </BaseLayout>
   );
 }

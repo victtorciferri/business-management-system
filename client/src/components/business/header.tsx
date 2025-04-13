@@ -1,4 +1,14 @@
 import { User } from "@shared/schema";
+import BaseHeader from "@/components/shared/base-header";
+import { 
+  HomeIcon, 
+  ShoppingBagIcon, 
+  CalendarIcon, 
+  ClipboardListIcon, 
+  InfoIcon,
+  LayoutDashboard
+} from "lucide-react";
+import { NavigationItem } from "@/components/shared/base-header";
 
 interface BusinessHeaderProps {
   business: Omit<User, "password">;
@@ -6,24 +16,57 @@ interface BusinessHeaderProps {
   currentPath: string;
 }
 
+// This component is kept for backward compatibility
+// It now uses the BaseHeader component under the hood
 export default function BusinessHeader({ business, slug, currentPath }: BusinessHeaderProps) {
+  // Define business portal navigation items
+  const navigationItems: NavigationItem[] = [
+    {
+      label: "Home",
+      path: `/${slug}`,
+      icon: <HomeIcon className="h-4 w-4 mr-2" />,
+      isActive: currentPath === `/${slug}` || currentPath.startsWith(`/${slug}/home`)
+    },
+    {
+      label: "Services",
+      path: `/${slug}/services`,
+      icon: <ShoppingBagIcon className="h-4 w-4 mr-2" />,
+      isActive: currentPath.startsWith(`/${slug}/services`)
+    },
+    {
+      label: "Store",
+      path: `/${slug}/store`,
+      icon: <LayoutDashboard className="h-4 w-4 mr-2" />,
+      isActive: currentPath.startsWith(`/${slug}/store`)
+    },
+    {
+      label: "Book",
+      path: `/${slug}/book`,
+      icon: <CalendarIcon className="h-4 w-4 mr-2" />,
+      isActive: currentPath.startsWith(`/${slug}/book`)
+    },
+    {
+      label: "My Appointments",
+      path: `/${slug}/my-appointments`,
+      icon: <ClipboardListIcon className="h-4 w-4 mr-2" />,
+      isActive: currentPath.startsWith(`/${slug}/my-appointments`)
+    },
+    {
+      label: "About",
+      path: `/${slug}/about`,
+      icon: <InfoIcon className="h-4 w-4 mr-2" />,
+      isActive: currentPath.startsWith(`/${slug}/about`)
+    }
+  ];
+  
   return (
-    <header className="bg-white shadow">
-      <div className="mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-center h-16">
-          <div className="flex items-center">
-            {/* Logo and Business Name */}
-            <div className="flex items-center">
-              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-bold text-xl mr-3">
-                {business.businessName?.substring(0, 1).toUpperCase() || "B"}
-              </div>
-              <h1 className="text-xl font-bold text-gray-900">
-                {business.businessName}
-              </h1>
-            </div>
-          </div>
-        </div>
-      </div>
-    </header>
+    <BaseHeader
+      business={business}
+      navigationItems={navigationItems}
+      currentPath={currentPath}
+      portalType="business"
+      logoText={business.businessName}
+      slug={slug}
+    />
   );
 }

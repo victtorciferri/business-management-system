@@ -4,6 +4,7 @@ import { useLocation } from "wouter";
 import { CalendarIcon, ClipboardListIcon, ShoppingBagIcon, SearchIcon, CheckIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { BusinessMap } from "@/components/maps/BusinessMap";
+import CustomerPortalLayout from "@/components/customer-portal/layout";
 
 export default function CustomerPortal() {
   const [location, navigate] = useLocation();
@@ -21,11 +22,15 @@ export default function CustomerPortal() {
   });
   
   return (
-    <div className="container mx-auto py-10">
+    <CustomerPortalLayout 
+      business={businessData?.business} 
+      businessId={businessId} 
+      accessToken={accessToken}
+    >
       <div className="flex flex-col items-center mb-10 text-center">
         <h1 className="text-4xl font-bold tracking-tight mb-4">
           <span className="bg-gradient-to-r from-primary to-indigo-500 text-transparent bg-clip-text">
-            Salon Elegante
+            {businessData?.business?.businessName || 'Salon Elegante'}
           </span>
         </h1>
         <p className="text-lg text-muted-foreground max-w-xl mb-8">
@@ -173,11 +178,17 @@ export default function CustomerPortal() {
       </div>
       
       <div className="mt-12 text-center">
-        <p className="text-muted-foreground mb-6">Need help? Contact us at <span className="text-primary">contact@salonelegante.cl</span> or call <span className="text-primary">+56 9 9876 5432</span></p>
+        <p className="text-muted-foreground mb-6">
+          Need help? Contact us at <span className="text-primary">
+            {businessData?.business?.email || 'contact@salonelegante.cl'}
+          </span> or call <span className="text-primary">
+            {businessData?.business?.phone || '+56 9 9876 5432'}
+          </span>
+        </p>
         <Button variant="outline" onClick={() => navigate("/")}>
           Business Login
         </Button>
       </div>
-    </div>
+    </CustomerPortalLayout>
   );
 }

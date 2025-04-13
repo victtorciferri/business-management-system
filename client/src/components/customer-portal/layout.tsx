@@ -1,5 +1,13 @@
 import { User } from "@shared/schema";
-import CustomerPortalHeader from "./header";
+import BaseLayout from "@/components/shared/base-layout";
+import { NavigationItem } from "@/components/shared/base-header";
+import { 
+  HomeIcon, 
+  ShoppingBagIcon, 
+  CalendarIcon, 
+  ClipboardListIcon, 
+  InfoIcon 
+} from "lucide-react";
 import { useLocation } from "wouter";
 
 interface CustomerPortalLayoutProps {
@@ -13,33 +21,59 @@ export default function CustomerPortalLayout({
   children, 
   business,
   businessId,
-  accessToken
+  accessToken 
 }: CustomerPortalLayoutProps) {
   const [location] = useLocation();
   
+  // Build query parameters for navigation
+  const queryParams: Record<string, string | null> = {};
+  if (accessToken) queryParams.token = accessToken;
+  if (businessId) queryParams.businessId = businessId;
+  
+  // Define customer portal navigation items
+  const navigationItems: NavigationItem[] = [
+    { 
+      label: "Home", 
+      icon: <HomeIcon className="h-4 w-4 mr-2" />,
+      path: "/customer-portal",
+      isActive: location === "/customer-portal" 
+    },
+    { 
+      label: "New Appointment", 
+      icon: <CalendarIcon className="h-4 w-4 mr-2" />,
+      path: "/customer-portal/new-appointment",
+      isActive: location === "/customer-portal/new-appointment"
+    },
+    { 
+      label: "My Appointments", 
+      icon: <ClipboardListIcon className="h-4 w-4 mr-2" />,
+      path: "/customer-portal/my-appointments",
+      isActive: location === "/customer-portal/my-appointments"
+    },
+    { 
+      label: "Services", 
+      icon: <ShoppingBagIcon className="h-4 w-4 mr-2" />,
+      path: "/customer-portal/services",
+      isActive: location === "/customer-portal/services"
+    },
+    { 
+      label: "About", 
+      icon: <InfoIcon className="h-4 w-4 mr-2" />,
+      path: "/customer-portal/about",
+      isActive: location === "/customer-portal/about"
+    }
+  ];
+  
   return (
-    <div className="min-h-screen bg-gray-50">
-      <CustomerPortalHeader 
-        business={business}
-        businessId={businessId}
-        accessToken={accessToken}
-        currentPath={location} 
-      />
-      <main className="container mx-auto px-4 py-8">
-        {children}
-      </main>
-      <footer className="bg-white border-t py-6">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-sm text-gray-500">
-              &copy; {new Date().getFullYear()} {business?.businessName || 'Salon Elegante'}. All rights reserved.
-            </p>
-            <p className="text-sm text-gray-400 mt-2 md:mt-0">
-              Powered by <span className="text-primary-600 font-medium">AppointEase</span>
-            </p>
-          </div>
-        </div>
-      </footer>
-    </div>
+    <BaseLayout
+      business={business}
+      navigationItems={navigationItems}
+      portalType="customer"
+      logoText={business?.businessName || "Salon Elegante"}
+      footerText={`Powered by AppointEase`}
+      queryParams={queryParams}
+    >
+      {children}
+    </BaseLayout>
   );
 }
