@@ -202,6 +202,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         businessSlug: result.rows[0].business_slug,
         customDomain: result.rows[0].custom_domain,
         phone: result.rows[0].phone,
+        // Add address fields
+        address: result.rows[0].address,
+        city: result.rows[0].city,
+        state: result.rows[0].state,
+        postalCode: result.rows[0].postal_code,
+        country: result.rows[0].country,
+        latitude: result.rows[0].latitude,
+        longitude: result.rows[0].longitude,
         createdAt: new Date(result.rows[0].created_at)
       };
       
