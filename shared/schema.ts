@@ -80,6 +80,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export const services = pgTable("services", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  businessSlug: text("business_slug").notNull(), // Add business slug for direct business scoping
   name: text("name").notNull(),
   description: text("description"),
   duration: integer("duration").notNull(), // in minutes
@@ -89,11 +90,13 @@ export const services = pgTable("services", {
 }, (table) => {
   return {
     userIdIdx: index("services_user_id_idx").on(table.userId),
+    businessSlugIdx: index("services_business_slug_idx").on(table.businessSlug), // Add index for business slug
   };
 });
 
 export const insertServiceSchema = createInsertSchema(services).pick({
   userId: true,
+  businessSlug: true, // Add business slug to insert schema
   name: true,
   description: true,
   duration: true,
@@ -106,6 +109,7 @@ export const insertServiceSchema = createInsertSchema(services).pick({
 export const customers = pgTable("customers", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  businessSlug: text("business_slug").notNull(), // Add business slug for direct business scoping
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   email: text("email").notNull(),
@@ -115,13 +119,16 @@ export const customers = pgTable("customers", {
 }, (table) => {
   return {
     userIdIdx: index("customers_user_id_idx").on(table.userId),
+    businessSlugIdx: index("customers_business_slug_idx").on(table.businessSlug), // Add index for business slug
     // Compound index for business-specific customer lookups
+    businessEmailIdx: index("customers_business_email_idx").on(table.businessSlug, table.email), // Updated compound index
     userEmailIdx: index("customers_user_id_email_idx").on(table.userId, table.email),
   };
 });
 
 export const insertCustomerSchema = createInsertSchema(customers).pick({
   userId: true,
+  businessSlug: true, // Add business slug to insert schema
   firstName: true,
   lastName: true,
   email: true,
@@ -133,6 +140,7 @@ export const insertCustomerSchema = createInsertSchema(customers).pick({
 export const appointments = pgTable("appointments", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  businessSlug: text("business_slug").notNull(), // Add business slug for direct business scoping
   customerId: integer("customer_id").notNull().references(() => customers.id, { onDelete: 'cascade' }),
   serviceId: integer("service_id").notNull().references(() => services.id, { onDelete: 'cascade' }),
   staffId: integer("staff_id").references(() => users.id), // Staff member assigned to this appointment
@@ -146,10 +154,12 @@ export const appointments = pgTable("appointments", {
 }, (table) => {
   return {
     userIdIdx: index("appointments_user_id_idx").on(table.userId),
+    businessSlugIdx: index("appointments_business_slug_idx").on(table.businessSlug), // Add index for business slug
     dateIdx: index("appointments_date_idx").on(table.date),
     customerIdIdx: index("appointments_customer_id_idx").on(table.customerId),
-    // Compound index for business-specific date range queries
+    // Compound indexes for business-specific date range queries
     userDateIdx: index("appointments_user_date_idx").on(table.userId, table.date),
+    businessDateIdx: index("appointments_business_date_idx").on(table.businessSlug, table.date), // Optimized business date lookup
   };
 });
 
@@ -225,6 +235,7 @@ export const insertPaymentSchema = createInsertSchema(payments).pick({
 export const products = pgTable("products", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  businessSlug: text("business_slug").notNull(), // Add business slug for direct business scoping
   name: text("name").notNull(),
   description: text("description"),
   price: numeric("price").notNull(),
@@ -238,7 +249,9 @@ export const products = pgTable("products", {
 }, (table) => {
   return {
     userIdIdx: index("products_user_id_idx").on(table.userId),
+    businessSlugIdx: index("products_business_slug_idx").on(table.businessSlug), // Add index for business slug
     categoryIdx: index("products_category_idx").on(table.category),
+    businessCategoryIdx: index("products_business_category_idx").on(table.businessSlug, table.category), // Compound index for business category filtering
   };
 });
 
@@ -289,6 +302,7 @@ export const insertProductVariantSchema = createInsertSchema(productVariants).pi
 export const carts = pgTable("carts", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id), // Can be null for guest carts
+  businessSlug: text("business_slug").notNull(), // Add business slug for direct business scoping
   customerId: integer("customer_id").references(() => customers.id), // Link to customer if logged in
   guestId: text("guest_id"), // Session ID for guest carts
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -297,8 +311,10 @@ export const carts = pgTable("carts", {
 }, (table) => {
   return {
     userIdIdx: index("carts_user_id_idx").on(table.userId),
+    businessSlugIdx: index("carts_business_slug_idx").on(table.businessSlug), // Add index for business slug
     customerIdIdx: index("carts_customer_id_idx").on(table.customerId),
     guestIdIdx: index("carts_guest_id_idx").on(table.guestId),
+    businessGuestIdx: index("carts_business_guest_idx").on(table.businessSlug, table.guestId), // Optimize guest lookups per business
   };
 });
 
@@ -338,6 +354,7 @@ export const insertCartItemSchema = createInsertSchema(cartItems).pick({
 export const staffAvailability = pgTable("staff_availability", {
   id: serial("id").primaryKey(),
   staffId: integer("staff_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  businessSlug: text("business_slug").notNull(), // Add business slug for direct business scoping
   dayOfWeek: integer("day_of_week").notNull(), // 0 = Sunday, 1 = Monday, etc.
   startTime: text("start_time").notNull(), // Format: "HH:MM" in 24-hour format
   endTime: text("end_time").notNull(), // Format: "HH:MM" in 24-hour format
@@ -347,7 +364,10 @@ export const staffAvailability = pgTable("staff_availability", {
 }, (table) => {
   return {
     staffIdIdx: index("staff_availability_staff_id_idx").on(table.staffId),
+    businessSlugIdx: index("staff_availability_business_slug_idx").on(table.businessSlug), // Add index for business slug
     dayOfWeekIdx: index("staff_availability_day_of_week_idx").on(table.dayOfWeek),
+    // Compound index for business-specific day of week queries
+    businessDayIdx: index("staff_availability_business_day_idx").on(table.businessSlug, table.dayOfWeek),
   };
 });
 
