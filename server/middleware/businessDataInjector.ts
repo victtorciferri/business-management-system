@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { storage } from "../storage";
-import fs from "fs";
-import path from "path";
+import { db, pool } from "../db";
 
 /**
  * Middleware to inject business data into the HTML response
@@ -34,11 +33,16 @@ export async function businessDataInjector(req: Request, res: Response, next: Ne
         }
       }
       
+      // Use business config if it's already attached to the request
+      // Otherwise, create a basic config with defaults
+      const businessConfig = req.businessConfig || await createDefaultBusinessConfig(req.business);
+      
       // Create a business data object to be injected into the HTML
       const businessData = {
         business: req.business,
         services: activeServices,
-        subPath: subPath
+        subPath: subPath,
+        config: businessConfig
       };
       
       // Store this on res.locals for use in subsequent middleware
@@ -52,9 +56,6 @@ export async function businessDataInjector(req: Request, res: Response, next: Ne
   // Create a wrapper for res.send to intercept HTML responses
   const originalSend = res.send;
   res.send = function(body) {
-    // Add debugging
-    console.log(`BusinessDataInjector: Handling response for ${req.path}, has business: ${!!req.business}, content type: ${res.getHeader('content-type')}`);
-    
     // Only modify HTML responses that have business data
     if (typeof body === 'string' && body.includes('<!DOCTYPE html>')) {
       // For debugging
@@ -74,8 +75,33 @@ export async function businessDataInjector(req: Request, res: Response, next: Ne
         // Insert the script right before the closing head tag
         body = body.replace('</head>', `${businessDataScript}\n</head>`);
       } else if (req.business) {
-        // If we have business data on req but not in res.locals, add it
-        console.log(`Business data not in res.locals, adding it for: ${req.path}`);
+        // If we have business data on req but not in res.locals, create minimal data object
+        console.log(`Business data not in res.locals, adding minimal data for: ${req.path}`);
+        
+        // Create a business config if we don't have one already
+        const businessConfig = req.businessConfig || {
+          id: req.business.id,
+          name: req.business.businessName,
+          slug: req.business.businessSlug,
+          email: req.business.email,
+          phone: req.business.phone,
+          
+          // Default theme settings
+          themeSettings: {
+            primaryColor: '#4f46e5',
+            secondaryColor: '#06b6d4',
+            accentColor: '#f59e0b',
+            textColor: '#1f2937',
+            backgroundColor: '#ffffff',
+            fontFamily: 'sans-serif',
+            borderRadius: 'rounded-md',
+            buttonStyle: 'rounded',
+            cardStyle: 'elevated',
+          },
+          
+          // Default industry type
+          industryType: 'general',
+        };
         
         // Create the script tag with business data
         const businessDataScript = `
@@ -83,7 +109,8 @@ export async function businessDataInjector(req: Request, res: Response, next: Ne
   window.BUSINESS_DATA = ${JSON.stringify({
     business: req.business,
     services: [], // We'll fetch these on the client side
-    subPath: ""
+    subPath: "",
+    config: businessConfig
   })};
 </script>`;
         
@@ -97,4 +124,156 @@ export async function businessDataInjector(req: Request, res: Response, next: Ne
   };
   
   next();
+}
+
+/**
+ * Helper function to create a default business configuration
+ * Used when businessConfig isn't already attached to the request
+ */
+async function createDefaultBusinessConfig(business: any) {
+  if (!business || !business.id) {
+    return {
+      id: 0,
+      name: null,
+      slug: null,
+      email: "",
+      themeSettings: {
+        primaryColor: '#4f46e5',
+        secondaryColor: '#06b6d4',
+        accentColor: '#f59e0b',
+        textColor: '#1f2937',
+        backgroundColor: '#ffffff',
+        fontFamily: 'sans-serif',
+        borderRadius: 'rounded-md',
+        buttonStyle: 'rounded',
+        cardStyle: 'elevated',
+      },
+      industryType: 'general',
+    };
+  }
+  
+  try {
+    // Use the pool to directly query the database
+    const themeResult = await pool.query(
+      'SELECT theme_settings, industry_type FROM users WHERE id = $1',
+      [business.id]
+    );
+    
+    const rows = themeResult.rows || [];
+    
+    if (rows.length > 0) {
+      const row = rows[0];
+      
+      // Parse theme settings if it exists
+      let themeSettings = {
+        primaryColor: '#4f46e5',
+        secondaryColor: '#06b6d4',
+        accentColor: '#f59e0b',
+        textColor: '#1f2937',
+        backgroundColor: '#ffffff',
+        fontFamily: 'sans-serif',
+        borderRadius: 'rounded-md',
+        buttonStyle: 'rounded',
+        cardStyle: 'elevated',
+      };
+      
+      // If theme_settings column exists and has data, merge with defaults
+      if (row.theme_settings) {
+        try {
+          const parsedSettings = typeof row.theme_settings === 'string' 
+            ? JSON.parse(row.theme_settings) 
+            : row.theme_settings;
+            
+          themeSettings = { ...themeSettings, ...parsedSettings };
+        } catch (e) {
+          console.error('Error parsing theme settings:', e);
+        }
+      }
+      
+      // Create a business config object
+      return {
+        id: business.id,
+        name: business.businessName,
+        slug: business.businessSlug,
+        email: business.email,
+        phone: business.phone,
+        address: business.address,
+        city: business.city,
+        state: business.state,
+        postalCode: business.postalCode,
+        country: business.country,
+        latitude: business.latitude,
+        longitude: business.longitude,
+        
+        // Theme settings
+        themeSettings,
+        
+        // Industry type
+        industryType: (row.industry_type as string) || 'general',
+        
+        // Default configurations
+        showMap: true,
+        showTestimonials: true,
+        showServices: true,
+        showPhone: true,
+        showAddress: true,
+        showEmail: true,
+        
+        locale: 'en',
+        timeZone: 'UTC',
+        currencyCode: 'USD',
+        currencySymbol: '$',
+        
+        use24HourFormat: false,
+        appointmentBuffer: 15,
+        allowSameTimeSlotForDifferentServices: false,
+        cancellationWindowHours: 24,
+        
+        customTexts: {},
+      };
+    }
+    
+    // Fallback to minimal config if query didn't return results
+    return {
+      id: business.id,
+      name: business.businessName,
+      slug: business.businessSlug,
+      email: business.email,
+      phone: business.phone,
+      themeSettings: {
+        primaryColor: '#4f46e5',
+        secondaryColor: '#06b6d4',
+        accentColor: '#f59e0b',
+        textColor: '#1f2937',
+        backgroundColor: '#ffffff',
+        fontFamily: 'sans-serif',
+        borderRadius: 'rounded-md',
+        buttonStyle: 'rounded',
+        cardStyle: 'elevated',
+      },
+      industryType: 'general',
+    };
+  } catch (err) {
+    console.error('Error creating default business config:', err);
+    
+    // Return minimal config on error
+    return {
+      id: business.id,
+      name: business.businessName,
+      slug: business.businessSlug,
+      email: business.email,
+      themeSettings: {
+        primaryColor: '#4f46e5',
+        secondaryColor: '#06b6d4',
+        accentColor: '#f59e0b',
+        textColor: '#1f2937',
+        backgroundColor: '#ffffff',
+        fontFamily: 'sans-serif',
+        borderRadius: 'rounded-md',
+        buttonStyle: 'rounded',
+        cardStyle: 'elevated',
+      },
+      industryType: 'general',
+    };
+  }
 }
