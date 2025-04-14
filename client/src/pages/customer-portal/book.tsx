@@ -18,6 +18,7 @@ import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { CustomerCheck } from "@/components/appointments/customer-check";
 import CustomerPortalLayout from "@/components/customer-portal/layout";
+import { useBusinessContext } from "@/contexts/BusinessContext";
 
 const formSchema = z.object({
   notes: z.string().optional(),
@@ -253,20 +254,13 @@ export default function BookAppointment() {
     }
   };
   
-  // Get the business data to pass to the layout
-  const { data: businessData } = useQuery<{
-    business: any;
-    services: any[];
-  }>({
-    queryKey: ['/api/business-data/salonelegante'],
-    enabled: true
-  });
+  // Get business data from BusinessContext instead of direct API call
+  const { business: contextBusiness, loading: businessLoading } = useBusinessContext();
   
   const businessId = params.get("businessId") ? parseInt(params.get("businessId")!) : 1;
 
   return (
     <CustomerPortalLayout 
-      business={businessData?.business} 
       businessId={businessId.toString()} 
       accessToken={accessToken}
     >
@@ -306,7 +300,7 @@ export default function BookAppointment() {
         // Step 1: Check if customer exists
         <div className="max-w-md mx-auto">
           <CustomerCheck 
-            businessId={1} // Using business owner's ID
+            businessId={contextBusiness?.id || businessId} 
             onExistingCustomer={handleExistingCustomer}
             onNewCustomer={handleNewCustomer}
           />
