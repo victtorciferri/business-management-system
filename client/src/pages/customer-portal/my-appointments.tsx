@@ -31,6 +31,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import CustomerPortalLayout from "@/components/customer-portal/layout";
+import { useBusinessContext } from "@/contexts/BusinessContext";
 
 const emailSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" })
@@ -182,20 +183,14 @@ export default function MyAppointments() {
     return service?.name || "Unknown service";
   };
   
-  // Get the business data to pass to the layout
-  const { data: businessData } = useQuery<{
-    business: any;
-    services: any[];
-  }>({
-    queryKey: ['/api/business-data/salonelegante'],
-    enabled: true
-  });
+  // Get business data from context
+  const { business, loading: businessLoading } = useBusinessContext();
   
+  // Get the business ID from the URL or from context
   const businessId = searchParams.get("businessId");
   
   return (
     <CustomerPortalLayout 
-      business={businessData?.business} 
       businessId={businessId} 
       accessToken={accessToken}
     >
