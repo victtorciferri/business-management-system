@@ -13,6 +13,7 @@ import {
 import { BusinessMap } from "@/components/maps/BusinessMap";
 import CustomerPortalLayout from "@/components/customer-portal/layout";
 import { useBusinessContext } from "@/contexts/BusinessContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import HomePage from "@/components/business/home-page";
 
@@ -25,6 +26,8 @@ export default function CustomerPortal() {
   
   // Get business data from context
   const { business, services, loading } = useBusinessContext();
+  // Get theme data for styling
+  const { theme, getPrimaryColor, getTextColor, getBackgroundColor } = useTheme();
   
   // Display only a subset of services on homepage
   const featuredServices = services?.slice(0, 3) || [];
@@ -84,12 +87,12 @@ export default function CustomerPortal() {
             {business ? (
               <div className="space-y-16 py-6">
                 {/* Hero Section */}
-                <section className="relative">
-                  <div className="max-w-4xl mx-auto text-center px-4">
-                    <h1 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-indigo-500 text-transparent bg-clip-text">
+                <section className={`relative ${getBackgroundColor()}`}>
+                  <div className={`max-w-4xl mx-auto text-center px-4 ${theme.fontFamily}`}>
+                    <h1 className={`text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-${theme.primaryColor} to-${theme.accentColor} text-transparent bg-clip-text`}>
                       Welcome to {business.businessName}
                     </h1>
-                    <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+                    <p className={`text-xl ${getTextColor()} mb-8 max-w-2xl mx-auto`}>
                       Experience exceptional professional services tailored to your needs. 
                       Book your appointment today for a great experience.
                     </p>
@@ -260,7 +263,7 @@ export default function CustomerPortal() {
                 </section>
                 
                 {/* CTA */}
-                <section className="bg-primary text-white py-16">
+                <section className={`${theme.primaryColor} text-white py-16 ${theme.fontFamily}`}>
                   <div className="max-w-3xl mx-auto text-center px-4">
                     <h2 className="text-3xl font-bold mb-6">Ready to Experience Our Services?</h2>
                     <p className="text-lg opacity-90 mb-8">
@@ -269,7 +272,7 @@ export default function CustomerPortal() {
                     <Button 
                       size="lg" 
                       variant="secondary"
-                      className="gap-2"
+                      className={`gap-2 ${getButtonClass('secondary')}`}
                       onClick={() => navigate(businessId 
                         ? `/customer-portal/new-appointment?businessId=${businessId}` 
                         : "/customer-portal/new-appointment")}

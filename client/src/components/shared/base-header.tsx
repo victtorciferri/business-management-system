@@ -2,6 +2,7 @@ import { User } from "@shared/schema";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ReactNode } from "react";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export interface NavigationItem {
   label: string;
@@ -30,6 +31,7 @@ export default function BaseHeader({
   queryParams = {}
 }: BaseHeaderProps) {
   const [_, navigate] = useLocation();
+  const { theme, getPrimaryColor, getTextColor, getButtonClass } = useTheme();
 
   // Helper function to build URL with query parameters
   const buildUrl = (path: string) => {
@@ -45,19 +47,19 @@ export default function BaseHeader({
 
   return (
     <header className="bg-white shadow">
-      <div className="container mx-auto px-4">
+      <div className={`container mx-auto px-4 ${theme.fontFamily}`}>
         <div className="flex flex-col md:flex-row justify-between items-center py-4">
           {/* Logo and Business Name */}
           <div className="flex items-center mb-4 md:mb-0">
             <Link href={portalType === 'business' && slug ? `/${slug}` : buildUrl('/customer-portal')}>
               <a className="flex items-center">
-                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-bold text-xl mr-3">
+                <div className={`h-10 w-10 ${theme.borderRadius} bg-gradient-to-br from-${theme.primaryColor} to-${theme.accentColor} flex items-center justify-center text-white font-bold text-xl mr-3`}>
                   {logoInitial}
                 </div>
-                <h1 className="text-xl font-bold text-gray-900">
+                <h1 className={`text-xl font-bold ${getTextColor()}`}>
                   {logoText}
                   {portalType === 'customer' && (
-                    <span className="text-primary font-normal ml-2">Customer Portal</span>
+                    <span className={`${getPrimaryColor()} font-normal ml-2`}>Customer Portal</span>
                   )}
                 </h1>
               </a>
@@ -71,7 +73,7 @@ export default function BaseHeader({
                 key={item.path}
                 variant={item.isActive ? "default" : "ghost"}
                 size="sm"
-                className="flex items-center"
+                className={`flex items-center ${getButtonClass()}`}
                 onClick={() => navigate(buildUrl(item.path))}
               >
                 {item.icon}
