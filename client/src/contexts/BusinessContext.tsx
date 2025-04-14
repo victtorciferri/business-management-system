@@ -97,12 +97,12 @@ function extractBusinessSlugFromUrl(path: string): string | null {
 // The actual provider component
 export function BusinessContextProvider({ 
   children,
-  initialSlug = 'salonelegante' // Default fallback slug if nothing is provided
+  initialSlug = '' // No default hardcoded slug - rely on URL or explicit prop value
 }: BusinessContextProviderProps) {
   // Get current URL to attempt extracting a business slug
   const [location] = useLocation();
   
-  // Try to extract from URL, fallback to initialSlug
+  // Try to extract from URL, fallback to initialSlug if provided
   const urlBusinessSlug = extractBusinessSlugFromUrl(location);
   const [businessSlug, setBusinessSlug] = useState<string>(urlBusinessSlug || initialSlug);
   
@@ -110,7 +110,7 @@ export function BusinessContextProvider({
   const searchParams = new URLSearchParams(window.location.search);
   const urlBusinessId = searchParams.get("businessId");
   
-  // Fetch the business data
+  // Fetch the business data - only enabled if we have a businessSlug or businessId
   const { 
     data: businessData,
     isLoading,
@@ -123,7 +123,7 @@ export function BusinessContextProvider({
     staff?: any[];
   }>({
     queryKey: [`/api/business-data/${businessSlug}`],
-    enabled: !!businessSlug,
+    enabled: !!businessSlug && businessSlug.length > 0,
   });
   
   // If URL change results in a new business slug, update state
@@ -141,6 +141,35 @@ export function BusinessContextProvider({
     }
   }, []);
   
+  // Create a business finder component for when no business is selected
+  const BusinessFinder = () => (
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50">
+      <div className="w-full max-w-md bg-white rounded-lg shadow-md p-8">
+        <h1 className="text-2xl font-bold text-center mb-6">Select a Business</h1>
+        <p className="text-gray-600 mb-6 text-center">
+          To continue, please select a business or enter a business ID.
+        </p>
+        <div className="space-y-4">
+          <div className="flex flex-col">
+            <label htmlFor="business-slug" className="text-sm font-medium mb-1">Business Slug:</label>
+            <input 
+              id="business-slug"
+              type="text" 
+              className="border rounded-md px-3 py-2"
+              placeholder="Enter business slug"
+              onChange={(e) => setBusinessSlug(e.target.value)}
+            />
+          </div>
+          <p className="text-sm text-gray-500">
+            You can also access a business directly using the URL format: 
+            <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">/businessname</code>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Conditionally render either the provider with children or the business finder
   return (
     <BusinessContext.Provider 
       value={{
@@ -154,7 +183,11 @@ export function BusinessContextProvider({
         businessId: businessData?.business?.id || (urlBusinessId ? parseInt(urlBusinessId) : null)
       }}
     >
-      {children}
+      {(!businessSlug && !urlBusinessId && !isLoading && !businessData?.business) ? (
+        <BusinessFinder />
+      ) : (
+        children
+      )}
     </BusinessContext.Provider>
   );
 };
