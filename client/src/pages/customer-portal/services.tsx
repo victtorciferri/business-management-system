@@ -6,31 +6,29 @@ import { type Service } from "@shared/schema";
 import { ArrowLeftIcon, Clock, DollarSign } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import CustomerPortalLayout from "@/components/customer-portal/layout";
+import { useBusinessContext } from "@/contexts/BusinessContext";
 
 export default function CustomerServices() {
   const [location, navigate] = useLocation();
   const params = new URLSearchParams(window.location.search);
   const accessToken = params.get("token");
-  
-  const { data: services, isLoading } = useQuery({
-    queryKey: ['/api/services'],
-    enabled: true
-  });
-  
-  // Get the business data to pass to the layout
-  const { data: businessData } = useQuery<{
-    business: any;
-    services: any[];
-  }>({
-    queryKey: ['/api/business-data/salonelegante'],
-    enabled: true
-  });
-  
   const businessId = params.get("businessId");
+  
+  // Get services and business data from context
+  const { business, services: contextServices, loading } = useBusinessContext();
+  
+  // Fallback to API query if not available in context
+  const { data: servicesData, isLoading: isServicesLoading } = useQuery({
+    queryKey: ['/api/services'],
+    enabled: !contextServices || contextServices.length === 0
+  });
+  
+  // Use context services if available, or fallback to API results
+  const services = contextServices || servicesData;
+  const isLoading = loading || isServicesLoading;
   
   return (
     <CustomerPortalLayout 
-      business={businessData?.business} 
       businessId={businessId} 
       accessToken={accessToken}
     >

@@ -28,11 +28,13 @@ import MockPayment from "@/pages/payment/mock";
 import NewAppointment from "@/pages/customer-portal/new-appointment";
 import CustomerPortal from "@/pages/customer-portal/index";
 import MyAppointments from "@/pages/customer-portal/my-appointments";
+import CustomerServices from "@/pages/customer-portal/services";
 import ErrorTestingPage from "@/pages/error-testing";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useState, useEffect } from "react";
 import { User } from "@shared/schema";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
+import { BusinessContextProvider } from "@/contexts/BusinessContext";
 
 function AppContent() {
   const { user: currentUser, isLoading: authLoading } = useAuth();
@@ -168,9 +170,27 @@ function AppContent() {
           <Route path="/new-appointment">
             <Redirect to="/customer-portal/new-appointment" />
           </Route>
-          <Route path="/customer-portal" component={CustomerPortal} />
-          <Route path="/customer-portal/new-appointment" component={NewAppointment} />
-          <Route path="/customer-portal/my-appointments" component={MyAppointments} />
+          {/* Customer Portal Routes - Wrapped with BusinessContextProvider */}
+          <Route path="/customer-portal">
+            <BusinessContextProvider>
+              <CustomerPortal />
+            </BusinessContextProvider>
+          </Route>
+          <Route path="/customer-portal/new-appointment">
+            <BusinessContextProvider>
+              <NewAppointment />
+            </BusinessContextProvider>
+          </Route>
+          <Route path="/customer-portal/my-appointments">
+            <BusinessContextProvider>
+              <MyAppointments />
+            </BusinessContextProvider>
+          </Route>
+          <Route path="/customer-portal/services">
+            <BusinessContextProvider>
+              <CustomerServices />
+            </BusinessContextProvider>
+          </Route>
           <Route path="/appointments">
             <ProtectedRoute>
               <Appointments />

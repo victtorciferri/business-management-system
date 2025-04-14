@@ -166,17 +166,17 @@ export default function CustomerPortal() {
       
       {/* Business location map section */}
       <div className="mt-12">
-        {businessData?.business && (
-          <BusinessMap business={businessData.business} />
+        {business && (
+          <BusinessMap business={business} />
         )}
       </div>
       
       <div className="mt-12 text-center">
         <p className="text-muted-foreground mb-6">
           Need help? Contact us at <span className="text-primary">
-            {businessData?.business?.email || 'contact@salonelegante.cl'}
+            {business?.email || 'contact@example.com'}
           </span> or call <span className="text-primary">
-            {businessData?.business?.phone || '+56 9 9876 5432'}
+            {business?.phone || '+1 555-123-4567'}
           </span>
         </p>
         <Button variant="outline" onClick={() => navigate("/")}>
