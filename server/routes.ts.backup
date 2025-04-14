@@ -15,16 +15,8 @@ import {
   insertCartSchema,
   insertCartItemSchema,
   insertCustomerAccessTokenSchema,
-  users,
-  User
+  users
 } from "@shared/schema";
-
-// Extend the Express Session to include user
-declare module 'express-session' {
-  interface SessionData {
-    user: User;
-  }
-}
 import { eq, sql, desc } from "drizzle-orm";
 import { z } from "zod";
 import Stripe from "stripe";
@@ -515,28 +507,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { username, password } = req.body;
       const user = await storage.getUserByUsername(username);
       
-      // Import password comparison function from auth.ts
-      const { comparePasswords } = await import('./auth');
+      if (!user || user.password !== password) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
       
-      if (!user) {
-        return res.status(401).json({ message: "Invalid credentials" });
-      }
-
-      // Check if password matches using secure comparison
-      const passwordMatches = await comparePasswords(password, user.password);
-      if (!passwordMatches) {
-        return res.status(401).json({ message: "Invalid credentials" });
-      }
+      // In a real app, we would use proper authentication with sessions or tokens
+      // For this MVP, we'll just return the user
       
       // Store user in session for authentication
       req.session.user = user;
       
-      // Remove sensitive data before sending to client
-      const { password: _, ...userWithoutPassword } = user;
-      
-      res.json(userWithoutPassword);
+      res.json(user);
     } catch (error) {
-      console.error("Login error:", error);
       res.status(500).json({ message: "Login failed" });
     }
   });
@@ -551,20 +533,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     return res.json(req.session.user);
-  });
-  
-  app.post("/api/logout", (req: Request, res: Response) => {
-    if (req.session) {
-      req.session.destroy((err) => {
-        if (err) {
-          return res.status(500).json({ message: "Failed to logout" });
-        }
-        res.clearCookie('connect.sid');
-        return res.status(200).json({ message: "Logged out successfully" });
-      });
-    } else {
-      return res.status(200).json({ message: "Already logged out" });
-    }
   });
   
   // Service routes
@@ -1792,11 +1760,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
    */
   app.patch("/api/business/theme-settings", async (req: Request, res: Response) => {
     try {
-      if (!req.session?.user) {
+      if (!req.isAuthenticated || !req.isAuthenticated()) {
         return res.status(401).json({ message: "Authentication required" });
       }
       
-      const userId = req.session.user.id;
+      const userId = req.user.id;
       const { themeSettings } = req.body;
       
       if (!themeSettings || typeof themeSettings !== 'object') {
@@ -1848,11 +1816,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
    */
   app.patch("/api/business/industry-type", async (req: Request, res: Response) => {
     try {
-      if (!req.session?.user) {
+      if (!req.isAuthenticated || !req.isAuthenticated()) {
         return res.status(401).json({ message: "Authentication required" });
       }
       
-      const userId = req.session.user.id;
+      const userId = req.user.id;
       const { industryType } = req.body;
       
       if (!industryType || !['salon', 'fitness', 'medical', 'general'].includes(industryType)) {
@@ -1934,11 +1902,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Product routes
   app.get("/api/products", async (req: Request, res: Response) => {
     try {
-      if (!req.session?.user) {
+      if (!req.isAuthenticated || !req.isAuthenticated()) {
         return res.status(401).json({ message: "Authentication required" });
       }
       
-      const userId = req.session.user.id;
+      const userId = req.user.id;
       let products;
       
       if (req.query.category) {
@@ -1956,11 +1924,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/products", async (req: Request, res: Response) => {
     try {
-      if (!req.session?.user) {
+      if (!req.isAuthenticated || !req.isAuthenticated()) {
         return res.status(401).json({ message: "Authentication required" });
       }
       
-      const userId = req.session.user.id;
+      const userId = req.user.id;
       const productData = insertProductSchema.parse({
         ...req.body,
         userId
@@ -1979,7 +1947,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/products/:id", async (req: Request, res: Response) => {
     try {
-      if (!req.session?.user) {
+      if (!req.isAuthenticated || !req.isAuthenticated()) {
         return res.status(401).json({ message: "Authentication required" });
       }
       
@@ -1995,7 +1963,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Ensure user can only access their own products
-      if (product.userId !== req.session.user.id) {
+      if (product.userId !== req.user.id) {
         return res.status(403).json({ message: "Access denied" });
       }
       
@@ -2008,7 +1976,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/products/:id", async (req: Request, res: Response) => {
     try {
-      if (!req.session?.user) {
+      if (!req.isAuthenticated || !req.isAuthenticated()) {
         return res.status(401).json({ message: "Authentication required" });
       }
       
@@ -2024,7 +1992,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Ensure user can only update their own products
-      if (product.userId !== req.session.user.id) {
+      if (product.userId !== req.user.id) {
         return res.status(403).json({ message: "Access denied" });
       }
       
@@ -2046,7 +2014,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/products/:id", async (req: Request, res: Response) => {
     try {
-      if (!req.session?.user) {
+      if (!req.isAuthenticated || !req.isAuthenticated()) {
         return res.status(401).json({ message: "Authentication required" });
       }
       
@@ -2062,7 +2030,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Ensure user can only delete their own products
-      if (product.userId !== req.session.user.id) {
+      if (product.userId !== req.user.id) {
         return res.status(403).json({ message: "Access denied" });
       }
       
@@ -2077,7 +2045,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Product Variants routes
   app.get("/api/products/:productId/variants", async (req: Request, res: Response) => {
     try {
-      if (!req.session?.user) {
+      if (!req.isAuthenticated || !req.isAuthenticated()) {
         return res.status(401).json({ message: "Authentication required" });
       }
       
@@ -2094,7 +2062,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Ensure user can only access variants of their own products
-      if (product.userId !== req.session.user.id) {
+      if (product.userId !== req.user.id) {
         return res.status(403).json({ message: "Access denied" });
       }
       
@@ -2108,7 +2076,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/products/:productId/variants", async (req: Request, res: Response) => {
     try {
-      if (!req.session?.user) {
+      if (!req.isAuthenticated || !req.isAuthenticated()) {
         return res.status(401).json({ message: "Authentication required" });
       }
       
@@ -2125,7 +2093,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Ensure user can only add variants to their own products
-      if (product.userId !== req.session.user.id) {
+      if (product.userId !== req.user.id) {
         return res.status(403).json({ message: "Access denied" });
       }
       
@@ -2153,7 +2121,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.put("/api/product-variants/:id", async (req: Request, res: Response) => {
     try {
-      if (!req.session?.user) {
+      if (!req.isAuthenticated || !req.isAuthenticated()) {
         return res.status(401).json({ message: "Authentication required" });
       }
       
@@ -2176,7 +2144,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Ensure user can only update variants of their own products
-      if (product.userId !== req.session.user.id) {
+      if (product.userId !== req.user.id) {
         return res.status(403).json({ message: "Access denied" });
       }
       
@@ -2193,7 +2161,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.delete("/api/product-variants/:id", async (req: Request, res: Response) => {
     try {
-      if (!req.session?.user) {
+      if (!req.isAuthenticated || !req.isAuthenticated()) {
         return res.status(401).json({ message: "Authentication required" });
       }
       
@@ -2216,7 +2184,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Ensure user can only delete variants of their own products
-      if (product.userId !== req.session.user.id) {
+      if (product.userId !== req.user.id) {
         return res.status(403).json({ message: "Access denied" });
       }
       
@@ -2242,9 +2210,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       let cart;
       
-      if (req.isAuthenticated && !!req.session?.user) {
+      if (req.isAuthenticated && req.isAuthenticated()) {
         // If user is logged in, get cart by user ID
-        cart = await storage.getCartByUserId(req.session.user.id);
+        cart = await storage.getCartByUserId(req.user.id);
       } else if (req.query.guestId) {
         // If user is not logged in but has a guest ID, get cart by guest ID
         cart = await storage.getCartByGuestId(req.query.guestId as string);
@@ -2279,8 +2247,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let customerId = null;
       let guestId = null;
       
-      if (req.isAuthenticated && !!req.session?.user) {
-        userId = req.session.user.id;
+      if (req.isAuthenticated && req.isAuthenticated()) {
+        userId = req.user.id;
       } else if (req.body.customerId) {
         customerId = parseInt(req.body.customerId);
       } else if (req.body.guestId) {
@@ -2424,7 +2392,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Check if the authenticated user owns the cart
-      if (req.isAuthenticated && !!req.session?.user && cart.userId && cart.userId !== req.session.user.id) {
+      if (req.isAuthenticated && req.isAuthenticated() && cart.userId && cart.userId !== req.user.id) {
         return res.status(403).json({ message: "You do not have permission to update this cart item" });
       }
       
@@ -2466,7 +2434,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Check if the authenticated user owns the cart
-      if (req.isAuthenticated && !!req.session?.user && cart.userId && cart.userId !== req.session.user.id) {
+      if (req.isAuthenticated && req.isAuthenticated() && cart.userId && cart.userId !== req.user.id) {
         return res.status(403).json({ message: "You do not have permission to delete this cart item" });
       }
       
@@ -2639,13 +2607,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // For authenticated access (admin/business owner/staff)
-      if (!!!req.session?.user) {
+      if (!req.isAuthenticated()) {
         return res.status(401).json({ message: "Authentication required" });
       }
       
       // If user is a staff member, they can only see themselves
-      if (req.session.user.role === "staff") {
-        const staffMember = await storage.getUser(req.session.user.id);
+      if (req.user.role === "staff") {
+        const staffMember = await storage.getUser(req.user.id);
         if (staffMember) {
           return res.json([staffMember]);
         } else {
@@ -2654,12 +2622,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // For business owners and admins, get all staff
-      if (req.session.user.role !== "business" && req.session.user.role !== "admin") {
+      if (req.user.role !== "business" && req.user.role !== "admin") {
         return res.status(403).json({ message: "Not authorized to view all staff" });
       }
       
-      const businessId = req.session.user.role === "business" ? req.session.user.id : undefined;
-      const staffMembers = await storage.getStaffByBusinessId(businessId || req.session.user.id);
+      const businessId = req.user.role === "business" ? req.user.id : undefined;
+      const staffMembers = await storage.getStaffByBusinessId(businessId || req.user.id);
       
       // Get appointment counts for each staff member
       const staffWithCounts = await Promise.all(
@@ -2682,7 +2650,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/staff/:id", async (req: Request, res: Response) => {
     try {
-      if (!!!req.session?.user || (req.session.user.role !== "business" && req.session.user.role !== "admin" && req.session.user.id !== parseInt(req.params.id))) {
+      if (!req.isAuthenticated() || (req.user.role !== "business" && req.user.role !== "admin" && req.user.id !== parseInt(req.params.id))) {
         return res.status(403).json({ message: "Not authorized to view this staff profile" });
       }
       
@@ -2694,7 +2662,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Check if the staff belongs to the current business (if current user is a business)
-      if (req.session.user.role === "business" && staff.businessId !== req.session.user.id) {
+      if (req.user.role === "business" && staff.businessId !== req.user.id) {
         return res.status(403).json({ message: "This staff member does not belong to your business" });
       }
       
@@ -2710,7 +2678,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/staff", async (req: Request, res: Response) => {
     try {
-      if (!!!req.session?.user || (req.session.user.role !== "business" && req.session.user.role !== "admin")) {
+      if (!req.isAuthenticated() || (req.user.role !== "business" && req.user.role !== "admin")) {
         return res.status(403).json({ message: "Not authorized to create staff members" });
       }
       
@@ -2736,7 +2704,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const hashedPassword = await bcrypt.hash(password, 10);
       
       // Create staff member
-      const businessId = req.session.user.role === "business" ? req.session.user.id : req.body.businessId;
+      const businessId = req.user.role === "business" ? req.user.id : req.body.businessId;
       
       const staffMember = await storage.createStaffMember({
         username,
@@ -2758,7 +2726,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/staff/:id", async (req: Request, res: Response) => {
     try {
-      if (!!!req.session?.user || (req.session.user.role !== "business" && req.session.user.role !== "admin")) {
+      if (!req.isAuthenticated() || (req.user.role !== "business" && req.user.role !== "admin")) {
         return res.status(403).json({ message: "Not authorized to delete staff members" });
       }
       
@@ -2770,7 +2738,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Check if the staff belongs to the current business (if current user is a business)
-      if (req.session.user.role === "business" && staff.businessId !== req.session.user.id) {
+      if (req.user.role === "business" && staff.businessId !== req.user.id) {
         return res.status(403).json({ message: "This staff member does not belong to your business" });
       }
       
@@ -2815,7 +2783,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // For authenticated users (admin, business owner, staff)
-      if (!!!req.session?.user) {
+      if (!req.isAuthenticated()) {
         return res.status(401).json({ message: "Not authenticated" });
       }
       
@@ -2827,7 +2795,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Check permissions
-      if (req.session.user.role === "business" && staff.businessId !== req.session.user.id && req.session.user.id !== staffId) {
+      if (req.user.role === "business" && staff.businessId !== req.user.id && req.user.id !== staffId) {
         return res.status(403).json({ message: "Not authorized to view this staff's availability" });
       }
       
@@ -2841,7 +2809,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/staff/:id/availability", async (req: Request, res: Response) => {
     try {
-      if (!!!req.session?.user) {
+      if (!req.isAuthenticated()) {
         return res.status(401).json({ message: "Not authenticated" });
       }
       
@@ -2853,7 +2821,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Check permissions
-      if (req.session.user.role === "business" && staff.businessId !== req.session.user.id && req.session.user.id !== staffId) {
+      if (req.user.role === "business" && staff.businessId !== req.user.id && req.user.id !== staffId) {
         return res.status(403).json({ message: "Not authorized to manage this staff's availability" });
       }
       
@@ -2882,7 +2850,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/staff/availability/:id", async (req: Request, res: Response) => {
     try {
-      if (!!!req.session?.user) {
+      if (!req.isAuthenticated()) {
         return res.status(401).json({ message: "Not authenticated" });
       }
       
@@ -2896,7 +2864,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const staff = await storage.getUser(availability.staffId);
       
       // Check permissions
-      if (req.session.user.role === "business" && staff?.businessId !== req.session.user.id && req.session.user.id !== availability.staffId) {
+      if (req.user.role === "business" && staff?.businessId !== req.user.id && req.user.id !== availability.staffId) {
         return res.status(403).json({ message: "Not authorized to manage this staff's availability" });
       }
       
@@ -2912,7 +2880,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/staff/:id/appointments", async (req: Request, res: Response) => {
     try {
-      if (!!!req.session?.user) {
+      if (!req.isAuthenticated()) {
         return res.status(401).json({ message: "Not authenticated" });
       }
       
@@ -2924,7 +2892,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Check permissions
-      if (req.session.user.role === "business" && staff.businessId !== req.session.user.id && req.session.user.id !== staffId) {
+      if (req.user.role === "business" && staff.businessId !== req.user.id && req.user.id !== staffId) {
         return res.status(403).json({ message: "Not authorized to view this staff's appointments" });
       }
       
