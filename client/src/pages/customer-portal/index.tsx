@@ -29,24 +29,28 @@ export default function CustomerPortal() {
   // Display only a subset of services on homepage
   const featuredServices = services?.slice(0, 3) || [];
   
-  // Customer testimonials
-  const testimonials = [
+  // Generic customer testimonials that can be used for any business type
+  const defaultTestimonials = [
     {
-      name: "Carolina Herrera",
-      comment: "Amazing service! The staff was professional and I loved my new look.",
+      name: "Customer 1",
+      comment: "Amazing service! The staff was professional and I loved my experience.",
       rating: 5
     },
     {
-      name: "Juan Mendez",
-      comment: "Always a great experience. I've been coming here for over a year and I'm always satisfied.",
+      name: "Customer 2",
+      comment: "Always a great experience. I've been coming here regularly and I'm always satisfied.",
       rating: 5
     },
     {
-      name: "Andrea Fuentes",
+      name: "Customer 3",
       comment: "Very satisfied with the results. Will definitely come back again.",
       rating: 4
     }
   ];
+  
+  // Use business-specific testimonials if available or fallback to generic ones
+  // TODO: In future implementation, fetch business testimonials from API
+  const testimonials = business?.testimonials || defaultTestimonials;
   
   return (
     <CustomerPortalLayout 
@@ -61,7 +65,7 @@ export default function CustomerPortal() {
             </span>
           </h1>
           <p className="text-lg text-muted-foreground max-w-xl">
-            Book your next appointment online and enjoy the best beauty and wellness services
+            Book your next appointment online and enjoy our professional services
           </p>
         </div>
         
@@ -86,8 +90,8 @@ export default function CustomerPortal() {
                       Welcome to {business.businessName}
                     </h1>
                     <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-                      Experience exceptional beauty and wellness services tailored to your needs. 
-                      Book your appointment today for a rejuvenating experience.
+                      Experience exceptional professional services tailored to your needs. 
+                      Book your appointment today for a great experience.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                       <Button 
@@ -394,7 +398,7 @@ export default function CustomerPortal() {
               </CardHeader>
               <CardContent>
                 <p>
-                  {business?.businessName || 'Our salon'} is dedicated to providing the highest quality beauty and wellness services in a comfortable and welcoming environment.
+                  {business?.businessName || 'Our business'} is dedicated to providing the highest quality professional services in a comfortable and welcoming environment.
                 </p>
                 <p className="mt-4">
                   Located in {business?.city || 'the heart of the city'}, we've been serving our community with passion and dedication.
