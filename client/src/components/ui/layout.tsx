@@ -1,75 +1,63 @@
-import React from "react";
-import { Link } from "wouter";
+import React from 'react';
 
-interface LayoutProps {
+interface ContainerProps {
   children: React.ReactNode;
+  className?: string;
+  as?: React.ElementType;
 }
 
-export function Layout({ children }: LayoutProps) {
+/**
+ * Container component for layout with consistent padding and max-width
+ */
+export function Container({
+  children,
+  className = '',
+  as: Component = 'div',
+}: ContainerProps) {
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <header className="border-b bg-card">
-        <div className="container py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Link href="/">
-              <a className="flex items-center space-x-2">
-                <div className="bg-primary w-8 h-8 rounded-md flex items-center justify-center text-primary-foreground font-bold">
-                  A
-                </div>
-                <span className="font-bold text-xl bg-gradient-to-r from-primary to-primary/70 text-transparent bg-clip-text">
-                  AppointEase
-                </span>
-              </a>
-            </Link>
-          </div>
-          <nav className="flex items-center space-x-6">
-            <Link href="/">
-              <a className="text-muted-foreground hover:text-foreground transition-colors">
-                Dashboard
-              </a>
-            </Link>
-            <Link href="/services">
-              <a className="text-muted-foreground hover:text-foreground transition-colors">
-                Services
-              </a>
-            </Link>
-            <Link href="/instructions/domain-setup">
-              <a className="text-muted-foreground hover:text-foreground transition-colors">
-                Domain Setup
-              </a>
-            </Link>
-          </nav>
-        </div>
-      </header>
-      <main className="flex-1">
-        {children}
-      </main>
-      <footer className="border-t py-6 bg-muted/40">
-        <div className="container">
-          <div className="flex flex-col md:flex-row items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              &copy; {new Date().getFullYear()} AppointEase. All rights reserved.
-            </p>
-            <div className="flex items-center space-x-4 mt-4 md:mt-0">
-              <Link href="/privacy">
-                <a className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Privacy
-                </a>
-              </Link>
-              <Link href="/terms">
-                <a className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Terms
-                </a>
-              </Link>
-              <Link href="/contact">
-                <a className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Contact
-                </a>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </footer>
-    </div>
+    <Component
+      className={`container mx-auto px-4 sm:px-6 lg:px-8 ${className}`}
+    >
+      {children}
+    </Component>
   );
+}
+
+interface SectionProps {
+  children: React.ReactNode;
+  className?: string;
+  id?: string;
+}
+
+/**
+ * Section component for consistent vertical spacing
+ */
+export function Section({ children, className = '', id }: SectionProps) {
+  return (
+    <section className={`py-12 md:py-16 ${className}`} id={id}>
+      {children}
+    </section>
+  );
+}
+
+/**
+ * Grid component with responsive behavior
+ */
+export function Grid({
+  children,
+  className = '',
+  cols = 1,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  cols?: 1 | 2 | 3 | 4;
+}) {
+  const colsClass = {
+    1: 'grid-cols-1',
+    2: 'grid-cols-1 md:grid-cols-2',
+    3: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
+    4: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4',
+  }[cols];
+
+  return <div className={`grid gap-6 ${colsClass} ${className}`}>{children}</div>;
 }
