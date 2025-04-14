@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
+import { BusinessConfig, getBusinessConfig } from '@/utils/businessConfig';
 
 // Define the Business interface to represent business data
 export interface Business {
@@ -19,6 +20,28 @@ export interface Business {
   description?: string | null;
   logoUrl?: string | null;
   coverImageUrl?: string | null;
+  // Business-specific locale settings
+  locale?: string;
+  businessTimeZone?: string;
+  currencyCode?: string;
+  currencySymbol?: string;
+  // Business preferences
+  use24HourFormat?: boolean;
+  appointmentBuffer?: number;
+  allowSameTimeSlotForDifferentServices?: boolean;
+  cancellationWindowHours?: number;
+  // Theme settings
+  themeSettings?: {
+    primaryColor: string;
+    secondaryColor: string;
+    accentColor: string;
+    textColor: string;
+    backgroundColor: string;
+    fontFamily: string;
+    borderRadius: string;
+    buttonStyle: "rounded" | "square" | "pill";
+    cardStyle: "elevated" | "flat" | "bordered";
+  };
   // Add any other business fields
   [key: string]: any;
 }
@@ -46,6 +69,7 @@ interface BusinessContextType {
   error: Error | null;
   setBusinessSlug: (slug: string) => void;
   businessId: number | null;
+  config: BusinessConfig; // Add business configuration
 }
 
 // Create the context with default values
@@ -57,7 +81,8 @@ const BusinessContext = createContext<BusinessContextType>({
   loading: false,
   error: null,
   setBusinessSlug: () => {},
-  businessId: null
+  businessId: null,
+  config: getBusinessConfig(null) // Initialize with default config
 });
 
 // Export the hook for using this context
