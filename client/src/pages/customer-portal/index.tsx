@@ -87,12 +87,12 @@ export default function CustomerPortal() {
             {business ? (
               <div className="space-y-16 py-6">
                 {/* Hero Section */}
-                <section className={`relative ${getBackgroundColor()}`}>
-                  <div className={`max-w-4xl mx-auto text-center px-4 ${theme.fontFamily}`}>
-                    <h1 className={`text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-${theme.primaryColor} to-${theme.accentColor} text-transparent bg-clip-text`}>
+                <section className="relative bg-white">
+                  <div className="max-w-4xl mx-auto text-center px-4">
+                    <h1 className={`text-4xl md:text-5xl font-bold mb-6 text-${theme.primaryColor}`}>
                       Welcome to {business.businessName}
                     </h1>
-                    <p className={`text-xl ${getTextColor()} mb-8 max-w-2xl mx-auto`}>
+                    <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
                       Experience exceptional professional services tailored to your needs. 
                       Book your appointment today for a great experience.
                     </p>
@@ -263,7 +263,7 @@ export default function CustomerPortal() {
                 </section>
                 
                 {/* CTA */}
-                <section className={`${theme.primaryColor} text-white py-16 ${theme.fontFamily}`}>
+                <section className="bg-primary text-white py-16">
                   <div className="max-w-3xl mx-auto text-center px-4">
                     <h2 className="text-3xl font-bold mb-6">Ready to Experience Our Services?</h2>
                     <p className="text-lg opacity-90 mb-8">
@@ -272,7 +272,7 @@ export default function CustomerPortal() {
                     <Button 
                       size="lg" 
                       variant="secondary"
-                      className={`gap-2 ${getButtonClass('secondary')}`}
+                      className="gap-2"
                       onClick={() => navigate(businessId 
                         ? `/customer-portal/new-appointment?businessId=${businessId}` 
                         : "/customer-portal/new-appointment")}
