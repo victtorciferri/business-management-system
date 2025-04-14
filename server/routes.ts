@@ -2486,14 +2486,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin API routes - middleware to check admin role
   const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
     // Check if user is authenticated and has admin role
-    if (!req.session?.user) {
+    // Support both Passport authentication (req.user) and session-based authentication (req.session?.user)
+    const user = req.user || req.session?.user;
+    
+    if (!user) {
+      // Log the authentication failure for debugging
+      console.log('Authentication required - no user in session or request:', { 
+        sessionExists: !!req.session, 
+        userInSession: !!req.session?.user,
+        userInRequest: !!req.user
+      });
       return res.status(401).json({ message: "Authentication required" });
     }
     
-    // Use the user from session
-    const user = req.session.user;
-    
-    if (user && user.role === 'admin') {
+    if (user.role === 'admin') {
       return next();
     }
     
