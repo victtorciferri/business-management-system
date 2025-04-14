@@ -19,6 +19,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import CustomerPortalLayout from "@/components/customer-portal/layout";
+import { useBusinessContext } from "@/contexts/BusinessContext";
 
 // Define email schema for the first step
 const emailSchema = z.object({
@@ -359,18 +360,12 @@ export default function NewAppointment() {
     }
   };
   
-  // Get the business data to pass to the layout
-  const { data: businessData } = useQuery<{
-    business: any;
-    services: any[];
-  }>({
-    queryKey: ['/api/business-data/salonelegante'],
-    enabled: true
-  });
+  // Get business data from BusinessContext instead of direct API call
+  const { business: contextBusiness, loading: businessLoading } = useBusinessContext();
   
   return (
     <CustomerPortalLayout 
-      business={businessData?.business} 
+      business={contextBusiness} 
       businessId={businessId?.toString()} 
       accessToken={accessToken}
     >

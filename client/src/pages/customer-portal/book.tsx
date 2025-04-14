@@ -121,7 +121,7 @@ export default function BookAppointment() {
         // Look up customer by email
         const response = await apiRequest("POST", "/api/check-customer-exists", {
           email: customer.email,
-          businessId: 1 // Use business owner's ID
+          businessId: contextBusiness?.id || businessId
         });
         
         const data = await response.json();
@@ -151,7 +151,7 @@ export default function BookAppointment() {
     try {
       // Create new customer
       const customerResponse = await apiRequest("POST", "/api/customers", {
-        userId: 1, // Use business owner's ID for all customer-created appointments
+        userId: contextBusiness?.id || businessId, // Use the business ID from context
         firstName: customerFormData.firstName,
         lastName: customerFormData.lastName,
         email: customerFormData.email,
@@ -208,7 +208,7 @@ export default function BookAppointment() {
       
       // Create appointment
       const appointmentResponse = await apiRequest("POST", "/api/appointments", {
-        userId: 1, // Use business owner's ID
+        userId: contextBusiness?.id || businessId,
         customerId: customerData.id,
         serviceId: selectedService.id,
         date: appointmentDate.toISOString(),
@@ -224,7 +224,7 @@ export default function BookAppointment() {
       // Create a customer access token
       const tokenResponse = await apiRequest("POST", "/api/customer-access-token", {
         email: customerData.email,
-        businessId: 1, // Use business owner's ID
+        businessId: contextBusiness?.id || businessId,
         sendEmail: true // Send the access link via email
       });
       
