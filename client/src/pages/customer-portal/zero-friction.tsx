@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -26,6 +27,7 @@ import { useForm } from "react-hook-form";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import CustomerPortalLayout from "@/components/customer-portal/layout";
 
 // Define the email schema for validation
 const emailSchema = z.object({
@@ -156,8 +158,21 @@ export default function ZeroFriction() {
     return `Please try again in ${seconds} second${seconds > 1 ? 's' : ''}`;
   };
   
+  // Get the business data to pass to the layout
+  const { data: businessData } = useQuery<{
+    business: any;
+    services: any[];
+  }>({
+    queryKey: ['/api/business-data/salonelegante'],
+    enabled: true
+  });
+  
   return (
-    <div className="container mx-auto py-10">
+    <CustomerPortalLayout 
+      business={businessData?.business} 
+      businessId={businessId?.toString()} 
+      accessToken={null}
+    >
       <div className="mb-8 flex items-center">
         <Button 
           variant="ghost" 
@@ -324,6 +339,6 @@ export default function ZeroFriction() {
           </p>
         </div>
       ) : null}
-    </div>
+    </CustomerPortalLayout>
   );
 }

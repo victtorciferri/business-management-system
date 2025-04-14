@@ -17,6 +17,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { CustomerCheck } from "@/components/appointments/customer-check";
+import CustomerPortalLayout from "@/components/customer-portal/layout";
 
 const formSchema = z.object({
   notes: z.string().optional(),
@@ -252,8 +253,23 @@ export default function BookAppointment() {
     }
   };
   
+  // Get the business data to pass to the layout
+  const { data: businessData } = useQuery<{
+    business: any;
+    services: any[];
+  }>({
+    queryKey: ['/api/business-data/salonelegante'],
+    enabled: true
+  });
+  
+  const businessId = params.get("businessId") ? parseInt(params.get("businessId")!) : 1;
+
   return (
-    <div className="container mx-auto py-10">
+    <CustomerPortalLayout 
+      business={businessData?.business} 
+      businessId={businessId.toString()} 
+      accessToken={accessToken}
+    >
       <div className="mb-8 flex items-center">
         <Button 
           variant="ghost" 
@@ -409,6 +425,6 @@ export default function BookAppointment() {
           </Card>
         </div>
       )}
-    </div>
+    </CustomerPortalLayout>
   );
 }
