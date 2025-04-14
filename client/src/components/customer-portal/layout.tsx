@@ -9,21 +9,26 @@ import {
   InfoIcon 
 } from "lucide-react";
 import { useLocation } from "wouter";
+import { useBusinessContext } from "@/contexts/BusinessContext";
 
 interface CustomerPortalLayoutProps {
   children: React.ReactNode;
-  business?: Omit<User, "password">;
+  business?: Omit<User, "password">; // Kept for backward compatibility
   businessId?: string | null;
   accessToken?: string | null;
 }
 
 export default function CustomerPortalLayout({ 
   children, 
-  business,
+  business: propsBusiness, // Renamed to avoid confusion
   businessId,
   accessToken 
 }: CustomerPortalLayoutProps) {
   const [location] = useLocation();
+  const { business: contextBusiness } = useBusinessContext();
+  
+  // Use business from context if available, otherwise fallback to props
+  const business = contextBusiness || propsBusiness;
   
   // Build query parameters for navigation
   const queryParams: Record<string, string | null> = {};
@@ -69,7 +74,7 @@ export default function CustomerPortalLayout({
       business={business}
       navigationItems={navigationItems}
       portalType="customer"
-      logoText={business?.businessName || "Salon Elegante"}
+      logoText={business?.businessName || "Business Portal"}
       footerText={`Powered by AppointEase`}
       queryParams={queryParams}
     >

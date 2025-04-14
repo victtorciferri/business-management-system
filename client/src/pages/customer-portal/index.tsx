@@ -2,35 +2,29 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { CalendarIcon, ClipboardListIcon, ShoppingBagIcon, SearchIcon, CheckIcon } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
 import { BusinessMap } from "@/components/maps/BusinessMap";
 import CustomerPortalLayout from "@/components/customer-portal/layout";
+import { useBusinessContext } from "@/contexts/BusinessContext";
 
 export default function CustomerPortal() {
   const [location, navigate] = useLocation();
   const params = new URLSearchParams(window.location.search);
   const accessToken = params.get("token");
   const businessId = params.get("businessId");
+  const businessSlug = params.get("businessSlug");
   
-  // Get the business data to pass to the map component
-  const { data: businessData } = useQuery<{
-    business: any;
-    services: any[];
-  }>({
-    queryKey: ['/api/business-data/salonelegante'],
-    enabled: true
-  });
+  // Get business data from context
+  const { business, services, loading } = useBusinessContext();
   
   return (
     <CustomerPortalLayout 
-      business={businessData?.business} 
       businessId={businessId} 
       accessToken={accessToken}
     >
       <div className="flex flex-col items-center mb-10 text-center">
         <h1 className="text-4xl font-bold tracking-tight mb-4">
           <span className="bg-gradient-to-r from-primary to-indigo-500 text-transparent bg-clip-text">
-            {businessData?.business?.businessName || 'Salon Elegante'}
+            {business?.businessName || 'Business Portal'}
           </span>
         </h1>
         <p className="text-lg text-muted-foreground max-w-xl mb-8">
