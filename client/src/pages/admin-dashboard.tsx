@@ -96,7 +96,7 @@ export default function AdminDashboard() {
     if (businesses) {
       const filtered = businesses.filter(business => 
         business.businessName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        business.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        business.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         business.businessSlug?.toLowerCase().includes(searchTerm.toLowerCase())
       );
       setFilteredBusinesses(filtered);

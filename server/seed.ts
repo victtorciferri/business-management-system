@@ -15,14 +15,44 @@ export async function seedDatabase() {
     if (userCount[0].count === '0') {
       console.log("Seeding users...");
       // Create a test user
-      await db.insert(users).values({
-        username: "businessowner",
-        email: "owner@example.com",
-        password: "password123", // In a real app, this would be hashed
-        businessName: "Salon Elegante",
-        businessSlug: "salonelegante",
-        phone: "+56 9 9876 5432",
-      });
+      await db.insert(users).values([
+        {
+          username: "businessowner",
+          email: "owner@example.com",
+          password: "password123", // In a real app, this would be hashed
+          business_name: "Salon Elegante",
+          business_slug: "salonelegante",
+          phone: "+56 9 9876 5432",
+          role: "business",
+        },
+        {
+          username: "admin",
+          email: "admin@example.com",
+          password: "admin123",
+          business_name: null,
+          business_slug: null,
+          phone: null,
+          role: "admin",
+        },
+        {
+          username: "business2",
+          email: "business2@example.com",
+          password: "password123",
+          business_name: "Acme Spa",
+          business_slug: "acmespa",
+          phone: "+56 9 1111 2222",
+          role: "business",
+        },
+        {
+          username: "business3",
+          email: "business3@example.com",
+          password: "password123",
+          business_name: "Downtown Barber",
+          business_slug: "downtownbarber",
+          phone: "+56 9 3333 4444",
+          role: "business",
+        }
+      ]);
     }
     
     // Check if services table has data
