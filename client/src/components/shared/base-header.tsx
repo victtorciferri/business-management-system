@@ -3,6 +3,7 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ReactNode } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useBusinessContext } from "@/contexts/BusinessContext";
 
 export interface NavigationItem {
   label: string;
@@ -32,6 +33,7 @@ export default function BaseHeader({
 }: BaseHeaderProps) {
   const [_, navigate] = useLocation();
   const { theme, getPrimaryColor, getTextColor, getButtonClass } = useTheme();
+  const { config } = useBusinessContext();
 
   // Helper function to build URL with query parameters
   const buildUrl = (path: string) => {
@@ -42,8 +44,37 @@ export default function BaseHeader({
     return path + (params.length ? `?${params.join('&')}` : '');
   };
 
-  // Get the first character of the business name for the logo
-  const logoInitial = logoText.substring(0, 1).toUpperCase();
+  // Get logo based on business configuration
+  const renderLogo = () => {
+    // If a logo URL is available, use it
+    if (business?.logoUrl || config.logoUrl) {
+      return (
+        <img 
+          src={business?.logoUrl || config.logoUrl || ""} 
+          alt={`${logoText} logo`} 
+          className="h-10 w-auto mr-3"
+        />
+      );
+    }
+    
+    // Otherwise use the text initial logo
+    const logoInitial = logoText.substring(0, 1).toUpperCase();
+    return (
+      <div className={`h-10 w-10 ${theme.borderRadius} bg-gradient-to-br from-${theme.primaryColor} to-${theme.accentColor} flex items-center justify-center text-white font-bold text-xl mr-3`}>
+        {logoInitial}
+      </div>
+    );
+  };
+
+  // Get portal label based on business locale
+  const getPortalLabel = () => {
+    if (portalType === 'customer') {
+      if (config.locale === 'es') return 'Portal de Clientes';
+      if (config.locale === 'pt') return 'Portal do Cliente';
+      return 'Customer Portal';
+    }
+    return '';
+  };
 
   return (
     <header className="bg-white shadow">
@@ -53,13 +84,13 @@ export default function BaseHeader({
           <div className="flex items-center mb-4 md:mb-0">
             <Link href={portalType === 'business' && slug ? `/${slug}` : buildUrl('/customer-portal')}>
               <a className="flex items-center">
-                <div className={`h-10 w-10 ${theme.borderRadius} bg-gradient-to-br from-${theme.primaryColor} to-${theme.accentColor} flex items-center justify-center text-white font-bold text-xl mr-3`}>
-                  {logoInitial}
-                </div>
+                {renderLogo()}
                 <h1 className={`text-xl font-bold ${getTextColor()}`}>
                   {logoText}
                   {portalType === 'customer' && (
-                    <span className={`${getPrimaryColor()} font-normal ml-2`}>Customer Portal</span>
+                    <span className={`${getPrimaryColor()} font-normal ml-2`}>
+                      {getPortalLabel()}
+                    </span>
                   )}
                 </h1>
               </a>

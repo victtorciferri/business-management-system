@@ -194,6 +194,12 @@ export function BusinessContextProvider({
     </div>
   );
 
+  // Generate business config from business data
+  const businessConfig = getBusinessConfig(
+    businessData?.business || null,
+    businessData?.services || null
+  );
+  
   // Conditionally render either the provider with children or the business finder
   return (
     <BusinessContext.Provider 
@@ -205,7 +211,8 @@ export function BusinessContextProvider({
         loading: isLoading,
         error: error as Error | null,
         setBusinessSlug,
-        businessId: businessData?.business?.id || (urlBusinessId ? parseInt(urlBusinessId) : null)
+        businessId: businessData?.business?.id || (urlBusinessId ? parseInt(urlBusinessId) : null),
+        config: businessConfig // Add the business configuration
       }}
     >
       {(!businessSlug && !urlBusinessId && !isLoading && !businessData?.business) ? (

@@ -15,7 +15,7 @@ export interface ThemeSettings {
   // Add more theme properties as needed
 }
 
-// Default theme values
+// Default theme values (this is just a fallback, actual defaults come from BusinessConfig)
 const defaultTheme: ThemeSettings = {
   primaryColor: "indigo-600",
   secondaryColor: "gray-200",
@@ -59,22 +59,20 @@ const ThemeContext = createContext<ThemeContextType>({
 
 // Provider component
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const { business } = useBusinessContext();
+  const { business, config } = useBusinessContext();
   const [theme, setTheme] = useState<ThemeSettings>(defaultTheme);
   
-  // Update theme when business data changes
+  // Update theme when business config changes
   useEffect(() => {
-    if (business?.themeSettings) {
-      // Apply business-specific theme if available
-      setTheme(prevTheme => ({
-        ...prevTheme,
-        ...(business.themeSettings as Partial<ThemeSettings>)
-      }));
+    if (config && config.themeSettings) {
+      // Always use the theme from business config 
+      // (it already merges defaults with business settings)
+      setTheme(config.themeSettings);
     } else {
-      // Reset to default theme if no business theme is available
+      // Fallback to default theme if config is not available
       setTheme(defaultTheme);
     }
-  }, [business]);
+  }, [config]);
   
   // Update theme function
   const updateTheme = (newTheme: Partial<ThemeSettings>) => {

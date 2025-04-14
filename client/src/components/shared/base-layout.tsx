@@ -1,8 +1,9 @@
 import { User } from "@shared/schema";
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import BaseHeader, { NavigationItem } from "./base-header";
 import { useLocation } from "wouter";
 import { useTheme } from "@/contexts/ThemeContext";
+import { ThemeSettings } from "@/contexts/ThemeContext";
 
 export interface BaseLayoutProps {
   children: ReactNode;
@@ -13,6 +14,7 @@ export interface BaseLayoutProps {
   logoText?: string;
   footerText?: string;
   queryParams?: Record<string, string | null>;
+  themeConfig?: ThemeSettings; // Pass theme settings from business config
 }
 
 export default function BaseLayout({
@@ -23,13 +25,21 @@ export default function BaseLayout({
   portalType,
   logoText,
   footerText,
-  queryParams
+  queryParams,
+  themeConfig
 }: BaseLayoutProps) {
   const [location] = useLocation();
   // Use theme context for styling
-  const { theme, getBackgroundColor, getTextColor, getPrimaryColor } = useTheme();
+  const { theme, getBackgroundColor, getTextColor, getPrimaryColor, updateTheme } = useTheme();
   
-  const businessName = business?.businessName || 'Business Portal';
+  // Apply business theme configuration if provided
+  useEffect(() => {
+    if (themeConfig) {
+      updateTheme(themeConfig);
+    }
+  }, [themeConfig, updateTheme]);
+  
+  const businessName = business?.businessName || logoText || 'Business Portal';
   
   return (
     <div className={`min-h-screen ${getBackgroundColor()}`}>
@@ -49,7 +59,7 @@ export default function BaseLayout({
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className={`text-sm ${getTextColor()}`}>
-              &copy; {new Date().getFullYear()} {businessName}. All rights reserved.
+              &copy; {new Date().getFullYear()} {businessName}. {footerText || 'All rights reserved.'}
             </p>
             <p className="text-sm text-gray-400 mt-2 md:mt-0">
               Powered by <span className={`${getPrimaryColor()} font-medium`}>AppointEase</span>

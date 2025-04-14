@@ -27,7 +27,7 @@ export default function CustomerPortalLayout({
   accessToken 
 }: CustomerPortalLayoutProps) {
   const [location] = useLocation();
-  const { business: contextBusiness } = useBusinessContext();
+  const { business: contextBusiness, config } = useBusinessContext();
   const { theme } = useTheme();
   
   // Use business from context if available, otherwise fallback to props
@@ -38,40 +38,40 @@ export default function CustomerPortalLayout({
   if (accessToken) queryParams.token = accessToken;
   if (businessId) queryParams.businessId = businessId;
   
-  // Define customer portal navigation items - matched with business portal
+  // Define customer portal navigation items - using translations based on business locale if needed
   const navigationItems: NavigationItem[] = [
     { 
-      label: "Home", 
+      label: config.locale === 'es' ? 'Inicio' : 'Home', 
       icon: <HomeIcon className="h-4 w-4 mr-2" />,
       path: "/customer-portal",
       isActive: location === "/customer-portal" 
     },
     { 
-      label: "Services", 
+      label: config.locale === 'es' ? 'Servicios' : 'Services', 
       icon: <ShoppingBagIcon className="h-4 w-4 mr-2" />,
       path: "/customer-portal/services",
       isActive: location === "/customer-portal/services"
     },
     { 
-      label: "Store", 
+      label: config.locale === 'es' ? 'Tienda' : 'Store', 
       icon: <LayoutDashboard className="h-4 w-4 mr-2" />,
       path: "/customer-portal/store",
       isActive: location === "/customer-portal/store"
     },
     { 
-      label: "Book", 
+      label: config.locale === 'es' ? 'Reservar' : 'Book', 
       icon: <CalendarIcon className="h-4 w-4 mr-2" />,
       path: "/customer-portal/new-appointment",
       isActive: location === "/customer-portal/new-appointment"
     },
     { 
-      label: "My Appointments", 
+      label: config.locale === 'es' ? 'Mis Citas' : 'My Appointments', 
       icon: <ClipboardListIcon className="h-4 w-4 mr-2" />,
       path: "/customer-portal/my-appointments",
       isActive: location === "/customer-portal/my-appointments"
     },
     { 
-      label: "About", 
+      label: config.locale === 'es' ? 'Acerca de' : 'About', 
       icon: <InfoIcon className="h-4 w-4 mr-2" />,
       path: "/customer-portal/about",
       isActive: location === "/customer-portal/about"
@@ -83,8 +83,9 @@ export default function CustomerPortalLayout({
       business={business}
       navigationItems={navigationItems}
       portalType="customer"
-      logoText={business?.businessName || "Business Portal"}
+      logoText={config.name || business?.businessName || "Business Portal"}
       queryParams={queryParams}
+      themeConfig={config.themeSettings}
     >
       {children}
     </BaseLayout>
