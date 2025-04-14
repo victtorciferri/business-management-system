@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useBusinessContext } from "@/contexts/BusinessContext";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface CustomerPortalLayoutProps {
   children: React.ReactNode;
@@ -27,6 +28,7 @@ export default function CustomerPortalLayout({
 }: CustomerPortalLayoutProps) {
   const [location] = useLocation();
   const { business: contextBusiness } = useBusinessContext();
+  const { theme } = useTheme();
   
   // Use business from context if available, otherwise fallback to props
   const business = contextBusiness || propsBusiness;

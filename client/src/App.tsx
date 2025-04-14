@@ -35,6 +35,7 @@ import { useState, useEffect } from "react";
 import { User } from "@shared/schema";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { BusinessContextProvider } from "@/contexts/BusinessContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 function AppContent() {
   const { user: currentUser, isLoading: authLoading } = useAuth();
@@ -170,25 +171,33 @@ function AppContent() {
           <Route path="/new-appointment">
             <Redirect to="/customer-portal/new-appointment" />
           </Route>
-          {/* Customer Portal Routes - Wrapped with BusinessContextProvider */}
+          {/* Customer Portal Routes - Wrapped with BusinessContextProvider and ThemeProvider */}
           <Route path="/customer-portal">
             <BusinessContextProvider>
-              <CustomerPortal />
+              <ThemeProvider>
+                <CustomerPortal />
+              </ThemeProvider>
             </BusinessContextProvider>
           </Route>
           <Route path="/customer-portal/new-appointment">
             <BusinessContextProvider>
-              <NewAppointment />
+              <ThemeProvider>
+                <NewAppointment />
+              </ThemeProvider>
             </BusinessContextProvider>
           </Route>
           <Route path="/customer-portal/my-appointments">
             <BusinessContextProvider>
-              <MyAppointments />
+              <ThemeProvider>
+                <MyAppointments />
+              </ThemeProvider>
             </BusinessContextProvider>
           </Route>
           <Route path="/customer-portal/services">
             <BusinessContextProvider>
-              <CustomerServices />
+              <ThemeProvider>
+                <CustomerServices />
+              </ThemeProvider>
             </BusinessContextProvider>
           </Route>
           <Route path="/appointments">

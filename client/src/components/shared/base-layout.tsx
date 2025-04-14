@@ -2,6 +2,7 @@ import { User } from "@shared/schema";
 import { ReactNode } from "react";
 import BaseHeader, { NavigationItem } from "./base-header";
 import { useLocation } from "wouter";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export interface BaseLayoutProps {
   children: ReactNode;
@@ -25,11 +26,13 @@ export default function BaseLayout({
   queryParams
 }: BaseLayoutProps) {
   const [location] = useLocation();
+  // Use theme context for styling
+  const { theme, getBackgroundColor, getTextColor, getPrimaryColor } = useTheme();
   
   const businessName = business?.businessName || 'Business Portal';
   
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={`min-h-screen ${getBackgroundColor()}`}>
       <BaseHeader
         business={business}
         navigationItems={navigationItems}
@@ -39,17 +42,17 @@ export default function BaseLayout({
         slug={slug}
         queryParams={queryParams}
       />
-      <main className="container mx-auto px-4 py-8">
+      <main className={`container mx-auto px-4 py-8 ${theme.fontFamily}`}>
         {children}
       </main>
       <footer className="bg-white border-t py-6">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-sm text-gray-500">
+            <p className={`text-sm ${getTextColor()}`}>
               &copy; {new Date().getFullYear()} {businessName}. All rights reserved.
             </p>
             <p className="text-sm text-gray-400 mt-2 md:mt-0">
-              Powered by <span className="text-primary-600 font-medium">AppointEase</span>
+              Powered by <span className={`${getPrimaryColor()} font-medium`}>AppointEase</span>
             </p>
           </div>
         </div>
