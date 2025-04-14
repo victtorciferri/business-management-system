@@ -6,7 +6,8 @@ import {
   ShoppingBagIcon, 
   CalendarIcon, 
   ClipboardListIcon, 
-  InfoIcon 
+  InfoIcon,
+  LayoutDashboard
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useBusinessContext } from "@/contexts/BusinessContext";
@@ -35,7 +36,7 @@ export default function CustomerPortalLayout({
   if (accessToken) queryParams.token = accessToken;
   if (businessId) queryParams.businessId = businessId;
   
-  // Define customer portal navigation items
+  // Define customer portal navigation items - matched with business portal
   const navigationItems: NavigationItem[] = [
     { 
       label: "Home", 
@@ -44,7 +45,19 @@ export default function CustomerPortalLayout({
       isActive: location === "/customer-portal" 
     },
     { 
-      label: "New Appointment", 
+      label: "Services", 
+      icon: <ShoppingBagIcon className="h-4 w-4 mr-2" />,
+      path: "/customer-portal/services",
+      isActive: location === "/customer-portal/services"
+    },
+    { 
+      label: "Store", 
+      icon: <LayoutDashboard className="h-4 w-4 mr-2" />,
+      path: "/customer-portal/store",
+      isActive: location === "/customer-portal/store"
+    },
+    { 
+      label: "Book", 
       icon: <CalendarIcon className="h-4 w-4 mr-2" />,
       path: "/customer-portal/new-appointment",
       isActive: location === "/customer-portal/new-appointment"
@@ -54,12 +67,6 @@ export default function CustomerPortalLayout({
       icon: <ClipboardListIcon className="h-4 w-4 mr-2" />,
       path: "/customer-portal/my-appointments",
       isActive: location === "/customer-portal/my-appointments"
-    },
-    { 
-      label: "Services", 
-      icon: <ShoppingBagIcon className="h-4 w-4 mr-2" />,
-      path: "/customer-portal/services",
-      isActive: location === "/customer-portal/services"
     },
     { 
       label: "About", 
@@ -75,7 +82,6 @@ export default function CustomerPortalLayout({
       navigationItems={navigationItems}
       portalType="customer"
       logoText={business?.businessName || "Business Portal"}
-      footerText={`Powered by AppointEase`}
       queryParams={queryParams}
     >
       {children}
