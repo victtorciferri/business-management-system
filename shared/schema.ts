@@ -166,6 +166,7 @@ export const appointments = pgTable("appointments", {
 export const insertAppointmentSchema = createInsertSchema(appointments)
   .pick({
     userId: true,
+    businessSlug: true, // Add business slug to insert schema
     customerId: true,
     serviceId: true,
     staffId: true,
@@ -257,6 +258,7 @@ export const products = pgTable("products", {
 
 export const insertProductSchema = createInsertSchema(products).pick({
   userId: true,
+  businessSlug: true, // Add business slug to insert schema
   name: true,
   description: true,
   price: true,
@@ -320,6 +322,7 @@ export const carts = pgTable("carts", {
 
 export const insertCartSchema = createInsertSchema(carts).pick({
   userId: true,
+  businessSlug: true, // Add business slug to insert schema
   customerId: true,
   guestId: true,
   status: true,
@@ -373,6 +376,7 @@ export const staffAvailability = pgTable("staff_availability", {
 
 export const insertStaffAvailabilitySchema = createInsertSchema(staffAvailability).pick({
   staffId: true,
+  businessSlug: true, // Add business slug to insert schema
   dayOfWeek: true,
   startTime: true,
   endTime: true,
