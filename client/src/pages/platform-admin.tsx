@@ -100,11 +100,26 @@ export default function PlatformAdmin({ businessSlug, editBusinessId, isCreateMo
   // Filter businesses based on search term
   useEffect(() => {
     if (businesses) {
-      const filtered = businesses.filter(business => 
-        (business.name?.toLowerCase() || business.businessName?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-        (business.ownerEmail?.toLowerCase() || business.email?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-        (business.slug?.toLowerCase() || business.businessSlug?.toLowerCase() || "").includes(searchTerm.toLowerCase())
-      );
+      const filtered = businesses.filter(business => {
+        // Handle both field naming patterns
+        const businessName = (business.name || business.businessName || "").toLowerCase();
+        const email = (business.ownerEmail || business.email || "").toLowerCase();
+        const slug = (business.slug || business.businessSlug || "").toLowerCase();
+        
+        const searchTermLower = searchTerm.toLowerCase();
+        
+        return businessName.includes(searchTermLower) || 
+               email.includes(searchTermLower) || 
+               slug.includes(searchTermLower);
+      });
+      
+      // Debug the filtering process
+      console.log("Filtering businesses:", { 
+        total: businesses.length,
+        filtered: filtered.length,
+        searchTerm
+      });
+      
       setFilteredBusinesses(filtered);
     }
   }, [businesses, searchTerm]);
@@ -404,11 +419,21 @@ export default function PlatformAdmin({ businessSlug, editBusinessId, isCreateMo
                       key={business.id}
                       className={index % 2 === 0 ? 'bg-background' : 'bg-muted/20'}
                     >
-                      <TableCell className="font-medium">{business.name || business.businessName || "Unnamed Business"}</TableCell>
-                      <TableCell className="text-muted-foreground">{business.slug || business.businessSlug || "No slug"}</TableCell>
-                      <TableCell>{business.customDomain || "—"}</TableCell>
-                      <TableCell>{renderSubscriptionStatus(business.subscriptionStatus)}</TableCell>
-                      <TableCell className="text-muted-foreground">{business.ownerEmail || business.email}</TableCell>
+                      <TableCell className="font-medium">
+                        {business.name || business.businessName || "Unnamed Business"}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {business.slug || business.businessSlug || "No slug"}
+                      </TableCell>
+                      <TableCell>
+                        {business.customDomain || "—"}
+                      </TableCell>
+                      <TableCell>
+                        {renderSubscriptionStatus(business.subscriptionStatus)}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {business.ownerEmail || business.email || "No email"}
+                      </TableCell>
                       <TableCell className="text-right">
                         <Button 
                           variant="default"
