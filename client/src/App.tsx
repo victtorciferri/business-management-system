@@ -19,6 +19,11 @@ import StaffManagement from "@/pages/staff-management";
 import StaffProfile from "@/pages/staff-profile";
 import StaffSchedule from "@/pages/staff-schedule";
 
+// Settings and theme pages
+import ThemeEditor from "@/pages/theme-editor";
+import DashboardSettings from "@/pages/dashboard/settings";
+import TemplateSettings from "@/pages/dashboard/settings/theme/templates";
+
 // Payment-related pages
 import PaymentSuccess from "@/pages/payment/success";
 import PaymentFailure from "@/pages/payment/failure";
@@ -56,7 +61,8 @@ function AppContent() {
     'api', 'auth', 'admin', 'checkout', 'preview', 'instructions',
     'products', 'services', 'dashboard', 'appointments', 'customers',
     'staff-management', 'staff-profile', 'staff', 'staff-schedule',
-    'new-appointment', 'customer-portal', 'error-testing', 'payment'
+    'new-appointment', 'customer-portal', 'error-testing', 'payment',
+    'theme-editor'
   ];
   
   const potentialBusinessSlug = match && 
@@ -264,6 +270,36 @@ function AppContent() {
               <StaffSchedule />
             </ProtectedRoute>
           </Route>
+          
+          {/* Theme and Settings routes */}
+          <Route path="/theme-editor">
+            <ProtectedRoute>
+              <BusinessContextProvider>
+                <ThemeProvider>
+                  <ThemeEditor />
+                </ThemeProvider>
+              </BusinessContextProvider>
+            </ProtectedRoute>
+          </Route>
+          <Route path="/dashboard/settings">
+            <ProtectedRoute>
+              <BusinessContextProvider>
+                <ThemeProvider>
+                  <DashboardSettings />
+                </ThemeProvider>
+              </BusinessContextProvider>
+            </ProtectedRoute>
+          </Route>
+          <Route path="/dashboard/settings/theme/templates">
+            <ProtectedRoute>
+              <BusinessContextProvider>
+                <ThemeProvider>
+                  <TemplateSettings />
+                </ThemeProvider>
+              </BusinessContextProvider>
+            </ProtectedRoute>
+          </Route>
+          
           {/* Payment related routes */}
           <Route path="/payment/success" component={PaymentSuccess} />
           <Route path="/payment/failure" component={PaymentFailure} />
