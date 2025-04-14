@@ -61,7 +61,13 @@ const BusinessContext = createContext<BusinessContextType>({
 });
 
 // Export the hook for using this context
-export const useBusinessContext = () => useContext(BusinessContext);
+export function useBusinessContext() {
+  const context = useContext(BusinessContext);
+  if (context === undefined) {
+    throw new Error('useBusinessContext must be used within a BusinessContextProvider');
+  }
+  return context;
+}
 
 // Props for the context provider
 interface BusinessContextProviderProps {
@@ -89,10 +95,10 @@ function extractBusinessSlugFromUrl(path: string): string | null {
 }
 
 // The actual provider component
-export const BusinessContextProvider: React.FC<BusinessContextProviderProps> = ({ 
+export function BusinessContextProvider({ 
   children,
   initialSlug = 'salonelegante' // Default fallback slug if nothing is provided
-}) => {
+}: BusinessContextProviderProps) {
   // Get current URL to attempt extracting a business slug
   const [location] = useLocation();
   

@@ -23,6 +23,7 @@ import {
   MailIcon
 } from "lucide-react";
 import { type Appointment, type Service, type Customer } from "@shared/schema";
+import { useBusinessContext, Service as BusinessService } from "@/contexts/BusinessContext";
 import { format } from "date-fns";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -31,7 +32,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import CustomerPortalLayout from "@/components/customer-portal/layout";
-import { useBusinessContext } from "@/contexts/BusinessContext";
 
 const emailSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" })
