@@ -2454,21 +2454,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admin/businesses", requireAdmin, async (req: Request, res: Response) => {
     try {
-      // In a real app, we would check for admin authentication
-      // For now, we'll just return all users (assuming they're businesses)
-      
       // Get only business users (not admin users)
       const businessesResult = await db.execute(sql`
         SELECT 
           id, 
-          username, 
           email, 
           business_name, 
           business_slug, 
           custom_domain, 
-          phone, 
-          platform_fee_percentage, 
-          subscription, 
           subscription_status,
           created_at
         FROM users 
@@ -2479,22 +2472,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Map the result to proper user objects and remove sensitive information
       const businessRows = businessesResult.rows || [];
       const safeBusinesses = businessRows.map(row => {
-        // Convert snake_case column names to camelCase
-        const business = {
+        // Convert snake_case column names to camelCase and map to the required fields
+        return {
           id: row.id,
-          username: row.username,
-          email: row.email,
-          businessName: row.business_name,
-          businessSlug: row.business_slug,
+          name: row.business_name,
+          slug: row.business_slug,
           customDomain: row.custom_domain,
-          phone: row.phone,
-          subscription: row.subscription,
           subscriptionStatus: row.subscription_status,
-          platformFeePercentage: row.platform_fee_percentage,
-          createdAt: typeof row.created_at === 'string' ? new Date(row.created_at) : new Date(),
-          role: "business" // We're assuming all users are businesses for now
+          ownerEmail: row.email,
+          createdAt: typeof row.created_at === 'string' ? new Date(row.created_at) : row.created_at
         };
-        return business;
       });
       
       res.json(safeBusinesses);
