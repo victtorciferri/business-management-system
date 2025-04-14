@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { db } from "./db";
+import { db, pool } from "./db";
 import rateLimit from 'express-rate-limit';
 import { createPreference, processWebhook } from './mercadopago';
 import { 
@@ -1744,11 +1744,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
    */
   app.patch("/api/business/theme-settings", async (req: Request, res: Response) => {
     try {
-      if (!req.session.userId) {
-        return res.status(401).json({ message: "Not authenticated" });
+      if (!req.isAuthenticated || !req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
       }
       
-      const userId = req.session.userId;
+      const userId = req.user.id;
       const { themeSettings } = req.body;
       
       if (!themeSettings || typeof themeSettings !== 'object') {
@@ -1800,11 +1800,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
    */
   app.patch("/api/business/industry-type", async (req: Request, res: Response) => {
     try {
-      if (!req.session.userId) {
-        return res.status(401).json({ message: "Not authenticated" });
+      if (!req.isAuthenticated || !req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
       }
       
-      const userId = req.session.userId;
+      const userId = req.user.id;
       const { industryType } = req.body;
       
       if (!industryType || !['salon', 'fitness', 'medical', 'general'].includes(industryType)) {

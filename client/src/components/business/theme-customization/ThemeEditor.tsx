@@ -108,13 +108,33 @@ export function ThemeEditor({ onPreview, onSave }: ThemeEditorProps) {
     setIsSaving(true);
     
     try {
-      await apiRequest('/api/business/theme', {
-        method: 'POST',
+      // Update theme settings
+      await apiRequest('/api/business/theme-settings', {
+        method: 'PATCH',
         body: JSON.stringify({
-          businessId: business.id,
-          themeSettings
+          themeSettings: {
+            primaryColor: themeSettings.primaryColor,
+            secondaryColor: themeSettings.secondaryColor,
+            accentColor: themeSettings.accentColor,
+            textColor: themeSettings.textColor,
+            backgroundColor: themeSettings.backgroundColor,
+            fontFamily: themeSettings.fontFamily,
+            borderRadius: themeSettings.borderRadius ? `rounded-[${themeSettings.borderRadius}px]` : 'rounded-md',
+            buttonStyle: themeSettings.buttonStyle === 'default' ? 'rounded' : themeSettings.buttonStyle,
+            cardStyle: themeSettings.cardStyle === 'default' ? 'elevated' : themeSettings.cardStyle
+          }
         })
       });
+      
+      // Update industry type if it's specified
+      if (themeSettings.industryType && themeSettings.industryType !== config.industryType) {
+        await apiRequest('/api/business/industry-type', {
+          method: 'PATCH',
+          body: JSON.stringify({
+            industryType: themeSettings.industryType
+          })
+        });
+      }
       
       // Refresh business data to get updated theme
       await refreshBusinessData();

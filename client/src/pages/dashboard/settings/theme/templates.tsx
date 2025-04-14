@@ -23,10 +23,9 @@ export default function TemplateSettingsPage() {
     setIsChanging(true);
     
     try {
-      await apiRequest('/api/business/template', {
-        method: 'POST',
+      await apiRequest('/api/business/industry-type', {
+        method: 'PATCH',
         body: JSON.stringify({
-          businessId: business.id,
           industryType: template
         })
       });
