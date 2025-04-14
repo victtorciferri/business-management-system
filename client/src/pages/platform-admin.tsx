@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Edit, Eye, MoreHorizontal, Settings, Trash } from "lucide-react";
+import { Plus, Search, Edit, Eye, MoreHorizontal, Settings, Trash, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -101,9 +101,9 @@ export default function PlatformAdmin({ businessSlug, editBusinessId, isCreateMo
   useEffect(() => {
     if (businesses) {
       const filtered = businesses.filter(business => 
-        business.businessName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        business.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        business.businessSlug?.toLowerCase().includes(searchTerm.toLowerCase())
+        (business.name?.toLowerCase() || business.businessName?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+        (business.ownerEmail?.toLowerCase() || business.email?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+        (business.slug?.toLowerCase() || business.businessSlug?.toLowerCase() || "").includes(searchTerm.toLowerCase())
       );
       setFilteredBusinesses(filtered);
     }
@@ -348,15 +348,33 @@ export default function PlatformAdmin({ businessSlug, editBusinessId, isCreateMo
         </CardHeader>
         <CardContent>
           <div className="flex w-full max-w-sm items-center space-x-2 mb-6">
-            <Input
-              type="search"
-              placeholder="Search businesses..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <Button type="submit" size="icon">
-              <Search className="h-4 w-4" />
-            </Button>
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                className="pl-9 pr-8 border-muted-foreground/20 focus-visible:ring-primary/30"
+                placeholder="Search by name, email, or slug..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              {searchTerm && (
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="sm" 
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full p-0 hover:bg-muted" 
+                  onClick={() => setSearchTerm("")}
+                >
+                  <X className="h-3.5 w-3.5" />
+                  <span className="sr-only">Clear search</span>
+                </Button>
+              )}
+            </div>
+            <div className="text-sm text-muted-foreground">
+              {filteredBusinesses && (
+                <span>{filteredBusinesses.length} {filteredBusinesses.length === 1 ? 'business' : 'businesses'}</span>
+              )}
+            </div>
           </div>
           
           {isLoading ? (
@@ -368,67 +386,38 @@ export default function PlatformAdmin({ businessSlug, editBusinessId, isCreateMo
               <Skeleton className="h-12 w-full" />
             </div>
           ) : filteredBusinesses && filteredBusinesses.length > 0 ? (
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
+            <div className="rounded-md border overflow-hidden">
+              <Table className="w-full">
+                <TableHeader className="bg-muted/50">
                   <TableRow>
-                    <TableHead>Business Name</TableHead>
-                    <TableHead>Slug</TableHead>
-                    <TableHead>Domain</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Owner Email</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead className="font-semibold">Business Name</TableHead>
+                    <TableHead className="font-semibold">Slug</TableHead>
+                    <TableHead className="font-semibold">Domain</TableHead>
+                    <TableHead className="font-semibold">Status</TableHead>
+                    <TableHead className="font-semibold">Owner Email</TableHead>
+                    <TableHead className="text-right font-semibold">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredBusinesses.map((business) => (
-                    <TableRow key={business.id}>
-                      <TableCell className="font-medium">{business.businessName || "Unnamed Business"}</TableCell>
-                      <TableCell>{business.businessSlug || "No slug"}</TableCell>
-                      <TableCell>{business.customDomain || "No domain"}</TableCell>
+                  {filteredBusinesses.map((business, index) => (
+                    <TableRow 
+                      key={business.id}
+                      className={index % 2 === 0 ? 'bg-background' : 'bg-muted/20'}
+                    >
+                      <TableCell className="font-medium">{business.name || business.businessName || "Unnamed Business"}</TableCell>
+                      <TableCell className="text-muted-foreground">{business.slug || business.businessSlug || "No slug"}</TableCell>
+                      <TableCell>{business.customDomain || "—"}</TableCell>
                       <TableCell>{renderSubscriptionStatus(business.subscriptionStatus)}</TableCell>
-                      <TableCell>{business.email}</TableCell>
-                      <TableCell>{formatDate(business.createdAt)}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => business.businessSlug && handleManageBusiness(business.businessSlug)}
-                          >
-                            <Settings className="h-4 w-4" />
-                          </Button>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem 
-                                onClick={() => business.businessSlug && handleManageBusiness(business.businessSlug)}
-                              >
-                                <Settings className="h-4 w-4 mr-2" />
-                                Manage
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                onClick={() => business.id && setLocation(`/preview/${business.id}`)}
-                              >
-                                <Eye className="h-4 w-4 mr-2" />
-                                Preview
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                onClick={() => business.id && setLocation(`/platform-admin/edit/${business.id}`)}
-                              >
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
+                      <TableCell className="text-muted-foreground">{business.ownerEmail || business.email}</TableCell>
+                      <TableCell className="text-right">
+                        <Button 
+                          variant="default"
+                          size="sm"
+                          onClick={() => (business.slug || business.businessSlug) && handleManageBusiness(business.slug || business.businessSlug)}
+                        >
+                          <Settings className="h-4 w-4 mr-2" />
+                          Manage
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -436,8 +425,21 @@ export default function PlatformAdmin({ businessSlug, editBusinessId, isCreateMo
               </Table>
             </div>
           ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              No businesses found. Try changing your search criteria or create a new business.
+            <div className="text-center py-12 px-4">
+              <div className="inline-flex h-20 w-20 items-center justify-center rounded-full bg-muted mb-5">
+                <Search className="h-10 w-10 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">No businesses found</h3>
+              <p className="text-muted-foreground max-w-md mx-auto mb-6">
+                Try changing your search criteria or create a new business using the button above.
+              </p>
+              <Button 
+                onClick={() => setLocation("/platform-admin/create")}
+                className="mt-2"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Create New Business
+              </Button>
             </div>
           )}
         </CardContent>
