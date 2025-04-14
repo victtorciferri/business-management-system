@@ -33,6 +33,21 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 
+// Define a type for the business data returned by the admin API
+interface AdminBusiness {
+  id: number;
+  name: string;           // business_name in database
+  slug: string;           // business_slug in database
+  ownerEmail: string;     // email in database
+  customDomain: string | null;
+  subscriptionStatus: string | null;
+  platformFeePercentage: number;
+  phone: string | null;
+  subscription: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 interface PlatformAdminProps {
   businessSlug?: string;
   editBusinessId?: number;
@@ -42,8 +57,8 @@ interface PlatformAdminProps {
 export default function PlatformAdmin({ businessSlug, editBusinessId, isCreateMode }: PlatformAdminProps = {}) {
   const [_, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredBusinesses, setFilteredBusinesses] = useState<User[]>([]);
-  const [selectedBusiness, setSelectedBusiness] = useState<User | null>(null);
+  const [filteredBusinesses, setFilteredBusinesses] = useState<AdminBusiness[]>([]);
+  const [selectedBusiness, setSelectedBusiness] = useState<AdminBusiness | null>(null);
   const [isBusinessDetails, setIsBusinessDetails] = useState<boolean>(false);
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
   const [isCreating, setIsCreating] = useState<boolean>(false);
@@ -70,7 +85,7 @@ export default function PlatformAdmin({ businessSlug, editBusinessId, isCreateMo
   }, [businessSlug, editBusinessId, isCreateMode]);
 
   // Fetch all businesses
-  const { data: businesses, isLoading, error } = useQuery<User[]>({
+  const { data: businesses, isLoading, error } = useQuery<AdminBusiness[]>({
     queryKey: ["/api/admin/businesses"],
     queryFn: async () => {
       const response = await apiRequest("GET", "/api/admin/businesses");
@@ -79,7 +94,17 @@ export default function PlatformAdmin({ businessSlug, editBusinessId, isCreateMo
         console.error("Error fetching businesses:", errorText);
         throw new Error(`Failed to fetch businesses: ${response.status} ${errorText}`);
       }
-      return response.json();
+      
+      const businessData = await response.json();
+      
+      // Debug: Log the raw business data to see what's coming from the API
+      console.log("Raw business data from API:", {
+        businessCount: businessData?.length || 0,
+        firstBusiness: businessData?.[0] || null,
+        allBusinesses: businessData || []
+      });
+      
+      return businessData;
     },
     retry: 1
   });
@@ -88,7 +113,7 @@ export default function PlatformAdmin({ businessSlug, editBusinessId, isCreateMo
   useEffect(() => {
     if (businesses && (businessSlug || editBusinessId)) {
       const business = businessSlug 
-        ? businesses.find(b => b.businessSlug === businessSlug)
+        ? businesses.find(b => b.slug === businessSlug)
         : businesses.find(b => b.id === editBusinessId);
         
       if (business) {
@@ -101,10 +126,9 @@ export default function PlatformAdmin({ businessSlug, editBusinessId, isCreateMo
   useEffect(() => {
     if (businesses) {
       const filtered = businesses.filter(business => {
-        // Handle both field naming patterns
-        const businessName = (business.name || business.businessName || "").toLowerCase();
-        const email = (business.ownerEmail || business.email || "").toLowerCase();
-        const slug = (business.slug || business.businessSlug || "").toLowerCase();
+        const businessName = (business.name || "").toLowerCase();
+        const email = (business.ownerEmail || "").toLowerCase();
+        const slug = (business.slug || "").toLowerCase();
         
         const searchTermLower = searchTerm.toLowerCase();
         
@@ -184,9 +208,9 @@ export default function PlatformAdmin({ businessSlug, editBusinessId, isCreateMo
                 <span className="mr-1">←</span> Back to Businesses
               </Button>
             </div>
-            <h1 className="text-3xl font-bold tracking-tight">{selectedBusiness.businessName}</h1>
+            <h1 className="text-3xl font-bold tracking-tight">{selectedBusiness.name}</h1>
             <div className="flex items-center space-x-2 mt-1">
-              <p className="text-muted-foreground">{selectedBusiness.businessSlug}</p>
+              <p className="text-muted-foreground">{selectedBusiness.slug}</p>
               {selectedBusiness.customDomain && (
                 <Badge variant="outline">{selectedBusiness.customDomain}</Badge>
               )}
@@ -222,7 +246,7 @@ export default function PlatformAdmin({ businessSlug, editBusinessId, isCreateMo
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <h3 className="text-sm font-medium text-muted-foreground">Email</h3>
-                    <p>{selectedBusiness.email}</p>
+                    <p>{selectedBusiness.ownerEmail}</p>
                   </div>
                   <div>
                     <h3 className="text-sm font-medium text-muted-foreground">Phone</h3>
@@ -302,12 +326,12 @@ export default function PlatformAdmin({ businessSlug, editBusinessId, isCreateMo
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={() => setLocation(`/platform-admin/${selectedBusiness.businessSlug}`)}
+            onClick={() => setLocation(`/platform-admin/${selectedBusiness.slug}`)}
           >
             <span className="mr-1">←</span> Back to Business Details
           </Button>
         </div>
-        <h1 className="text-3xl font-bold tracking-tight mb-6">Edit Business: {selectedBusiness.businessName}</h1>
+        <h1 className="text-3xl font-bold tracking-tight mb-6">Edit Business: {selectedBusiness.name}</h1>
         
         <Card>
           <CardHeader>
@@ -318,7 +342,7 @@ export default function PlatformAdmin({ businessSlug, editBusinessId, isCreateMo
             <p className="text-muted-foreground mb-4">This feature is coming soon. Currently, you can view business details but not edit them.</p>
             <Button 
               variant="outline" 
-              onClick={() => setLocation(`/platform-admin/${selectedBusiness.businessSlug}`)}
+              onClick={() => setLocation(`/platform-admin/${selectedBusiness.slug}`)}
             >
               Return to Business Details
             </Button>
@@ -420,10 +444,10 @@ export default function PlatformAdmin({ businessSlug, editBusinessId, isCreateMo
                       className={index % 2 === 0 ? 'bg-background' : 'bg-muted/20'}
                     >
                       <TableCell className="font-medium">
-                        {business.name || business.businessName || "Unnamed Business"}
+                        {business.name || "Unnamed Business"}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {business.slug || business.businessSlug || "No slug"}
+                        {business.slug || "No slug"}
                       </TableCell>
                       <TableCell>
                         {business.customDomain || "—"}
@@ -432,13 +456,13 @@ export default function PlatformAdmin({ businessSlug, editBusinessId, isCreateMo
                         {renderSubscriptionStatus(business.subscriptionStatus)}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {business.ownerEmail || business.email || "No email"}
+                        {business.ownerEmail || "No email"}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button 
                           variant="default"
                           size="sm"
-                          onClick={() => (business.slug || business.businessSlug) && handleManageBusiness(business.slug || business.businessSlug)}
+                          onClick={() => business.slug && handleManageBusiness(business.slug)}
                         >
                           <Settings className="h-4 w-4 mr-2" />
                           Manage
