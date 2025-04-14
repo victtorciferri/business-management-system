@@ -28,6 +28,7 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from "@/component
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import CustomerPortalLayout from "@/components/customer-portal/layout";
+import { useBusinessContext } from "@/contexts/BusinessContext";
 
 // Define the email schema for validation
 const emailSchema = z.object({
@@ -84,10 +85,10 @@ export default function ZeroFriction() {
       
       // Use the businessId from URL params, already defined above
       
-      // Call the zero-friction API endpoint
+      // Call the zero-friction API endpoint with businessId from context if available
       const response = await apiRequest("POST", "/api/zero-friction-lookup", {
         email: values.email,
-        businessId
+        businessId: contextBusiness?.id || businessId
       });
       
       if (response.status === 429) {
@@ -158,18 +159,12 @@ export default function ZeroFriction() {
     return `Please try again in ${seconds} second${seconds > 1 ? 's' : ''}`;
   };
   
-  // Get the business data to pass to the layout
-  const { data: businessData } = useQuery<{
-    business: any;
-    services: any[];
-  }>({
-    queryKey: ['/api/business-data/salonelegante'],
-    enabled: true
-  });
+  // Get business data from BusinessContext instead of direct API call
+  const { business: contextBusiness, loading: businessLoading } = useBusinessContext();
   
   return (
     <CustomerPortalLayout 
-      business={businessData?.business} 
+      business={contextBusiness} 
       businessId={businessId?.toString()} 
       accessToken={null}
     >
