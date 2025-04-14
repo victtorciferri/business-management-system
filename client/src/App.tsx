@@ -14,6 +14,7 @@ import DomainSetupInstructions from "@/pages/domain-setup";
 import CustomDomain from "@/pages/custom-domain";
 import PreviewBusiness from "@/pages/preview-business";
 import AdminDashboard from "@/pages/admin-dashboard";
+import PlatformAdmin from "@/pages/platform-admin";
 import AuthPage from "@/pages/auth-page";
 import StaffManagement from "@/pages/staff-management";
 import StaffProfile from "@/pages/staff-profile";
@@ -62,7 +63,7 @@ function AppContent() {
     'products', 'services', 'dashboard', 'appointments', 'customers',
     'staff-management', 'staff-profile', 'staff', 'staff-schedule',
     'new-appointment', 'customer-portal', 'error-testing', 'payment',
-    'theme-editor'
+    'theme-editor', 'platform-admin'
   ];
   
   const potentialBusinessSlug = match && 
@@ -239,6 +240,30 @@ function AppContent() {
           <Route path="/admin">
             <ProtectedRoute requiredRole="admin">
               <AdminDashboard />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/platform-admin/create">
+            <ProtectedRoute requiredRole="admin">
+              <PlatformAdmin isCreateMode={true} />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/platform-admin/edit/:id">
+            {params => (
+              <ProtectedRoute requiredRole="admin">
+                <PlatformAdmin editBusinessId={Number(params.id)} />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/platform-admin/:slug">
+            {params => (
+              <ProtectedRoute requiredRole="admin">
+                <PlatformAdmin businessSlug={params.slug} />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/platform-admin">
+            <ProtectedRoute requiredRole="admin">
+              <PlatformAdmin />
             </ProtectedRoute>
           </Route>
           <Route path="/checkout/:appointmentId">
