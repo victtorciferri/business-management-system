@@ -1738,6 +1738,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  /**
+   * Update business theme settings
+   * This endpoint updates the theme settings for the current logged-in business
+   */
+  app.patch("/api/business/theme-settings", async (req: Request, res: Response) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const userId = req.session.userId;
+      const { themeSettings } = req.body;
+      
+      if (!themeSettings || typeof themeSettings !== 'object') {
+        return res.status(400).json({ message: "Invalid theme settings format" });
+      }
+
+      // Check if theme_settings column exists before trying to update it
+      const checkResult = await pool.query(`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'users' AND column_name = 'theme_settings'
+      `);
+      
+      if (checkResult.rows.length === 0) {
+        // Add the column if it doesn't exist
+        await pool.query(`
+          ALTER TABLE users 
+          ADD COLUMN theme_settings JSONB DEFAULT '{
+            "primaryColor": "indigo-600",
+            "secondaryColor": "gray-200",
+            "accentColor": "amber-500",
+            "textColor": "gray-800",
+            "backgroundColor": "white",
+            "fontFamily": "sans-serif",
+            "borderRadius": "rounded-md",
+            "buttonStyle": "rounded",
+            "cardStyle": "elevated"
+          }'
+        `);
+      }
+      
+      // Update theme settings using native PostgreSQL query to handle JSONB
+      await pool.query(`
+        UPDATE users 
+        SET theme_settings = $1::jsonb
+        WHERE id = $2
+      `, [JSON.stringify(themeSettings), userId]);
+      
+      return res.json({ success: true, themeSettings });
+    } catch (error) {
+      console.error('Error updating theme settings:', error);
+      return res.status(500).json({ message: "Failed to update theme settings" });
+    }
+  });
+  
+  /**
+   * Update business industry type (template)
+   * This endpoint updates the industry type for the current logged-in business
+   */
+  app.patch("/api/business/industry-type", async (req: Request, res: Response) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const userId = req.session.userId;
+      const { industryType } = req.body;
+      
+      if (!industryType || !['salon', 'fitness', 'medical', 'general'].includes(industryType)) {
+        return res.status(400).json({ message: "Invalid industry type" });
+      }
+
+      // Check if industry_type column exists before trying to update it
+      const checkResult = await pool.query(`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'users' AND column_name = 'industry_type'
+      `);
+      
+      if (checkResult.rows.length === 0) {
+        // Add the column if it doesn't exist
+        await pool.query(`
+          ALTER TABLE users 
+          ADD COLUMN industry_type TEXT DEFAULT 'general'
+        `);
+      }
+      
+      // Update industry type
+      await pool.query(`
+        UPDATE users 
+        SET industry_type = $1
+        WHERE id = $2
+      `, [industryType, userId]);
+      
+      return res.json({ success: true, industryType });
+    } catch (error) {
+      console.error('Error updating industry type:', error);
+      return res.status(500).json({ message: "Failed to update industry type" });
+    }
+  });
+  
   // API endpoint to update a business's platform fee percentage
   app.patch("/api/business/platform-fee", async (req: Request, res: Response) => {
     try {
