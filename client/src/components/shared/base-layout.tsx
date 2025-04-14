@@ -26,7 +26,7 @@ export default function BaseLayout({
 }: BaseLayoutProps) {
   const [location] = useLocation();
   
-  const businessName = business?.businessName || 'Salon Elegante';
+  const businessName = business?.businessName || 'Business Portal';
   
   return (
     <div className="min-h-screen bg-gray-50">
