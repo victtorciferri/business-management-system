@@ -28,10 +28,15 @@ interface AdminBusiness {
   createdAt: Date;
 }
 
-export default function AdminThemeEditor() {
+interface AdminThemeEditorProps {
+  businessId?: number;
+}
+
+export default function AdminThemeEditor({ businessId: propBusinessId }: AdminThemeEditorProps) {
   const [_, setLocation] = useLocation();
   const params = useParams<{ businessId: string }>();
-  const businessId = params?.businessId ? parseInt(params.businessId, 10) : null;
+  // Use prop businessId if provided, otherwise use URL param
+  const businessId = propBusinessId || (params?.businessId ? parseInt(params.businessId, 10) : null);
   const { toast } = useToast();
 
   // State for theme preview

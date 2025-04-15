@@ -270,7 +270,7 @@ function AppContent() {
           <Route path="/admin-theme-editor/:businessId">
             {params => (
               <ProtectedRoute requiredRole="admin">
-                <AdminThemeEditor />
+                <AdminThemeEditor businessId={parseInt(params.businessId, 10)} />
               </ProtectedRoute>
             )}
           </Route>
