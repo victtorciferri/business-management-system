@@ -39,12 +39,24 @@ export default function AdminDashboard() {
   const [_, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState("businesses");
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredBusinesses, setFilteredBusinesses] = useState<User[]>([]);
+  // Define AdminBusiness type to match the API response
+  interface AdminBusiness {
+    id: number;
+    name: string;
+    slug: string;
+    customDomain: string | null;
+    subscriptionStatus: string | null;
+    ownerEmail: string;
+    platformFeePercentage?: number;
+    createdAt: Date;
+  }
+  
+  const [filteredBusinesses, setFilteredBusinesses] = useState<AdminBusiness[]>([]);
   const [selectedBusinessId, setSelectedBusinessId] = useState<number | null>(null);
   const [platformFeePercentage, setPlatformFeePercentage] = useState<string>("2.00");
 
   // Fetch all businesses
-  const { data: businesses, isLoading: isLoadingBusinesses, error: businessesError } = useQuery<User[]>({
+  const { data: businesses, isLoading: isLoadingBusinesses, error: businessesError } = useQuery<AdminBusiness[]>({
     queryKey: ["/api/admin/businesses"],
     queryFn: async () => {
       const response = await apiRequest("GET", "/api/admin/businesses");
@@ -53,7 +65,11 @@ export default function AdminDashboard() {
         console.error("Error fetching businesses:", errorText);
         throw new Error(`Failed to fetch businesses: ${response.status} ${errorText}`);
       }
-      return response.json();
+      
+      // Debug log to see the response
+      const data = await response.json();
+      console.log("Businesses API response:", data);
+      return data;
     },
     retry: 1
   });
@@ -95,11 +111,11 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (businesses) {
       const filtered = businesses.filter(business => 
-        business.businessName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        business.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        business.businessSlug?.toLowerCase().includes(searchTerm.toLowerCase())
+        business.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        business.ownerEmail?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        business.slug?.toLowerCase().includes(searchTerm.toLowerCase())
       );
-      setFilteredBusinesses(filtered);
+      setFilteredBusinesses(filtered as any[]);
     }
   }, [businesses, searchTerm]);
 
@@ -205,10 +221,10 @@ export default function AdminDashboard() {
               <Card>
                 <CardHeader>
                   <CardTitle>
-                    {businesses.find(b => b.id === selectedBusinessId)?.businessName}
+                    {businesses.find(b => b.id === selectedBusinessId)?.name}
                   </CardTitle>
                   <CardDescription>
-                    {businesses.find(b => b.id === selectedBusinessId)?.email}
+                    {businesses.find(b => b.id === selectedBusinessId)?.ownerEmail}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -216,7 +232,7 @@ export default function AdminDashboard() {
                     <div>
                       <h3 className="text-sm font-medium mb-1">Business Details</h3>
                       <p className="text-sm text-muted-foreground mb-1">
-                        <span className="font-medium">Slug:</span> {businesses.find(b => b.id === selectedBusinessId)?.businessSlug}
+                        <span className="font-medium">Slug:</span> {businesses.find(b => b.id === selectedBusinessId)?.slug}
                       </p>
                       <p className="text-sm text-muted-foreground mb-1">
                         <span className="font-medium">Custom Domain:</span> {businesses.find(b => b.id === selectedBusinessId)?.customDomain || "None"}
@@ -497,9 +513,9 @@ export default function AdminDashboard() {
                       {filteredBusinesses.map((business) => (
                         <TableRow key={business.id}>
                           <TableCell>{business.id}</TableCell>
-                          <TableCell>{business.businessName}</TableCell>
-                          <TableCell>{business.email}</TableCell>
-                          <TableCell>{business.businessSlug}</TableCell>
+                          <TableCell>{business.name}</TableCell>
+                          <TableCell>{business.ownerEmail}</TableCell>
+                          <TableCell>{business.slug}</TableCell>
                           <TableCell>{business.customDomain || "None"}</TableCell>
                           <TableCell>{business.subscriptionStatus || "Free"}</TableCell>
                           <TableCell>{business.platformFeePercentage || "2.00"}%</TableCell>
@@ -528,50 +544,125 @@ export default function AdminDashboard() {
           </Card>
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-2">
-                  <Building className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">Total Businesses</span>
-                </div>
-                <div className="text-2xl font-bold mt-2">
-                  {businesses ? businesses.length : 0}
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-2">
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">Total Customers</span>
-                </div>
-                <div className="text-2xl font-bold mt-2">
-                  Loading...
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-2">
-                  <div className="h-4 w-4 text-muted-foreground">$</div>
-                  <span className="text-sm font-medium">Platform Revenue</span>
-                </div>
-                <div className="text-2xl font-bold mt-2">
-                  Loading...
+            <Card className="overflow-hidden">
+              <CardContent className="p-0">
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <div className="p-2 bg-blue-500/10 rounded-full">
+                          <Building className="h-5 w-5 text-blue-700" />
+                        </div>
+                        <span className="text-sm font-medium text-blue-900">Total Businesses</span>
+                      </div>
+                      <div className="text-3xl font-bold mt-2 text-blue-900">
+                        {businesses ? businesses.length : 0}
+                      </div>
+                    </div>
+                    {businesses && businesses.length > 0 && (
+                      <div className="h-16 w-16 flex items-center justify-center bg-blue-500/10 rounded-full">
+                        <span className="text-lg font-bold text-blue-700">{businesses.length}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
             
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-2">
-                  <div className="h-4 w-4 text-muted-foreground">%</div>
-                  <span className="text-sm font-medium">Average Fee</span>
+            <Card className="overflow-hidden">
+              <CardContent className="p-0">
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <div className="p-2 bg-green-500/10 rounded-full">
+                          <Users className="h-5 w-5 text-green-700" />
+                        </div>
+                        <span className="text-sm font-medium text-green-900">Total Customers</span>
+                      </div>
+                      <div className="text-3xl font-bold mt-2 text-green-900">
+                        {isLoading ? (
+                          <div className="h-8 w-20 animate-pulse bg-green-200/50 rounded"></div>
+                        ) : (
+                          <div className="flex items-center">
+                            <span>-</span>
+                            <span className="text-xs text-green-700 ml-2">Coming soon</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="h-16 w-16 flex items-center justify-center bg-green-500/10 rounded-full">
+                      <span className="text-green-700">
+                        <Users className="h-8 w-8 opacity-70" />
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="text-2xl font-bold mt-2">
-                  2.00%
+              </CardContent>
+            </Card>
+            
+            <Card className="overflow-hidden">
+              <CardContent className="p-0">
+                <div className="bg-gradient-to-r from-purple-50 to-violet-50 p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <div className="p-2 bg-purple-500/10 rounded-full">
+                          <div className="h-5 w-5 flex items-center justify-center text-purple-700 font-bold">$</div>
+                        </div>
+                        <span className="text-sm font-medium text-purple-900">Platform Revenue</span>
+                      </div>
+                      <div className="text-3xl font-bold mt-2 text-purple-900">
+                        {isLoading ? (
+                          <div className="h-8 w-20 animate-pulse bg-purple-200/50 rounded"></div>
+                        ) : (
+                          <div className="flex items-center">
+                            <span>-</span>
+                            <span className="text-xs text-purple-700 ml-2">Coming soon</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="h-16 w-16 flex items-center justify-center bg-purple-500/10 rounded-full">
+                      <span className="text-lg font-bold text-purple-700">$</span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="overflow-hidden">
+              <CardContent className="p-0">
+                <div className="bg-gradient-to-r from-amber-50 to-yellow-50 p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <div className="p-2 bg-amber-500/10 rounded-full">
+                          <div className="h-5 w-5 flex items-center justify-center text-amber-700 font-bold">%</div>
+                        </div>
+                        <span className="text-sm font-medium text-amber-900">Average Fee</span>
+                      </div>
+                      {isLoading ? (
+                        <div className="h-8 w-20 animate-pulse bg-amber-200/50 rounded mt-2"></div>
+                      ) : businesses && businesses.length > 0 ? (
+                        <div className="text-3xl font-bold mt-2 text-amber-900">
+                          {(businesses.reduce((sum, b) => sum + (b.platformFeePercentage || 0), 0) / businesses.length).toFixed(2)}%
+                        </div>
+                      ) : (
+                        <div className="text-3xl font-bold mt-2 text-amber-900">
+                          0.00%
+                        </div>
+                      )}
+                    </div>
+                    <div className="h-16 w-16 flex items-center justify-center bg-amber-500/10 rounded-full">
+                      <span className="text-lg font-bold text-amber-700">
+                        {businesses && businesses.length > 0 
+                          ? `${(businesses.reduce((sum, b) => sum + (b.platformFeePercentage || 0), 0) / businesses.length).toFixed(1)}%`
+                          : "0%"
+                        }
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>

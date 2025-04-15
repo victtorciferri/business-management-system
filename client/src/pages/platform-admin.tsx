@@ -17,7 +17,8 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Edit, Eye, MoreHorizontal, Settings, Trash, X } from "lucide-react";
+import { Plus, Search, Edit, Eye, MoreHorizontal, Settings, Trash, X, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Filter } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -62,6 +63,15 @@ export default function PlatformAdmin({ businessSlug, editBusinessId, isCreateMo
   const [isBusinessDetails, setIsBusinessDetails] = useState<boolean>(false);
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
   const [isCreating, setIsCreating] = useState<boolean>(false);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(10);
+  
+  // Filter state
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [sortField, setSortField] = useState<string>("createdAt");
 
   // Determine which view to show based on props
   useEffect(() => {
@@ -122,31 +132,92 @@ export default function PlatformAdmin({ businessSlug, editBusinessId, isCreateMo
     }
   }, [businesses, businessSlug, editBusinessId]);
 
-  // Filter businesses based on search term
+  // Filter and sort businesses based on applied filters
   useEffect(() => {
     if (businesses) {
-      const filtered = businesses.filter(business => {
+      // First filter by search term
+      let filtered = businesses.filter(business => {
         const businessName = (business.name || "").toLowerCase();
         const email = (business.ownerEmail || "").toLowerCase();
         const slug = (business.slug || "").toLowerCase();
         
         const searchTermLower = searchTerm.toLowerCase();
         
+        // Skip search filter if empty
+        if (!searchTermLower) return true;
+        
         return businessName.includes(searchTermLower) || 
                email.includes(searchTermLower) || 
                slug.includes(searchTermLower);
       });
       
-      // Debug the filtering process
-      console.log("Filtering businesses:", { 
+      // Filter by status if status filter is applied
+      if (statusFilter) {
+        filtered = filtered.filter(business => {
+          // Handle null status as "free"
+          if (statusFilter === "free" && !business.subscriptionStatus) {
+            return true;
+          }
+          
+          return business.subscriptionStatus?.toLowerCase() === statusFilter.toLowerCase();
+        });
+      }
+      
+      // Sort the filtered results
+      filtered = [...filtered].sort((a, b) => {
+        let valueA: any;
+        let valueB: any;
+        
+        // Determine sort values based on field
+        switch (sortField) {
+          case "name":
+            valueA = a.name || "";
+            valueB = b.name || "";
+            break;
+          case "platformFeePercentage":
+            valueA = a.platformFeePercentage || 0;
+            valueB = b.platformFeePercentage || 0;
+            break;
+          case "createdAt":
+            valueA = new Date(a.createdAt).getTime();
+            valueB = new Date(b.createdAt).getTime();
+            break;
+          default:
+            valueA = a[sortField as keyof AdminBusiness] || "";
+            valueB = b[sortField as keyof AdminBusiness] || "";
+        }
+        
+        // Compare based on sort order
+        if (sortOrder === "asc") {
+          return valueA > valueB ? 1 : -1;
+        } else {
+          return valueA < valueB ? 1 : -1;
+        }
+      });
+      
+      // Debug the filtering and sorting process
+      console.log("Filtering and sorting businesses:", { 
         total: businesses.length,
         filtered: filtered.length,
-        searchTerm
+        searchTerm,
+        statusFilter,
+        sortField,
+        sortOrder
       });
       
       setFilteredBusinesses(filtered);
+      
+      // Reset to first page when filter changes
+      setCurrentPage(1);
     }
-  }, [businesses, searchTerm]);
+  }, [businesses, searchTerm, statusFilter, sortField, sortOrder]);
+  
+  // Calculate paginated data
+  const getPaginatedData = () => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredBusinesses.slice(startIndex, endIndex);
+  };
 
   const formatDate = (dateString: string | Date) => {
     const date = new Date(dateString);
@@ -386,32 +457,109 @@ export default function PlatformAdmin({ businessSlug, editBusinessId, isCreateMo
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex w-full max-w-sm items-center space-x-2 mb-6">
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                className="pl-9 pr-8 border-muted-foreground/20 focus-visible:ring-primary/30"
-                placeholder="Search by name, email, or slug..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              {searchTerm && (
-                <Button 
-                  type="button" 
-                  variant="ghost" 
-                  size="sm" 
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full p-0 hover:bg-muted" 
-                  onClick={() => setSearchTerm("")}
-                >
-                  <X className="h-3.5 w-3.5" />
-                  <span className="sr-only">Clear search</span>
-                </Button>
-              )}
+          <div className="space-y-4 mb-6">
+            {/* Search bar */}
+            <div className="flex w-full max-w-sm items-center space-x-2">
+              <div className="relative w-full">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  className="pl-9 pr-8 border-muted-foreground/20 focus-visible:ring-primary/30"
+                  placeholder="Search by name, email, or slug..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                {searchTerm && (
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="sm" 
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full p-0 hover:bg-muted" 
+                    onClick={() => setSearchTerm("")}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    <span className="sr-only">Clear search</span>
+                  </Button>
+                )}
+              </div>
+              <div className="text-sm text-muted-foreground">
+                {filteredBusinesses && (
+                  <span>{filteredBusinesses.length} {filteredBusinesses.length === 1 ? 'business' : 'businesses'}</span>
+                )}
+              </div>
             </div>
-            <div className="text-sm text-muted-foreground">
-              {filteredBusinesses && (
-                <span>{filteredBusinesses.length} {filteredBusinesses.length === 1 ? 'business' : 'businesses'}</span>
+            
+            {/* Filter and sort controls */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center space-x-2">
+                <span className="text-sm">Status:</span>
+                <Select
+                  value={statusFilter || ""}
+                  onValueChange={(value) => setStatusFilter(value === "" ? null : value)}
+                >
+                  <SelectTrigger className="h-8 w-[110px]">
+                    <SelectValue placeholder="All" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All</SelectItem>
+                    <SelectItem value="free">Free</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="trialing">Trial</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                    <SelectItem value="past_due">Past Due</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <span className="text-sm">Sort by:</span>
+                <Select
+                  value={sortField}
+                  onValueChange={(value) => setSortField(value)}
+                >
+                  <SelectTrigger className="h-8 w-[120px]">
+                    <SelectValue placeholder="Created date" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="createdAt">Created date</SelectItem>
+                    <SelectItem value="name">Business name</SelectItem>
+                    <SelectItem value="platformFeePercentage">Platform fee</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <span className="text-sm">Order:</span>
+                <Select
+                  value={sortOrder}
+                  onValueChange={(value) => setSortOrder(value as "asc" | "desc")}
+                >
+                  <SelectTrigger className="h-8 w-[100px]">
+                    <SelectValue placeholder="Descending" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="desc">Newest first</SelectItem>
+                    <SelectItem value="asc">Oldest first</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {/* Reset filters button */}
+              {(searchTerm || statusFilter || sortField !== "createdAt" || sortOrder !== "desc") && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSearchTerm("");
+                    setStatusFilter(null);
+                    setSortField("createdAt");
+                    setSortOrder("desc");
+                  }}
+                  className="ml-auto"
+                >
+                  <Filter className="h-3.5 w-3.5 mr-1" />
+                  Reset filters
+                </Button>
               )}
             </div>
           </div>
@@ -438,7 +586,7 @@ export default function PlatformAdmin({ businessSlug, editBusinessId, isCreateMo
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredBusinesses.map((business, index) => (
+                  {getPaginatedData().map((business, index) => (
                     <TableRow 
                       key={business.id}
                       className={index % 2 === 0 ? 'bg-background' : 'bg-muted/20'}
@@ -472,23 +620,119 @@ export default function PlatformAdmin({ businessSlug, editBusinessId, isCreateMo
                   ))}
                 </TableBody>
               </Table>
+              
+              {/* Pagination controls */}
+              {filteredBusinesses.length > itemsPerPage && (
+                <div className="flex items-center justify-between px-2 py-4">
+                  <div className="flex items-center space-x-2">
+                    <Select
+                      value={itemsPerPage.toString()}
+                      onValueChange={(value) => {
+                        setItemsPerPage(Number(value));
+                        setCurrentPage(1);
+                      }}
+                    >
+                      <SelectTrigger className="h-8 w-[70px]">
+                        <SelectValue placeholder="10" />
+                      </SelectTrigger>
+                      <SelectContent side="top">
+                        <SelectItem value="5">5</SelectItem>
+                        <SelectItem value="10">10</SelectItem>
+                        <SelectItem value="20">20</SelectItem>
+                        <SelectItem value="50">50</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-sm text-muted-foreground">
+                      per page
+                    </p>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <p className="text-sm text-muted-foreground whitespace-nowrap">
+                      Page {currentPage} of {Math.ceil(filteredBusinesses.length / itemsPerPage)}
+                    </p>
+                    <div className="flex items-center space-x-1">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setCurrentPage(1)}
+                        disabled={currentPage === 1}
+                      >
+                        <ChevronsLeft className="h-4 w-4" />
+                        <span className="sr-only">First page</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        <span className="sr-only">Previous page</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setCurrentPage((prev) => Math.min(prev + 1, Math.ceil(filteredBusinesses.length / itemsPerPage)))}
+                        disabled={currentPage === Math.ceil(filteredBusinesses.length / itemsPerPage)}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                        <span className="sr-only">Next page</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setCurrentPage(Math.ceil(filteredBusinesses.length / itemsPerPage))}
+                        disabled={currentPage === Math.ceil(filteredBusinesses.length / itemsPerPage)}
+                      >
+                        <ChevronsRight className="h-4 w-4" />
+                        <span className="sr-only">Last page</span>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="text-center py-12 px-4">
-              <div className="inline-flex h-20 w-20 items-center justify-center rounded-full bg-muted mb-5">
-                <Search className="h-10 w-10 text-muted-foreground" />
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-50 to-indigo-50 blur-xl opacity-50 rounded-full"></div>
+                <div className="relative inline-flex h-24 w-24 items-center justify-center rounded-full bg-muted mb-6 border border-muted-foreground/10 shadow-md">
+                  <Search className="h-12 w-12 text-muted-foreground opacity-80" />
+                </div>
               </div>
-              <h3 className="text-lg font-semibold mb-2">No businesses found</h3>
-              <p className="text-muted-foreground max-w-md mx-auto mb-6">
-                Try changing your search criteria or create a new business using the button above.
+              <h3 className="text-xl font-semibold mb-3">No businesses found</h3>
+              <p className="text-muted-foreground max-w-md mx-auto mb-8">
+                {searchTerm ? (
+                  <>No businesses match your search criteria. Try adjusting your search or clear the filter.</>
+                ) : (
+                  <>Start by adding your first business to the platform. It only takes a minute to set up.</>
+                )}
               </p>
-              <Button 
-                onClick={() => setLocation("/platform-admin/create")}
-                className="mt-2"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Create New Business
-              </Button>
+              
+              <div className="flex flex-col sm:flex-row justify-center gap-2">
+                {searchTerm && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setSearchTerm("")}
+                    className="mt-2"
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Clear Search
+                  </Button>
+                )}
+                <Button 
+                  onClick={() => setLocation("/platform-admin/create")}
+                  className="mt-2"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create New Business
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>
