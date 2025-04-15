@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
+import { queryClient } from "@/lib/queryClient";
 import { 
   Card, 
   CardContent, 
@@ -18,7 +19,30 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { AlertCircle, ArrowLeft, Building, Edit, Eye, Search, Users } from "lucide-react";
+import { 
+  AlertCircle, 
+  ArrowLeft, 
+  Building, 
+  Pencil, 
+  Eye, 
+  Search, 
+  Users, 
+  Palette,
+  Save,
+  Settings,
+  Shield
+} from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { CardFooter } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { 
@@ -54,6 +78,16 @@ export default function AdminDashboard() {
   const [filteredBusinesses, setFilteredBusinesses] = useState<AdminBusiness[]>([]);
   const [selectedBusinessId, setSelectedBusinessId] = useState<number | null>(null);
   const [platformFeePercentage, setPlatformFeePercentage] = useState<string>("2.00");
+  const [editBusinessDialog, setEditBusinessDialog] = useState<boolean>(false);
+  const [themeSettingsDialog, setThemeSettingsDialog] = useState<boolean>(false);
+  const [currentEditBusiness, setCurrentEditBusiness] = useState<AdminBusiness | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    name: "",
+    slug: "",
+    customDomain: "",
+    ownerEmail: "",
+    platformFeePercentage: ""
+  });
 
   // Fetch all businesses
   const { data: businesses, isLoading: isLoadingBusinesses, error: businessesError } = useQuery<AdminBusiness[]>({
@@ -157,6 +191,100 @@ export default function AdminDashboard() {
     setSelectedBusinessId(null);
     setActiveTab("businesses");
   };
+  
+  const handleEditBusiness = (business: AdminBusiness) => {
+    setCurrentEditBusiness(business);
+    setEditFormData({
+      name: business.name || "",
+      slug: business.slug || "",
+      customDomain: business.customDomain || "",
+      ownerEmail: business.ownerEmail || "",
+      platformFeePercentage: business.platformFeePercentage?.toString() || "2.00"
+    });
+    setEditBusinessDialog(true);
+  };
+  
+  const handleThemeSettings = (businessId: number) => {
+    setSelectedBusinessId(businessId);
+    setThemeSettingsDialog(true);
+  };
+  
+  const handleSaveBusinessEdit = async () => {
+    if (!currentEditBusiness) return;
+    
+    try {
+      const response = await apiRequest("PUT", `/api/admin/business/${currentEditBusiness.id}`, {
+        name: editFormData.name,
+        slug: editFormData.slug,
+        customDomain: editFormData.customDomain || null,
+        ownerEmail: editFormData.ownerEmail,
+        platformFeePercentage: parseFloat(editFormData.platformFeePercentage)
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to update business");
+      }
+      
+      // Invalidate and refresh the businesses query
+      queryClient.invalidateQueries({queryKey: ["/api/admin/businesses"]});
+      
+      // Close the dialog
+      setEditBusinessDialog(false);
+    } catch (error) {
+      console.error("Error updating business:", error);
+      alert("Failed to update business: " + (error instanceof Error ? error.message : "Unknown error"));
+    }
+  };
+  
+  const [themeSettings, setThemeSettings] = useState({
+    primary: "#4f46e5",
+    variant: "professional",
+    appearance: "system",
+    radius: "8"
+  });
+
+  // Update theme settings when business is selected for editing
+  useEffect(() => {
+    if (selectedBusinessId && businesses) {
+      const business = businesses.find(b => b.id === selectedBusinessId);
+      if (business) {
+        // These fields would ideally come from the business data
+        // For now setting defaults if not available
+        setThemeSettings({
+          primary: "#4f46e5",
+          variant: "professional",
+          appearance: "system",
+          radius: "8"
+        });
+      }
+    }
+  }, [selectedBusinessId, businesses]);
+
+  const handleSaveThemeSettings = async () => {
+    if (!selectedBusinessId) return;
+    
+    try {
+      const response = await apiRequest("PUT", `/api/admin/business/${selectedBusinessId}/theme`, {
+        primary: themeSettings.primary,
+        variant: themeSettings.variant,
+        appearance: themeSettings.appearance,
+        radius: parseInt(themeSettings.radius)
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to update theme settings");
+      }
+      
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({queryKey: ["/api/admin/businesses"]});
+      
+      setThemeSettingsDialog(false);
+      alert("Theme settings updated successfully");
+    } catch (error) {
+      console.error("Error updating theme settings:", error);
+      alert("Failed to update theme settings: " + (error instanceof Error ? error.message : "Unknown error"));
+    }
+  };
 
   const formatDate = (dateString: string | Date) => {
     const date = new Date(dateString);
@@ -196,6 +324,185 @@ export default function AdminDashboard() {
           </p>
         </div>
       </div>
+      
+      {/* Edit Business Dialog */}
+      <Dialog open={editBusinessDialog} onOpenChange={setEditBusinessDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Edit Business Information</DialogTitle>
+            <DialogDescription>
+              Update the business details below. Click save when you're done.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="businessName" className="text-right">
+                Name
+              </Label>
+              <Input
+                id="businessName"
+                value={editFormData.name}
+                onChange={(e) => setEditFormData({...editFormData, name: e.target.value})}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="businessSlug" className="text-right">
+                Slug
+              </Label>
+              <Input
+                id="businessSlug"
+                value={editFormData.slug}
+                onChange={(e) => setEditFormData({...editFormData, slug: e.target.value})}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="ownerEmail" className="text-right">
+                Owner Email
+              </Label>
+              <Input
+                id="ownerEmail"
+                type="email"
+                value={editFormData.ownerEmail}
+                onChange={(e) => setEditFormData({...editFormData, ownerEmail: e.target.value})}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="customDomain" className="text-right">
+                Custom Domain
+              </Label>
+              <Input
+                id="customDomain"
+                value={editFormData.customDomain}
+                onChange={(e) => setEditFormData({...editFormData, customDomain: e.target.value})}
+                placeholder="example.com (optional)"
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="platformFee" className="text-right">
+                Platform Fee %
+              </Label>
+              <Input
+                id="platformFee"
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                value={editFormData.platformFeePercentage}
+                onChange={(e) => setEditFormData({...editFormData, platformFeePercentage: e.target.value})}
+                className="col-span-3"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditBusinessDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveBusinessEdit} className="ml-2">
+              <Save className="h-4 w-4 mr-2" />
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Theme Settings Dialog */}
+      <Dialog open={themeSettingsDialog} onOpenChange={setThemeSettingsDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Theme Settings</DialogTitle>
+            <DialogDescription>
+              Customize the business theme settings.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="primaryColor" className="text-right">
+                Primary Color
+              </Label>
+              <div className="col-span-3 flex gap-2">
+                <Input
+                  id="primaryColor"
+                  type="color"
+                  value={themeSettings.primary}
+                  onChange={(e) => setThemeSettings({...themeSettings, primary: e.target.value})}
+                  className="w-24 h-10"
+                />
+                <Input 
+                  type="text" 
+                  value={themeSettings.primary}
+                  onChange={(e) => setThemeSettings({...themeSettings, primary: e.target.value})}
+                  className="flex-1"
+                  placeholder="HEX color code" 
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="themeVariant" className="text-right">
+                Variant
+              </Label>
+              <Select 
+                value={themeSettings.variant}
+                onValueChange={(value) => setThemeSettings({...themeSettings, variant: value})}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select variant" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="professional">Professional</SelectItem>
+                  <SelectItem value="tint">Tint</SelectItem>
+                  <SelectItem value="vibrant">Vibrant</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="appearance" className="text-right">
+                Appearance
+              </Label>
+              <Select 
+                value={themeSettings.appearance}
+                onValueChange={(value) => setThemeSettings({...themeSettings, appearance: value})}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select appearance" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="light">Light</SelectItem>
+                  <SelectItem value="dark">Dark</SelectItem>
+                  <SelectItem value="system">System</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="borderRadius" className="text-right">
+                Border Radius
+              </Label>
+              <Input
+                id="borderRadius"
+                type="number"
+                min="0"
+                max="24"
+                step="1"
+                value={themeSettings.radius}
+                onChange={(e) => setThemeSettings({...themeSettings, radius: e.target.value})}
+                className="col-span-3"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setThemeSettingsDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveThemeSettings} className="ml-2">
+              <Save className="h-4 w-4 mr-2" />
+              Save Theme Settings
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       
       {businessesError && (
         <div className="bg-destructive/15 text-destructive p-4 rounded-md mb-6">
@@ -525,8 +832,27 @@ export default function AdminDashboard() {
                                 variant="outline"
                                 size="icon"
                                 onClick={() => handleBusinessSelect(business.id)}
+                                title="View details"
                               >
                                 <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="bg-blue-50 hover:bg-blue-100 border-blue-200"
+                                onClick={() => handleEditBusiness(business)}
+                                title="Edit business"
+                              >
+                                <Pencil className="h-4 w-4 text-blue-600" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="bg-purple-50 hover:bg-purple-100 border-purple-200"
+                                onClick={() => handleThemeSettings(business.id)}
+                                title="Theme settings"
+                              >
+                                <Palette className="h-4 w-4 text-purple-600" />
                               </Button>
                             </div>
                           </TableCell>

@@ -2545,6 +2545,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Update business details (Admin only)
+  app.put("/api/admin/business/:id", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { name, slug, customDomain, ownerEmail, platformFeePercentage } = req.body;
+      
+      // Validate inputs
+      if (!name || !slug) {
+        return res.status(400).json({ message: "Business name and slug are required" });
+      }
+      
+      // Check if slug is already taken (excluding current business)
+      const slugCheckResult = await db.execute(sql`
+        SELECT id FROM users 
+        WHERE business_slug = ${slug} AND id != ${parseInt(id, 10)}
+      `);
+      
+      if (slugCheckResult.rows && slugCheckResult.rows.length > 0) {
+        return res.status(400).json({ message: "Business slug already in use" });
+      }
+      
+      // Update business details
+      const updateResult = await db.execute(sql`
+        UPDATE users
+        SET 
+          business_name = ${name},
+          business_slug = ${slug},
+          custom_domain = ${customDomain},
+          email = ${ownerEmail},
+          platform_fee_percentage = ${platformFeePercentage || 2.0},
+          updated_at = NOW()
+        WHERE id = ${parseInt(id, 10)}
+        RETURNING id, business_name, business_slug, custom_domain, email, platform_fee_percentage, updated_at
+      `);
+      
+      if (!updateResult.rows || updateResult.rows.length === 0) {
+        return res.status(404).json({ message: "Business not found" });
+      }
+      
+      // Convert snake_case to camelCase for the response
+      const updatedBusiness = {
+        id: updateResult.rows[0].id,
+        name: updateResult.rows[0].business_name,
+        slug: updateResult.rows[0].business_slug,
+        customDomain: updateResult.rows[0].custom_domain,
+        ownerEmail: updateResult.rows[0].email,
+        platformFeePercentage: updateResult.rows[0].platform_fee_percentage,
+        updatedAt: updateResult.rows[0].updated_at
+      };
+      
+      res.json(updatedBusiness);
+    } catch (error) {
+      console.error("Error updating business:", error);
+      res.status(500).json({ message: "Failed to update business" });
+    }
+  });
+  
+  // Theme settings update endpoint (Admin or Business owner)
+  app.put("/api/admin/business/:id/theme", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { primary, variant, appearance, radius } = req.body;
+      
+      // Update theme settings
+      const updateResult = await db.execute(sql`
+        UPDATE users
+        SET 
+          theme_primary_color = ${primary || '#4f46e5'},
+          theme_variant = ${variant || 'professional'},
+          theme_appearance = ${appearance || 'system'},
+          theme_radius = ${parseInt(radius, 10) || 8},
+          updated_at = NOW()
+        WHERE id = ${parseInt(id, 10)}
+        RETURNING id, business_name, theme_primary_color, theme_variant, theme_appearance, theme_radius
+      `);
+      
+      if (!updateResult.rows || updateResult.rows.length === 0) {
+        return res.status(404).json({ message: "Business not found" });
+      }
+      
+      // Convert snake_case to camelCase for the response
+      const updatedTheme = {
+        id: updateResult.rows[0].id,
+        businessName: updateResult.rows[0].business_name,
+        theme: {
+          primary: updateResult.rows[0].theme_primary_color,
+          variant: updateResult.rows[0].theme_variant,
+          appearance: updateResult.rows[0].theme_appearance,
+          radius: updateResult.rows[0].theme_radius
+        }
+      };
+      
+      res.json(updatedTheme);
+    } catch (error) {
+      console.error("Error updating theme settings:", error);
+      res.status(500).json({ message: "Failed to update theme settings" });
+    }
+  });
+
   app.get("/api/admin/customers", requireAdmin, async (req: Request, res: Response) => {
     try {
       const { businessId } = req.query;
