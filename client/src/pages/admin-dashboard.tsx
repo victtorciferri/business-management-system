@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
+import { useLocation, navigate } from "wouter";
 import { queryClient } from "@/lib/queryClient";
 import { 
   Card, 
@@ -11,6 +11,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import { 
   Table, 
   TableBody, 
@@ -207,6 +208,10 @@ export default function AdminDashboard() {
   const handleThemeSettings = (businessId: number) => {
     setSelectedBusinessId(businessId);
     setThemeSettingsDialog(true);
+  };
+  
+  const navigateToAdvancedThemeEditor = (businessId: number) => {
+    setLocation(`/admin-theme-editor/${businessId}`);
   };
   
   const handleSaveBusinessEdit = async () => {
@@ -415,7 +420,7 @@ export default function AdminDashboard() {
           <DialogHeader>
             <DialogTitle>Theme Settings</DialogTitle>
             <DialogDescription>
-              Customize the business theme settings.
+              Customize the business theme settings or use the advanced editor for more options.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -490,6 +495,25 @@ export default function AdminDashboard() {
                 onChange={(e) => setThemeSettings({...themeSettings, radius: e.target.value})}
                 className="col-span-3"
               />
+            </div>
+            <Separator className="my-2" />
+            <div className="col-span-4">
+              <Button 
+                variant="outline" 
+                className="w-full flex items-center justify-center gap-2"
+                onClick={() => {
+                  setThemeSettingsDialog(false);
+                  if (selectedBusinessId) {
+                    setLocation(`/admin-theme-editor/${selectedBusinessId}`);
+                  }
+                }}
+              >
+                <Palette className="h-4 w-4" />
+                Open Advanced Theme Editor
+              </Button>
+              <p className="text-xs text-muted-foreground mt-2 text-center">
+                The advanced editor provides more theme customization options including fonts, component styles, and layout settings.
+              </p>
             </div>
           </div>
           <DialogFooter>
@@ -850,9 +874,18 @@ export default function AdminDashboard() {
                                 size="icon"
                                 className="bg-purple-50 hover:bg-purple-100 border-purple-200"
                                 onClick={() => handleThemeSettings(business.id)}
-                                title="Theme settings"
+                                title="Basic theme settings"
                               >
                                 <Palette className="h-4 w-4 text-purple-600" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="bg-indigo-50 hover:bg-indigo-100 border-indigo-200"
+                                onClick={() => navigateToAdvancedThemeEditor(business.id)}
+                                title="Advanced theme editor"
+                              >
+                                <Settings className="h-4 w-4 text-indigo-600" />
                               </Button>
                             </div>
                           </TableCell>

@@ -2603,22 +2603,109 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Theme settings update endpoint (Admin or Business owner)
+  app.get("/api/admin/business/:id/theme", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      
+      // Fetch theme settings
+      const result = await db.execute(sql`
+        SELECT 
+          id, 
+          business_name, 
+          business_slug,
+          theme_primary_color,
+          theme_secondary_color,
+          theme_accent_color, 
+          theme_variant, 
+          theme_appearance, 
+          theme_radius,
+          theme_font_family,
+          theme_text_color,
+          theme_background_color,
+          theme_button_style,
+          theme_card_style,
+          industry_type
+        FROM users
+        WHERE id = ${parseInt(id, 10)}
+      `);
+      
+      if (!result.rows || result.rows.length === 0) {
+        return res.status(404).json({ message: "Business not found" });
+      }
+      
+      // Convert snake_case to camelCase for the response
+      const themeData = {
+        id: result.rows[0].id,
+        businessName: result.rows[0].business_name,
+        businessSlug: result.rows[0].business_slug,
+        theme: {
+          primaryColor: result.rows[0].theme_primary_color || '#4f46e5',
+          secondaryColor: result.rows[0].theme_secondary_color || '#06b6d4',
+          accentColor: result.rows[0].theme_accent_color || '#f59e0b',
+          variant: result.rows[0].theme_variant || 'professional',
+          appearance: result.rows[0].theme_appearance || 'system',
+          radius: result.rows[0].theme_radius || 8,
+          fontFamily: result.rows[0].theme_font_family || 'Inter, sans-serif',
+          textColor: result.rows[0].theme_text_color || '#111827',
+          backgroundColor: result.rows[0].theme_background_color || '#ffffff',
+          buttonStyle: result.rows[0].theme_button_style || 'default',
+          cardStyle: result.rows[0].theme_card_style || 'default'
+        },
+        industryType: result.rows[0].industry_type || 'general'
+      };
+      
+      res.json(themeData);
+    } catch (error) {
+      console.error("Error fetching theme settings:", error);
+      res.status(500).json({ message: "Failed to fetch theme settings" });
+    }
+  });
+
   app.put("/api/admin/business/:id/theme", requireAdmin, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const { primary, variant, appearance, radius } = req.body;
+      const { 
+        primary, 
+        primaryColor,
+        secondaryColor,
+        accentColor,
+        variant, 
+        appearance, 
+        radius,
+        fontFamily,
+        textColor,
+        backgroundColor,
+        buttonStyle,
+        cardStyle,
+        industryType
+      } = req.body;
+      
+      // Use either primary or primaryColor (backward compatibility)
+      const primaryValue = primaryColor || primary || '#4f46e5';
       
       // Update theme settings
       const updateResult = await db.execute(sql`
         UPDATE users
         SET 
-          theme_primary_color = ${primary || '#4f46e5'},
+          theme_primary_color = ${primaryValue},
+          theme_secondary_color = ${secondaryColor || '#06b6d4'},
+          theme_accent_color = ${accentColor || '#f59e0b'},
           theme_variant = ${variant || 'professional'},
           theme_appearance = ${appearance || 'system'},
           theme_radius = ${parseInt(radius, 10) || 8},
+          theme_font_family = ${fontFamily || 'Inter, sans-serif'},
+          theme_text_color = ${textColor || '#111827'},
+          theme_background_color = ${backgroundColor || '#ffffff'},
+          theme_button_style = ${buttonStyle || 'default'},
+          theme_card_style = ${cardStyle || 'default'},
+          industry_type = ${industryType || 'general'},
           updated_at = NOW()
         WHERE id = ${parseInt(id, 10)}
-        RETURNING id, business_name, theme_primary_color, theme_variant, theme_appearance, theme_radius
+        RETURNING id, business_name, 
+          theme_primary_color, theme_secondary_color, theme_accent_color, 
+          theme_variant, theme_appearance, theme_radius,
+          theme_font_family, theme_text_color, theme_background_color,
+          theme_button_style, theme_card_style, industry_type
       `);
       
       if (!updateResult.rows || updateResult.rows.length === 0) {
@@ -2630,11 +2717,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: updateResult.rows[0].id,
         businessName: updateResult.rows[0].business_name,
         theme: {
-          primary: updateResult.rows[0].theme_primary_color,
+          primaryColor: updateResult.rows[0].theme_primary_color,
+          secondaryColor: updateResult.rows[0].theme_secondary_color,
+          accentColor: updateResult.rows[0].theme_accent_color,
           variant: updateResult.rows[0].theme_variant,
           appearance: updateResult.rows[0].theme_appearance,
-          radius: updateResult.rows[0].theme_radius
-        }
+          radius: updateResult.rows[0].theme_radius,
+          fontFamily: updateResult.rows[0].theme_font_family,
+          textColor: updateResult.rows[0].theme_text_color,
+          backgroundColor: updateResult.rows[0].theme_background_color,
+          buttonStyle: updateResult.rows[0].theme_button_style,
+          cardStyle: updateResult.rows[0].theme_card_style
+        },
+        industryType: updateResult.rows[0].industry_type
       };
       
       res.json(updatedTheme);

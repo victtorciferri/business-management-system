@@ -22,6 +22,7 @@ import StaffSchedule from "@/pages/staff-schedule";
 
 // Settings and theme pages
 import ThemeEditor from "@/pages/theme-editor";
+import AdminThemeEditor from "@/pages/admin-theme-editor";
 import DashboardSettings from "@/pages/dashboard/settings";
 import TemplateSettings from "@/pages/dashboard/settings/theme/templates";
 
@@ -265,6 +266,13 @@ function AppContent() {
             <ProtectedRoute requiredRole="admin">
               <PlatformAdmin />
             </ProtectedRoute>
+          </Route>
+          <Route path="/admin-theme-editor/:businessId">
+            {params => (
+              <ProtectedRoute requiredRole="admin">
+                <AdminThemeEditor />
+              </ProtectedRoute>
+            )}
           </Route>
           <Route path="/checkout/:appointmentId">
             {params => (
