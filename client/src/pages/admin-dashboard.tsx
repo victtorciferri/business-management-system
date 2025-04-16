@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { useLocation, navigate } from "wouter";
+import { useLocation } from "wouter";
 import { queryClient } from "@/lib/queryClient";
+import { useTheme } from "@/contexts/ThemeContext";
 import { 
   Card, 
   CardContent, 
@@ -214,6 +215,11 @@ export default function AdminDashboard() {
     setLocation(`/admin-theme-editor/${businessId}`);
   };
   
+  // Helper function to handle navigation (replacing the navigate function)
+  const navigate = (path: string) => {
+    setLocation(path);
+  };
+  
   const handleSaveBusinessEdit = async () => {
     if (!currentEditBusiness) return;
     
@@ -318,6 +324,9 @@ export default function AdminDashboard() {
 
   const isLoading = isLoadingBusinesses || 
     (selectedBusinessId && (isLoadingCustomers || isLoadingAppointments || isLoadingPayments));
+
+  // Get dark mode state to apply appropriate styling
+  const { isDarkMode } = useTheme();
 
   return (
     <div className="container mx-auto py-6">
@@ -905,22 +914,22 @@ export default function AdminDashboard() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card className="overflow-hidden">
               <CardContent className="p-0">
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6">
+                <div className={`${isDarkMode ? 'bg-gradient-to-r from-blue-950/50 to-indigo-950/50' : 'bg-gradient-to-r from-blue-50 to-indigo-50'} p-6`}>
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="flex items-center space-x-2">
-                        <div className="p-2 bg-blue-500/10 rounded-full">
-                          <Building className="h-5 w-5 text-blue-700" />
+                        <div className={`p-2 ${isDarkMode ? 'bg-blue-500/20' : 'bg-blue-500/10'} rounded-full`}>
+                          <Building className={`h-5 w-5 ${isDarkMode ? 'text-blue-400' : 'text-blue-700'}`} />
                         </div>
-                        <span className="text-sm font-medium text-blue-900">Total Businesses</span>
+                        <span className={`text-sm font-medium ${isDarkMode ? 'text-blue-300' : 'text-blue-900'}`}>Total Businesses</span>
                       </div>
-                      <div className="text-3xl font-bold mt-2 text-blue-900">
+                      <div className={`text-3xl font-bold mt-2 ${isDarkMode ? 'text-blue-100' : 'text-blue-900'}`}>
                         {businesses ? businesses.length : 0}
                       </div>
                     </div>
                     {businesses && businesses.length > 0 && (
-                      <div className="h-16 w-16 flex items-center justify-center bg-blue-500/10 rounded-full">
-                        <span className="text-lg font-bold text-blue-700">{businesses.length}</span>
+                      <div className={`h-16 w-16 flex items-center justify-center ${isDarkMode ? 'bg-blue-500/20' : 'bg-blue-500/10'} rounded-full`}>
+                        <span className={`text-lg font-bold ${isDarkMode ? 'text-blue-300' : 'text-blue-700'}`}>{businesses.length}</span>
                       </div>
                     )}
                   </div>
@@ -930,28 +939,28 @@ export default function AdminDashboard() {
             
             <Card className="overflow-hidden">
               <CardContent className="p-0">
-                <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6">
+                <div className={`${isDarkMode ? 'bg-gradient-to-r from-green-950/50 to-emerald-950/50' : 'bg-gradient-to-r from-green-50 to-emerald-50'} p-6`}>
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="flex items-center space-x-2">
-                        <div className="p-2 bg-green-500/10 rounded-full">
-                          <Users className="h-5 w-5 text-green-700" />
+                        <div className={`p-2 ${isDarkMode ? 'bg-green-500/20' : 'bg-green-500/10'} rounded-full`}>
+                          <Users className={`h-5 w-5 ${isDarkMode ? 'text-green-400' : 'text-green-700'}`} />
                         </div>
-                        <span className="text-sm font-medium text-green-900">Total Customers</span>
+                        <span className={`text-sm font-medium ${isDarkMode ? 'text-green-300' : 'text-green-900'}`}>Total Customers</span>
                       </div>
-                      <div className="text-3xl font-bold mt-2 text-green-900">
+                      <div className={`text-3xl font-bold mt-2 ${isDarkMode ? 'text-green-100' : 'text-green-900'}`}>
                         {isLoading ? (
-                          <div className="h-8 w-20 animate-pulse bg-green-200/50 rounded"></div>
+                          <div className={`h-8 w-20 animate-pulse ${isDarkMode ? 'bg-green-800/30' : 'bg-green-200/50'} rounded`}></div>
                         ) : (
                           <div className="flex items-center">
                             <span>-</span>
-                            <span className="text-xs text-green-700 ml-2">Coming soon</span>
+                            <span className={`text-xs ${isDarkMode ? 'text-green-400' : 'text-green-700'} ml-2`}>Coming soon</span>
                           </div>
                         )}
                       </div>
                     </div>
-                    <div className="h-16 w-16 flex items-center justify-center bg-green-500/10 rounded-full">
-                      <span className="text-green-700">
+                    <div className={`h-16 w-16 flex items-center justify-center ${isDarkMode ? 'bg-green-500/20' : 'bg-green-500/10'} rounded-full`}>
+                      <span className={`${isDarkMode ? 'text-green-400' : 'text-green-700'}`}>
                         <Users className="h-8 w-8 opacity-70" />
                       </span>
                     </div>
@@ -962,28 +971,28 @@ export default function AdminDashboard() {
             
             <Card className="overflow-hidden">
               <CardContent className="p-0">
-                <div className="bg-gradient-to-r from-purple-50 to-violet-50 p-6">
+                <div className={`${isDarkMode ? 'bg-gradient-to-r from-purple-950/50 to-violet-950/50' : 'bg-gradient-to-r from-purple-50 to-violet-50'} p-6`}>
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="flex items-center space-x-2">
-                        <div className="p-2 bg-purple-500/10 rounded-full">
-                          <div className="h-5 w-5 flex items-center justify-center text-purple-700 font-bold">$</div>
+                        <div className={`p-2 ${isDarkMode ? 'bg-purple-500/20' : 'bg-purple-500/10'} rounded-full`}>
+                          <div className={`h-5 w-5 flex items-center justify-center ${isDarkMode ? 'text-purple-400' : 'text-purple-700'} font-bold`}>$</div>
                         </div>
-                        <span className="text-sm font-medium text-purple-900">Platform Revenue</span>
+                        <span className={`text-sm font-medium ${isDarkMode ? 'text-purple-300' : 'text-purple-900'}`}>Platform Revenue</span>
                       </div>
-                      <div className="text-3xl font-bold mt-2 text-purple-900">
+                      <div className={`text-3xl font-bold mt-2 ${isDarkMode ? 'text-purple-100' : 'text-purple-900'}`}>
                         {isLoading ? (
-                          <div className="h-8 w-20 animate-pulse bg-purple-200/50 rounded"></div>
+                          <div className={`h-8 w-20 animate-pulse ${isDarkMode ? 'bg-purple-800/30' : 'bg-purple-200/50'} rounded`}></div>
                         ) : (
                           <div className="flex items-center">
                             <span>-</span>
-                            <span className="text-xs text-purple-700 ml-2">Coming soon</span>
+                            <span className={`text-xs ${isDarkMode ? 'text-purple-400' : 'text-purple-700'} ml-2`}>Coming soon</span>
                           </div>
                         )}
                       </div>
                     </div>
-                    <div className="h-16 w-16 flex items-center justify-center bg-purple-500/10 rounded-full">
-                      <span className="text-lg font-bold text-purple-700">$</span>
+                    <div className={`h-16 w-16 flex items-center justify-center ${isDarkMode ? 'bg-purple-500/20' : 'bg-purple-500/10'} rounded-full`}>
+                      <span className={`text-lg font-bold ${isDarkMode ? 'text-purple-400' : 'text-purple-700'}`}>$</span>
                     </div>
                   </div>
                 </div>
@@ -992,29 +1001,29 @@ export default function AdminDashboard() {
             
             <Card className="overflow-hidden">
               <CardContent className="p-0">
-                <div className="bg-gradient-to-r from-amber-50 to-yellow-50 p-6">
+                <div className={`${isDarkMode ? 'bg-gradient-to-r from-amber-950/50 to-yellow-950/50' : 'bg-gradient-to-r from-amber-50 to-yellow-50'} p-6`}>
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="flex items-center space-x-2">
-                        <div className="p-2 bg-amber-500/10 rounded-full">
-                          <div className="h-5 w-5 flex items-center justify-center text-amber-700 font-bold">%</div>
+                        <div className={`p-2 ${isDarkMode ? 'bg-amber-500/20' : 'bg-amber-500/10'} rounded-full`}>
+                          <div className={`h-5 w-5 flex items-center justify-center ${isDarkMode ? 'text-amber-400' : 'text-amber-700'} font-bold`}>%</div>
                         </div>
-                        <span className="text-sm font-medium text-amber-900">Average Fee</span>
+                        <span className={`text-sm font-medium ${isDarkMode ? 'text-amber-300' : 'text-amber-900'}`}>Average Fee</span>
                       </div>
                       {isLoading ? (
-                        <div className="h-8 w-20 animate-pulse bg-amber-200/50 rounded mt-2"></div>
+                        <div className={`h-8 w-20 animate-pulse ${isDarkMode ? 'bg-amber-800/30' : 'bg-amber-200/50'} rounded mt-2`}></div>
                       ) : businesses && businesses.length > 0 ? (
-                        <div className="text-3xl font-bold mt-2 text-amber-900">
+                        <div className={`text-3xl font-bold mt-2 ${isDarkMode ? 'text-amber-100' : 'text-amber-900'}`}>
                           {(businesses.reduce((sum, b) => sum + (b.platformFeePercentage || 0), 0) / businesses.length).toFixed(2)}%
                         </div>
                       ) : (
-                        <div className="text-3xl font-bold mt-2 text-amber-900">
+                        <div className={`text-3xl font-bold mt-2 ${isDarkMode ? 'text-amber-100' : 'text-amber-900'}`}>
                           0.00%
                         </div>
                       )}
                     </div>
-                    <div className="h-16 w-16 flex items-center justify-center bg-amber-500/10 rounded-full">
-                      <span className="text-lg font-bold text-amber-700">
+                    <div className={`h-16 w-16 flex items-center justify-center ${isDarkMode ? 'bg-amber-500/20' : 'bg-amber-500/10'} rounded-full`}>
+                      <span className={`text-lg font-bold ${isDarkMode ? 'text-amber-400' : 'text-amber-700'}`}>
                         {businesses && businesses.length > 0 
                           ? `${(businesses.reduce((sum, b) => sum + (b.platformFeePercentage || 0), 0) / businesses.length).toFixed(1)}%`
                           : "0%"

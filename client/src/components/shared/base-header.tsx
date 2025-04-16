@@ -5,6 +5,12 @@ import { ReactNode } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useBusinessContext } from "@/contexts/BusinessContext";
 import { Moon, Sun } from "lucide-react";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 
 export interface NavigationItem {
   label: string;
@@ -38,7 +44,7 @@ export default function BaseHeader({
   queryParams = {}
 }: BaseHeaderProps) {
   const [_, navigate] = useLocation();
-  const { theme, getPrimaryColor, getTextColor, getButtonClass, isDarkMode } = useTheme();
+  const { theme, getPrimaryColor, getTextColor, getButtonClass, isDarkMode, toggleDarkMode } = useTheme();
   const { config } = useBusinessContext();
 
   // Helper function to build URL with query parameters
@@ -87,7 +93,7 @@ export default function BaseHeader({
   };
   
   return (
-    <header className={`${isDarkMode ? 'bg-gray-900 border-b border-gray-800' : 'bg-white'} shadow`}>
+    <header className={`${isDarkMode ? 'bg-card border-b border-border' : 'bg-white border-gray-200'} shadow`}>
       <div className={`container mx-auto px-4 ${theme.fontFamily}`}>
         <div className="flex flex-col md:flex-row justify-between items-center py-4">
           {/* Logo and Business Name */}
@@ -95,10 +101,10 @@ export default function BaseHeader({
             <Link href={portalType === 'business' && slug ? `/${slug}` : buildUrl('/customer-portal')}>
               <a className="flex items-center">
                 {renderLogo()}
-                <h1 className={`text-xl font-bold ${isDarkMode ? 'text-white' : getTextColor()}`}>
+                <h1 className={`text-xl font-bold ${isDarkMode ? 'text-foreground' : getTextColor()}`}>
                   {logoText}
                   {portalType === 'customer' && (
-                    <span className={`${getPrimaryColor()} font-normal ml-2`}>
+                    <span className={`${isDarkMode ? 'text-primary' : getPrimaryColor()} font-normal ml-2`}>
                       {getPortalLabel()}
                     </span>
                   )}
@@ -114,7 +120,11 @@ export default function BaseHeader({
                 key={item.path}
                 variant={item.isActive ? "default" : "ghost"}
                 size="sm"
-                className={`flex items-center ${getButtonClass()} ${isDarkMode && !item.isActive ? 'text-gray-300 hover:text-white hover:bg-gray-800' : ''}`}
+                className={`flex items-center ${getButtonClass()} ${
+                  isDarkMode && !item.isActive 
+                    ? 'text-muted-foreground hover:text-foreground hover:bg-muted' 
+                    : ''
+                }`}
                 onClick={() => navigate(buildUrl(item.path))}
               >
                 {item.icon}
@@ -122,16 +132,27 @@ export default function BaseHeader({
               </Button>
             ))}
             
-            {/* Dark mode toggle for Salon Elegante */}
-            {slug === 'salonelegante' && (
-              <Button 
-                variant="ghost" 
-                size="sm"
-                className={`ml-2 ${isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'}`}
-              >
-                {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-              </Button>
-            )}
+            {/* Dark mode toggle for all sites */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className={`ml-2 ${
+                    isDarkMode 
+                      ? 'text-muted-foreground hover:text-foreground hover:bg-muted' 
+                      : 'text-gray-700 hover:text-gray-900'
+                  }`}
+                >
+                  {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={toggleDarkMode}>
+                  {isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </nav>
         </div>
       </div>

@@ -59,7 +59,7 @@ export default function BaseLayout({
   const businessName = business?.businessName || logoText || 'Business Portal';
   
   return (
-    <div className={`min-h-screen ${getBackgroundColor()} ${isDarkMode ? 'dark text-white' : 'text-gray-900'}`}>
+    <div className={`min-h-screen ${isDarkMode ? 'bg-background text-foreground' : getBackgroundColor() + ' text-gray-900'}`}>
       <BaseHeader
         business={business}
         navigationItems={navigationItems}
@@ -72,14 +72,14 @@ export default function BaseLayout({
       <main className={`container mx-auto px-4 py-8 ${theme.fontFamily}`}>
         {children}
       </main>
-      <footer className={`${isDarkMode ? 'bg-gray-900' : 'bg-white'} border-t ${isDarkMode ? 'border-gray-800' : 'border-gray-200'} py-6`}>
+      <footer className={`${isDarkMode ? 'bg-card border-border' : 'bg-white border-gray-200'} border-t py-6`}>
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className={`text-sm ${isDarkMode ? 'text-gray-300' : getTextColor()}`}>
+            <p className={`text-sm ${isDarkMode ? 'text-muted-foreground' : getTextColor()}`}>
               &copy; {new Date().getFullYear()} {businessName}. {footerText || 'All rights reserved.'}
             </p>
-            <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mt-2 md:mt-0`}>
-              Powered by <span className={`${getPrimaryColor()} font-medium`}>AppointEase</span>
+            <p className={`text-sm ${isDarkMode ? 'text-muted-foreground' : 'text-gray-500'} mt-2 md:mt-0`}>
+              Powered by <span className={`${isDarkMode ? 'text-primary' : getPrimaryColor()} font-medium`}>AppointEase</span>
             </p>
           </div>
         </div>

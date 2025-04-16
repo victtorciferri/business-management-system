@@ -44,6 +44,7 @@ interface ThemeContextType {
   getButtonClass: () => string;
   getCardClass: () => string;
   isDarkMode: boolean;
+  toggleDarkMode: () => void; // Added toggle function
 }
 
 // Create context with default values
@@ -59,6 +60,7 @@ const ThemeContext = createContext<ThemeContextType>({
   getButtonClass: () => "rounded-md",
   getCardClass: () => "shadow-md",
   isDarkMode: false,
+  toggleDarkMode: () => {}, // Added default value
 });
 
 // Helper to detect system dark mode preference
@@ -207,6 +209,35 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
   };
   
+  // Toggle dark mode function
+  const toggleDarkMode = () => {
+    console.log('Toggle dark mode called, current isDarkMode:', isDarkMode);
+    const newAppearance = !isDarkMode ? 'dark' : 'light';
+    console.log('Setting new appearance:', newAppearance);
+    
+    // Update the theme settings with the new appearance
+    updateTheme({ appearance: newAppearance as ThemeSettings['appearance'] });
+    
+    // Update the business theme settings via API if this is a business site
+    if (business && business.id) {
+      // We should persist this preference for the business
+      try {
+        fetch('/api/business/theme-settings', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            themeSettings: { 
+              ...theme, 
+              appearance: newAppearance 
+            } 
+          }),
+        });
+      } catch (error) {
+        console.error('Failed to persist dark mode preference:', error);
+      }
+    }
+  };
+  
   const value = {
     theme,
     updateTheme,
@@ -219,6 +250,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     getButtonClass,
     getCardClass,
     isDarkMode,
+    toggleDarkMode,
   };
   
   return (
