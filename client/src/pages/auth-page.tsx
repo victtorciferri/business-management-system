@@ -86,10 +86,10 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/40 p-4">
-      <div className="flex w-full max-w-5xl bg-white rounded-lg shadow-xl overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="flex w-full max-w-5xl bg-card dark:bg-card rounded-lg shadow-xl overflow-hidden border dark:border-border">
         {/* Hero section */}
-        <div className="hidden md:block md:w-1/2 bg-gradient-to-br from-primary-500 to-primary-700 text-white p-12 flex flex-col justify-center">
+        <div className="hidden md:block md:w-1/2 bg-gradient-to-br from-primary to-primary-900 text-white p-12 flex flex-col justify-center">
           <h1 className="text-4xl font-bold mb-6">AppointEase</h1>
           <h2 className="text-2xl font-semibold mb-4">Streamline your service business</h2>
           <p className="text-lg mb-6">

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLocation } from 'wouter';
+import { useBusinessContext } from '@/contexts/BusinessContext';
 
 /**
  * DarkModeInitializer is a component that ensures dark mode gets properly
@@ -10,9 +11,21 @@ import { useLocation } from 'wouter';
 export default function DarkModeInitializer() {
   const { theme, isDarkMode } = useTheme();
   const [location] = useLocation();
+  const { business } = useBusinessContext();
+  
+  // Determine if this is a business portal page or admin page
+  const isBusinessPortalPage = business?.businessSlug && location.includes(`/${business.businessSlug}`);
+  const isAdminPage = location.includes('/admin') || location.includes('/platform-admin');
 
   // Apply dark mode class to document.documentElement based on theme settings
   useEffect(() => {
+    // Skip dark mode application for business portal pages - these should
+    // use their own theme settings and not the global dark mode
+    if (isBusinessPortalPage && business?.themeSettings?.appearance) {
+      console.log('Business portal page detected, respecting business appearance settings');
+      return;
+    }
+    
     console.log('DarkModeInitializer: Appearance setting is', theme.appearance);
     
     // Special case for salonelegante
@@ -26,7 +39,6 @@ export default function DarkModeInitializer() {
       console.log('No appearance setting found, defaulting to system preference');
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       if (prefersDark) {
-        console.log('Customer portal route detected:', location);
         console.log('Applying system preference:', 'dark');
         document.documentElement.classList.add('dark');
       } else {
@@ -56,7 +68,6 @@ export default function DarkModeInitializer() {
         console.log('DarkModeInitializer: Using system preference');
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         if (prefersDark) {
-          console.log('Customer portal route detected:', location);
           console.log('Applying system preference:', 'dark');
           document.documentElement.classList.add('dark');
         } else {
@@ -64,7 +75,7 @@ export default function DarkModeInitializer() {
         }
         break;
     }
-  }, [theme.appearance, location]);
+  }, [theme.appearance, location, business, isBusinessPortalPage]);
 
   // Add debug info for dark mode status
   useEffect(() => {
