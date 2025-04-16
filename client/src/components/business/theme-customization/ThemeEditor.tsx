@@ -19,10 +19,38 @@ import { FontSelector } from './FontSelector';
 interface ThemeEditorProps {
   onPreview?: (themeConfig: any) => void;
   onSave?: () => void;
+  initialConfig?: {
+    primaryColor?: string;
+    secondaryColor?: string;
+    accentColor?: string;
+    industryType?: string;
+    business?: {
+      id: number;
+      name: string;
+      slug: string;
+    }
+  };
 }
 
-export function ThemeEditor({ onPreview, onSave }: ThemeEditorProps) {
-  const { business, config, refreshBusinessData } = useBusinessContext();
+export function ThemeEditor({ onPreview, onSave, initialConfig }: ThemeEditorProps) {
+  // Get context data, but prefer initialConfig if available
+  const contextData = useBusinessContext();
+  const business = initialConfig?.business || contextData.business;
+  
+  // Create a typed config object that merges initialConfig with context
+  const config: {
+    primaryColor?: string;
+    secondaryColor?: string;
+    accentColor?: string;
+    industryType?: string;
+  } = {
+    primaryColor: initialConfig?.primaryColor || contextData.config?.primaryColor,
+    secondaryColor: initialConfig?.secondaryColor || contextData.config?.secondaryColor,
+    accentColor: initialConfig?.accentColor || contextData.config?.accentColor,
+    industryType: initialConfig?.industryType || contextData.config?.industryType,
+  };
+  
+  const refreshBusinessData = contextData.refreshBusinessData;
   const { toast } = useToast();
   
   // Theme settings state
@@ -108,32 +136,76 @@ export function ThemeEditor({ onPreview, onSave }: ThemeEditorProps) {
     setIsSaving(true);
     
     try {
-      // Update theme settings
-      await apiRequest('/api/business/theme-settings', {
-        method: 'PATCH',
-        body: JSON.stringify({
-          themeSettings: {
+      // Check if we're in admin mode (with business ID)
+      const isAdminMode = !!business.id;
+      
+      if (isAdminMode) {
+        // Admin mode - use the admin-specific endpoint
+        const adminResponse = await fetch(`/api/admin/business/${business.id}/theme`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
             primaryColor: themeSettings.primaryColor,
             secondaryColor: themeSettings.secondaryColor,
             accentColor: themeSettings.accentColor,
             textColor: themeSettings.textColor,
             backgroundColor: themeSettings.backgroundColor,
             fontFamily: themeSettings.fontFamily,
-            borderRadius: themeSettings.borderRadius ? `rounded-[${themeSettings.borderRadius}px]` : 'rounded-md',
-            buttonStyle: themeSettings.buttonStyle === 'default' ? 'rounded' : themeSettings.buttonStyle,
-            cardStyle: themeSettings.cardStyle === 'default' ? 'elevated' : themeSettings.cardStyle
-          }
-        })
-      });
-      
-      // Update industry type if it's specified
-      if (themeSettings.industryType && themeSettings.industryType !== config.industryType) {
-        await apiRequest('/api/business/industry-type', {
-          method: 'PATCH',
-          body: JSON.stringify({
+            borderRadius: themeSettings.borderRadius,
+            buttonStyle: themeSettings.buttonStyle,
+            cardStyle: themeSettings.cardStyle,
             industryType: themeSettings.industryType
           })
         });
+        
+        if (!adminResponse.ok) {
+          throw new Error(`Failed to update theme: ${adminResponse.statusText}`);
+        }
+      } else {
+        // Regular business mode - use standard endpoints
+        // Update theme settings
+        const themeResponse = await fetch('/api/business/theme-settings', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            themeSettings: {
+              primaryColor: themeSettings.primaryColor,
+              secondaryColor: themeSettings.secondaryColor,
+              accentColor: themeSettings.accentColor,
+              textColor: themeSettings.textColor,
+              backgroundColor: themeSettings.backgroundColor,
+              fontFamily: themeSettings.fontFamily,
+              borderRadius: themeSettings.borderRadius ? `rounded-[${themeSettings.borderRadius}px]` : 'rounded-md',
+              buttonStyle: themeSettings.buttonStyle === 'default' ? 'rounded' : themeSettings.buttonStyle,
+              cardStyle: themeSettings.cardStyle === 'default' ? 'elevated' : themeSettings.cardStyle
+            }
+          })
+        });
+        
+        if (!themeResponse.ok) {
+          throw new Error(`Failed to update theme settings: ${themeResponse.statusText}`);
+        }
+        
+        // Update industry type if it's specified
+        if (themeSettings.industryType && themeSettings.industryType !== config.industryType) {
+          const industryResponse = await fetch('/api/business/industry-type', {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              industryType: themeSettings.industryType
+            })
+          });
+          
+          if (!industryResponse.ok) {
+            throw new Error(`Failed to update industry type: ${industryResponse.statusText}`);
+          }
+        }
       }
       
       // Refresh business data to get updated theme

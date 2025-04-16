@@ -28,6 +28,18 @@ interface AdminBusiness {
   createdAt: Date;
 }
 
+// Type for theme configuration
+interface ThemeConfig {
+  primaryColor?: string;
+  secondaryColor?: string;
+  accentColor?: string;
+  fontFamily?: string;
+  borderRadius?: number;
+  backgroundColor?: string;
+  textColor?: string;
+  industryType?: string;
+}
+
 interface AdminThemeEditorProps {
   businessId?: number;
 }
@@ -41,24 +53,35 @@ export default function AdminThemeEditor({ businessId: propBusinessId }: AdminTh
 
   // State for theme preview
   const [previewActive, setPreviewActive] = useState(false);
-  const [previewTheme, setPreviewTheme] = useState({});
+  const [previewTheme, setPreviewTheme] = useState<ThemeConfig>({});
 
-  // Fetch the business data
-  const { data: business, isLoading } = useQuery<AdminBusiness>({
-    queryKey: ["/api/admin/business", businessId],
+  // Fetch the business data using the preview endpoint since there's no dedicated admin business endpoint
+  const { data: business, isLoading } = useQuery<AdminBusiness | null>({
+    queryKey: ["/api/preview-business", businessId],
     queryFn: async () => {
       if (!businessId) return null;
-      const response = await apiRequest("GET", `/api/admin/business/${businessId}`);
+      const response = await apiRequest("GET", `/api/preview-business/${businessId}`);
       if (!response.ok) {
         throw new Error("Failed to fetch business details");
       }
-      return response.json();
+      const data = await response.json();
+      // Extract the business data from the response
+      return {
+        id: data.business.id,
+        name: data.business.businessName,
+        slug: data.business.businessSlug,
+        customDomain: data.business.customDomain,
+        subscriptionStatus: data.business.subscriptionStatus,
+        ownerEmail: data.business.email,
+        platformFeePercentage: data.business.platformFeePercentage,
+        createdAt: new Date(data.business.createdAt)
+      };
     },
     enabled: !!businessId,
   });
 
-  // Simulate business config
-  const [businessConfig, setBusinessConfig] = useState({
+  // Business theme configuration state
+  const [businessConfig, setBusinessConfig] = useState<ThemeConfig>({
     primaryColor: "#4f46e5",
     secondaryColor: "#06b6d4",
     accentColor: "#f59e0b",
@@ -90,7 +113,7 @@ export default function AdminThemeEditor({ businessId: propBusinessId }: AdminTh
   }, [businessId]);
 
   // Handle theme preview
-  const handlePreview = (themeConfig) => {
+  const handlePreview = (themeConfig: ThemeConfig) => {
     setPreviewTheme(themeConfig);
     setPreviewActive(true);
     
@@ -106,7 +129,7 @@ export default function AdminThemeEditor({ businessId: propBusinessId }: AdminTh
     });
     
     // Refresh business data
-    queryClient.invalidateQueries({queryKey: ["/api/admin/business", businessId]});
+    queryClient.invalidateQueries({queryKey: ["/api/preview-business", businessId]});
   };
 
   if (isLoading) {
@@ -180,6 +203,18 @@ export default function AdminThemeEditor({ businessId: propBusinessId }: AdminTh
         <ThemeEditor 
           onPreview={handlePreview}
           onSave={handleSaveComplete}
+          initialConfig={{
+            primaryColor: businessConfig.primaryColor,
+            secondaryColor: businessConfig.secondaryColor,
+            accentColor: businessConfig.accentColor,
+            industryType: businessConfig.industryType,
+            // Set the business context manually for the theme editor
+            business: {
+              id: business.id,
+              name: business.name,
+              slug: business.slug
+            }
+          }}
         />
         
         {previewActive && (

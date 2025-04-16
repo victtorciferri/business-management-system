@@ -362,8 +362,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`Fetching business preview data for ID: ${id}`);
       
-      // Get the business by ID
-      const business = await storage.getUser(id);
+      // Get the business by ID with detailed error logging
+      let business;
+      try {
+        business = await storage.getUser(id);
+        console.log(`Storage.getUser(${id}) result:`, business ? 'Found' : 'Not found');
+      } catch (dbError) {
+        console.error(`Database error in getUser(${id}):`, dbError);
+        throw new Error(`Database error: ${dbError.message}`);
+      }
       
       if (!business) {
         console.log(`No business found with ID: ${id}`);
@@ -371,18 +378,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Get services for this business
-      const services = await storage.getServicesByUserId(business.id);
+      let services = [];
+      try {
+        services = await storage.getServicesByUserId(business.id);
+        console.log(`Retrieved ${services.length} services for business ID ${business.id}`);
+      } catch (servicesError) {
+        console.error(`Error fetching services for business ID ${business.id}:`, servicesError);
+        // Continue without services if this fails
+        services = [];
+      }
+      
       const activeServices = services.filter(service => service.active);
+      console.log(`Filtered to ${activeServices.length} active services`);
       
-      // Remove sensitive data
-      const { password: _, ...businessData } = business;
-      
-      // Return the business data with preview flag
-      res.json({
-        business: businessData,
-        services: activeServices,
-        isPreview: true
-      });
+      // Remove sensitive data - check that business has expected structure first
+      if (!business.password) {
+        console.warn(`Business object missing password field - unexpected structure`);
+        console.log('Business object structure:', Object.keys(business));
+        
+        // Use a safer approach to avoid errors
+        const businessData = { ...business };
+        delete businessData.password;
+        
+        // Return the business data with preview flag
+        res.json({
+          business: businessData,
+          services: activeServices,
+          isPreview: true
+        });
+      } else {
+        // Normal path - destructure as expected
+        const { password: _, ...businessData } = business;
+        
+        // Return the business data with preview flag
+        res.json({
+          business: businessData,
+          services: activeServices,
+          isPreview: true
+        });
+      }
       
       console.log(`Returned preview business data for ID: ${id}`);
     } catch (error) {
