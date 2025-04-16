@@ -32,6 +32,7 @@ export interface ThemeSettings {
   borderRadius: string;
   buttonStyle: "rounded" | "square" | "pill";
   cardStyle: "elevated" | "flat" | "bordered";
+  appearance?: "light" | "dark" | "system";
 }
 
 export interface BusinessConfig {
@@ -114,6 +115,7 @@ const defaultConfig: BusinessConfig = {
     borderRadius: 'rounded-md',
     buttonStyle: 'rounded',
     cardStyle: 'elevated',
+    appearance: 'system',
   },
   
   showMap: true,

@@ -68,6 +68,7 @@ export function ThemeEditor({ onPreview, onSave, initialConfig }: ThemeEditorPro
     logoPosition: 'left',
     navbarStyle: 'simple',
     footerStyle: 'standard',
+    appearance: 'system', // Default to system preference
   });
   
   // UI state
@@ -160,6 +161,7 @@ export function ThemeEditor({ onPreview, onSave, initialConfig }: ThemeEditorPro
             borderRadius: themeSettings.borderRadius,
             buttonStyle: themeSettings.buttonStyle,
             cardStyle: themeSettings.cardStyle,
+            appearance: themeSettings.appearance,
             industryType: themeSettings.industryType
           })
         });
@@ -185,7 +187,8 @@ export function ThemeEditor({ onPreview, onSave, initialConfig }: ThemeEditorPro
               fontFamily: themeSettings.fontFamily,
               borderRadius: themeSettings.borderRadius ? `rounded-[${themeSettings.borderRadius}px]` : 'rounded-md',
               buttonStyle: themeSettings.buttonStyle === 'default' ? 'rounded' : themeSettings.buttonStyle,
-              cardStyle: themeSettings.cardStyle === 'default' ? 'elevated' : themeSettings.cardStyle
+              cardStyle: themeSettings.cardStyle === 'default' ? 'elevated' : themeSettings.cardStyle,
+              appearance: themeSettings.appearance
             }
           })
         });
@@ -250,6 +253,7 @@ export function ThemeEditor({ onPreview, onSave, initialConfig }: ThemeEditorPro
       logoPosition: 'left',
       navbarStyle: 'simple',
       footerStyle: 'standard',
+      appearance: 'system',
     };
     
     // Update state with default settings
@@ -558,6 +562,26 @@ export function ThemeEditor({ onPreview, onSave, initialConfig }: ThemeEditorPro
                   </Select>
                   <p className="text-sm text-muted-foreground mt-2">
                     Changing the industry type will adjust the layout and components to best fit your business type
+                  </p>
+                </div>
+                
+                <div>
+                  <Label htmlFor="appearance">Appearance</Label>
+                  <Select 
+                    value={themeSettings.appearance}
+                    onValueChange={(value) => handleInputChange('appearance', value)}
+                  >
+                    <SelectTrigger id="appearance" className="w-full">
+                      <SelectValue placeholder="Select appearance" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="light">Light Mode</SelectItem>
+                      <SelectItem value="dark">Dark Mode</SelectItem>
+                      <SelectItem value="system">System Preference</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Choose the appearance mode for your site
                   </p>
                 </div>
               </div>

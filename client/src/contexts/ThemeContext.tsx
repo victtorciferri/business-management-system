@@ -12,6 +12,7 @@ export interface ThemeSettings {
   borderRadius: string;
   buttonStyle: "rounded" | "square" | "pill";
   cardStyle: "elevated" | "flat" | "bordered";
+  appearance?: "light" | "dark" | "system";
   // Add more theme properties as needed
 }
 
@@ -26,6 +27,7 @@ const defaultTheme: ThemeSettings = {
   borderRadius: "rounded-md",
   buttonStyle: "rounded",
   cardStyle: "elevated",
+  appearance: "system",
 };
 
 // Context interface
@@ -41,6 +43,7 @@ interface ThemeContextType {
   getBorderRadius: () => string;
   getButtonClass: () => string;
   getCardClass: () => string;
+  isDarkMode: boolean;
 }
 
 // Create context with default values
@@ -55,24 +58,86 @@ const ThemeContext = createContext<ThemeContextType>({
   getBorderRadius: () => "rounded-md",
   getButtonClass: () => "rounded-md",
   getCardClass: () => "shadow-md",
+  isDarkMode: false,
 });
+
+// Helper to detect system dark mode preference
+const getSystemPreference = (): boolean => {
+  if (typeof window !== 'undefined') {
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  return false;
+};
 
 // Provider component
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const { business, config } = useBusinessContext();
   const [theme, setTheme] = useState<ThemeSettings>(defaultTheme);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   
+  // Function to set dark mode class on document
+  const applyDarkMode = (isDark: boolean) => {
+    if (typeof document !== 'undefined') {
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+      setIsDarkMode(isDark);
+    }
+  };
+
   // Update theme when business config changes
   useEffect(() => {
     if (config && config.themeSettings) {
       // Always use the theme from business config 
       // (it already merges defaults with business settings)
       setTheme(config.themeSettings);
+      
+      // Apply appearance setting if it exists
+      if (config.themeSettings.appearance) {
+        switch (config.themeSettings.appearance) {
+          case 'dark':
+            applyDarkMode(true);
+            break;
+          case 'light':
+            applyDarkMode(false);
+            break;
+          case 'system':
+          default:
+            applyDarkMode(getSystemPreference());
+            break;
+        }
+      }
     } else {
       // Fallback to default theme if config is not available
       setTheme(defaultTheme);
+      applyDarkMode(getSystemPreference());
     }
   }, [config]);
+  
+  // Listen for system preference changes when in "system" mode
+  useEffect(() => {
+    if (theme.appearance !== 'system') return;
+    
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e: MediaQueryListEvent) => {
+      applyDarkMode(e.matches);
+    };
+    
+    // Apply initial system preference
+    applyDarkMode(mediaQuery.matches);
+    
+    // Add listener for changes
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    } else {
+      // Fallback for older browsers
+      mediaQuery.addListener(handleChange);
+      return () => mediaQuery.removeListener(handleChange);
+    }
+  }, [theme.appearance]);
   
   // Update theme function
   const updateTheme = (newTheme: Partial<ThemeSettings>) => {
@@ -80,6 +145,21 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       ...prevTheme,
       ...newTheme
     }));
+    
+    // If appearance is updated, apply it immediately
+    if (newTheme.appearance) {
+      switch (newTheme.appearance) {
+        case 'dark':
+          applyDarkMode(true);
+          break;
+        case 'light':
+          applyDarkMode(false);
+          break;
+        case 'system':
+          applyDarkMode(getSystemPreference());
+          break;
+      }
+    }
   };
   
   // Helper functions to get appropriate classes based on theme settings
@@ -118,6 +198,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     getBorderRadius,
     getButtonClass,
     getCardClass,
+    isDarkMode,
   };
   
   return (
