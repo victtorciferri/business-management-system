@@ -43,6 +43,7 @@ import { User } from "@shared/schema";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { BusinessContextProvider } from "@/contexts/BusinessContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import DarkModeInitializer from "@/components/shared/dark-mode-initializer";
 
 function AppContent() {
   const { user: currentUser, isLoading: authLoading } = useAuth();
@@ -351,7 +352,12 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <AppContent />
+        <BusinessContextProvider>
+          <ThemeProvider>
+            <DarkModeInitializer />
+            <AppContent />
+          </ThemeProvider>
+        </BusinessContextProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

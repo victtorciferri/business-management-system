@@ -30,14 +30,31 @@ export default function BaseLayout({
 }: BaseLayoutProps) {
   const [location] = useLocation();
   // Use theme context for styling
-  const { theme, getBackgroundColor, getTextColor, getPrimaryColor, updateTheme } = useTheme();
+  const { theme, getBackgroundColor, getTextColor, getPrimaryColor, updateTheme, isDarkMode } = useTheme();
   
   // Apply business theme configuration if provided
   useEffect(() => {
     if (themeConfig) {
+      console.log('Applying theme config in BaseLayout:', themeConfig);
       updateTheme(themeConfig);
+      
+      // Manually apply dark mode class for business profile
+      if (themeConfig.appearance === 'dark' || 
+         (themeConfig.appearance === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        console.log('Forcing dark mode in BaseLayout');
+        document.documentElement.classList.add('dark');
+      } else {
+        console.log('Forcing light mode in BaseLayout');
+        document.documentElement.classList.remove('dark');
+      }
     }
   }, [themeConfig, updateTheme]);
+  
+  // Log current dark mode state
+  useEffect(() => {
+    console.log('Current dark mode state in BaseLayout:', isDarkMode);
+    console.log('HTML class list:', document.documentElement.classList.toString());
+  }, [isDarkMode]);
   
   const businessName = business?.businessName || logoText || 'Business Portal';
   

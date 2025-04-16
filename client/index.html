@@ -3,6 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <!-- Inline script to detect and apply dark mode before any rendering -->
+    <script>
+      // Apply dark mode early if needed
+      (function() {
+        // Check if URL includes salonelegante or other dark mode businesses
+        var path = window.location.pathname;
+        if (path.includes('/salonelegante')) {
+          document.documentElement.classList.add('dark');
+          console.log('Dark mode applied early in index.html for Salon Elegante');
+        }
+        // Also check system preference
+        else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.classList.add('dark');
+          console.log('Dark mode applied early in index.html for system preference');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

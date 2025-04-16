@@ -77,13 +77,29 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   
   // Function to set dark mode class on document
   const applyDarkMode = (isDark: boolean) => {
+    console.log('applyDarkMode called with isDark:', isDark);
+    
     if (typeof document !== 'undefined') {
-      if (isDark) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
+      try {
+        if (isDark) {
+          console.log('Adding dark class to HTML document');
+          document.documentElement.classList.add('dark');
+          
+          // Force a style recalculation
+          document.body.classList.add('dark-mode-enabled');
+          setTimeout(() => {
+            document.body.classList.remove('dark-mode-enabled');
+          }, 50);
+        } else {
+          console.log('Removing dark class from HTML document');
+          document.documentElement.classList.remove('dark');
+        }
+        setIsDarkMode(isDark);
+      } catch (error) {
+        console.error('Error applying dark mode:', error);
       }
-      setIsDarkMode(isDark);
+    } else {
+      console.warn('Document is not available for dark mode application');
     }
   };
 
@@ -98,14 +114,18 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       if (config.themeSettings.appearance) {
         switch (config.themeSettings.appearance) {
           case 'dark':
+            console.log('Applying dark mode from theme settings');
             applyDarkMode(true);
             break;
           case 'light':
+            console.log('Applying light mode from theme settings');
             applyDarkMode(false);
             break;
           case 'system':
           default:
-            applyDarkMode(getSystemPreference());
+            const systemIsDark = getSystemPreference();
+            console.log('Applying system preference:', systemIsDark ? 'dark' : 'light');
+            applyDarkMode(systemIsDark);
             break;
         }
       }
