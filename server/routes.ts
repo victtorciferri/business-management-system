@@ -218,6 +218,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         country: result.rows[0].country,
         latitude: result.rows[0].latitude,
         longitude: result.rows[0].longitude,
+        // Add theme settings from JSONB column
+        themeSettings: result.rows[0].theme_settings || {
+          primaryColor: '#4f46e5',
+          secondaryColor: '#06b6d4',
+          accentColor: '#f59e0b',
+          variant: 'professional',
+          appearance: 'system',
+          borderRadius: 8,
+          fontFamily: 'Inter, sans-serif',
+          textColor: '#111827',
+          backgroundColor: '#ffffff',
+          buttonStyle: 'default',
+          cardStyle: 'default'
+        },
+        industryType: result.rows[0].industry_type || 'general',
         createdAt: new Date(result.rows[0].created_at)
       };
       
@@ -2641,23 +2656,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       
-      // Fetch theme settings
+      // Fetch theme settings using the JSONB column
       const result = await db.execute(sql`
         SELECT 
           id, 
           business_name, 
           business_slug,
-          theme_primary_color,
-          theme_secondary_color,
-          theme_accent_color, 
-          theme_variant, 
-          theme_appearance, 
-          theme_radius,
-          theme_font_family,
-          theme_text_color,
-          theme_background_color,
-          theme_button_style,
-          theme_card_style,
+          theme_settings,
           industry_type
         FROM users
         WHERE id = ${parseInt(id, 10)}
@@ -2667,24 +2672,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Business not found" });
       }
       
-      // Convert snake_case to camelCase for the response
+      // Use JSONB theme_settings or provide default values if not set
+      const defaultThemeSettings = {
+        primaryColor: '#4f46e5',
+        secondaryColor: '#06b6d4',
+        accentColor: '#f59e0b',
+        variant: 'professional',
+        appearance: 'system',
+        borderRadius: 8,
+        fontFamily: 'Inter, sans-serif',
+        textColor: '#111827',
+        backgroundColor: '#ffffff',
+        buttonStyle: 'default',
+        cardStyle: 'default'
+      };
+      
+      // Prepare response with theme data
       const themeData = {
         id: result.rows[0].id,
         businessName: result.rows[0].business_name,
         businessSlug: result.rows[0].business_slug,
-        theme: {
-          primaryColor: result.rows[0].theme_primary_color || '#4f46e5',
-          secondaryColor: result.rows[0].theme_secondary_color || '#06b6d4',
-          accentColor: result.rows[0].theme_accent_color || '#f59e0b',
-          variant: result.rows[0].theme_variant || 'professional',
-          appearance: result.rows[0].theme_appearance || 'system',
-          radius: result.rows[0].theme_radius || 8,
-          fontFamily: result.rows[0].theme_font_family || 'Inter, sans-serif',
-          textColor: result.rows[0].theme_text_color || '#111827',
-          backgroundColor: result.rows[0].theme_background_color || '#ffffff',
-          buttonStyle: result.rows[0].theme_button_style || 'default',
-          cardStyle: result.rows[0].theme_card_style || 'default'
-        },
+        theme: result.rows[0].theme_settings || defaultThemeSettings,
         industryType: result.rows[0].industry_type || 'general'
       };
       
@@ -2699,7 +2707,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const { 
-        primary, 
         primaryColor,
         secondaryColor,
         accentColor,
@@ -2714,55 +2721,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         industryType
       } = req.body;
       
-      // Use either primary or primaryColor (backward compatibility)
-      const primaryValue = primaryColor || primary || '#4f46e5';
+      // Create theme settings JSON object
+      const themeSettings = {
+        primaryColor: primaryColor || '#4f46e5',
+        secondaryColor: secondaryColor || '#06b6d4',
+        accentColor: accentColor || '#f59e0b',
+        textColor: textColor || '#111827',
+        backgroundColor: backgroundColor || '#ffffff',
+        fontFamily: fontFamily || 'Inter, sans-serif',
+        borderRadius: radius || 6,
+        buttonStyle: buttonStyle || 'default',
+        cardStyle: cardStyle || 'default',
+        variant: variant || 'professional',
+        appearance: appearance || 'system'
+      };
       
-      // Update theme settings
+      // Update theme settings using JSONB column
       const updateResult = await db.execute(sql`
         UPDATE users
         SET 
-          theme_primary_color = ${primaryValue},
-          theme_secondary_color = ${secondaryColor || '#06b6d4'},
-          theme_accent_color = ${accentColor || '#f59e0b'},
-          theme_variant = ${variant || 'professional'},
-          theme_appearance = ${appearance || 'system'},
-          theme_radius = ${parseInt(radius, 10) || 8},
-          theme_font_family = ${fontFamily || 'Inter, sans-serif'},
-          theme_text_color = ${textColor || '#111827'},
-          theme_background_color = ${backgroundColor || '#ffffff'},
-          theme_button_style = ${buttonStyle || 'default'},
-          theme_card_style = ${cardStyle || 'default'},
+          theme_settings = ${JSON.stringify(themeSettings)}::jsonb,
           industry_type = ${industryType || 'general'},
           updated_at = NOW()
         WHERE id = ${parseInt(id, 10)}
-        RETURNING id, business_name, 
-          theme_primary_color, theme_secondary_color, theme_accent_color, 
-          theme_variant, theme_appearance, theme_radius,
-          theme_font_family, theme_text_color, theme_background_color,
-          theme_button_style, theme_card_style, industry_type
+        RETURNING id, business_name, theme_settings, industry_type
       `);
       
       if (!updateResult.rows || updateResult.rows.length === 0) {
         return res.status(404).json({ message: "Business not found" });
       }
       
-      // Convert snake_case to camelCase for the response
+      // Format the response
       const updatedTheme = {
         id: updateResult.rows[0].id,
         businessName: updateResult.rows[0].business_name,
-        theme: {
-          primaryColor: updateResult.rows[0].theme_primary_color,
-          secondaryColor: updateResult.rows[0].theme_secondary_color,
-          accentColor: updateResult.rows[0].theme_accent_color,
-          variant: updateResult.rows[0].theme_variant,
-          appearance: updateResult.rows[0].theme_appearance,
-          radius: updateResult.rows[0].theme_radius,
-          fontFamily: updateResult.rows[0].theme_font_family,
-          textColor: updateResult.rows[0].theme_text_color,
-          backgroundColor: updateResult.rows[0].theme_background_color,
-          buttonStyle: updateResult.rows[0].theme_button_style,
-          cardStyle: updateResult.rows[0].theme_card_style
-        },
+        theme: updateResult.rows[0].theme_settings,
         industryType: updateResult.rows[0].industry_type
       };
       

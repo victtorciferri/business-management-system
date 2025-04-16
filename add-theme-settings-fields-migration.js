@@ -1,6 +1,7 @@
-const { drizzle } = require("drizzle-orm/node-postgres");
-const { sql } = require("drizzle-orm");
-const { Pool } = require("pg");
+import { drizzle } from "drizzle-orm/node-postgres";
+import { sql } from "drizzle-orm";
+import pkg from 'pg';
+const { Pool } = pkg;
 
 async function addThemeSettingsFields() {
   console.log('Starting migration to add theme settings fields...');
@@ -88,17 +89,15 @@ async function addThemeSettingsFields() {
   }
 }
 
-// Execute the migration if this file is run directly
-if (require.main === module) {
-  addThemeSettingsFields()
-    .then(() => {
-      console.log('Theme settings fields migration completed successfully');
-      process.exit(0);
-    })
-    .catch((error) => {
-      console.error('Theme settings fields migration failed:', error);
-      process.exit(1);
-    });
-}
+// Execute the migration
+addThemeSettingsFields()
+  .then(() => {
+    console.log('Theme settings fields migration completed successfully');
+    process.exit(0);
+  })
+  .catch((error) => {
+    console.error('Theme settings fields migration failed:', error);
+    process.exit(1);
+  });
 
-module.exports = { addThemeSettingsFields };
+export { addThemeSettingsFields };
