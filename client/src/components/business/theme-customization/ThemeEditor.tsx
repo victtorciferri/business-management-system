@@ -92,31 +92,35 @@ export function ThemeEditor({ onPreview, onSave, initialConfig }: ThemeEditorPro
   
   // Handle color change
   const handleColorChange = (colorType: string, color: string) => {
-    setThemeSettings(prev => ({
-      ...prev,
+    // Create updated settings with new color
+    const updatedSettings = {
+      ...themeSettings,
       [colorType]: color
-    }));
+    };
     
+    // Update state with new settings
+    setThemeSettings(updatedSettings);
+    
+    // If preview is active, send updated settings
     if (isPreviewActive && onPreview) {
-      onPreview({
-        ...themeSettings,
-        [colorType]: color
-      });
+      onPreview(updatedSettings);
     }
   };
   
   // Handle any input change
   const handleInputChange = (field: string, value: string | number | boolean) => {
-    setThemeSettings(prev => ({
-      ...prev,
+    // Create updated settings with new value
+    const updatedSettings = {
+      ...themeSettings,
       [field]: value
-    }));
+    };
     
+    // Update state with new settings
+    setThemeSettings(updatedSettings);
+    
+    // If preview is active, send updated settings
     if (isPreviewActive && onPreview) {
-      onPreview({
-        ...themeSettings,
-        [field]: value
-      });
+      onPreview(updatedSettings);
     }
   };
   
@@ -231,7 +235,8 @@ export function ThemeEditor({ onPreview, onSave, initialConfig }: ThemeEditorPro
   
   // Reset theme settings
   const resetThemeSettings = () => {
-    setThemeSettings({
+    // Create default settings
+    const defaultSettings = {
       primaryColor: '#4f46e5',
       secondaryColor: '#06b6d4',
       accentColor: '#f59e0b',
@@ -245,24 +250,14 @@ export function ThemeEditor({ onPreview, onSave, initialConfig }: ThemeEditorPro
       logoPosition: 'left',
       navbarStyle: 'simple',
       footerStyle: 'standard',
-    });
+    };
     
+    // Update state with default settings
+    setThemeSettings(defaultSettings);
+    
+    // If preview is active, send default settings
     if (isPreviewActive && onPreview) {
-      onPreview({
-        primaryColor: '#4f46e5',
-        secondaryColor: '#06b6d4',
-        accentColor: '#f59e0b',
-        backgroundColor: '#ffffff',
-        textColor: '#111827',
-        fontFamily: 'Inter, sans-serif',
-        borderRadius: 6,
-        buttonStyle: 'default',
-        cardStyle: 'default',
-        industryType: config.industryType || 'general',
-        logoPosition: 'left',
-        navbarStyle: 'simple',
-        footerStyle: 'standard',
-      });
+      onPreview(defaultSettings);
     }
     
     toast({
@@ -348,20 +343,20 @@ export function ThemeEditor({ onPreview, onSave, initialConfig }: ThemeEditorPro
                   accent: themeSettings.accentColor
                 }}
                 onSelect={(palette) => {
-                  setThemeSettings(prev => ({
-                    ...prev,
+                  // Create the updated settings object
+                  const updatedSettings = {
+                    ...themeSettings,
                     primaryColor: palette.primary,
                     secondaryColor: palette.secondary,
                     accentColor: palette.accent
-                  }));
+                  };
                   
+                  // Update state with the new settings
+                  setThemeSettings(updatedSettings);
+                  
+                  // If preview is active, send the updated settings to preview
                   if (isPreviewActive && onPreview) {
-                    onPreview({
-                      ...themeSettings,
-                      primaryColor: palette.primary,
-                      secondaryColor: palette.secondary,
-                      accentColor: palette.accent
-                    });
+                    onPreview(updatedSettings);
                   }
                 }}
               />

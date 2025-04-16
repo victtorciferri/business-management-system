@@ -114,11 +114,12 @@ const industryPalettes: Record<string, ColorPalette[]> = {
 };
 
 export function PaletteSuggestions({ currentPalette, onSelect }: PaletteSuggestionsProps) {
-  // Check if two palettes are the same
+  // Check if two palettes are the same (with case-insensitive comparison)
   const isSamePalette = (a: ColorPalette, b: ColorPalette) => {
-    return a.primary === b.primary && 
-           a.secondary === b.secondary && 
-           a.accent === b.accent;
+    // Convert all colors to lowercase for consistent comparison
+    return a.primary.toLowerCase() === b.primary.toLowerCase() && 
+           a.secondary.toLowerCase() === b.secondary.toLowerCase() && 
+           a.accent.toLowerCase() === b.accent.toLowerCase();
   };
   
   return (
