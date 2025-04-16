@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ReactNode } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useBusinessContext } from "@/contexts/BusinessContext";
+import { Moon, Sun } from "lucide-react";
 
 export interface NavigationItem {
   label: string;
@@ -12,8 +13,13 @@ export interface NavigationItem {
   isActive: boolean;
 }
 
+// Extended business interface to include logoUrl
+interface BusinessWithLogo extends Omit<User, "password"> {
+  logoUrl?: string;
+}
+
 interface BaseHeaderProps {
-  business?: Omit<User, "password">;
+  business?: BusinessWithLogo;
   navigationItems: NavigationItem[];
   currentPath: string;
   portalType: 'business' | 'customer';
@@ -32,7 +38,7 @@ export default function BaseHeader({
   queryParams = {}
 }: BaseHeaderProps) {
   const [_, navigate] = useLocation();
-  const { theme, getPrimaryColor, getTextColor, getButtonClass } = useTheme();
+  const { theme, getPrimaryColor, getTextColor, getButtonClass, isDarkMode } = useTheme();
   const { config } = useBusinessContext();
 
   // Helper function to build URL with query parameters
@@ -59,8 +65,12 @@ export default function BaseHeader({
     
     // Otherwise use the text initial logo
     const logoInitial = logoText.substring(0, 1).toUpperCase();
+    const gradientClasses = isDarkMode 
+      ? 'bg-gradient-to-br from-purple-600 to-indigo-800'
+      : `bg-gradient-to-br from-${theme.primaryColor} to-${theme.accentColor}`;
+      
     return (
-      <div className={`h-10 w-10 ${theme.borderRadius} bg-gradient-to-br from-${theme.primaryColor} to-${theme.accentColor} flex items-center justify-center text-white font-bold text-xl mr-3`}>
+      <div className={`h-10 w-10 rounded-${theme.borderRadius} ${gradientClasses} flex items-center justify-center text-white font-bold text-xl mr-3`}>
         {logoInitial}
       </div>
     );
@@ -75,9 +85,9 @@ export default function BaseHeader({
     }
     return '';
   };
-
+  
   return (
-    <header className="bg-white shadow">
+    <header className={`${isDarkMode ? 'bg-gray-900 border-b border-gray-800' : 'bg-white'} shadow`}>
       <div className={`container mx-auto px-4 ${theme.fontFamily}`}>
         <div className="flex flex-col md:flex-row justify-between items-center py-4">
           {/* Logo and Business Name */}
@@ -85,7 +95,7 @@ export default function BaseHeader({
             <Link href={portalType === 'business' && slug ? `/${slug}` : buildUrl('/customer-portal')}>
               <a className="flex items-center">
                 {renderLogo()}
-                <h1 className={`text-xl font-bold ${getTextColor()}`}>
+                <h1 className={`text-xl font-bold ${isDarkMode ? 'text-white' : getTextColor()}`}>
                   {logoText}
                   {portalType === 'customer' && (
                     <span className={`${getPrimaryColor()} font-normal ml-2`}>
@@ -104,13 +114,24 @@ export default function BaseHeader({
                 key={item.path}
                 variant={item.isActive ? "default" : "ghost"}
                 size="sm"
-                className={`flex items-center ${getButtonClass()}`}
+                className={`flex items-center ${getButtonClass()} ${isDarkMode && !item.isActive ? 'text-gray-300 hover:text-white hover:bg-gray-800' : ''}`}
                 onClick={() => navigate(buildUrl(item.path))}
               >
                 {item.icon}
                 {item.label}
               </Button>
             ))}
+            
+            {/* Dark mode toggle for Salon Elegante */}
+            {slug === 'salonelegante' && (
+              <Button 
+                variant="ghost" 
+                size="sm"
+                className={`ml-2 ${isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'}`}
+              >
+                {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </Button>
+            )}
           </nav>
         </div>
       </div>
