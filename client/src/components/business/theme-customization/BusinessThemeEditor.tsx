@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Theme } from "../../../contexts/ThemeContext";
 import { useTheme } from "../../../contexts/ThemeContext";
+import { Theme as ContextTheme } from "../../../contexts/ThemeContext";
+import { Theme } from "@shared/config";
+import { ThemePresetSelector } from "./ThemePresetSelector";
 
 // Color picker with preview
 const ColorPicker = ({ label, value, onChange }: { label: string; value: string; onChange: (color: string) => void }) => {
@@ -82,11 +84,15 @@ export function BusinessThemeEditor({
   const { toast } = useToast();
   const { businessTheme, updateBusinessTheme } = useTheme();
   const [theme, setTheme] = useState<Theme>({
+    name: 'Custom Theme',
     primary: '#1E3A8A',
     secondary: '#9333EA',
     background: '#FFFFFF',
     text: '#111827',
-    appearance: 'system'
+    appearance: 'system',
+    font: 'Inter',
+    borderRadius: '0.375rem',
+    spacing: '1rem'
   });
   const [loading, setLoading] = useState(false);
 
@@ -97,7 +103,14 @@ export function BusinessThemeEditor({
       setTheme(initialTheme);
     } else if (businessTheme) {
       // Otherwise use the theme from context (for business owner view)
-      setTheme(businessTheme);
+      // Add the name property if it's missing in the context theme
+      setTheme({
+        name: 'Custom Theme',
+        ...businessTheme,
+        font: businessTheme.font || 'Inter',
+        borderRadius: businessTheme.borderRadius || '0.375rem',
+        spacing: businessTheme.spacing || '1rem'
+      });
     }
   }, [businessTheme, initialTheme]);
 
@@ -168,6 +181,7 @@ export function BusinessThemeEditor({
         <Tabs defaultValue="colors">
           <TabsList className="mb-4">
             <TabsTrigger value="colors">Colors</TabsTrigger>
+            <TabsTrigger value="presets">Theme Presets</TabsTrigger>
             <TabsTrigger value="appearance">Appearance</TabsTrigger>
           </TabsList>
           
@@ -198,6 +212,20 @@ export function BusinessThemeEditor({
               
               <ThemePreview theme={theme} />
             </div>
+          </TabsContent>
+          
+          <TabsContent value="presets" className="space-y-4">
+            <ThemePresetSelector
+              currentTheme={theme}
+              onSelectPreset={(preset) => {
+                // Apply the selected preset
+                setTheme(preset);
+                toast({
+                  title: "Theme preset applied",
+                  description: `"${preset.name}" theme has been applied. Don't forget to save your changes.`,
+                });
+              }}
+            />
           </TabsContent>
           
           <TabsContent value="appearance">
