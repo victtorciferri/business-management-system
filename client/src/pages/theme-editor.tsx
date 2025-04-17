@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useBusinessContext } from '@/contexts/BusinessContext';
 import { ThemeEditor } from '@/components/business/theme-customization/ThemeEditor';
-import BusinessThemeEditor from '@/components/business/theme-customization/BusinessThemeEditor';
+import { BusinessThemeEditor } from '@/components/business/theme-customization/BusinessThemeEditor';
+import { Theme } from '@/contexts/ThemeContext';
 import { Container, Section } from '@/components/ui/layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -14,25 +15,35 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 export default function ThemeEditorPage() {
   const { business, isLoading } = useBusinessContext();
   const [isPreviewActive, setIsPreviewActive] = useState(false);
-  const [previewTheme, setPreviewTheme] = useState<any>(null);
+  const [previewTheme, setPreviewTheme] = useState<Theme | null>(null);
   
   // Handle theme preview
   const handlePreview = (themeConfig: any) => {
-    setPreviewTheme(themeConfig);
+    setPreviewTheme(themeConfig as Theme);
     setIsPreviewActive(true);
     
     // Apply preview styles
-    document.documentElement.style.setProperty('--primary', themeConfig.primaryColor);
-    document.documentElement.style.setProperty('--secondary', themeConfig.secondaryColor);
-    document.documentElement.style.setProperty('--accent', themeConfig.accentColor);
-    document.documentElement.style.setProperty('--background', themeConfig.backgroundColor);
-    document.documentElement.style.setProperty('--foreground', themeConfig.textColor);
+    // Using legacy property names first, falling back to new theme properties if available
+    const primary = themeConfig.primaryColor || themeConfig.primary;
+    const secondary = themeConfig.secondaryColor || themeConfig.secondary;
+    const background = themeConfig.backgroundColor || themeConfig.background;
+    const textColor = themeConfig.textColor || themeConfig.text;
+    
+    if (primary) document.documentElement.style.setProperty('--primary', primary);
+    if (secondary) document.documentElement.style.setProperty('--secondary', secondary);
+    if (themeConfig.accentColor) document.documentElement.style.setProperty('--accent', themeConfig.accentColor);
+    if (background) document.documentElement.style.setProperty('--background', background);
+    if (textColor) document.documentElement.style.setProperty('--foreground', textColor);
     
     // Apply border radius
-    document.documentElement.style.setProperty('--radius', `${themeConfig.borderRadius}px`);
+    if (themeConfig.borderRadius) {
+      document.documentElement.style.setProperty('--radius', `${themeConfig.borderRadius}px`);
+    }
     
     // Apply font family
-    document.body.style.fontFamily = themeConfig.fontFamily;
+    if (themeConfig.fontFamily) {
+      document.body.style.fontFamily = themeConfig.fontFamily;
+    }
   };
   
   // Handle theme save

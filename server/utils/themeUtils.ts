@@ -1,6 +1,50 @@
 import { db } from "../db";
 import { Theme, defaultTheme } from "@shared/config";
+import { themeSchema } from "@shared/themeSchema";
 import { sql } from "drizzle-orm";
+
+/**
+ * Merges a partial theme with default values to create a complete theme
+ * @param storedTheme Partial theme from storage or user input
+ * @returns Complete theme with all required properties
+ */
+export const getEffectiveTheme = (storedTheme?: Partial<Theme>): Theme => ({
+  ...defaultTheme,
+  ...storedTheme,
+});
+
+/**
+ * Validates a theme against the schema and returns a valid theme object
+ * @param theme Theme data to validate
+ * @returns Validated theme or null if invalid
+ */
+export const validateTheme = (theme: unknown): Theme | null => {
+  try {
+    // Parse and validate the theme data using the enhanced schema validation
+    const validTheme = themeSchema.parse(theme);
+    
+    // Add any missing fields from defaultTheme that might be needed
+    const completedTheme: Theme = {
+      ...defaultTheme,  // Provide defaults
+      ...validTheme,   // Overwrite with provided values
+      // Make sure required properties are always present
+      name: validTheme.name || "Custom Theme",
+      primary: validTheme.primary || defaultTheme.primary,
+      secondary: validTheme.secondary || defaultTheme.secondary,
+      background: validTheme.background || defaultTheme.background,
+      text: validTheme.text || defaultTheme.text,
+    };
+    
+    return completedTheme;
+  } catch (error) {
+    console.error("Theme validation error:", error);
+    // Provide more detailed error logging
+    if (error instanceof Error) {
+      console.error(`Error details: ${error.message}`);
+    }
+    return null;
+  }
+};
 
 /**
  * Retrieves the theme for a specific business
@@ -18,7 +62,8 @@ export async function getThemeForBusiness(businessId: number): Promise<Theme> {
 
     // Check if we have a result
     if (result.rows.length > 0 && result.rows[0].theme) {
-      return result.rows[0].theme as Theme;
+      // Use the effective theme helper to merge with defaults
+      return getEffectiveTheme(result.rows[0].theme as Partial<Theme>);
     }
 
     // If no theme is found, try to migrate from theme_settings
@@ -39,9 +84,19 @@ export async function getThemeForBusiness(businessId: number): Promise<Theme> {
  */
 export async function updateThemeForBusiness(businessId: number, theme: Theme): Promise<void> {
   try {
+    // Validate the theme before saving
+    const validatedTheme = validateTheme(theme);
+    
+    if (!validatedTheme) {
+      throw new Error("Invalid theme format");
+    }
+    
+    // Ensure we have a complete theme by merging with defaults
+    const completeTheme = getEffectiveTheme(validatedTheme);
+    
     await db.execute(sql`
       UPDATE users
-      SET theme = ${JSON.stringify(theme)}::jsonb
+      SET theme = ${JSON.stringify(completeTheme)}::jsonb
       WHERE id = ${businessId}
     `);
   } catch (error) {
@@ -66,15 +121,25 @@ async function migrateThemeSettingsToTheme(businessId: number): Promise<void> {
 
     // Check if we have theme_settings to migrate
     if (result.rows.length > 0 && result.rows[0].theme_settings) {
-      const themeSettings = result.rows[0].theme_settings;
+      const themeSettings = result.rows[0].theme_settings as {
+        primaryColor?: string;
+        secondaryColor?: string;
+        backgroundColor?: string;
+        textColor?: string;
+        appearance?: "light" | "dark" | "system";
+      };
       
       // Map from legacy format to new format
       const theme: Theme = {
+        name: "Legacy Theme", // Add a name for the migrated theme
         primary: themeSettings.primaryColor || defaultTheme.primary,
         secondary: themeSettings.secondaryColor || defaultTheme.secondary,
         background: themeSettings.backgroundColor || defaultTheme.background,
         text: themeSettings.textColor || defaultTheme.text,
-        appearance: themeSettings.appearance || defaultTheme.appearance
+        appearance: themeSettings.appearance || defaultTheme.appearance,
+        font: defaultTheme.font,
+        borderRadius: defaultTheme.borderRadius,
+        spacing: defaultTheme.spacing
       };
       
       // Update the theme column

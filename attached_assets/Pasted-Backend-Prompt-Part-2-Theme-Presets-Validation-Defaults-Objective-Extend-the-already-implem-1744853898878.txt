@@ -1,0 +1,105 @@
+Backend Prompt — Part 2 (Theme Presets, Validation, Defaults)
+🎯 Objective
+Extend the already implemented business theming backend to support:
+
+Schema validation for themes
+
+Saving theme presets (like "Modern", "Classic") per business
+
+Enabling clients to list available presets
+
+Full TypeScript typing & reusable logic
+
+✅ Tech Stack
+Node.js · Express · TypeScript · Drizzle ORM
+
+⚙️ Instructions
+1. 🧪 Add Theme Schema Validation (Zod)
+In a shared utils folder:
+
+ts
+Copiar
+Editar
+// src/utils/themeSchema.ts
+import { z } from "zod";
+
+export const themeSchema = z.object({
+  primary: z.string().startsWith("#"),
+  secondary: z.string().startsWith("#"),
+  background: z.string().startsWith("#"),
+  text: z.string().startsWith("#"),
+  font: z.string().optional(),
+  borderRadius: z.string().optional(),
+  spacing: z.string().optional(),
+});
+
+export type Theme = z.infer<typeof themeSchema>;
+Validate all incoming theme data against this schema.
+
+2. 📦 Store Presets in Code
+Create file: src/config/themePresets.ts
+
+ts
+Copiar
+Editar
+import { Theme } from "../utils/themeSchema";
+
+export const themePresets: Theme[] = [
+  {
+    primary: "#0D9488",
+    secondary: "#E11D48",
+    background: "#F9FAFB",
+    text: "#111827",
+    font: "Inter",
+    borderRadius: "0.5rem",
+    spacing: "1rem",
+  },
+  {
+    primary: "#1E40AF",
+    secondary: "#F59E0B",
+    background: "#FFFFFF",
+    text: "#1F2937",
+    font: "Georgia",
+    borderRadius: "0.25rem",
+    spacing: "0.75rem",
+  },
+];
+3. 🚀 New Endpoint: Get Presets
+Add a public API route:
+
+ts
+Copiar
+Editar
+GET /api/themes/presets
+→ Returns array of theme presets
+Responds with the static themePresets.
+
+4. 🔐 Validate Incoming Themes on POST
+Update your existing endpoint:
+
+ts
+Copiar
+Editar
+POST /api/business/:id/theme
+Use themeSchema.parse(req.body) to validate the theme
+
+Respond with 400 if invalid
+
+5. 🧱 Create Helper: getEffectiveTheme
+In your theme utils:
+
+ts
+Copiar
+Editar
+export const getEffectiveTheme = (storedTheme?: Partial<Theme>): Theme => ({
+  ...defaultTheme,
+  ...storedTheme,
+});
+Use this to merge defaults with stored values before serving themes.
+
+6. 🧪 Test Again
+GET /api/themes/presets — works
+
+POST /api/business/:id/theme — validates input
+
+GET /api/business/:id/theme — returns stored theme + fallback values

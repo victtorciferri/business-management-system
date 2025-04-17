@@ -1,253 +1,244 @@
-import { useState, useEffect } from "react";
-import { useTheme } from "@/contexts/ThemeContext";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useBusinessContext } from "@/contexts/BusinessContext";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { Theme } from "../../../contexts/ThemeContext";
+import { useTheme } from "../../../contexts/ThemeContext";
 
-export default function BusinessThemeEditor() {
-  const { businessTheme, updateBusinessTheme } = useTheme();
-  const { business } = useBusinessContext();
-  const { toast } = useToast();
-  
-  // Local state for form values
-  const [primary, setPrimary] = useState(businessTheme.primary);
-  const [secondary, setSecondary] = useState(businessTheme.secondary);
-  const [background, setBackground] = useState(businessTheme.background);
-  const [text, setText] = useState(businessTheme.text);
-  const [appearance, setAppearance] = useState<"light" | "dark" | "system">(
-    businessTheme.appearance || "system"
-  );
-  
-  // Update local state when business theme changes
-  useEffect(() => {
-    setPrimary(businessTheme.primary);
-    setSecondary(businessTheme.secondary);
-    setBackground(businessTheme.background);
-    setText(businessTheme.text);
-    setAppearance(businessTheme.appearance || "system");
-  }, [businessTheme]);
-  
-  // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validate all colors are hex format
-    const hexRegex = /^#[0-9A-Fa-f]{6}$/;
-    if (!hexRegex.test(primary) || !hexRegex.test(secondary) || 
-        !hexRegex.test(background) || !hexRegex.test(text)) {
-      toast({
-        title: "Invalid color format",
-        description: "All colors must be in hex format (e.g., #1E3A8A)",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    // Update the theme
-    updateBusinessTheme({
-      primary,
-      secondary,
-      background,
-      text,
-      appearance
-    });
-    
-    toast({
-      title: "Theme updated",
-      description: "Your business theme has been updated successfully"
-    });
-  };
-  
-  // Apply preview colors to a specific element without affecting the whole app
-  const previewStyle = {
-    "--preview-primary": primary,
-    "--preview-secondary": secondary,
-    "--preview-background": background,
-    "--preview-text": text,
-  } as React.CSSProperties;
-  
-  if (!business) {
-    return null; // Only show for business owners
-  }
-  
+// Color picker with preview
+const ColorPicker = ({ label, value, onChange }: { label: string; value: string; onChange: (color: string) => void }) => {
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Business Theme</CardTitle>
-          <CardDescription>
-            Customize your business theme colors. These colors will be used throughout your business portal.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <Tabs defaultValue="colors">
-              <TabsList className="mb-4">
-                <TabsTrigger value="colors">Colors</TabsTrigger>
-                <TabsTrigger value="appearance">Appearance</TabsTrigger>
-                <TabsTrigger value="preview">Preview</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="colors" className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="primary">Primary Color</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id="primary"
-                        value={primary}
-                        onChange={(e) => setPrimary(e.target.value)}
-                        placeholder="#1E3A8A"
-                      />
-                      <input
-                        type="color"
-                        value={primary}
-                        onChange={(e) => setPrimary(e.target.value)}
-                        className="w-10 h-10 border rounded"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="secondary">Secondary Color</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id="secondary"
-                        value={secondary}
-                        onChange={(e) => setSecondary(e.target.value)}
-                        placeholder="#9333EA"
-                      />
-                      <input
-                        type="color"
-                        value={secondary}
-                        onChange={(e) => setSecondary(e.target.value)}
-                        className="w-10 h-10 border rounded"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="background">Background Color</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id="background"
-                        value={background}
-                        onChange={(e) => setBackground(e.target.value)}
-                        placeholder="#FFFFFF"
-                      />
-                      <input
-                        type="color"
-                        value={background}
-                        onChange={(e) => setBackground(e.target.value)}
-                        className="w-10 h-10 border rounded"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="text">Text Color</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id="text"
-                        value={text}
-                        onChange={(e) => setText(e.target.value)}
-                        placeholder="#111827"
-                      />
-                      <input
-                        type="color"
-                        value={text}
-                        onChange={(e) => setText(e.target.value)}
-                        className="w-10 h-10 border rounded"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="appearance" className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Appearance Mode</Label>
-                  <div className="flex gap-2">
-                    <Button 
-                      type="button"
-                      variant={appearance === "light" ? "default" : "outline"}
-                      onClick={() => setAppearance("light")}
-                    >
-                      Light
-                    </Button>
-                    <Button 
-                      type="button"
-                      variant={appearance === "dark" ? "default" : "outline"}
-                      onClick={() => setAppearance("dark")}
-                    >
-                      Dark
-                    </Button>
-                    <Button 
-                      type="button"
-                      variant={appearance === "system" ? "default" : "outline"}
-                      onClick={() => setAppearance("system")}
-                    >
-                      System
-                    </Button>
-                  </div>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="preview" className="space-y-4">
-                <div 
-                  className="p-6 rounded-lg border shadow-sm" 
-                  style={previewStyle}
-                >
-                  <div className="mb-4 p-4 rounded" style={{ 
-                    backgroundColor: 'var(--preview-background)',
-                    color: 'var(--preview-text)',
-                    border: '1px solid var(--preview-text)'
-                  }}>
-                    <h3 className="text-lg font-semibold mb-2">Background & Text</h3>
-                    <p>This is how your background and text colors will look together.</p>
-                  </div>
-                  
-                  <div className="flex gap-4">
-                    <div className="p-4 rounded" style={{ 
-                      backgroundColor: 'var(--preview-primary)',
-                      color: '#ffffff'
-                    }}>
-                      Primary Color
-                    </div>
-                    
-                    <div className="p-4 rounded" style={{ 
-                      backgroundColor: 'var(--preview-secondary)',
-                      color: '#ffffff'
-                    }}>
-                      Secondary Color
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
-            </Tabs>
-            
-            <div className="flex justify-end gap-2">
-              <Button 
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setPrimary(businessTheme.primary);
-                  setSecondary(businessTheme.secondary);
-                  setBackground(businessTheme.background);
-                  setText(businessTheme.text);
-                }}
-              >
-                Reset
-              </Button>
-              <Button type="submit">Save Theme</Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+    <div className="mb-4">
+      <Label className="block mb-1">{label}</Label>
+      <div className="flex items-center gap-3">
+        <div 
+          className="w-10 h-10 rounded-md border border-gray-300 shadow-sm" 
+          style={{ backgroundColor: value }}
+        />
+        <input 
+          type="color" 
+          value={value} 
+          onChange={(e) => onChange(e.target.value)} 
+          className="h-10"
+        />
+        <div className="text-sm font-mono">{value}</div>
+      </div>
     </div>
+  );
+};
+
+// Theme preview card
+const ThemePreview = ({ theme }: { theme: Theme }) => {
+  return (
+    <div className="border rounded-md p-4 mt-4">
+      <h3 className="text-lg font-medium mb-2">Theme Preview</h3>
+      <div className="space-y-4">
+        <div 
+          className="w-full h-24 rounded-md flex items-center justify-center" 
+          style={{ backgroundColor: theme.primary, color: '#fff' }}
+        >
+          Primary Color
+        </div>
+        <div 
+          className="w-full h-14 rounded-md flex items-center justify-center" 
+          style={{ backgroundColor: theme.secondary, color: '#fff' }}
+        >
+          Secondary Color
+        </div>
+        <div 
+          className="w-full h-32 rounded-md flex flex-col items-center justify-center p-4" 
+          style={{ backgroundColor: theme.background, color: theme.text }}
+        >
+          <h4 className="text-lg font-semibold" style={{ color: theme.text }}>Background & Text</h4>
+          <p style={{ color: theme.text }}>This is how your text will appear on your background.</p>
+          <Button 
+            className="mt-2" 
+            style={{ backgroundColor: theme.primary, color: '#fff' }}
+          >
+            Sample Button
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+interface BusinessThemeEditorProps {
+  onSave?: () => void;
+  initialTheme?: Theme;
+  businessId?: number | null;
+  onSaveTheme?: (theme: Theme) => Promise<void>;
+}
+
+export function BusinessThemeEditor({ 
+  onSave, 
+  initialTheme,
+  businessId,
+  onSaveTheme 
+}: BusinessThemeEditorProps) {
+  const { toast } = useToast();
+  const { businessTheme, updateBusinessTheme } = useTheme();
+  const [theme, setTheme] = useState<Theme>({
+    primary: '#1E3A8A',
+    secondary: '#9333EA',
+    background: '#FFFFFF',
+    text: '#111827',
+    appearance: 'system'
+  });
+  const [loading, setLoading] = useState(false);
+
+  // Load current theme when component mounts
+  useEffect(() => {
+    if (initialTheme) {
+      // If an initialTheme prop is provided, use that (for admin view)
+      setTheme(initialTheme);
+    } else if (businessTheme) {
+      // Otherwise use the theme from context (for business owner view)
+      setTheme(businessTheme);
+    }
+  }, [businessTheme, initialTheme]);
+
+  // Handle color changes
+  const handleColorChange = (key: keyof Theme, value: string) => {
+    setTheme((prev: Theme) => ({ ...prev, [key]: value }));
+  };
+
+  // Handle appearance mode toggle
+  const handleAppearanceChange = (mode: 'light' | 'dark' | 'system') => {
+    setTheme((prev: Theme) => ({ ...prev, appearance: mode }));
+  };
+
+  // Save theme to API
+  const saveTheme = async () => {
+    setLoading(true);
+    try {
+      // If a custom save function was provided (for admin), use that
+      if (onSaveTheme) {
+        await onSaveTheme(theme);
+      } 
+      // Otherwise use the business API endpoint (for business owner)
+      else {
+        const response = await fetch('/api/business/theme', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ theme }),
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to save theme');
+        }
+        
+        // Update theme context (only for business owner view)
+        updateBusinessTheme(theme);
+      }
+      
+      toast({
+        title: "Theme saved",
+        description: "The theme settings have been updated.",
+      });
+      
+      // Call onSave callback if provided
+      if (onSave) onSave();
+    } catch (error) {
+      console.error('Error saving theme:', error);
+      toast({
+        title: "Error saving theme",
+        description: "There was a problem saving theme settings.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle>Business Theme Editor</CardTitle>
+        <CardDescription>
+          Customize your business colors and appearance
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Tabs defaultValue="colors">
+          <TabsList className="mb-4">
+            <TabsTrigger value="colors">Colors</TabsTrigger>
+            <TabsTrigger value="appearance">Appearance</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="colors" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <ColorPicker
+                  label="Primary Color" 
+                  value={theme.primary}
+                  onChange={(color) => handleColorChange('primary', color)}
+                />
+                <ColorPicker
+                  label="Secondary Color" 
+                  value={theme.secondary}
+                  onChange={(color) => handleColorChange('secondary', color)}
+                />
+                <ColorPicker
+                  label="Background Color" 
+                  value={theme.background}
+                  onChange={(color) => handleColorChange('background', color)}
+                />
+                <ColorPicker
+                  label="Text Color" 
+                  value={theme.text}
+                  onChange={(color) => handleColorChange('text', color)}
+                />
+              </div>
+              
+              <ThemePreview theme={theme} />
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="appearance">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="dark-mode">Dark Mode</Label>
+                  <p className="text-sm text-gray-500">Enable dark mode for your business portal</p>
+                </div>
+                <div className="space-x-2">
+                  <Switch
+                    id="dark-mode"
+                    checked={theme.appearance === 'dark'}
+                    onCheckedChange={(checked) => handleAppearanceChange(checked ? 'dark' : 'light')}
+                  />
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="system-mode">Follow System Preference</Label>
+                  <p className="text-sm text-gray-500">Automatically switch based on user's device settings</p>
+                </div>
+                <div className="space-x-2">
+                  <Switch
+                    id="system-mode"
+                    checked={theme.appearance === 'system'}
+                    onCheckedChange={(checked) => handleAppearanceChange(checked ? 'system' : 'light')}
+                  />
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+        
+        <div className="mt-6 flex justify-end">
+          <Button onClick={saveTheme} disabled={loading}>
+            {loading ? 'Saving...' : 'Save Theme'}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

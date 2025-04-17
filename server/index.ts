@@ -7,6 +7,7 @@ import { businessExtractor } from "./middleware/businessExtractor";
 import { setupSSL } from "./ssl";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
+import themeRoutes from "./routes/themeRoutes";
 
 const app = express();
 app.use(express.json());
@@ -51,6 +52,9 @@ app.use((req, res, next) => {
   
   // Add the business extractor middleware before routes
   app.use(businessExtractor);
+  
+  // Register theme routes
+  app.use('/api', themeRoutes);
   
   // Let the routes.ts define all routes
   let server = await registerRoutes(app);

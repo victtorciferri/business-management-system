@@ -1,8 +1,8 @@
 import { pgTable, text, serial, integer, timestamp, boolean, numeric, primaryKey, index, foreignKey, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-import { relations } from "drizzle-orm";
-import { defaultTheme } from "./config";
+import { relations, sql } from "drizzle-orm";
+import { defaultTheme, Theme } from "./config";
 
 // User schema (for authentication)
 export const users = pgTable("users", {
@@ -44,7 +44,7 @@ export const users = pgTable("users", {
     appearance?: "light" | "dark" | "system";
   }>(),
   // New theme configuration - used for the new theming system
-  theme: jsonb("theme").$type<Theme>().default(JSON.stringify(defaultTheme)),
+  theme: jsonb("theme").$type<Theme>().default(sql`${JSON.stringify(defaultTheme)}::jsonb`),
   // Payment processing and marketplace configuration
   platformFeePercentage: numeric("platform_fee_percentage").default("2.00"), // Default platform fee percentage (can be adjusted per business)
   // MercadoPago integration fields for marketplace payment split

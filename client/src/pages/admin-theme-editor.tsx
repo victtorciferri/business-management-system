@@ -3,6 +3,7 @@ import { useLocation, useParams } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { Theme } from "@/contexts/ThemeContext";
 import { 
   Card, 
   CardContent, 
@@ -23,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { ThemeEditor } from "@/components/business/theme-customization/ThemeEditor";
-import BusinessThemeEditor from "@/components/business/theme-customization/BusinessThemeEditor";
+import { BusinessThemeEditor } from "@/components/business/theme-customization/BusinessThemeEditor";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ArrowLeft, Eye, Save, Shield, AlertTriangle } from "lucide-react";
@@ -101,12 +102,12 @@ export default function AdminThemeEditor({ businessId: propBusinessId }: AdminTh
   });
   
   // Business theme (new format) configuration state
-  const [businessTheme, setBusinessTheme] = useState({
+  const [businessTheme, setBusinessTheme] = useState<Theme>({
     primary: "#4f46e5",
     secondary: "#9333EA",
     background: "#FFFFFF",
     text: "#111827",
-    appearance: "system" as "light" | "dark" | "system"
+    appearance: "system"
   });
 
   // Fetch real business config/theme data
@@ -126,7 +127,7 @@ export default function AdminThemeEditor({ businessId: propBusinessId }: AdminTh
                 secondary: themeData.theme.secondary || "#9333EA",
                 background: themeData.theme.background || "#FFFFFF",
                 text: themeData.theme.text || "#111827",
-                appearance: themeData.theme.appearance || "system" as "light" | "dark" | "system"
+                appearance: themeData.theme.appearance || "system"
               });
             }
             
@@ -168,7 +169,7 @@ export default function AdminThemeEditor({ businessId: propBusinessId }: AdminTh
   };
   
   // Handle saving the new business theme
-  const handleSaveBusinessTheme = async (theme: typeof businessTheme) => {
+  const handleSaveBusinessTheme = async (theme: Theme) => {
     if (!businessId) return;
     
     try {
@@ -288,153 +289,21 @@ export default function AdminThemeEditor({ businessId: propBusinessId }: AdminTh
           
           <TabsContent value="new">
             <div className="mb-4">
-              {/* Custom implementation of BusinessThemeEditor for admin context */}
               <Card>
                 <CardHeader>
                   <CardTitle>Business Theme Settings</CardTitle>
                   <CardDescription>
-                    Simple, direct color customization for {business.name}'s theme
+                    Color customization for {business.name}'s theme
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <form onSubmit={(e) => {
-                    e.preventDefault();
-                    handleSaveBusinessTheme(businessTheme);
-                  }} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="primary">Primary Color</Label>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="color"
-                            id="primary"
-                            value={businessTheme.primary}
-                            onChange={(e) => setBusinessTheme({...businessTheme, primary: e.target.value})}
-                            className="w-10 h-10 rounded-md cursor-pointer"
-                          />
-                          <Input
-                            value={businessTheme.primary}
-                            onChange={(e) => setBusinessTheme({...businessTheme, primary: e.target.value})}
-                            className="font-mono"
-                            maxLength={7}
-                          />
-                        </div>
-                        <p className="text-xs text-muted-foreground">Main brand color used for primary buttons and accents</p>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="secondary">Secondary Color</Label>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="color"
-                            id="secondary"
-                            value={businessTheme.secondary}
-                            onChange={(e) => setBusinessTheme({...businessTheme, secondary: e.target.value})}
-                            className="w-10 h-10 rounded-md cursor-pointer"
-                          />
-                          <Input
-                            value={businessTheme.secondary}
-                            onChange={(e) => setBusinessTheme({...businessTheme, secondary: e.target.value})}
-                            className="font-mono"
-                            maxLength={7}
-                          />
-                        </div>
-                        <p className="text-xs text-muted-foreground">Complementary color used for links and secondary elements</p>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="background">Background Color</Label>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="color"
-                            id="background"
-                            value={businessTheme.background}
-                            onChange={(e) => setBusinessTheme({...businessTheme, background: e.target.value})}
-                            className="w-10 h-10 rounded-md cursor-pointer"
-                          />
-                          <Input
-                            value={businessTheme.background}
-                            onChange={(e) => setBusinessTheme({...businessTheme, background: e.target.value})}
-                            className="font-mono"
-                            maxLength={7}
-                          />
-                        </div>
-                        <p className="text-xs text-muted-foreground">Default background color for the site</p>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="text">Text Color</Label>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="color"
-                            id="text"
-                            value={businessTheme.text}
-                            onChange={(e) => setBusinessTheme({...businessTheme, text: e.target.value})}
-                            className="w-10 h-10 rounded-md cursor-pointer"
-                          />
-                          <Input
-                            value={businessTheme.text}
-                            onChange={(e) => setBusinessTheme({...businessTheme, text: e.target.value})}
-                            className="font-mono"
-                            maxLength={7}
-                          />
-                        </div>
-                        <p className="text-xs text-muted-foreground">Primary text color used throughout the site</p>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="appearance">Default Appearance</Label>
-                      <Select 
-                        value={businessTheme.appearance} 
-                        onValueChange={(value) => setBusinessTheme({
-                          ...businessTheme, 
-                          appearance: value as "light" | "dark" | "system"
-                        })}
-                      >
-                        <SelectTrigger id="appearance">
-                          <SelectValue placeholder="Choose appearance mode" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="light">Light</SelectItem>
-                          <SelectItem value="dark">Dark</SelectItem>
-                          <SelectItem value="system">System (follow device setting)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs text-muted-foreground">
-                        Default color mode for the site. Users can override this setting.
-                      </p>
-                    </div>
-                    
-                    <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border">
-                      <h3 className="text-sm font-medium mb-2">Preview</h3>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                        <div className="flex flex-col items-center">
-                          <div className="w-12 h-12 rounded-md" style={{ backgroundColor: businessTheme.primary }}></div>
-                          <span className="text-xs mt-1">Primary</span>
-                        </div>
-                        <div className="flex flex-col items-center">
-                          <div className="w-12 h-12 rounded-md" style={{ backgroundColor: businessTheme.secondary }}></div>
-                          <span className="text-xs mt-1">Secondary</span>
-                        </div>
-                        <div className="flex flex-col items-center">
-                          <div className="w-12 h-12 rounded-md border" style={{ backgroundColor: businessTheme.background }}></div>
-                          <span className="text-xs mt-1">Background</span>
-                        </div>
-                        <div className="flex flex-col items-center">
-                          <div className="w-12 h-12 rounded-md flex items-center justify-center" style={{ backgroundColor: businessTheme.background }}>
-                            <span style={{ color: businessTheme.text }}>Aa</span>
-                          </div>
-                          <span className="text-xs mt-1">Text</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <Button type="submit" className="w-full sm:w-auto">
-                      <Save className="h-4 w-4 mr-2" />
-                      Save Theme Settings
-                    </Button>
-                  </form>
+                  {/* Admin implementation that saves to the admin API endpoint */}
+                  <BusinessThemeEditor 
+                    initialTheme={businessTheme}
+                    businessId={businessId}
+                    onSaveTheme={handleSaveBusinessTheme}
+                    onSave={() => handleSaveComplete()}
+                  />
                 </CardContent>
               </Card>
             </div>
@@ -450,11 +319,11 @@ export default function AdminThemeEditor({ businessId: propBusinessId }: AdminTh
                 accentColor: businessConfig.accentColor,
                 industryType: businessConfig.industryType,
                 // Set the business context manually for the theme editor
-                business: {
+                business: business ? {
                   id: business.id,
                   name: business.name,
                   slug: business.slug
-                }
+                } : undefined
               }}
             />
           </TabsContent>
@@ -513,56 +382,6 @@ export default function AdminThemeEditor({ businessId: propBusinessId }: AdminTh
                     style={{ fontFamily: previewTheme.fontFamily || "system-ui, sans-serif" }}
                   >
                     <span>The quick brown fox jumps over the lazy dog</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <h3 className="text-sm font-medium mb-4">UI Components Preview</h3>
-                  <div className="space-y-4">
-                    <Button 
-                      style={{ 
-                        backgroundColor: previewTheme.primaryColor || businessConfig.primaryColor,
-                        borderRadius: previewTheme.borderRadius ? `${previewTheme.borderRadius}px` : '8px'
-                      }}
-                    >
-                      Primary Button
-                    </Button>
-                    
-                    <Button 
-                      variant="outline"
-                      style={{ 
-                        borderColor: previewTheme.primaryColor || businessConfig.primaryColor,
-                        color: previewTheme.primaryColor || businessConfig.primaryColor,
-                        borderRadius: previewTheme.borderRadius ? `${previewTheme.borderRadius}px` : '8px'
-                      }}
-                    >
-                      Outline Button
-                    </Button>
-                    
-                    <Card style={{ 
-                      borderRadius: previewTheme.borderRadius ? `${previewTheme.borderRadius}px` : '8px' 
-                    }}>
-                      <CardHeader>
-                        <CardTitle>Card Title</CardTitle>
-                        <CardDescription>Card description</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <p>Card content sample text</p>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="text-sm font-medium mb-4">Industry Layout Preview</h3>
-                  <div className="border rounded-md p-4 h-64 flex items-center justify-center">
-                    <p className="text-center text-muted-foreground">
-                      Selected industry template: <strong>{previewTheme.industryType || businessConfig.industryType}</strong>
-                      <br /><br />
-                      A live preview would be rendered here with the actual template.
-                    </p>
                   </div>
                 </div>
               </div>

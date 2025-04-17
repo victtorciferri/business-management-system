@@ -71,68 +71,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
    * GET /api/business/theme
    * Returns the current theme for the authenticated business
    * Requires authentication and business context
+   * 
+   * NOTE: This route is now implemented as an async function further down in the file
+   * at around line 1924. The implementation below is commented out to avoid duplicates.
    */
-  app.get("/api/business/theme", (req: Request, res: Response) => {
-    // Check if we have a business context
-    const businessId = req.business?.id;
-    if (!businessId) {
-      return res.status(404).json({ message: "Business not found" });
-    }
-    
-    // Get the theme for this business
-    getThemeForBusiness(businessId)
-      .then(theme => {
-        res.json({
-          theme
-        });
-      })
-      .catch(error => {
-        console.error("Error getting business theme:", error);
-        res.status(500).json({ message: "Failed to retrieve theme" });
-      });
-  });
+  /* REMOVED DUPLICATE ROUTE - Using async implementation below */
 
   /**
    * POST /api/business/theme
    * Updates the theme for the authenticated business
    * Requires authentication and business context
    */
-  app.post("/api/business/theme", (req: Request, res: Response) => {
-    // Check if we have a business context
-    const businessId = req.business?.id;
-    if (!businessId) {
-      return res.status(404).json({ message: "Business not found" });
-    }
-    
-    // Validate theme data
-    const themeData = req.body.theme as Partial<Theme>;
-    if (!themeData) {
-      return res.status(400).json({ message: "Missing theme data" });
-    }
-    
-    // Get current theme to merge with updates
-    getThemeForBusiness(businessId)
-      .then(currentTheme => {
-        // Merge current theme with updates
-        const updatedTheme: Theme = {
-          ...currentTheme,
-          ...themeData
-        };
-        
-        // Update the theme
-        return updateThemeForBusiness(businessId, updatedTheme);
-      })
-      .then(() => {
-        res.json({ 
-          success: true,
-          message: "Theme updated successfully" 
-        });
-      })
-      .catch(error => {
-        console.error("Error updating business theme:", error);
-        res.status(500).json({ message: "Failed to update theme" });
-      });
-  });
+  /**
+   * POST /api/business/theme
+   * Updates the theme for the authenticated business
+   * Requires authentication and business context
+   * 
+   * NOTE: This route is now implemented as an async function further down in the file
+   * at around line 1946. The implementation below is commented out to avoid duplicates.
+   */
+  /* REMOVED DUPLICATE ROUTE - Using async implementation below */
   
   // Add a custom middleware to inject business data into HTML responses
   app.use(async (req, res, next) => {
@@ -2038,10 +1996,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Also update the new theme column for consistency
       const theme = {
+        name: "Legacy Settings",  // Add a name for the theme
         primary: themeSettings.primaryColor || '#1E3A8A',
         secondary: themeSettings.secondaryColor || '#9333EA',
         background: themeSettings.backgroundColor || '#FFFFFF',
-        text: themeSettings.textColor || '#111827'
+        text: themeSettings.textColor || '#111827',
+        appearance: themeSettings.appearance || 'system',
+        font: defaultTheme.font,
+        borderRadius: defaultTheme.borderRadius,
+        spacing: defaultTheme.spacing
       };
       
       await updateThemeForBusiness(userId, theme);
@@ -2836,6 +2799,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Use JSONB theme_settings or provide default values if not set
       const defaultThemeSettings = {
+        name: "Professional Default",  // Add a name for the theme
         primaryColor: '#4f46e5',
         secondaryColor: '#06b6d4',
         accentColor: '#f59e0b',
@@ -2885,6 +2849,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Create theme settings JSON object
       const themeSettings = {
+        name: "Admin Updated Theme",  // Add a name for the theme
         primaryColor: primaryColor || '#4f46e5',
         secondaryColor: secondaryColor || '#06b6d4',
         accentColor: accentColor || '#f59e0b',
