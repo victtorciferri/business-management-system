@@ -1,215 +1,364 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Theme } from '@shared/themeSchema';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/hooks/use-toast';
-
-// Interface for the theme preset from API
-interface ThemePreset {
-  id: string;
-  name: string;
-  category: string;
-  description: string;
-  theme: Theme;
-}
+import React from 'react';
+import { 
+  Card,
+  CardContent
+} from "@/components/ui/card";
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from "@/components/ui/tabs";
+import { LayoutGrid, Sparkles, Briefcase, Scissors, Award, Stethoscope } from 'lucide-react';
+import type { Theme, ThemePreset } from '../../../types/theme';
 
 interface ThemePresetSelectorProps {
-  currentTheme: Theme;
-  onSelectPreset: (preset: Theme) => void;
+  onSelect: (preset: Partial<Theme>) => void;
 }
 
-/**
- * ThemePresetSelector component
- * 
- * Displays a grid of theme preset cards organized by category
- * Allows users to preview and select a theme preset
- */
-export function ThemePresetSelector({ currentTheme, onSelectPreset }: ThemePresetSelectorProps) {
-  const { toast } = useToast();
-  const [selectedPreset, setSelectedPreset] = useState<Theme | null>(null);
-  const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
-  const [tab, setTab] = useState<string>('salon');
-
-  // Fetch theme presets from API
-  const { data, isLoading, error } = useQuery<{ 
-    presets: ThemePreset[],
-    categories: string[] 
-  }>({
-    queryKey: ['/api/themes/presets'],
-    staleTime: 1000 * 60 * 60, // Cache for 1 hour
-  });
-
-  const presets = data?.presets || [] as ThemePreset[];
-  const apiCategories = data?.categories || [];
-
-  // Create categories map from API response
-  const categories: Record<string, ThemePreset[]> = {};
-  
-  // Initialize categories with empty arrays
-  if (apiCategories.length > 0) {
-    apiCategories.forEach(category => {
-      categories[category] = [];
-    });
-    
-    // Add 'dark' category if not included
-    if (!categories['dark']) {
-      categories['dark'] = [];
-    }
-    
-    // Populate categories
-    presets.forEach(preset => {
-      if (categories[preset.category]) {
-        categories[preset.category].push(preset);
+export default function ThemePresetSelector({ onSelect }: ThemePresetSelectorProps) {
+  // Theme presets organized by industry/style
+  const presets: ThemePreset[] = [
+    // Professional presets
+    {
+      id: 'pro-blue',
+      name: 'Corporate Blue',
+      category: 'professional',
+      description: 'Professional and trustworthy blue theme',
+      theme: {
+        primaryColor: '#2563eb',
+        secondaryColor: '#475569',
+        accentColor: '#f59e0b',
+        backgroundColor: '#ffffff',
+        textColor: '#1e293b',
+        variant: 'professional'
+      },
+      preview: {
+        colors: ['#2563eb', '#475569', '#f59e0b', '#ffffff', '#1e293b']
       }
-    });
-  } else {
-    // Fallback categorization if API doesn't provide categories
-    categories.salon = presets.filter(preset => preset.category === 'salon');
-    categories.fitness = presets.filter(preset => preset.category === 'fitness');
-    categories.medical = presets.filter(preset => preset.category === 'medical');
-    categories.professional = presets.filter(preset => preset.category === 'professional');
-    categories.dark = presets.filter(preset => preset.category === 'dark');
-  }
-
-  // Preview a preset by selecting it
-  const handlePreview = (preset: Theme, presetId: string) => {
-    setSelectedPreset(preset);
-    setSelectedPresetId(presetId);
-  };
-
-  // Find selected preset from presets array
-  const findSelectedPreset = (): ThemePreset | undefined => {
-    if (!selectedPresetId) return undefined;
-    return presets.find(p => p.id === selectedPresetId);
-  };
-
-  // Apply the selected preset
-  const handleApply = () => {
-    if (selectedPreset) {
-      onSelectPreset(selectedPreset);
-      const presetObj = findSelectedPreset();
-      const name = presetObj?.name || selectedPreset.name;
-      toast({
-        title: "Theme preset applied",
-        description: `"${name}" theme has been applied to your business.`,
-      });
-    }
-  };
-
-  // Display a preview swatch showing theme colors
-  const ColorSwatch = ({ color, label }: { color: string; label: string }) => (
-    <div className="flex flex-col items-center">
-      <div 
-        className="h-8 w-8 rounded-md border mb-1" 
-        style={{ backgroundColor: color }}
-      />
-      <span className="text-xs">{label}</span>
-    </div>
-  );
-
-  // Render a preview card for each theme preset
-  const PresetCard = ({ preset }: { preset: ThemePreset }) => {
-    const themeData = preset.theme;
-    const isSelected = selectedPresetId === preset.id;
-    const isCurrentTheme = currentTheme?.name === themeData.name;
+    },
+    {
+      id: 'pro-green',
+      name: 'Business Green',
+      category: 'professional',
+      description: 'Professional green theme with a touch of growth',
+      theme: {
+        primaryColor: '#059669',
+        secondaryColor: '#334155',
+        accentColor: '#8b5cf6',
+        backgroundColor: '#f8fafc',
+        textColor: '#0f172a',
+        variant: 'professional'
+      },
+      preview: {
+        colors: ['#059669', '#334155', '#8b5cf6', '#f8fafc', '#0f172a']
+      }
+    },
+    {
+      id: 'pro-purple',
+      name: 'Elegant Purple',
+      category: 'professional',
+      description: 'Sophisticated and elegant purple theme',
+      theme: {
+        primaryColor: '#7c3aed',
+        secondaryColor: '#334155',
+        accentColor: '#ec4899',
+        backgroundColor: '#ffffff',
+        textColor: '#1e293b',
+        variant: 'professional'
+      },
+      preview: {
+        colors: ['#7c3aed', '#334155', '#ec4899', '#ffffff', '#1e293b']
+      }
+    },
     
-    return (
-      <Card 
-        className={`
-          cursor-pointer transition-all overflow-hidden
-          ${isSelected ? 'ring-2 ring-primary ring-offset-2' : ''}
-          ${isCurrentTheme ? 'border-primary' : ''}
-        `}
-        onClick={() => handlePreview(themeData, preset.id)}
-      >
-        <CardHeader className="p-3 pb-2">
-          <CardTitle className="text-sm">{preset.name}</CardTitle>
-          <CardDescription className="text-xs">{preset.description}</CardDescription>
-        </CardHeader>
-        <CardContent className="p-3 pt-0">
-          <div 
-            className="rounded-md w-full h-16 mb-2"
-            style={{ 
-              backgroundColor: themeData.background,
-              border: `1px solid ${themeData.text}20`
-            }}
-          >
-            <div 
-              className="rounded-md px-3 py-2 text-xs" 
-              style={{ 
-                backgroundColor: themeData.primary,
-                color: '#fff'
-              }}
-            >
-              Primary
-            </div>
-            <div 
-              className="rounded-md px-3 py-1 mt-1 mx-2 text-xs inline-block" 
-              style={{ 
-                backgroundColor: themeData.secondary,
-                color: '#fff'
-              }}
-            >
-              Secondary
-            </div>
-          </div>
-          <div className="flex justify-between mt-3">
-            <ColorSwatch color={themeData.primary} label="Primary" />
-            <ColorSwatch color={themeData.secondary} label="Secondary" />
-            <ColorSwatch color={themeData.background} label="Bg" />
-            <ColorSwatch color={themeData.text} label="Text" />
-          </div>
-        </CardContent>
-      </Card>
-    );
+    // Salon & Spa presets
+    {
+      id: 'salon-pink',
+      name: 'Spa Elegance',
+      category: 'salon',
+      description: 'Luxurious pink and gold for spas and salons',
+      theme: {
+        primaryColor: '#db2777',
+        secondaryColor: '#8b5cf6',
+        accentColor: '#d97706',
+        backgroundColor: '#fffbf5',
+        textColor: '#1e293b',
+        variant: 'vibrant'
+      },
+      preview: {
+        colors: ['#db2777', '#8b5cf6', '#d97706', '#fffbf5', '#1e293b']
+      }
+    },
+    {
+      id: 'salon-teal',
+      name: 'Tranquil Teal',
+      category: 'salon',
+      description: 'Peaceful teal theme for relaxing environments',
+      theme: {
+        primaryColor: '#0d9488',
+        secondaryColor: '#475569',
+        accentColor: '#8b5cf6',
+        backgroundColor: '#f8fafc',
+        textColor: '#1e293b',
+        variant: 'tint'
+      },
+      preview: {
+        colors: ['#0d9488', '#475569', '#8b5cf6', '#f8fafc', '#1e293b']
+      }
+    },
+    {
+      id: 'salon-lavender',
+      name: 'Lavender Calm',
+      category: 'salon',
+      description: 'Soothing lavender theme for wellness centers',
+      theme: {
+        primaryColor: '#8b5cf6',
+        secondaryColor: '#64748b',
+        accentColor: '#ec4899',
+        backgroundColor: '#f8f9fa',
+        textColor: '#334155',
+        variant: 'tint'
+      },
+      preview: {
+        colors: ['#8b5cf6', '#64748b', '#ec4899', '#f8f9fa', '#334155']
+      }
+    },
+    
+    // Medical presets
+    {
+      id: 'medical-blue',
+      name: 'Healthcare Blue',
+      category: 'medical',
+      description: 'Clean, professional blue for medical practices',
+      theme: {
+        primaryColor: '#0284c7',
+        secondaryColor: '#64748b',
+        accentColor: '#059669',
+        backgroundColor: '#ffffff',
+        textColor: '#0f172a',
+        variant: 'professional'
+      },
+      preview: {
+        colors: ['#0284c7', '#64748b', '#059669', '#ffffff', '#0f172a']
+      }
+    },
+    {
+      id: 'medical-teal',
+      name: 'Medical Teal',
+      category: 'medical',
+      description: 'Trustworthy teal theme for healthcare',
+      theme: {
+        primaryColor: '#0f766e',
+        secondaryColor: '#475569',
+        accentColor: '#dc2626',
+        backgroundColor: '#f9fafb',
+        textColor: '#1e293b',
+        variant: 'professional'
+      },
+      preview: {
+        colors: ['#0f766e', '#475569', '#dc2626', '#f9fafb', '#1e293b']
+      }
+    },
+    {
+      id: 'medical-green',
+      name: 'Wellness Green',
+      category: 'medical',
+      description: 'Calming green for wellness and medical spas',
+      theme: {
+        primaryColor: '#16a34a',
+        secondaryColor: '#334155',
+        accentColor: '#3b82f6',
+        backgroundColor: '#f8fafc',
+        textColor: '#0f172a',
+        variant: 'tint'
+      },
+      preview: {
+        colors: ['#16a34a', '#334155', '#3b82f6', '#f8fafc', '#0f172a']
+      }
+    },
+    
+    // Creative presets
+    {
+      id: 'creative-orange',
+      name: 'Creative Orange',
+      category: 'creative',
+      description: 'Vibrant orange for creative businesses',
+      theme: {
+        primaryColor: '#ea580c',
+        secondaryColor: '#4338ca',
+        accentColor: '#fbbf24',
+        backgroundColor: '#ffffff',
+        textColor: '#27272a',
+        variant: 'vibrant'
+      },
+      preview: {
+        colors: ['#ea580c', '#4338ca', '#fbbf24', '#ffffff', '#27272a']
+      }
+    },
+    {
+      id: 'creative-purple',
+      name: 'Creative Purple',
+      category: 'creative',
+      description: 'Bold, creative purple theme',
+      theme: {
+        primaryColor: '#9333ea',
+        secondaryColor: '#0891b2',
+        accentColor: '#f43f5e',
+        backgroundColor: '#f8fafc',
+        textColor: '#0f172a',
+        variant: 'vibrant'
+      },
+      preview: {
+        colors: ['#9333ea', '#0891b2', '#f43f5e', '#f8fafc', '#0f172a']
+      }
+    },
+    {
+      id: 'creative-pink',
+      name: 'Bold Pink',
+      category: 'creative',
+      description: 'Playful pink theme for fashion and creative industries',
+      theme: {
+        primaryColor: '#ec4899',
+        secondaryColor: '#6366f1',
+        accentColor: '#fbbf24',
+        backgroundColor: '#ffffff',
+        textColor: '#334155',
+        variant: 'vibrant'
+      },
+      preview: {
+        colors: ['#ec4899', '#6366f1', '#fbbf24', '#ffffff', '#334155']
+      }
+    }
+  ];
+  
+  // Function to filter presets by category
+  const getPresetsByCategory = (category: string) => {
+    return presets.filter(preset => preset.category === category);
   };
-
-  if (isLoading) {
-    return <div className="text-center p-4">Loading theme presets...</div>;
-  }
-
-  if (error) {
-    return <div className="text-center p-4 text-red-500">Error loading theme presets</div>;
-  }
-
+  
   return (
-    <div className="space-y-4">
-      <Tabs defaultValue="salon" value={tab} onValueChange={setTab}>
-        <TabsList className="grid w-full grid-cols-5 mb-4">
-          <TabsTrigger value="salon">Salon</TabsTrigger>
-          <TabsTrigger value="fitness">Fitness</TabsTrigger>
-          <TabsTrigger value="medical">Medical</TabsTrigger>
-          <TabsTrigger value="professional">Business</TabsTrigger>
-          <TabsTrigger value="dark">Dark</TabsTrigger>
+    <div className="theme-preset-selector">
+      <Tabs defaultValue="all">
+        <TabsList className="grid grid-cols-5 mb-6">
+          <TabsTrigger value="all" className="flex items-center gap-1">
+            <LayoutGrid className="h-4 w-4" />
+            <span className="hidden sm:inline">All</span>
+          </TabsTrigger>
+          <TabsTrigger value="professional" className="flex items-center gap-1">
+            <Briefcase className="h-4 w-4" />
+            <span className="hidden sm:inline">Business</span>
+          </TabsTrigger>
+          <TabsTrigger value="salon" className="flex items-center gap-1">
+            <Scissors className="h-4 w-4" />
+            <span className="hidden sm:inline">Salon</span>
+          </TabsTrigger>
+          <TabsTrigger value="medical" className="flex items-center gap-1">
+            <Stethoscope className="h-4 w-4" />
+            <span className="hidden sm:inline">Medical</span>
+          </TabsTrigger>
+          <TabsTrigger value="creative" className="flex items-center gap-1">
+            <Sparkles className="h-4 w-4" />
+            <span className="hidden sm:inline">Creative</span>
+          </TabsTrigger>
         </TabsList>
         
-        {Object.entries(categories).map(([category, categoryPresets]) => (
-          <TabsContent key={category} value={category} className="mt-0">
-            <ScrollArea className="h-[400px] pr-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {categoryPresets.map((preset: ThemePreset) => (
-                  <PresetCard key={preset.id} preset={preset} />
-                ))}
-              </div>
-            </ScrollArea>
-          </TabsContent>
-        ))}
-      </Tabs>
-
-      {selectedPreset && (
-        <div className="flex justify-between items-center border-t pt-4 mt-4">
-          <div>
-            <h3 className="font-medium">{findSelectedPreset()?.name || selectedPreset.name}</h3>
-            <p className="text-sm text-muted-foreground">Select this theme preset?</p>
+        {/* All presets */}
+        <TabsContent value="all">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {presets.map((preset) => (
+              <PresetCard key={preset.id} preset={preset} onSelect={onSelect} />
+            ))}
           </div>
-          <Button onClick={handleApply}>
-            Apply Theme
-          </Button>
-        </div>
-      )}
+        </TabsContent>
+        
+        {/* Professional presets */}
+        <TabsContent value="professional">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {getPresetsByCategory('professional').map((preset) => (
+              <PresetCard key={preset.id} preset={preset} onSelect={onSelect} />
+            ))}
+          </div>
+        </TabsContent>
+        
+        {/* Salon presets */}
+        <TabsContent value="salon">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {getPresetsByCategory('salon').map((preset) => (
+              <PresetCard key={preset.id} preset={preset} onSelect={onSelect} />
+            ))}
+          </div>
+        </TabsContent>
+        
+        {/* Medical presets */}
+        <TabsContent value="medical">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {getPresetsByCategory('medical').map((preset) => (
+              <PresetCard key={preset.id} preset={preset} onSelect={onSelect} />
+            ))}
+          </div>
+        </TabsContent>
+        
+        {/* Creative presets */}
+        <TabsContent value="creative">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {getPresetsByCategory('creative').map((preset) => (
+              <PresetCard key={preset.id} preset={preset} onSelect={onSelect} />
+            ))}
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
+  );
+}
+
+// Individual preset card component
+function PresetCard({ 
+  preset, 
+  onSelect 
+}: { 
+  preset: ThemePreset; 
+  onSelect: (preset: Partial<Theme>) => void;
+}) {
+  return (
+    <Card 
+      className="overflow-hidden cursor-pointer hover:border-primary/50 transition-all"
+      onClick={() => onSelect(preset.theme)}
+    >
+      <div 
+        className="h-12 w-full flex items-center justify-center"
+        style={{ backgroundColor: preset.theme.primaryColor }}
+      >
+        <span className="font-medium text-white text-sm">
+          {preset.name}
+        </span>
+      </div>
+      
+      <CardContent className="p-4">
+        <div className="flex gap-1.5 mb-2">
+          {preset.preview?.colors.map((color, index) => (
+            <div 
+              key={index}
+              className="h-6 w-6 rounded-full border"
+              style={{ backgroundColor: color }}
+              title={color}
+            />
+          ))}
+        </div>
+        
+        <p className="text-xs text-muted-foreground">
+          {preset.description}
+        </p>
+        
+        {preset.theme.variant && (
+          <div className="mt-2 flex items-center">
+            <Award className="h-3.5 w-3.5 text-muted-foreground mr-1" />
+            <span className="text-xs text-muted-foreground capitalize">
+              {preset.theme.variant}
+            </span>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

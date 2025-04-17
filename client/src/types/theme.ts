@@ -1,8 +1,44 @@
 /**
- * Utility functions for converting between different theme formats
+ * Theme interface representing all customizable aspects of a business theme
  */
+export interface Theme {
+  // Basic info
+  id?: number;
+  businessId?: number;
+  name: string;
+  
+  // Colors
+  primaryColor: string;
+  secondaryColor: string;
+  accentColor: string;
+  backgroundColor: string;
+  textColor: string;
+  
+  // Typography
+  fontFamily: string;
+  headingFontFamily?: string;
+  fontSize?: string;
+  lineHeight?: string;
+  
+  // Layout
+  borderRadius: string;
+  spacing: string;
+  
+  // Meta
+  variant: 'professional' | 'tint' | 'vibrant' | 'custom';
+  appearance: 'light' | 'dark' | 'system';
+  
+  // Additional customizations - for future expansion
+  customCSS?: string;
+  
+  // Timestamps
+  createdAt?: Date;
+  updatedAt?: Date;
+}
 
-// Legacy theme settings format
+/**
+ * Legacy theme settings format for backward compatibility
+ */
 export interface ThemeSettings {
   variant: string;
   primaryColor: string;
@@ -16,35 +52,43 @@ export interface ThemeSettings {
   appearance: 'light' | 'dark' | 'system';
 }
 
-// New theme format
-export interface Theme {
-  id?: number;
-  businessId?: number;
+/**
+ * Theme preset definitions for quick application
+ */
+export interface ThemePreset {
+  id: string;
   name: string;
-  primaryColor: string;
-  secondaryColor: string;
-  accentColor: string;
-  backgroundColor: string;
-  textColor: string;
-  fontFamily: string;
-  headingFontFamily?: string;
-  fontSize?: string;
-  lineHeight?: string;
-  borderRadius: string;
-  spacing: string;
-  variant: 'professional' | 'tint' | 'vibrant' | 'custom';
-  appearance: 'light' | 'dark' | 'system';
-  customCSS?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+  category: string;
+  description?: string;
+  theme: Partial<Theme>;
+  preview?: {
+    colors: string[];
+    background?: string;
+  };
 }
+
+/**
+ * Default theme when no theme is specified
+ */
+export const defaultTheme: Theme = {
+  name: 'Default Theme',
+  primaryColor: '#0f766e',     // Teal/blue
+  secondaryColor: '#9333ea',   // Purple
+  accentColor: '#eab308',      // Yellow/gold
+  backgroundColor: '#ffffff',  // White
+  textColor: '#171717',        // Near black
+  fontFamily: 'Inter, system-ui, sans-serif',
+  borderRadius: '0.5rem',
+  spacing: '1rem',
+  variant: 'professional',
+  appearance: 'light'
+};
 
 /**
  * Convert legacy theme settings to new Theme format
  */
-export function convertLegacyThemeSettings(settings: ThemeSettings, businessId?: number): Theme {
+export function convertLegacyThemeSettings(settings: ThemeSettings): Theme {
   return {
-    businessId,
     name: 'Converted Theme',
     primaryColor: settings.primaryColor,
     secondaryColor: settings.secondaryColor,
@@ -54,7 +98,7 @@ export function convertLegacyThemeSettings(settings: ThemeSettings, businessId?:
     fontFamily: settings.fontFamily || 'Inter, system-ui, sans-serif',
     borderRadius: settings.borderRadius || '0.5rem',
     spacing: settings.spacing || '1rem',
-    variant: settings.variant as 'professional' | 'tint' | 'vibrant' | 'custom' || 'professional',
+    variant: settings.variant as any || 'professional',
     appearance: settings.appearance || 'light'
   };
 }

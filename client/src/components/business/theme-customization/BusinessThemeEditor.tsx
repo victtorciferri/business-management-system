@@ -1,563 +1,422 @@
-import { useState, useEffect } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import React, { useState, useEffect } from 'react';
+import { useToast } from "@/hooks/use-toast";
+import { useTheme, Theme } from "@/contexts/ThemeContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/hooks/use-toast";
-import { useTheme } from "../../../contexts/ThemeContext";
-import { Theme as ContextTheme } from "../../../contexts/ThemeContext";
-import { Theme } from "@shared/config";
-import { ThemePresetSelector } from "./ThemePresetSelector";
-import { ColorExtractor } from "./ColorExtractor";
-import { FontSelector } from "./FontSelector";
-import { Save, RefreshCw, Paintbrush, EyeIcon, Check, X as XIcon } from 'lucide-react';
-import { applyTheme, resetTheme } from '../../../utils/applyTheme';
+import { AlertTriangle, Save, RefreshCw, Check } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import ColorPicker from "./ColorPicker";
+import ThemePreview from "./ThemePreview";
+import ColorExtractor from "./ColorExtractor";
 
-// Color picker with preview
-const ColorPicker = ({ label, value, onChange }: { label: string; value: string; onChange: (color: string) => void }) => {
-  return (
-    <div className="mb-4">
-      <Label className="block mb-1">{label}</Label>
-      <div className="flex items-center gap-3">
-        <div 
-          className="w-10 h-10 rounded-md border border-gray-300 shadow-sm" 
-          style={{ backgroundColor: value }}
-        />
-        <input 
-          type="color" 
-          value={value} 
-          onChange={(e) => onChange(e.target.value)} 
-          className="h-10"
-        />
-        <div className="text-sm font-mono">{value}</div>
-      </div>
-    </div>
-  );
-};
-
-// Font selector is now imported from './FontSelector'
-
-// Border radius selector component
-const BorderRadiusSelector = ({ value, onChange }: { value: string; onChange: (value: string) => void }) => {
-  const radiusOptions = [
-    { value: '0', label: 'None' },
-    { value: '0.125rem', label: 'Extra Small (2px)' },
-    { value: '0.25rem', label: 'Small (4px)' },
-    { value: '0.375rem', label: 'Medium (6px)' },
-    { value: '0.5rem', label: 'Large (8px)' },
-    { value: '0.75rem', label: 'Extra Large (12px)' },
-    { value: '1rem', label: 'Rounded (16px)' },
-    { value: '9999px', label: 'Full' },
-  ];
-
-  return (
-    <div className="mb-4">
-      <Label htmlFor="border-radius" className="block mb-1">Border Radius</Label>
-      <Select value={value} onValueChange={onChange}>
-        <SelectTrigger id="border-radius" className="w-full">
-          <SelectValue placeholder="Select border radius" />
-        </SelectTrigger>
-        <SelectContent>
-          {radiusOptions.map(option => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <div className="mt-2 h-10 border" style={{ borderRadius: value }}>
-        <div className="w-full h-full flex items-center justify-center bg-muted">
-          Preview
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Spacing selector component
-const SpacingSelector = ({ value, onChange }: { value: string; onChange: (value: string) => void }) => {
-  const spacingOptions = [
-    { value: '0.5rem', label: 'Compact (8px)' },
-    { value: '0.75rem', label: 'Cozy (12px)' },
-    { value: '1rem', label: 'Standard (16px)' },
-    { value: '1.25rem', label: 'Comfortable (20px)' },
-    { value: '1.5rem', label: 'Spacious (24px)' },
-    { value: '2rem', label: 'Very Spacious (32px)' },
-  ];
-
-  return (
-    <div className="mb-4">
-      <Label htmlFor="spacing" className="block mb-1">Base Spacing</Label>
-      <Select value={value} onValueChange={onChange}>
-        <SelectTrigger id="spacing" className="w-full">
-          <SelectValue placeholder="Select spacing" />
-        </SelectTrigger>
-        <SelectContent>
-          {spacingOptions.map(option => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <div className="mt-2 flex flex-col gap-2">
-        <div className="flex items-center">
-          <div className="w-6 h-6 rounded-md bg-primary"></div>
-          <div className="w-6 h-6 rounded-md bg-secondary" style={{ marginLeft: value }}></div>
-        </div>
-        <div className="text-xs text-muted-foreground">Elements spaced by {value}</div>
-      </div>
-    </div>
-  );
-};
-
-// Theme preview card
-const ThemePreview = ({ theme }: { theme: Theme }) => {
-  return (
-    <div className="border rounded-md p-4 mt-4">
-      <h3 className="text-lg font-medium mb-2 flex items-center gap-2">
-        <EyeIcon className="h-4 w-4" />
-        Theme Preview
-      </h3>
-      <div className="space-y-4">
-        <div 
-          className="w-full h-24 rounded-md flex items-center justify-center" 
-          style={{ 
-            backgroundColor: theme.primary, 
-            color: '#fff',
-            borderRadius: theme.borderRadius || '0.375rem',
-            fontFamily: theme.font || 'Inter'
-          }}
-        >
-          Primary Color
-        </div>
-        <div 
-          className="w-full h-14 rounded-md flex items-center justify-center" 
-          style={{ 
-            backgroundColor: theme.secondary, 
-            color: '#fff',
-            borderRadius: theme.borderRadius || '0.375rem',
-            fontFamily: theme.font || 'Inter'
-          }}
-        >
-          Secondary Color
-        </div>
-        <div 
-          className="w-full rounded-md flex flex-col items-center justify-center p-4" 
-          style={{ 
-            backgroundColor: theme.background, 
-            color: theme.text,
-            borderRadius: theme.borderRadius || '0.375rem',
-            fontFamily: theme.font || 'Inter',
-            padding: theme.spacing || '1rem'
-          }}
-        >
-          <h4 className="text-lg font-semibold" style={{ color: theme.text }}>Background & Text</h4>
-          <p style={{ color: theme.text, marginBottom: theme.spacing || '1rem' }}>
-            This is how your text will appear on your background using {theme.font || 'Inter'} font.
-          </p>
-          <div className="flex gap-2" style={{ gap: theme.spacing || '1rem' }}>
-            <Button 
-              className="rounded-md" 
-              style={{ 
-                backgroundColor: theme.primary, 
-                color: '#fff',
-                borderRadius: theme.borderRadius || '0.375rem',
-                fontFamily: theme.font || 'Inter'
-              }}
-            >
-              Primary Button
-            </Button>
-            <Button 
-              className="rounded-md" 
-              variant="outline"
-              style={{ 
-                borderColor: theme.primary, 
-                color: theme.primary,
-                borderRadius: theme.borderRadius || '0.375rem',
-                fontFamily: theme.font || 'Inter'
-              }}
-            >
-              Outline Button
-            </Button>
-          </div>
-        </div>
-      </div>
-      <div className="mt-4 p-3 rounded border-dashed border-2 bg-muted/30 text-center">
-        <p className="text-sm">This preview shows how your theme settings will appear on your business portal.</p>
-      </div>
-    </div>
-  );
-};
+// Define font options
+const FONT_OPTIONS = [
+  { value: "Inter", label: "Inter (Sans-serif)" },
+  { value: "Roboto", label: "Roboto (Sans-serif)" },
+  { value: "Poppins", label: "Poppins (Modern)" },
+  { value: "Lora", label: "Lora (Serif)" },
+  { value: "Montserrat", label: "Montserrat (Clean)" },
+  { value: "Open Sans", label: "Open Sans (Readable)" },
+  { value: "Playfair Display", label: "Playfair Display (Elegant)" },
+  { value: "Raleway", label: "Raleway (Light)" },
+  { value: "Source Sans Pro", label: "Source Sans Pro (Clear)" },
+  { value: "Nunito", label: "Nunito (Rounded)" }
+];
 
 interface BusinessThemeEditorProps {
-  onSave?: () => void;
+  businessId?: number;
   initialTheme?: Theme;
-  businessId?: number | null;
-  onSaveTheme?: (theme: Theme) => Promise<void>;
+  onSave?: (theme: Theme) => void;
+  onCancel?: () => void;
+  readOnly?: boolean;
 }
 
-export function BusinessThemeEditor({ 
-  onSave, 
-  initialTheme,
+export function BusinessThemeEditor({
   businessId,
-  onSaveTheme 
+  initialTheme,
+  onSave,
+  onCancel,
+  readOnly = false
 }: BusinessThemeEditorProps) {
   const { toast } = useToast();
   const { businessTheme, updateBusinessTheme } = useTheme();
-  const [theme, setTheme] = useState<Theme>({
-    name: 'Custom Theme',
-    primary: '#1E3A8A',
-    secondary: '#9333EA',
-    background: '#FFFFFF',
-    text: '#111827',
-    appearance: 'system',
-    font: 'Inter',
-    borderRadius: '0.375rem',
-    spacing: '1rem'
-  });
-  const [loading, setLoading] = useState(false);
-  const [previewActive, setPreviewActive] = useState(false);
-
-  // Load current theme when component mounts
+  
+  // Use initialTheme if provided, otherwise use the current theme from context
+  const [theme, setTheme] = useState<Theme>(initialTheme || businessTheme);
+  const [previewTheme, setPreviewTheme] = useState<Theme>(theme);
+  const [isDirty, setIsDirty] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("colors");
+  
+  // Reset to the current theme when initialTheme changes (e.g. from API)
   useEffect(() => {
     if (initialTheme) {
-      // If an initialTheme prop is provided, use that (for admin view)
       setTheme(initialTheme);
-    } else if (businessTheme) {
-      // Otherwise use the theme from context (for business owner view)
-      // Use the existing theme but fill in missing properties with defaults
-      setTheme({
-        ...businessTheme,
-        name: businessTheme.name || 'Custom Theme',
-        font: businessTheme.font || 'Inter',
-        borderRadius: businessTheme.borderRadius || '0.375rem',
-        spacing: businessTheme.spacing || '1rem'
-      });
+      setPreviewTheme(initialTheme);
+      setIsDirty(false);
     }
-  }, [businessTheme, initialTheme]);
-
-  // Handle color changes
-  const handleColorChange = (key: keyof Theme, value: string) => {
-    setTheme((prev: Theme) => ({ ...prev, [key]: value }));
-  };
-
-  // Handle appearance mode toggle
-  const handleAppearanceChange = (mode: 'light' | 'dark' | 'system') => {
-    setTheme((prev: Theme) => ({ ...prev, appearance: mode }));
-  };
-
-  // Handle font change
-  const handleFontChange = (font: string) => {
-    setTheme((prev: Theme) => ({ ...prev, font }));
-  };
-
-  // Handle border radius change
-  const handleBorderRadiusChange = (borderRadius: string) => {
-    setTheme((prev: Theme) => ({ ...prev, borderRadius }));
-  };
-
-  // Handle spacing change
-  const handleSpacingChange = (spacing: string) => {
-    setTheme((prev: Theme) => ({ ...prev, spacing }));
-  };
-
-  // Handle colors extracted from logo
-  const handleExtractedColors = (colors: Partial<Theme>) => {
-    setTheme((prev: Theme) => ({ ...prev, ...colors }));
-  };
-
-  // Apply theme temporarily for preview
-  const handlePreview = () => {
-    try {
-      setPreviewActive(true);
-      
-      // Store the current theme in session storage for potential reset
-      if (!sessionStorage.getItem('previousTheme')) {
-        sessionStorage.setItem('previousTheme', JSON.stringify(businessTheme || theme));
-      }
-      
-      // Apply the theme using our applyTheme utility
-      applyTheme(theme);
-      
-      toast({
-        title: "Preview mode active",
-        description: "This is a preview of how your theme will look. Save to apply permanently.",
-      });
-    } catch (error) {
-      console.error('Error previewing theme:', error);
-      toast({
-        title: "Preview failed",
-        description: "There was a problem generating the preview.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Save theme to API
-  const saveTheme = async () => {
-    setLoading(true);
-    try {
-      // If a custom save function was provided (for admin), use that
-      if (onSaveTheme) {
-        await onSaveTheme(theme);
-      } 
-      // Otherwise use the business API endpoint (for business owner)
-      else {
-        const response = await fetch('/api/business/theme', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ theme }),
-        });
-        
-        if (!response.ok) {
-          throw new Error('Failed to save theme');
-        }
-        
-        // Update theme context (only for business owner view)
-        updateBusinessTheme(theme);
-      }
-      
-      toast({
-        title: "Theme saved",
-        description: "The theme settings have been updated.",
-      });
-      
-      // Call onSave callback if provided
-      if (onSave) onSave();
-    } catch (error) {
-      console.error('Error saving theme:', error);
-      toast({
-        title: "Error saving theme",
-        description: "There was a problem saving theme settings.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-      setPreviewActive(false);
-    }
-  };
-
-  // Cancel preview and restore previous theme
-  const cancelPreview = () => {
-    // Restore the previous theme from session storage if it exists
-    const previousThemeJSON = sessionStorage.getItem('previousTheme');
-    if (previousThemeJSON) {
-      try {
-        const previousTheme = JSON.parse(previousThemeJSON) as Theme;
-        // Clear CSS variables first, then apply the previous theme
-        resetTheme(); // Using the imported utility directly
-        applyTheme(previousTheme); 
-        // Clear the stored theme
-        sessionStorage.removeItem('previousTheme');
-      } catch (error) {
-        console.error('Error restoring previous theme:', error);
-      }
-    }
-    
-    setPreviewActive(false);
-    toast({
-      title: "Preview cancelled",
-      description: "Theme preview has been cancelled and original theme restored.",
+  }, [initialTheme]);
+  
+  // Update a single theme property and mark as dirty
+  const updateThemeProperty = <K extends keyof Theme>(key: K, value: Theme[K]) => {
+    setTheme(prevTheme => {
+      const newTheme = { ...prevTheme, [key]: value };
+      setPreviewTheme(newTheme);
+      setIsDirty(true);
+      return newTheme;
     });
   };
-
-  // Reset theme to defaults
-  const resetThemeToDefaults = () => {
-    const defaultTheme: Theme = {
-      name: 'Default Theme',
-      primary: '#1E3A8A',
-      secondary: '#9333EA',
-      background: '#FFFFFF',
-      text: '#111827',
-      appearance: 'system',
-      font: 'Inter',
-      borderRadius: '0.375rem',
-      spacing: '1rem'
-    };
-    
-    setTheme(defaultTheme);
-    // First clear existing CSS variables, then apply the default theme
-    resetTheme(); // Using the imported utility directly, not calling recursively
-    applyTheme(defaultTheme);
+  
+  // Update multiple theme properties at once
+  const updateThemeProperties = (updates: Partial<Theme>) => {
+    setTheme(prevTheme => {
+      const newTheme = { ...prevTheme, ...updates };
+      setPreviewTheme(newTheme);
+      setIsDirty(true);
+      return newTheme;
+    });
+  };
+  
+  // Extract colors from an uploaded image
+  const handleColorExtraction = (colors: string[]) => {
+    if (colors.length >= 2) {
+      updateThemeProperties({
+        primary: colors[0],
+        secondary: colors[1],
+        ...(colors[2] && { text: colors[2] })
+      });
+      
+      toast({
+        title: "Colors extracted",
+        description: "Brand colors have been applied from your logo.",
+      });
+    }
+  };
+  
+  // Reset to the current business theme
+  const handleReset = () => {
+    setTheme(businessTheme);
+    setPreviewTheme(businessTheme);
+    setIsDirty(false);
     
     toast({
       title: "Theme reset",
-      description: "Theme settings have been reset to defaults.",
+      description: "All changes have been discarded.",
     });
   };
-
+  
+  // Save theme changes
+  const handleSave = async () => {
+    setIsSaving(true);
+    setSaveError(null);
+    
+    try {
+      // If onSave callback is provided, use it
+      if (onSave) {
+        await onSave(theme);
+      } 
+      // Otherwise update via the theme context
+      else {
+        updateBusinessTheme(theme);
+      }
+      
+      setIsDirty(false);
+      
+      toast({
+        title: "Theme saved",
+        description: "Your theme changes have been applied.",
+      });
+    } catch (error) {
+      console.error("Failed to save theme:", error);
+      setSaveError("Failed to save theme. Please try again.");
+      
+      toast({
+        variant: "destructive",
+        title: "Error saving theme",
+        description: "There was a problem saving your theme changes.",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Paintbrush className="h-5 w-5 text-primary" />
-          Business Theme Editor
-        </CardTitle>
-        <CardDescription>
-          Customize your business colors, typography, and visual appearance
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="colors">
-          <TabsList className="mb-4">
-            <TabsTrigger value="colors">Colors</TabsTrigger>
-            <TabsTrigger value="typography">Typography & Spacing</TabsTrigger>
-            <TabsTrigger value="presets">Theme Presets</TabsTrigger>
-            <TabsTrigger value="logo">Logo Colors</TabsTrigger>
-            <TabsTrigger value="appearance">Appearance</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="colors" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <ColorPicker
-                  label="Primary Color" 
-                  value={theme.primary}
-                  onChange={(color) => handleColorChange('primary', color)}
-                />
-                <ColorPicker
-                  label="Secondary Color" 
-                  value={theme.secondary}
-                  onChange={(color) => handleColorChange('secondary', color)}
-                />
-                <ColorPicker
-                  label="Background Color" 
-                  value={theme.background}
-                  onChange={(color) => handleColorChange('background', color)}
-                />
-                <ColorPicker
-                  label="Text Color" 
-                  value={theme.text}
-                  onChange={(color) => handleColorChange('text', color)}
-                />
-              </div>
+    <div className="business-theme-editor w-full">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Editor sidebar */}
+        <div className="lg:col-span-5 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Theme Editor</CardTitle>
+              <CardDescription>
+                Customize the look and feel of your business site
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Tabs value={activeTab} onValueChange={setActiveTab}>
+                <TabsList className="mb-4">
+                  <TabsTrigger value="colors">Colors</TabsTrigger>
+                  <TabsTrigger value="typography">Typography</TabsTrigger>
+                  <TabsTrigger value="layout">Layout</TabsTrigger>
+                  <TabsTrigger value="advanced">Advanced</TabsTrigger>
+                </TabsList>
+                
+                {/* Colors tab */}
+                <TabsContent value="colors" className="space-y-6">
+                  <div className="space-y-4">
+                    <ColorExtractor onColorsExtracted={handleColorExtraction} />
+                    
+                    <Separator className="my-4" />
+                    
+                    <ColorPicker
+                      label="Primary Color"
+                      description="Main brand color used for buttons, headings, and accents"
+                      value={theme.primary}
+                      onChange={(color) => updateThemeProperty("primary", color)}
+                    />
+                    
+                    <ColorPicker
+                      label="Secondary Color"
+                      description="Used for secondary elements and highlights"
+                      value={theme.secondary}
+                      onChange={(color) => updateThemeProperty("secondary", color)}
+                    />
+                    
+                    <ColorPicker
+                      label="Text Color"
+                      description="Main text color"
+                      value={theme.text}
+                      onChange={(color) => updateThemeProperty("text", color)}
+                    />
+                    
+                    <ColorPicker
+                      label="Background Color"
+                      description="Main background color"
+                      value={theme.background}
+                      onChange={(color) => updateThemeProperty("background", color)}
+                    />
+                  </div>
+                </TabsContent>
+                
+                {/* Typography tab */}
+                <TabsContent value="typography" className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="fontFamily">Font Family</Label>
+                      <Select 
+                        value={theme.font} 
+                        onValueChange={(value) => updateThemeProperty("font", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a font" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {FONT_OPTIONS.map(font => (
+                            <SelectItem key={font.value} value={font.value}>
+                              <span style={{ fontFamily: font.value }}>{font.label}</span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="appearance">Dark Mode</Label>
+                        <Select 
+                          value={theme.appearance} 
+                          onValueChange={(value) => updateThemeProperty("appearance", value as "light" | "dark" | "system")}
+                        >
+                          <SelectTrigger className="w-36">
+                            <SelectValue placeholder="Select mode" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="light">Light Mode</SelectItem>
+                            <SelectItem value="dark">Dark Mode</SelectItem>
+                            <SelectItem value="system">System Preference</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Choose light mode, dark mode, or follow system preference
+                      </p>
+                    </div>
+                  </div>
+                </TabsContent>
+                
+                {/* Layout tab */}
+                <TabsContent value="layout" className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="borderRadius">Border Radius</Label>
+                      <div className="grid grid-cols-2 gap-4">
+                        <Slider 
+                          defaultValue={[parseFloat(theme.borderRadius || "0.375") * 16]} 
+                          max={16} 
+                          step={1}
+                          onValueChange={(values) => {
+                            const value = values[0];
+                            updateThemeProperty("borderRadius", `${value / 16}rem`);
+                          }}
+                        />
+                        <Input 
+                          value={theme.borderRadius} 
+                          onChange={(e) => updateThemeProperty("borderRadius", e.target.value)}
+                          className="w-24 font-mono"
+                        />
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Adjust the roundness of corners (0 for square, 0.5rem for rounded)
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="spacing">Base Spacing</Label>
+                      <div className="grid grid-cols-2 gap-4">
+                        <Slider 
+                          defaultValue={[parseFloat(theme.spacing || "1")]} 
+                          max={2} 
+                          min={0.5}
+                          step={0.125}
+                          onValueChange={(values) => {
+                            const value = values[0];
+                            updateThemeProperty("spacing", `${value}rem`);
+                          }}
+                        />
+                        <Input 
+                          value={theme.spacing} 
+                          onChange={(e) => updateThemeProperty("spacing", e.target.value)}
+                          className="w-24 font-mono"
+                        />
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Adjust the default spacing between elements
+                      </p>
+                    </div>
+                  </div>
+                </TabsContent>
+                
+                {/* Advanced tab */}
+                <TabsContent value="advanced" className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="themeName">Theme Name</Label>
+                      <Input 
+                        id="themeName" 
+                        value={theme.name} 
+                        onChange={(e) => updateThemeProperty("name", e.target.value)}
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        Give your theme a custom name
+                      </p>
+                    </div>
+                    
+                    {/* These features are planned for future implementation
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Switch 
+                          id="enableAnimations" 
+                          checked={false} 
+                          onCheckedChange={(checked) => {}} 
+                        />
+                        <Label htmlFor="enableAnimations">Enable animations</Label>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Toggle animations and transitions
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Switch 
+                          id="reducedMotion" 
+                          checked={false} 
+                          onCheckedChange={(checked) => {}} 
+                        />
+                        <Label htmlFor="reducedMotion">Reduced motion</Label>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Enable for users who prefer reduced motion
+                      </p>
+                    </div>
+                    */}
+                  </div>
+                </TabsContent>
+              </Tabs>
               
-              <ThemePreview theme={theme} />
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="typography" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <FontSelector 
-                  value={theme.font || 'Inter'} 
-                  onChange={handleFontChange} 
-                />
-                <BorderRadiusSelector 
-                  value={theme.borderRadius || '0.375rem'} 
-                  onChange={handleBorderRadiusChange} 
-                />
-                <SpacingSelector 
-                  value={theme.spacing || '1rem'} 
-                  onChange={handleSpacingChange} 
-                />
-              </div>
-              
-              <ThemePreview theme={theme} />
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="presets" className="space-y-4">
-            <ThemePresetSelector
-              currentTheme={theme}
-              onSelectPreset={(preset) => {
-                // Apply the selected preset
-                setTheme(preset);
-                toast({
-                  title: "Theme preset applied",
-                  description: `"${preset.name}" theme has been applied. Don't forget to save your changes.`,
-                });
-              }}
-            />
-          </TabsContent>
-          
-          <TabsContent value="logo" className="space-y-4">
-            <ColorExtractor onExtractColors={handleExtractedColors} />
-            <div className="mt-4">
-              <ThemePreview theme={theme} />
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="appearance">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="dark-mode">Dark Mode</Label>
-                  <p className="text-sm text-gray-500">Enable dark mode for your business portal</p>
+              {/* Action buttons */}
+              {!readOnly && (
+                <div className="mt-6 flex justify-between">
+                  <Button 
+                    variant="outline" 
+                    onClick={handleReset}
+                    disabled={!isDirty || isSaving}
+                  >
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Reset
+                  </Button>
+                  
+                  <Button 
+                    onClick={handleSave} 
+                    disabled={!isDirty || isSaving}
+                  >
+                    {isSaving ? (
+                      <>Saving...</>
+                    ) : (
+                      <>
+                        <Save className="mr-2 h-4 w-4" />
+                        Save Changes
+                      </>
+                    )}
+                  </Button>
                 </div>
-                <div className="space-x-2">
-                  <Switch
-                    id="dark-mode"
-                    checked={theme.appearance === 'dark'}
-                    onCheckedChange={(checked) => handleAppearanceChange(checked ? 'dark' : 'light')}
-                  />
-                </div>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="system-mode">Follow System Preference</Label>
-                  <p className="text-sm text-gray-500">Automatically switch based on user's device settings</p>
-                </div>
-                <div className="space-x-2">
-                  <Switch
-                    id="system-mode"
-                    checked={theme.appearance === 'system'}
-                    onCheckedChange={(checked) => handleAppearanceChange(checked ? 'system' : 'light')}
-                  />
-                </div>
-              </div>
-              
-              <div className="mt-4">
-                <ThemePreview theme={theme} />
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
-        
-        <Separator className="my-6" />
-        
-        <div className="flex justify-between items-center">
-          <Button variant="outline" onClick={resetThemeToDefaults}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Reset to Defaults
-          </Button>
-          
-          <div className="flex gap-2">
-            {previewActive ? (
-              <Button variant="outline" onClick={cancelPreview}>
-                <XIcon className="h-4 w-4 mr-2" />
-                Cancel Preview
-              </Button>
-            ) : (
-              <Button variant="outline" onClick={handlePreview} disabled={loading}>
-                <EyeIcon className="h-4 w-4 mr-2" />
-                Preview Theme
-              </Button>
-            )}
-            <Button onClick={saveTheme} disabled={loading}>
-              {loading ? (
-                <>
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Theme
-                </>
               )}
-            </Button>
-          </div>
+              
+              {/* Save error message */}
+              {saveError && (
+                <Alert variant="destructive" className="mt-4">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>{saveError}</AlertDescription>
+                </Alert>
+              )}
+              
+              {/* Save success message */}
+              {!isDirty && !saveError && !isSaving && (
+                <Alert className="mt-4 bg-green-50 border-green-200">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <AlertDescription className="text-green-600">Theme saved successfully.</AlertDescription>
+                </Alert>
+              )}
+            </CardContent>
+          </Card>
         </div>
-      </CardContent>
-    </Card>
+        
+        {/* Preview panel */}
+        <div className="lg:col-span-7">
+          <Card>
+            <CardHeader>
+              <CardTitle>Live Preview</CardTitle>
+              <CardDescription>
+                See how your theme will look across different elements
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ThemePreview 
+                previewTheme={previewTheme} 
+                showControls={false} 
+              />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
   );
 }

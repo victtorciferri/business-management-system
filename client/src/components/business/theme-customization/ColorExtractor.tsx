@@ -1,284 +1,224 @@
-import React, { useState } from 'react';
-// We'll use a manual color extraction since node-vibrant has import issues
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Upload, RefreshCw, Check } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { Theme } from '@shared/config';
+import React, { useState, useRef } from 'react';
+import { Image, Upload, UploadCloud, CheckCircle2, Palette } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+// @ts-ignore
+import Vibrant from 'node-vibrant';
+// @ts-ignore
+import tinycolor from 'tinycolor2';
 
 interface ColorExtractorProps {
-  onExtractColors: (colors: Partial<Theme>) => void;
+  onColorsExtracted: (colors: string[]) => void;
 }
 
-export function ColorExtractor({ onExtractColors }: ColorExtractorProps) {
-  const { toast } = useToast();
-  const [isExtracting, setIsExtracting] = useState(false);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [extractedColors, setExtractedColors] = useState<Partial<Theme> | null>(null);
+export default function ColorExtractor({ onColorsExtracted }: ColorExtractorProps) {
+  const [file, setFile] = useState<File | null>(null);
+  const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isExtracted, setIsExtracted] = useState(false);
+  const [extractedColors, setExtractedColors] = useState<string[]>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Check if the file is an image
-    if (!file.type.match('image.*')) {
-      toast({
-        title: "Invalid file type",
-        description: "Please upload an image file (JPG, PNG, etc.)",
-        variant: "destructive",
-      });
-      return;
+  // Handle file selection
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const selectedFile = e.target.files[0];
+      setFile(selectedFile);
+      
+      // Create URL for preview
+      const url = URL.createObjectURL(selectedFile);
+      setFileUrl(url);
+      
+      // Reset extraction state
+      setIsExtracted(false);
+      setExtractedColors([]);
     }
+  };
 
-    // Create a preview URL
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+  // Handle dropping files
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const droppedFile = e.dataTransfer.files[0];
+      setFile(droppedFile);
+      
+      // Create URL for preview
+      const url = URL.createObjectURL(droppedFile);
+      setFileUrl(url);
+      
+      // Reset extraction state
+      setIsExtracted(false);
+      setExtractedColors([]);
+    }
+  };
 
-    // Extract colors from the image
+  // Prevent default drag behavior
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+  };
+
+  // Trigger file input click
+  const handleUploadClick = () => {
+    if (inputRef.current) {
+      inputRef.current.click();
+    }
+  };
+
+  // Extract colors from an image using node-vibrant library
+  const extractColors = async () => {
+    if (!fileUrl) return;
+    
+    setIsLoading(true);
+    
     try {
-      setIsExtracting(true);
-      const colors = await extractColors(file);
+      // Use node-vibrant to extract a palette from the image
+      const palette = await Vibrant.from(fileUrl).getPalette();
+      
+      // Get the most prominent colors
+      const colors: string[] = [];
+      
+      // Primary color (most vibrant)
+      if (palette.Vibrant) {
+        colors.push(tinycolor(palette.Vibrant.hex).toHexString());
+      }
+      
+      // Secondary color (try muted or dark vibrant for contrast)
+      if (palette.Muted) {
+        colors.push(tinycolor(palette.Muted.hex).toHexString());
+      } else if (palette.DarkVibrant) {
+        colors.push(tinycolor(palette.DarkVibrant.hex).toHexString());
+      } else if (palette.LightVibrant) {
+        colors.push(tinycolor(palette.LightVibrant.hex).toHexString());
+      }
+      
+      // Text color (usually dark for contrast)
+      if (palette.DarkMuted) {
+        colors.push(tinycolor(palette.DarkMuted.hex).toHexString());
+      } else {
+        // Default to a dark gray if no suitable color found
+        colors.push('#333333');
+      }
+      
+      // Background color (usually light for contrast)
+      if (palette.LightMuted) {
+        colors.push(tinycolor(palette.LightMuted.hex).toHexString());
+      } else {
+        // Default to white if no suitable color found
+        colors.push('#FFFFFF');
+      }
+      
+      // Update state with extracted colors
       setExtractedColors(colors);
-      toast({
-        title: "Colors extracted",
-        description: "Colors have been extracted from your logo. Click 'Apply Colors' to use them.",
-      });
+      setIsExtracted(true);
+      
+      // Call the callback function with extracted colors
+      onColorsExtracted(colors);
     } catch (error) {
       console.error('Error extracting colors:', error);
-      toast({
-        title: "Color extraction failed",
-        description: "Unable to extract colors from this image. Please try another image.",
-        variant: "destructive",
-      });
     } finally {
-      setIsExtracting(false);
+      setIsLoading(false);
     }
   };
 
-  // Simple color extraction function based on canvas sampling
-  const extractColors = async (file: File): Promise<Partial<Theme>> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      
-      reader.onload = (event) => {
-        if (!event.target?.result) {
-          reject(new Error('Failed to read file'));
-          return;
-        }
-        
-        try {
-          // Create an image element
-          const img = new Image();
-          img.crossOrigin = 'Anonymous';
-          img.src = event.target.result as string;
-          
-          img.onload = () => {
-            try {
-              // Create a canvas to analyze the image
-              const canvas = document.createElement('canvas');
-              const ctx = canvas.getContext('2d');
-              
-              if (!ctx) {
-                reject(new Error('Could not get canvas context'));
-                return;
-              }
-              
-              // Scale down for performance
-              const maxSize = 100;
-              const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
-              canvas.width = img.width * scale;
-              canvas.height = img.height * scale;
-              
-              // Draw image to canvas
-              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-              
-              // Get image data
-              const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-              const pixels = imageData.data;
-              
-              // Calculate color buckets (simplified)
-              const colorSamples: Record<string, number> = {};
-              
-              // Sample pixels (skip some for performance)
-              for (let i = 0; i < pixels.length; i += 16) {
-                const r = pixels[i];
-                const g = pixels[i + 1];
-                const b = pixels[i + 2];
-                const a = pixels[i + 3];
-                
-                // Skip transparent pixels
-                if (a < 128) continue;
-                
-                // Quantize a bit to reduce unique colors
-                const quantR = Math.round(r / 16) * 16;
-                const quantG = Math.round(g / 16) * 16;
-                const quantB = Math.round(b / 16) * 16;
-                
-                const colorKey = `${quantR},${quantG},${quantB}`;
-                colorSamples[colorKey] = (colorSamples[colorKey] || 0) + 1;
-              }
-              
-              // Convert to array and sort by frequency
-              const sortedColors = Object.entries(colorSamples)
-                .sort((a, b) => b[1] - a[1])
-                .map(([key]) => {
-                  const [r, g, b] = key.split(',').map(Number);
-                  return { r, g, b, hex: `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}` };
-                });
-              
-              // Get a bright color for primary
-              const getBrightColor = () => {
-                for (const color of sortedColors) {
-                  const brightness = (color.r * 299 + color.g * 587 + color.b * 114) / 1000;
-                  if (brightness > 128 && brightness < 240) return color.hex;
-                }
-                return '#1E3A8A'; // Default primary if no suitable color found
-              };
-              
-              // Get a darker color for text
-              const getDarkColor = () => {
-                for (const color of sortedColors) {
-                  const brightness = (color.r * 299 + color.g * 587 + color.b * 114) / 1000;
-                  if (brightness < 100) return color.hex;
-                }
-                return '#111827'; // Default dark if no suitable color found
-              };
-              
-              // Generate theme colors
-              const themeColors: Partial<Theme> = {
-                primary: getBrightColor(),
-                secondary: sortedColors[1]?.hex || '#9333EA',
-                background: '#FFFFFF',
-                text: getDarkColor(),
-              };
-              
-              resolve(themeColors);
-            } catch (err) {
-              console.error('Color extraction error:', err);
-              reject(err);
-            }
-          };
-          
-          img.onerror = () => {
-            reject(new Error('Failed to load image'));
-          };
-        } catch (error) {
-          reject(error);
-        }
-      };
-      
-      reader.onerror = () => {
-        reject(new Error('Error reading file'));
-      };
-      
-      reader.readAsDataURL(file);
-    });
-  };
-
-  const handleApplyColors = () => {
-    if (extractedColors) {
-      onExtractColors(extractedColors);
-      toast({
-        title: "Colors applied",
-        description: "The extracted colors have been applied to your theme.",
-      });
-    }
-  };
+  // Clean up resources when component unmounts
+  React.useEffect(() => {
+    return () => {
+      if (fileUrl) {
+        URL.revokeObjectURL(fileUrl);
+      }
+    };
+  }, [fileUrl]);
 
   return (
-    <Card>
-      <CardContent className="p-6">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label className="text-base font-medium">Extract Colors from Logo</Label>
-              <p className="text-sm text-muted-foreground mt-1">
-                Upload your logo to automatically generate a color palette
-              </p>
-            </div>
-            <div className="flex items-center">
-              <Label 
-                htmlFor="logo-upload" 
-                className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium focus-visible:outline-none focus-visible:ring-1 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2"
-              >
-                <Upload className="h-4 w-4 mr-2" />
-                Upload Logo
-              </Label>
-              <input 
-                id="logo-upload" 
-                type="file" 
-                accept="image/*" 
-                className="hidden" 
+    <div className="color-extractor">
+      <Card className="border-dashed">
+        <CardContent className="p-4">
+          <div
+            className="flex flex-col items-center justify-center gap-4 rounded-md border border-dashed p-8 text-center"
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+          >
+            <div className="flex flex-col items-center gap-2">
+              {fileUrl ? (
+                <div className="relative h-28 w-28 overflow-hidden rounded-md border border-gray-200">
+                  <img
+                    src={fileUrl}
+                    alt="Logo preview"
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="flex h-28 w-28 items-center justify-center rounded-md bg-gray-100">
+                  <Image className="h-12 w-12 text-gray-400" />
+                </div>
+              )}
+              
+              <input
+                ref={inputRef}
+                type="file"
+                className="hidden"
+                accept="image/*"
                 onChange={handleFileChange}
               />
-            </div>
-          </div>
-
-          {imagePreview && (
-            <div className="mt-4 flex flex-col md:flex-row gap-4 items-start">
-              <div className="border rounded-md p-4 flex-shrink-0">
-                <p className="text-sm font-medium mb-2">Uploaded Logo</p>
-                <div className="relative w-24 h-24 flex items-center justify-center">
-                  <img 
-                    src={imagePreview} 
-                    alt="Uploaded logo" 
-                    className="max-w-full max-h-full object-contain" 
-                  />
-                  {isExtracting && (
-                    <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-                      <RefreshCw className="h-6 w-6 animate-spin text-primary" />
-                    </div>
-                  )}
-                </div>
+              
+              <div className="mt-2 text-sm text-muted-foreground">
+                {fileUrl ? (
+                  <span className="font-medium">{file?.name}</span>
+                ) : (
+                  <span>Upload your business logo or brand image</span>
+                )}
               </div>
-
-              {extractedColors && (
-                <div className="flex-1">
-                  <p className="text-sm font-medium mb-2">Extracted Colors</p>
-                  <div className="grid grid-cols-2 gap-2 mb-4">
-                    <div className="flex items-center gap-2">
-                      <div 
-                        className="w-8 h-8 rounded-md border"
-                        style={{ backgroundColor: extractedColors.primary }}
-                      />
-                      <span className="text-sm">Primary</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div 
-                        className="w-8 h-8 rounded-md border"
-                        style={{ backgroundColor: extractedColors.secondary }}
-                      />
-                      <span className="text-sm">Secondary</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div 
-                        className="w-8 h-8 rounded-md border"
-                        style={{ backgroundColor: extractedColors.background }}
-                      />
-                      <span className="text-sm">Background</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div 
-                        className="w-8 h-8 rounded-md border"
-                        style={{ backgroundColor: extractedColors.text }}
-                      />
-                      <span className="text-sm">Text</span>
-                    </div>
-                  </div>
-                  <Button onClick={handleApplyColors} className="w-full">
-                    <Check className="h-4 w-4 mr-2" />
-                    Apply Colors
-                  </Button>
+            </div>
+            
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={handleUploadClick}
+                size="sm"
+                className="gap-1"
+                disabled={isLoading}
+              >
+                <UploadCloud className="h-4 w-4" />
+                {fileUrl ? "Change" : "Upload"}
+              </Button>
+              
+              {fileUrl && !isExtracted && (
+                <Button
+                  onClick={extractColors}
+                  size="sm"
+                  className="gap-1"
+                  disabled={isLoading}
+                >
+                  <Palette className="h-4 w-4" />
+                  {isLoading ? "Extracting..." : "Extract Colors"}
+                </Button>
+              )}
+              
+              {isExtracted && (
+                <div className="flex items-center gap-2 text-sm text-green-600">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span>Colors extracted</span>
                 </div>
               )}
             </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+            
+            {/* Color preview */}
+            {extractedColors.length > 0 && (
+              <div className="mt-4 flex gap-2">
+                {extractedColors.map((color, index) => (
+                  <div
+                    key={index}
+                    className="h-8 w-12 rounded-md border"
+                    style={{ backgroundColor: color }}
+                    title={color}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

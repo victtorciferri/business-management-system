@@ -1,139 +1,138 @@
-import { Theme } from '@shared/config';
+// We're using a relative import here since the path alias isn't working
+import type { Theme } from "../types/theme";
 
 /**
- * Applies theme settings to CSS variables in the document
- * This function should be called whenever the theme changes
+ * Apply theme settings to a root element (usually :root or a specific container for preview)
  */
-export const applyTheme = (theme: Theme): void => {
-  // Skip if not in browser environment
-  if (typeof document === 'undefined') return;
-  
+export function applyTheme(theme: Theme): void {
+  // Get the document root element
   const root = document.documentElement;
   
-  // Apply color variables
-  root.style.setProperty('--primary', theme.primary);
-  root.style.setProperty('--secondary', theme.secondary);
-  root.style.setProperty('--background', theme.background);
-  root.style.setProperty('--text', theme.text);
-  
-  // Apply optional variables if they exist
-  if (theme.font) {
-    root.style.setProperty('--font', theme.font);
+  // Apply the theme CSS variables
+  applyThemeToElement(theme, root);
+}
+
+/**
+ * Apply theme settings to a specific element (useful for previews)
+ */
+export function applyThemeToPreview(theme: Theme, element: HTMLElement): void {
+  // Apply the theme CSS variables to the specified element
+  applyThemeToElement(theme, element);
+}
+
+/**
+ * Apply theme settings to a DOM element by setting CSS variables
+ */
+function applyThemeToElement(theme: Theme, element: HTMLElement): void {
+  // Colors
+  if (theme.primaryColor) {
+    element.style.setProperty('--primary', hslToHsla(hexToHSL(theme.primaryColor)));
+    element.style.setProperty('--primary-foreground', getContrastColor(theme.primaryColor));
   }
   
+  if (theme.secondaryColor) {
+    element.style.setProperty('--secondary', hslToHsla(hexToHSL(theme.secondaryColor)));
+    element.style.setProperty('--secondary-foreground', getContrastColor(theme.secondaryColor));
+  }
+  
+  if (theme.accentColor) {
+    element.style.setProperty('--accent', hslToHsla(hexToHSL(theme.accentColor)));
+    element.style.setProperty('--accent-foreground', getContrastColor(theme.accentColor));
+  }
+  
+  if (theme.backgroundColor) {
+    element.style.setProperty('--background', hslToHsla(hexToHSL(theme.backgroundColor)));
+    element.style.setProperty('--foreground', getContrastColor(theme.backgroundColor));
+  }
+  
+  // Font
+  if (theme.fontFamily) {
+    element.style.setProperty('--font-sans', theme.fontFamily);
+  }
+  
+  // Border radius
   if (theme.borderRadius) {
-    root.style.setProperty('--border-radius', theme.borderRadius);
+    element.style.setProperty('--radius', theme.borderRadius);
   }
   
+  // Spacing
   if (theme.spacing) {
-    root.style.setProperty('--spacing', theme.spacing);
+    element.style.setProperty('--spacing', theme.spacing);
   }
-  
-  // Set light/dark class based on appearance
-  if (theme.appearance === 'dark') {
-    root.classList.add('dark');
-  } else if (theme.appearance === 'light') {
-    root.classList.remove('dark');
-  }
-  
-  // Add additional derived color variables
-  // These are computed from the main colors for consistent UI
-  
-  // Generate hover variants (10% darker)
-  const darkenColor = (hex: string, percent: number = 10): string => {
-    // Remove hash
-    let r = parseInt(hex.substring(1, 3), 16);
-    let g = parseInt(hex.substring(3, 5), 16);
-    let b = parseInt(hex.substring(5, 7), 16);
-    
-    // Make darker
-    r = Math.max(0, Math.floor(r * (100 - percent) / 100));
-    g = Math.max(0, Math.floor(g * (100 - percent) / 100));
-    b = Math.max(0, Math.floor(b * (100 - percent) / 100));
-    
-    // Convert back to hex
-    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-  };
-  
-  // Generate lighter variants (10% lighter)
-  const lightenColor = (hex: string, percent: number = 10): string => {
-    // Remove hash
-    let r = parseInt(hex.substring(1, 3), 16);
-    let g = parseInt(hex.substring(3, 5), 16);
-    let b = parseInt(hex.substring(5, 7), 16);
-    
-    // Make lighter
-    r = Math.min(255, Math.floor(r + (255 - r) * percent / 100));
-    g = Math.min(255, Math.floor(g + (255 - g) * percent / 100));
-    b = Math.min(255, Math.floor(b + (255 - b) * percent / 100));
-    
-    // Convert back to hex
-    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-  };
-  
-  // Apply hover states
-  root.style.setProperty('--primary-hover', darkenColor(theme.primary));
-  root.style.setProperty('--secondary-hover', darkenColor(theme.secondary));
-  
-  // Apply focus/active states
-  root.style.setProperty('--primary-focus', lightenColor(theme.primary, 5));
-  root.style.setProperty('--primary-active', darkenColor(theme.primary, 15));
-  
-  // Apply foreground colors (text on primary/secondary backgrounds)
-  // Simple algorithm to determine if text should be white or black based on background color
-  const getContrastColor = (hex: string): string => {
-    // Convert hex to RGB
-    const r = parseInt(hex.substring(1, 3), 16);
-    const g = parseInt(hex.substring(3, 5), 16);
-    const b = parseInt(hex.substring(5, 7), 16);
-    
-    // Calculate perceived brightness using the sRGB formula
-    // https://www.w3.org/TR/AERT/#color-contrast
-    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-    
-    // Return white for dark backgrounds, black for light backgrounds
-    return brightness > 128 ? '#000000' : '#FFFFFF';
-  };
-  
-  root.style.setProperty('--primary-foreground', getContrastColor(theme.primary));
-  root.style.setProperty('--secondary-foreground', getContrastColor(theme.secondary));
-  
-  // Set additional UI colors
-  root.style.setProperty('--card-background', theme.background);
-  root.style.setProperty('--card-foreground', theme.text);
-  root.style.setProperty('--popover-background', theme.background);
-  root.style.setProperty('--popover-foreground', theme.text);
-  
-  // Force a re-render of the page to apply the changes
-  const forceReflow = document.createElement('div');
-  document.body.appendChild(forceReflow);
-  document.body.removeChild(forceReflow);
-};
+}
 
 /**
- * Resets theme to default values by removing CSS variables
+ * Convert a HEX color to HSL format
  */
-export const resetTheme = (): void => {
-  if (typeof document === 'undefined') return;
+function hexToHSL(hex: string): { h: number; s: number; l: number } {
+  // Remove the # if present
+  hex = hex.replace(/^#/, '');
   
-  const root = document.documentElement;
+  // Parse the r, g, b values
+  let r = 0, g = 0, b = 0;
   
-  // Remove all custom properties
-  root.style.removeProperty('--primary');
-  root.style.removeProperty('--secondary');
-  root.style.removeProperty('--background');
-  root.style.removeProperty('--text');
-  root.style.removeProperty('--font');
-  root.style.removeProperty('--border-radius');
-  root.style.removeProperty('--spacing');
-  root.style.removeProperty('--primary-hover');
-  root.style.removeProperty('--secondary-hover');
-  root.style.removeProperty('--primary-focus');
-  root.style.removeProperty('--primary-active');
-  root.style.removeProperty('--primary-foreground');
-  root.style.removeProperty('--secondary-foreground');
-  root.style.removeProperty('--card-background');
-  root.style.removeProperty('--card-foreground');
-  root.style.removeProperty('--popover-background');
-  root.style.removeProperty('--popover-foreground');
-};
+  if (hex.length === 3) {
+    r = parseInt(hex[0] + hex[0], 16) / 255;
+    g = parseInt(hex[1] + hex[1], 16) / 255;
+    b = parseInt(hex[2] + hex[2], 16) / 255;
+  } else if (hex.length === 6) {
+    r = parseInt(hex.substring(0, 2), 16) / 255;
+    g = parseInt(hex.substring(2, 4), 16) / 255;
+    b = parseInt(hex.substring(4, 6), 16) / 255;
+  }
+  
+  // Find min and max values of r, g, b
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  
+  // Calculate lightness
+  let l = (max + min) / 2;
+  
+  // Calculate saturation
+  let s = 0;
+  
+  if (max !== min) {
+    s = l > 0.5 ? (max - min) / (2 - max - min) : (max - min) / (max + min);
+  }
+  
+  // Calculate hue
+  let h = 0;
+  
+  if (max !== min) {
+    if (max === r) {
+      h = (g - b) / (max - min) + (g < b ? 6 : 0);
+    } else if (max === g) {
+      h = (b - r) / (max - min) + 2;
+    } else if (max === b) {
+      h = (r - g) / (max - min) + 4;
+    }
+    
+    h /= 6;
+  }
+  
+  // Convert to degrees
+  h = Math.round(h * 360);
+  s = Math.round(s * 100);
+  l = Math.round(l * 100);
+  
+  return { h, s, l };
+}
+
+/**
+ * Convert HSL object to HSLA string
+ */
+function hslToHsla(hsl: { h: number; s: number; l: number }, alpha = 1): string {
+  return `hsl(${hsl.h} ${hsl.s}% ${hsl.l}% / ${alpha})`;
+}
+
+/**
+ * Get a contrasting color (black or white) for the given background color
+ */
+function getContrastColor(hexColor: string): string {
+  // Convert hex to HSL
+  const hsl = hexToHSL(hexColor);
+  
+  // Determine if the color is light or dark
+  // For more sophisticated approaches, you could use the WCAG contrast formula
+  return hsl.l > 50 ? 'hsl(0 0% 0%)' : 'hsl(0 0% 100%)';
+}

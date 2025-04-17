@@ -10,6 +10,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { format, addDays } from "date-fns";
 import { Clock, CalendarIcon, DollarSign, CalendarPlus } from "lucide-react";
 import { User, Service, Customer, Appointment } from "@shared/schema";
+import { useTheme } from "@/contexts/ThemeContext";
+import { applyTheme } from "@/utils/applyTheme";
 
 // Import business components
 import BusinessLayout from "@/components/business/layout";
@@ -44,6 +46,9 @@ export default function BusinessPortal({ slug, subPath, initialData }: BusinessP
   });
   const [searchEmail, setSearchEmail] = useState("");
   
+  // Access theme context
+  const { theme, businessTheme, updateBusinessTheme } = useTheme();
+  
   // Fetch business data by slug if not provided
   const { data, isLoading, error } = useQuery<BusinessPortalData>({
     queryKey: ["/api/business", slug],
@@ -58,25 +63,56 @@ export default function BusinessPortal({ slug, subPath, initialData }: BusinessP
     initialData: initialData || undefined,
   });
   
+  // Fetch the theme for this business
+  const { data: themeData } = useQuery({
+    queryKey: [`/api/business/${slug}/theme`],
+    queryFn: async () => {
+      console.log(`Fetching theme for business: ${slug}`);
+      try {
+        const response = await fetch(`/api/business/${slug}/theme`);
+        if (!response.ok) {
+          console.error(`Failed to fetch business theme: ${response.status} ${response.statusText}`);
+          return null;
+        }
+        const data = await response.json();
+        console.log(`Received theme data:`, data);
+        return data;
+      } catch (error) {
+        console.error("Error fetching business theme:", error);
+        return null;
+      }
+    },
+    enabled: !!slug
+  });
+  
   // Fetch customer appointments if searching
-  const { data: customers } = useQuery({
+  const { data: customers = [] } = useQuery<Customer[]>({
     queryKey: ['/api/customers'],
     enabled: activeTab === "my-appointments" && !!searchEmail
   });
   
   // Fetch appointments
-  const { data: appointments } = useQuery({
+  const { data: appointments = [] } = useQuery<Appointment[]>({
     queryKey: ['/api/appointments'],
     enabled: activeTab === "my-appointments" && !!searchEmail
   });
   
   // Find customer by email
-  const customer = customers?.find((c: Customer) => c.email === searchEmail);
+  const customer = customers.find((c: Customer) => c.email === searchEmail);
   
   // Find appointments for customer
-  const customerAppointments = appointments?.filter(
+  const customerAppointments = appointments.filter(
     (a: Appointment) => customer && a.customerId === customer.id
   );
+  
+  // Apply the theme when it's loaded
+  useEffect(() => {
+    if (themeData?.theme) {
+      console.log("Applying business theme:", themeData.theme);
+      updateBusinessTheme(themeData.theme); // Use updateBusinessTheme instead of setTheme
+      applyTheme(themeData.theme);
+    }
+  }, [themeData, updateBusinessTheme]);
   
   // Set the document title to the business name when data is loaded
   useEffect(() => {
@@ -191,7 +227,7 @@ export default function BusinessPortal({ slug, subPath, initialData }: BusinessP
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {services?.map((service: Service) => (
                   <Card key={service.id} className="overflow-hidden">
-                    <div className="h-2" style={{ backgroundColor: service.color }}></div>
+                    <div className="h-2" style={{ backgroundColor: (service.color as string) || "#cccccc" }}></div>
                     <CardHeader>
                       <CardTitle>{service.name}</CardTitle>
                       <CardDescription>Professional service</CardDescription>
