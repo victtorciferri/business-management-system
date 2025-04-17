@@ -1,76 +1,130 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import type { Theme } from '../types/theme';
-import { defaultTheme } from '../types/theme';
-import { applyTheme } from '../utils/applyTheme';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { Theme, defaultTheme, mergeWithDefaults } from '@shared/config';
+import { useToast } from '@/hooks/use-toast';
 
 interface ThemeContextType {
   theme: Theme;
-  updateTheme: (newTheme: Partial<Theme>) => void;
+  updateTheme: (updates: Partial<Theme>) => void;
+  saveTheme: () => Promise<void>;
   resetTheme: () => void;
+  hasUnsavedChanges: boolean;
+  isSaving: boolean;
+  isPreviewMode: boolean;
+  setPreviewMode: (mode: boolean) => void;
 }
 
-// Create context with default values
-const ThemeContext = createContext<ThemeContextType>({
-  theme: defaultTheme,
-  updateTheme: () => {},
-  resetTheme: () => {}
-});
+export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-// Provider component
-export function ThemeProvider({ 
-  children,
-  initialTheme
-}: { 
+interface ThemeProviderProps {
+  initialTheme?: Partial<Theme>;
   children: React.ReactNode;
-  initialTheme?: Theme;
-}) {
-  const [theme, setTheme] = useState<Theme>(initialTheme || defaultTheme);
+}
+
+export const ThemeProvider: React.FC<ThemeProviderProps> = ({ 
+  initialTheme, 
+  children 
+}) => {
+  const { toast } = useToast();
   
-  // Apply theme when it changes
-  useEffect(() => {
-    applyTheme(theme);
-  }, [theme]);
+  // Convert partial theme to full theme with defaults
+  const fullInitialTheme = initialTheme 
+    ? mergeWithDefaults(initialTheme) 
+    : defaultTheme;
   
-  // Apply initial theme
+  const [theme, setTheme] = useState<Theme>(fullInitialTheme);
+  const [originalTheme, setOriginalTheme] = useState<Theme>(fullInitialTheme);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
+  
+  // Update theme when initialTheme changes
   useEffect(() => {
     if (initialTheme) {
-      setTheme(initialTheme);
+      const newTheme = mergeWithDefaults(initialTheme);
+      setTheme(newTheme);
+      setOriginalTheme(newTheme);
     }
   }, [initialTheme]);
   
   // Update theme with partial changes
-  const updateTheme = (newTheme: Partial<Theme>) => {
-    setTheme((prevTheme) => ({
-      ...prevTheme,
-      ...newTheme
-    }));
-  };
+  const updateTheme = useCallback((updates: Partial<Theme>) => {
+    setTheme(prevTheme => ({ ...prevTheme, ...updates }));
+  }, []);
   
-  // Reset to default theme
-  const resetTheme = () => {
-    setTheme(initialTheme || defaultTheme);
+  // Reset theme to original state
+  const resetTheme = useCallback(() => {
+    setTheme(originalTheme);
+    toast({
+      title: "Theme reset",
+      description: "Your changes have been discarded and the theme has been reset.",
+    });
+  }, [originalTheme, toast]);
+  
+  // Save theme changes
+  const saveTheme = useCallback(async () => {
+    try {
+      setIsSaving(true);
+      
+      // Simulate network delay
+      // You would replace this with an actual API call to save the theme
+      const response = await fetch('/api/business/theme', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ theme }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save theme');
+      }
+      
+      // Update the original theme to match the current theme
+      setOriginalTheme(theme);
+      
+      toast({
+        title: "Theme saved",
+        description: "Your theme has been saved successfully.",
+      });
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error saving theme:', error);
+      toast({
+        title: "Error saving theme",
+        description: "There was a problem saving your theme. Please try again.",
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setIsSaving(false);
+    }
+  }, [theme, toast]);
+  
+  // Track if there are unsaved changes
+  const hasUnsavedChanges = JSON.stringify(theme) !== JSON.stringify(originalTheme);
+  
+  const value = {
+    theme,
+    updateTheme,
+    saveTheme,
+    resetTheme,
+    hasUnsavedChanges,
+    isSaving,
+    isPreviewMode,
+    setPreviewMode: setIsPreviewMode,
   };
   
   return (
-    <ThemeContext.Provider 
-      value={{ 
-        theme, 
-        updateTheme,
-        resetTheme
-      }}
-    >
+    <ThemeContext.Provider value={value}>
       {children}
     </ThemeContext.Provider>
   );
-}
+};
 
-// Custom hook to use the theme context
-export function useTheme() {
+export const useTheme = (): ThemeContextType => {
   const context = useContext(ThemeContext);
-  
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useTheme must be used within a ThemeProvider');
   }
-  
   return context;
-}
+};

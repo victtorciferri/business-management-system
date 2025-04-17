@@ -1,310 +1,230 @@
-import React, { useEffect, useState } from 'react';
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from "@/components/ui/tabs";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
-import { 
-  Calendar, 
-  CalendarCheck, 
-  User, 
-  ShoppingCart, 
-  Bell, 
-  Star,
-  Scissors,
-  Clock,
-  DollarSign,
-  AlertCircle,
-  Info,
-  Check
-} from 'lucide-react';
-import type { Theme } from "../../../types/theme";
-import { applyThemeToPreview } from "../../../utils/applyTheme";
+import React from 'react';
+import { Theme } from '@shared/config';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+import { CalendarIcon, CheckIcon, StarIcon, UserIcon, ShoppingBagIcon } from 'lucide-react';
 
 interface ThemePreviewProps {
-  previewTheme: Theme;
-  showControls?: boolean;
+  theme: Theme;
+  className?: string;
 }
 
-export default function ThemePreview({ 
-  previewTheme, 
-  showControls = false 
-}: ThemePreviewProps) {
-  // Track preview styles
-  const [previewRoot, setPreviewRoot] = useState<HTMLElement | null>(null);
-  
-  // Apply theme when it changes
-  useEffect(() => {
-    if (previewRoot) {
-      applyThemeToPreview(previewTheme, previewRoot);
-    }
-  }, [previewTheme, previewRoot]);
-
-  // Set up preview container ref
-  useEffect(() => {
-    const root = document.getElementById('theme-preview-root');
-    setPreviewRoot(root);
-  }, []);
+/**
+ * ThemePreview Component
+ * 
+ * This component renders a preview of various UI elements styled according to the current theme settings.
+ * It helps users visualize how their theme changes will appear across the application.
+ */
+export const ThemePreview: React.FC<ThemePreviewProps> = ({ theme, className }) => {
+  // Generate CSS variables for the theme
+  const themeVars = {
+    '--primary': theme.primaryColor,
+    '--secondary': theme.secondaryColor,
+    '--accent': theme.accentColor,
+    '--text': theme.textColor,
+    '--background': theme.backgroundColor,
+    '--border-radius': `${theme.borderRadius}px`,
+    '--spacing': `${theme.spacing}px`,
+    '--font-family': theme.fontFamily,
+  } as React.CSSProperties;
 
   return (
     <div 
-      id="theme-preview-root" 
-      className="theme-preview rounded-lg overflow-hidden border p-4 bg-background text-foreground"
+      className={cn("overflow-hidden rounded-lg border shadow-md", className)}
+      style={{
+        ...themeVars,
+        fontFamily: theme.fontFamily,
+        backgroundColor: theme.backgroundColor,
+        color: theme.textColor,
+        padding: theme.spacing,
+        borderRadius: theme.borderRadius,
+      }}
     >
-      {/* Controls at the top if enabled */}
-      {showControls && (
-        <div className="mb-6 flex flex-wrap gap-4">
-          <Button variant="default">Primary Button</Button>
-          <Button variant="destructive">Destructive</Button>
-          <Button variant="outline">Outline</Button>
-          <Button variant="secondary">Secondary</Button>
-          <Button variant="ghost">Ghost</Button>
-          <Button variant="link">Link</Button>
-        </div>
-      )}
-
-      {/* Tabbed content preview */}
-      <Tabs defaultValue="appointments">
-        <TabsList className="grid grid-cols-3 mb-4">
-          <TabsTrigger value="appointments">Appointments</TabsTrigger>
-          <TabsTrigger value="services">Services</TabsTrigger>
-          <TabsTrigger value="profile">Profile</TabsTrigger>
-        </TabsList>
-        
-        {/* Appointments Tab */}
-        <TabsContent value="appointments">
-          <div className="grid gap-4">
-            {/* Alert component */}
-            <Alert className="border border-primary/20 bg-primary/5">
-              <Info className="h-4 w-4 text-primary" />
-              <AlertDescription className="text-primary-foreground">
-                You have 3 upcoming appointments this week.
-              </AlertDescription>
-            </Alert>
+      <div className="preview-container">
+        <div className="mb-6">
+          <h2 
+            style={{ color: theme.primaryColor }} 
+            className="text-xl font-bold mb-2"
+          >
+            Theme Preview
+          </h2>
+          <p className="text-sm opacity-80 mb-4">
+            This preview shows how your theme will look across the application
+          </p>
+          
+          <div className="flex flex-wrap gap-2 mb-4">
+            <Button 
+              style={{ backgroundColor: theme.primaryColor }}
+              className="shadow-sm hover:shadow-md transition-shadow"
+            >
+              Primary Button
+            </Button>
             
-            {/* Header section */}
-            <Card>
+            <Button 
+              variant="outline"
+              style={{ 
+                borderColor: theme.secondaryColor,
+                color: theme.secondaryColor 
+              }}
+              className="shadow-sm hover:shadow-md transition-shadow"
+            >
+              Secondary Button
+            </Button>
+            
+            <Button 
+              variant="ghost"
+              style={{ color: theme.accentColor }}
+            >
+              Ghost Button
+            </Button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <Card style={{
+              borderRadius: theme.borderRadius,
+              boxShadow: theme.cardStyle === 'elevated' ? '0 10px 15px -3px rgba(0, 0, 0, 0.1)' : 'none',
+              border: theme.cardStyle === 'bordered' ? `2px solid ${theme.secondaryColor}` : '1px solid #e5e7eb',
+            }}>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  Upcoming Appointments
+                <CardTitle style={{ color: theme.primaryColor }}>
+                  Service Card
                 </CardTitle>
-                <CardDescription>
-                  Manage your scheduled services
-                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {/* Appointment card 1 */}
-                  <div className="flex items-start justify-between p-4 border rounded-lg hover:bg-accent/10">
-                    <div className="flex gap-3">
-                      <div className="rounded-full p-2 bg-primary/10">
-                        <Scissors className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <div className="font-medium">Haircut & Styling</div>
-                        <div className="text-sm text-muted-foreground flex gap-2 items-center mt-1">
-                          <Clock className="h-3.5 w-3.5" />
-                          Tomorrow, 10:00 AM
-                        </div>
-                        <Badge className="mt-2 bg-secondary text-secondary-foreground">Confirmed</Badge>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="ghost" size="sm">
-                        Reschedule
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  {/* Appointment card 2 */}
-                  <div className="flex items-start justify-between p-4 border rounded-lg hover:bg-accent/10">
-                    <div className="flex gap-3">
-                      <div className="rounded-full p-2 bg-primary/10">
-                        <Scissors className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <div className="font-medium">Coloring Treatment</div>
-                        <div className="text-sm text-muted-foreground flex gap-2 items-center mt-1">
-                          <Clock className="h-3.5 w-3.5" />
-                          Friday, 2:30 PM
-                        </div>
-                        <Badge className="mt-2 bg-primary text-primary-foreground">Paid</Badge>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="ghost" size="sm">
-                        Reschedule
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        Cancel
-                      </Button>
-                    </div>
+                <p>This is an example of a service card in your application.</p>
+                <div className="flex items-center mt-2">
+                  <Badge style={{ backgroundColor: theme.secondaryColor }}>
+                    Available
+                  </Badge>
+                  <div className="flex ml-auto">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <StarIcon 
+                        key={star} 
+                        size={14}
+                        fill={star <= 4 ? theme.accentColor : 'transparent'} 
+                        stroke={theme.accentColor}
+                      />
+                    ))}
                   </div>
                 </div>
               </CardContent>
-              <CardFooter className="justify-between border-t pt-4">
-                <Button variant="ghost" size="sm">
-                  View history
-                </Button>
-                <Button size="sm">
-                  Book New Appointment
+              <CardFooter className="flex justify-between">
+                <span className="font-bold">$75.00</span>
+                <Button size="sm" style={{ backgroundColor: theme.primaryColor }}>
+                  Book Now
                 </Button>
               </CardFooter>
             </Card>
-          </div>
-        </TabsContent>
-        
-        {/* Services Tab */}
-        <TabsContent value="services">
-          <div className="grid gap-4">
-            <Card>
+            
+            <Card style={{
+              borderRadius: theme.borderRadius,
+              boxShadow: theme.cardStyle === 'elevated' ? '0 10px 15px -3px rgba(0, 0, 0, 0.1)' : 'none',
+              border: theme.cardStyle === 'bordered' ? `2px solid ${theme.secondaryColor}` : '1px solid #e5e7eb',
+            }}>
               <CardHeader>
-                <CardTitle>Our Services</CardTitle>
-                <CardDescription>
-                  Book your favorite treatments
-                </CardDescription>
+                <CardTitle style={{ color: theme.primaryColor }}>
+                  Appointment Card
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {/* Service 1 */}
-                  <div className="flex justify-between p-4 border rounded-lg hover:bg-accent/10">
-                    <div className="flex items-center gap-4">
-                      <div className="rounded-md p-2.5 bg-secondary">
-                        <Scissors className="h-5 w-5 text-secondary-foreground" />
-                      </div>
-                      <div>
-                        <div className="font-medium">Premium Haircut</div>
-                        <div className="text-sm text-muted-foreground mt-1">
-                          45 min
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end justify-between">
-                      <div className="font-medium text-lg">
-                        <DollarSign className="h-4 w-4 inline" />
-                        45
-                      </div>
-                      <Button variant="default" size="sm" className="mt-2">
-                        Book Now
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  {/* Service 2 */}
-                  <div className="flex justify-between p-4 border rounded-lg hover:bg-accent/10">
-                    <div className="flex items-center gap-4">
-                      <div className="rounded-md p-2.5 bg-primary">
-                        <Scissors className="h-5 w-5 text-primary-foreground" />
-                      </div>
-                      <div>
-                        <div className="font-medium">Color & Highlights</div>
-                        <div className="text-sm text-muted-foreground mt-1">
-                          90 min
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end justify-between">
-                      <div className="font-medium text-lg">
-                        <DollarSign className="h-4 w-4 inline" />
-                        120
-                      </div>
-                      <Button variant="default" size="sm" className="mt-2">
-                        Book Now
-                      </Button>
-                    </div>
-                  </div>
+                <div className="flex items-center mb-2">
+                  <CalendarIcon size={16} className="mr-2" style={{ color: theme.secondaryColor }} />
+                  <span>April 17, 2023 - 10:00 AM</span>
+                </div>
+                <div className="flex items-center mb-2">
+                  <UserIcon size={16} className="mr-2" style={{ color: theme.secondaryColor }} />
+                  <span>With Dr. Smith</span>
+                </div>
+                <Separator className="my-2" />
+                <div className="flex justify-between items-center">
+                  <Badge variant="outline" style={{ borderColor: theme.accentColor, color: theme.accentColor }}>
+                    Upcoming
+                  </Badge>
+                  <span className="text-sm opacity-70">Duration: 1 hour</span>
                 </div>
               </CardContent>
-              <CardFooter className="justify-between border-t pt-4">
-                <div className="text-sm text-muted-foreground">
-                  * Prices may vary based on hair length
-                </div>
-                <Button variant="outline" size="sm">
-                  View All Services
+              <CardFooter>
+                <Button variant="outline" size="sm" className="mr-2" style={{ borderColor: theme.secondaryColor, color: theme.secondaryColor }}>
+                  Reschedule
+                </Button>
+                <Button size="sm" variant="destructive">
+                  Cancel
                 </Button>
               </CardFooter>
             </Card>
           </div>
-        </TabsContent>
-        
-        {/* Profile Tab */}
-        <TabsContent value="profile">
-          <div className="grid gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Your Profile</CardTitle>
-                <CardDescription>
-                  Manage your account preferences
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Full Name</Label>
-                    <Input id="name" defaultValue="Jane Smith" />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
-                    <Input id="email" defaultValue="jane@example.com" />
-                  </div>
-                  
-                  <Separator className="my-4" />
-                  
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-medium">Preferences</h3>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label htmlFor="notifications">Email Notifications</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Receive booking confirmations and reminders
-                        </p>
-                      </div>
-                      <Switch id="notifications" defaultChecked />
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label htmlFor="marketing">Marketing Updates</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Receive promotions and special offers
-                        </p>
-                      </div>
-                      <Switch id="marketing" />
-                    </div>
-                  </div>
+          
+          <div className="flex flex-wrap gap-4">
+            <div>
+              <h3 className="text-sm font-semibold mb-2" style={{ color: theme.secondaryColor }}>
+                Calendar Example
+              </h3>
+              <Calendar 
+                mode="single"
+                className="rounded border shadow-sm"
+                classNames={{
+                  day_selected: `bg-[${theme.primaryColor}]`,
+                  day_today: `text-[${theme.accentColor}]`,
+                }}
+              />
+            </div>
+            
+            <div>
+              <h3 className="text-sm font-semibold mb-2" style={{ color: theme.secondaryColor }}>
+                Color Palette
+              </h3>
+              <div className="grid grid-cols-5 gap-2">
+                <div 
+                  className="h-16 w-16 rounded-md shadow-sm flex items-center justify-center text-white text-xs"
+                  style={{ backgroundColor: theme.primaryColor }}
+                >
+                  Primary
                 </div>
-              </CardContent>
-              <CardFooter className="justify-end border-t pt-4">
-                <Button className="ml-auto">
-                  Save Changes
-                </Button>
-              </CardFooter>
-            </Card>
+                <div 
+                  className="h-16 w-16 rounded-md shadow-sm flex items-center justify-center text-white text-xs"
+                  style={{ backgroundColor: theme.secondaryColor }}
+                >
+                  Secondary
+                </div>
+                <div 
+                  className="h-16 w-16 rounded-md shadow-sm flex items-center justify-center text-xs"
+                  style={{ 
+                    backgroundColor: theme.accentColor,
+                    color: ['#fff', '#f8f9fa', '#f1f3f5', '#e9ecef', '#dee2e6'].includes(theme.accentColor) 
+                      ? '#000' : '#fff'
+                  }}
+                >
+                  Accent
+                </div>
+                <div 
+                  className="h-16 w-16 rounded-md shadow-sm flex items-center justify-center text-xs"
+                  style={{ 
+                    backgroundColor: theme.backgroundColor,
+                    color: theme.textColor,
+                    border: '1px solid #e5e7eb'
+                  }}
+                >
+                  Background
+                </div>
+                <div 
+                  className="h-16 w-16 rounded-md shadow-sm flex items-center justify-center text-white text-xs"
+                  style={{ 
+                    backgroundColor: theme.textColor
+                  }}
+                >
+                  Text
+                </div>
+              </div>
+            </div>
           </div>
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
     </div>
   );
-}
+};
+
+export default ThemePreview;

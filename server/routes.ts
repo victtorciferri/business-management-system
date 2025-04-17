@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { db, pool } from "./db";
 import rateLimit from 'express-rate-limit';
 import { createPreference, processWebhook } from './mercadopago';
+import themeRoutes from './routes/themeRoutes';
 import { 
   insertUserSchema, 
   insertServiceSchema, 
@@ -90,6 +91,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Apply the business extractor middleware to all routes
   app.use(businessExtractor);
+  
+  // Register theme-related routes
+  app.use('/api/business', themeRoutes);
 
   /**
    * GET /api/business/theme

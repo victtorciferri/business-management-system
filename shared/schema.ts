@@ -560,3 +560,49 @@ export const insertCustomerAccessTokenSchema = createInsertSchema(customerAccess
 
 export type CustomerAccessToken = typeof customerAccessTokens.$inferSelect;
 export type InsertCustomerAccessToken = z.infer<typeof insertCustomerAccessTokenSchema>;
+
+// Theme schema for storing business themes
+export const themes = pgTable("themes", {
+  id: serial("id").primaryKey(),
+  businessId: integer("business_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  businessSlug: text("business_slug").notNull(),
+  name: text("name").notNull().default("Default Theme"),
+  isActive: boolean("is_active").default(true),
+  isDefault: boolean("is_default").default(false),
+  // Theme properties
+  primaryColor: text("primary_color").default("#4f46e5"),
+  secondaryColor: text("secondary_color").default("#06b6d4"),
+  accentColor: text("accent_color").default("#f59e0b"),
+  textColor: text("text_color").default("#111827"),
+  backgroundColor: text("background_color").default("#ffffff"),
+  fontFamily: text("font_family").default("Inter, sans-serif"),
+  borderRadius: integer("border_radius").default(8),
+  spacing: integer("spacing").default(16),
+  buttonStyle: text("button_style").default("default"),
+  cardStyle: text("card_style").default("default"),
+  appearance: text("appearance").default("system"),
+  variant: text("variant").default("professional"),
+  // Advanced theme properties (can be extended as needed)
+  colorPalette: jsonb("color_palette").$type<string[]>(),
+  headerStyle: text("header_style").default("standard"),
+  footerStyle: text("footer_style").default("standard"),
+  // Metadata
+  logoImageUrl: text("logo_image_url"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    businessIdIdx: index("themes_business_id_idx").on(table.businessId),
+    businessSlugIdx: index("themes_business_slug_idx").on(table.businessSlug),
+    businessActiveIdx: index("themes_business_active_idx").on(table.businessId, table.isActive),
+  };
+});
+
+export const insertThemeSchema = createInsertSchema(themes).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type ThemeEntity = typeof themes.$inferSelect;
+export type InsertThemeEntity = z.infer<typeof insertThemeSchema>;

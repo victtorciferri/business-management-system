@@ -1,171 +1,159 @@
-import { Router, Request, Response } from 'express';
+import express, { Router, Request, Response } from 'express';
 import { db } from '../db';
 import { users, themes } from '@shared/schema';
-import { eq } from 'drizzle-orm';
-import { z } from 'zod';
-import { convertLegacyThemeSettings, convertToLegacyThemeSettings } from '../utils/themeUtils';
+import { eq, desc } from 'drizzle-orm';
+import { storage } from '../storage';
+import { convertLegacyThemeToTheme, convertThemeToLegacyTheme } from '../utils/themeUtils';
+import { defaultTheme } from '@shared/config';
 
+// Create a router instance
 const router = Router();
 
-// Theme validation schema
-const themeSchema = z.object({
-  id: z.number().optional(),
-  businessId: z.number(),
-  name: z.string().min(1).max(100),
-  primaryColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/),
-  secondaryColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/),
-  accentColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/),
-  backgroundColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/),
-  textColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/),
-  fontFamily: z.string(),
-  headingFontFamily: z.string().optional(),
-  fontSize: z.string().optional(),
-  lineHeight: z.string().optional(),
-  borderRadius: z.string(),
-  spacing: z.string(),
-  variant: z.enum(['professional', 'tint', 'vibrant', 'custom']),
-  appearance: z.enum(['light', 'dark', 'system']),
-  customCSS: z.string().optional(),
-  createdAt: z.date().optional(),
-  updatedAt: z.date().optional(),
-});
-
-// Get theme by business ID
-router.get('/:businessId/theme', async (req: Request, res: Response) => {
+/**
+ * GET /api/business/theme
+ * Get the current theme for the authenticated business
+ */
+router.get('/theme', async (req: Request, res: Response) => {
   try {
-    const businessId = parseInt(req.params.businessId);
-    
-    if (isNaN(businessId)) {
-      return res.status(400).json({ message: 'Invalid business ID' });
-    }
-    
-    // Check if the business exists
-    const business = await db.select().from(users).where(eq(users.id, businessId)).limit(1);
-    
-    if (business.length === 0) {
-      return res.status(404).json({ message: 'Business not found' });
-    }
-    
-    // Get the theme
-    const themeResult = await db.select().from(themes).where(eq(themes.businessId, businessId)).limit(1);
-    
-    if (themeResult.length === 0) {
-      // If no theme is found, check if there are legacy theme settings
-      if (business[0].theme_settings) {
-        // Convert legacy theme settings to new theme format
-        const convertedTheme = convertLegacyThemeSettings(business[0].theme_settings, businessId);
-        return res.json(convertedTheme);
-      }
-      
-      return res.status(404).json({ message: 'Theme not found' });
-    }
-    
-    return res.json(themeResult[0]);
-  } catch (error) {
-    console.error('Error fetching theme:', error);
-    return res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// Get theme by business slug
-router.get('/slug/:slug/theme', async (req: Request, res: Response) => {
-  try {
-    const { slug } = req.params;
-    
-    // Find the business by slug
-    const business = await db.select().from(users).where(eq(users.businessSlug, slug)).limit(1);
-    
-    if (business.length === 0) {
-      return res.status(404).json({ message: 'Business not found' });
-    }
-    
-    const businessId = business[0].id;
-    
-    // Get the theme
-    const themeResult = await db.select().from(themes).where(eq(themes.businessId, businessId)).limit(1);
-    
-    if (themeResult.length === 0) {
-      // If no theme is found, check if there are legacy theme settings
-      if (business[0].theme_settings) {
-        // Convert legacy theme settings to new theme format
-        const convertedTheme = convertLegacyThemeSettings(business[0].theme_settings, businessId);
-        return res.json(convertedTheme);
-      }
-      
-      return res.status(404).json({ message: 'Theme not found' });
-    }
-    
-    return res.json(themeResult[0]);
-  } catch (error) {
-    console.error('Error fetching theme by slug:', error);
-    return res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// Save or update theme
-router.post('/theme', async (req: Request, res: Response) => {
-  try {
-    // Check if user is authenticated and has permissions
-    if (!req.user) {
+    if (!req.session.user) {
       return res.status(401).json({ message: 'Not authenticated' });
     }
-    
-    const userId = (req.user as any).id;
-    
-    // Parse and validate the theme data
-    const themeData = themeSchema.parse(req.body);
-    
-    // Make sure the user can only modify their own theme
-    if (themeData.businessId !== userId) {
-      return res.status(403).json({ message: 'Not authorized to modify this theme' });
+
+    // Get the business ID from the session
+    const businessId = req.session.user.id;
+
+    // First try to get an active theme from the themes table
+    let themeResult;
+    try {
+      themeResult = await db.select().from(themes)
+        .where(eq(themes.businessId, businessId))
+        .where(eq(themes.isActive, true))
+        .orderBy(desc(themes.updatedAt))
+        .limit(1);
+    } catch (error) {
+      console.error('Error fetching theme from database:', error);
+      // If themes table doesn't exist yet or other DB error, fall back to the user's theme setting
     }
-    
-    // Check if the theme already exists
-    const existingTheme = await db.select().from(themes)
-      .where(eq(themes.businessId, themeData.businessId))
-      .limit(1);
-    
-    let savedTheme;
-    
-    if (existingTheme.length === 0) {
-      // Create a new theme
-      savedTheme = await db.insert(themes).values({
-        ...themeData,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }).returning();
+
+    if (themeResult && themeResult.length > 0) {
+      // Return the active theme from the themes table
+      res.json({ theme: themeResult[0] });
     } else {
-      // Update existing theme
-      savedTheme = await db.update(themes)
-        .set({
-          ...themeData,
-          updatedAt: new Date(),
-        })
-        .where(eq(themes.id, existingTheme[0].id))
-        .returning();
+      // Get the user's theme settings from the users table
+      const user = await storage.getUser(businessId);
+      if (!user) {
+        return res.status(404).json({ message: 'Business not found' });
+      }
+
+      // Return the user's theme settings from the legacy format if available,
+      // otherwise return the new theme format, or default theme as fallback
+      if (user.themeSettings) {
+        // Convert legacy theme settings to new theme format
+        const theme = convertLegacyThemeToTheme(user.themeSettings);
+        res.json({ theme });
+      } else if (user.theme) {
+        res.json({ theme: user.theme });
+      } else {
+        res.json({ theme: defaultTheme });
+      }
     }
-    
-    // Also update the legacy theme_settings field in the users table for backward compatibility
-    const legacyThemeSettings = convertToLegacyThemeSettings(themeData);
-    
+  } catch (error) {
+    console.error('Error getting theme:', error);
+    res.status(500).json({ message: 'Failed to get theme' });
+  }
+});
+
+/**
+ * POST /api/business/theme
+ * Update the theme for the authenticated business
+ */
+router.post('/theme', async (req: Request, res: Response) => {
+  try {
+    if (!req.session.user) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+
+    // Get the business ID from the session
+    const businessId = req.session.user.id;
+    const theme = req.body.theme;
+
+    if (!theme) {
+      return res.status(400).json({ message: 'Theme data is required' });
+    }
+
+    // Update both new theme format and legacy theme settings for backward compatibility
+    const legacyThemeSettings = convertThemeToLegacyTheme(theme);
+
+    try {
+      // Update or insert theme into themes table
+      const existingTheme = await db.select().from(themes)
+        .where(eq(themes.businessId, businessId))
+        .where(eq(themes.isActive, true))
+        .limit(1);
+
+      if (existingTheme && existingTheme.length > 0) {
+        // Update existing theme
+        await db.update(themes)
+          .set({
+            ...theme,
+            updatedAt: new Date()
+          })
+          .where(eq(themes.id, existingTheme[0].id));
+      } else {
+        // Insert new theme
+        await db.insert(themes).values({
+          businessId,
+          businessSlug: req.session.user.businessSlug || '',
+          ...theme,
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+      }
+    } catch (dbError) {
+      console.error('Error updating themes table:', dbError);
+      // Continue to update legacy theme settings even if themes table update fails
+    }
+
+    // Always update the legacy theme settings in the users table for backward compatibility
     await db.update(users)
       .set({
-        theme_settings: legacyThemeSettings,
+        themeSettings: legacyThemeSettings,
+        theme: theme
       })
-      .where(eq(users.id, themeData.businessId));
-    
-    return res.json(savedTheme[0]);
+      .where(eq(users.id, businessId));
+
+    // Return the updated theme
+    res.json({ 
+      theme,
+      message: 'Theme updated successfully' 
+    });
   } catch (error) {
-    console.error('Error saving theme:', error);
+    console.error('Error updating theme:', error);
+    res.status(500).json({ message: 'Failed to update theme' });
+  }
+});
+
+/**
+ * GET /api/business/theme-presets
+ * Get a list of theme presets for different industries
+ */
+router.get('/theme-presets', (_req: Request, res: Response) => {
+  try {
+    // Import theme presets from the shared module
+    const { themePresets, industryPresets } = require('../../shared/themePresets');
     
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ 
-        message: 'Invalid theme data', 
-        errors: error.errors 
-      });
-    }
-    
-    return res.status(500).json({ message: 'Internal server error' });
+    // Return theme presets
+    res.json({ 
+      themePresets,
+      industryPresets
+    });
+  } catch (error) {
+    console.error('Error loading theme presets:', error);
+    res.status(500).json({ 
+      error: 'Failed to load theme presets',
+      message: 'An error occurred while loading theme presets.' 
+    });
   }
 });
 

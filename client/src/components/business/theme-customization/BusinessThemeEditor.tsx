@@ -1,227 +1,251 @@
 import React, { useState, useEffect } from 'react';
-import { useToast } from "@/hooks/use-toast";
-import { useTheme, Theme } from "@/contexts/ThemeContext";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Slider } from "@/components/ui/slider";
-import { Separator } from "@/components/ui/separator";
-import { AlertTriangle, Save, RefreshCw, Check } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import ColorPicker from "./ColorPicker";
-import ThemePreview from "./ThemePreview";
-import ColorExtractor from "./ColorExtractor";
+import { useTheme } from '@/contexts/ThemeContext';
+import { Theme } from '@shared/config';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card } from '@/components/ui/card';
+import { Slider } from '@/components/ui/slider';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
+import { Paintbrush, LayoutGrid, Undo2, Save, Eye, Palette, EyeOff, Settings2, Heart } from 'lucide-react';
 
-// Define font options
-const FONT_OPTIONS = [
-  { value: "Inter", label: "Inter (Sans-serif)" },
-  { value: "Roboto", label: "Roboto (Sans-serif)" },
-  { value: "Poppins", label: "Poppins (Modern)" },
-  { value: "Lora", label: "Lora (Serif)" },
-  { value: "Montserrat", label: "Montserrat (Clean)" },
-  { value: "Open Sans", label: "Open Sans (Readable)" },
-  { value: "Playfair Display", label: "Playfair Display (Elegant)" },
-  { value: "Raleway", label: "Raleway (Light)" },
-  { value: "Source Sans Pro", label: "Source Sans Pro (Clear)" },
-  { value: "Nunito", label: "Nunito (Rounded)" }
-];
+import ThemePreview from './ThemePreview';
+import ColorPicker from './ColorPicker';
+import ColorExtractor from './ColorExtractor';
+import ThemePresetSelector from './ThemePresetSelector';
 
 interface BusinessThemeEditorProps {
-  businessId?: number;
-  initialTheme?: Theme;
-  onSave?: (theme: Theme) => void;
-  onCancel?: () => void;
-  readOnly?: boolean;
+  className?: string;
 }
 
-export function BusinessThemeEditor({
-  businessId,
-  initialTheme,
-  onSave,
-  onCancel,
-  readOnly = false
-}: BusinessThemeEditorProps) {
-  const { toast } = useToast();
-  const { businessTheme, updateBusinessTheme } = useTheme();
+/**
+ * BusinessThemeEditor Component
+ * 
+ * The main editor for customizing the business theme.
+ * It combines different customization components with a live preview.
+ */
+export const BusinessThemeEditor: React.FC<BusinessThemeEditorProps> = ({
+  className
+}) => {
+  const { 
+    theme, 
+    updateTheme, 
+    saveTheme, 
+    resetTheme, 
+    hasUnsavedChanges, 
+    isSaving,
+    isPreviewMode,
+    setPreviewMode
+  } = useTheme();
   
-  // Use initialTheme if provided, otherwise use the current theme from context
-  const [theme, setTheme] = useState<Theme>(initialTheme || businessTheme);
-  const [previewTheme, setPreviewTheme] = useState<Theme>(theme);
-  const [isDirty, setIsDirty] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("colors");
-  
-  // Reset to the current theme when initialTheme changes (e.g. from API)
-  useEffect(() => {
-    if (initialTheme) {
-      setTheme(initialTheme);
-      setPreviewTheme(initialTheme);
-      setIsDirty(false);
-    }
-  }, [initialTheme]);
-  
-  // Update a single theme property and mark as dirty
-  const updateThemeProperty = <K extends keyof Theme>(key: K, value: Theme[K]) => {
-    setTheme(prevTheme => {
-      const newTheme = { ...prevTheme, [key]: value };
-      setPreviewTheme(newTheme);
-      setIsDirty(true);
-      return newTheme;
-    });
+  const [activeTab, setActiveTab] = useState('colors');
+  const [showPreviewControls, setShowPreviewControls] = useState(false);
+
+  // Helper function to handle numeric slider changes
+  const handleNumericChange = (field: keyof Theme, value: number[]) => {
+    updateTheme({ [field]: value[0] });
   };
-  
-  // Update multiple theme properties at once
-  const updateThemeProperties = (updates: Partial<Theme>) => {
-    setTheme(prevTheme => {
-      const newTheme = { ...prevTheme, ...updates };
-      setPreviewTheme(newTheme);
-      setIsDirty(true);
-      return newTheme;
-    });
+
+  // Font families available for selection
+  const fontFamilies = [
+    'Inter, system-ui, sans-serif',
+    'Poppins, sans-serif',
+    'Playfair Display, serif',
+    'Montserrat, sans-serif',
+    'Lato, sans-serif',
+    'Roboto, sans-serif',
+    'Open Sans, sans-serif',
+    'Manrope, sans-serif',
+    'Plus Jakarta Sans, sans-serif',
+    'Nunito, sans-serif',
+  ];
+
+  // Available button styles
+  const buttonStyles = [
+    { value: 'default', label: 'Default' },
+    { value: 'rounded', label: 'Rounded' },
+    { value: 'square', label: 'Square' },
+    { value: 'pill', label: 'Pill' }
+  ];
+
+  // Available card styles
+  const cardStyles = [
+    { value: 'default', label: 'Default' },
+    { value: 'elevated', label: 'Elevated' },
+    { value: 'flat', label: 'Flat' },
+    { value: 'bordered', label: 'Bordered' }
+  ];
+
+  // Available appearance modes
+  const appearanceModes = [
+    { value: 'light', label: 'Light Mode' },
+    { value: 'dark', label: 'Dark Mode' },
+    { value: 'system', label: 'System Default' }
+  ];
+
+  // Toggle preview mode
+  const togglePreviewMode = () => {
+    setPreviewMode(!isPreviewMode);
   };
-  
-  // Extract colors from an uploaded image
-  const handleColorExtraction = (colors: string[]) => {
-    if (colors.length >= 2) {
-      updateThemeProperties({
-        primary: colors[0],
-        secondary: colors[1],
-        ...(colors[2] && { text: colors[2] })
-      });
-      
-      toast({
-        title: "Colors extracted",
-        description: "Brand colors have been applied from your logo.",
-      });
-    }
+
+  // Handle colors extracted from logo
+  const handleColorsExtracted = (colors: Partial<Theme>) => {
+    updateTheme(colors);
   };
-  
-  // Reset to the current business theme
-  const handleReset = () => {
-    setTheme(businessTheme);
-    setPreviewTheme(businessTheme);
-    setIsDirty(false);
-    
-    toast({
-      title: "Theme reset",
-      description: "All changes have been discarded.",
-    });
-  };
-  
-  // Save theme changes
-  const handleSave = async () => {
-    setIsSaving(true);
-    setSaveError(null);
-    
-    try {
-      // If onSave callback is provided, use it
-      if (onSave) {
-        await onSave(theme);
-      } 
-      // Otherwise update via the theme context
-      else {
-        updateBusinessTheme(theme);
-      }
-      
-      setIsDirty(false);
-      
-      toast({
-        title: "Theme saved",
-        description: "Your theme changes have been applied.",
-      });
-    } catch (error) {
-      console.error("Failed to save theme:", error);
-      setSaveError("Failed to save theme. Please try again.");
-      
-      toast({
-        variant: "destructive",
-        title: "Error saving theme",
-        description: "There was a problem saving your theme changes.",
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-  
+
   return (
-    <div className="business-theme-editor w-full">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Editor sidebar */}
-        <div className="lg:col-span-5 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Theme Editor</CardTitle>
-              <CardDescription>
-                Customize the look and feel of your business site
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="mb-4">
-                  <TabsTrigger value="colors">Colors</TabsTrigger>
-                  <TabsTrigger value="typography">Typography</TabsTrigger>
-                  <TabsTrigger value="layout">Layout</TabsTrigger>
-                  <TabsTrigger value="advanced">Advanced</TabsTrigger>
-                </TabsList>
-                
-                {/* Colors tab */}
-                <TabsContent value="colors" className="space-y-6">
+    <div className={cn("flex flex-col lg:flex-row gap-6", className)}>
+      {/* Editor Panel */}
+      <Card className={cn(
+        "flex-1 overflow-hidden transition-all duration-300",
+        isPreviewMode ? "lg:w-0 lg:flex-none lg:opacity-0 lg:invisible" : "lg:w-1/2 lg:opacity-100 lg:visible"
+      )}>
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold">Theme Editor</h2>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={resetTheme}
+                disabled={!hasUnsavedChanges || isSaving}
+              >
+                <Undo2 className="mr-2 h-4 w-4" />
+                Reset
+              </Button>
+              <Button 
+                variant="default" 
+                size="sm" 
+                onClick={saveTheme}
+                disabled={!hasUnsavedChanges || isSaving}
+              >
+                <Save className="mr-2 h-4 w-4" />
+                {isSaving ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
+          </div>
+          
+          {hasUnsavedChanges && (
+            <Alert className="mb-4">
+              <AlertDescription>
+                You have unsaved changes. Click 'Save Changes' to apply them.
+              </AlertDescription>
+            </Alert>
+          )}
+          
+          <Tabs 
+            value={activeTab} 
+            onValueChange={setActiveTab}
+            className="w-full"
+          >
+            <TabsList className="mb-6 w-full">
+              <TabsTrigger value="presets" className="flex items-center">
+                <Palette className="mr-2 h-4 w-4" />
+                Presets
+              </TabsTrigger>
+              <TabsTrigger value="colors" className="flex items-center">
+                <Paintbrush className="mr-2 h-4 w-4" />
+                Colors
+              </TabsTrigger>
+              <TabsTrigger value="layout" className="flex items-center">
+                <LayoutGrid className="mr-2 h-4 w-4" />
+                Layout
+              </TabsTrigger>
+              <TabsTrigger value="advanced" className="flex items-center">
+                <Settings2 className="mr-2 h-4 w-4" />
+                Advanced
+              </TabsTrigger>
+            </TabsList>
+            
+            <ScrollArea className="h-[600px] pr-4">
+              <TabsContent value="presets" className="mt-0">
+                <ThemePresetSelector 
+                  onSelectPreset={(preset) => {
+                    updateTheme(preset);
+                  }}
+                />
+              </TabsContent>
+              
+              <TabsContent value="colors" className="space-y-6 mt-0">
+                <div>
+                  <h3 className="text-base font-semibold mb-4">Theme Colors</h3>
+                  
                   <div className="space-y-4">
-                    <ColorExtractor onColorsExtracted={handleColorExtraction} />
-                    
-                    <Separator className="my-4" />
-                    
                     <ColorPicker
                       label="Primary Color"
-                      description="Main brand color used for buttons, headings, and accents"
-                      value={theme.primary}
-                      onChange={(color) => updateThemeProperty("primary", color)}
+                      color={theme.primaryColor}
+                      onChange={(color) => updateTheme({ primaryColor: color })}
+                      description="The main color of your brand, used for primary buttons and elements"
                     />
                     
                     <ColorPicker
                       label="Secondary Color"
-                      description="Used for secondary elements and highlights"
-                      value={theme.secondary}
-                      onChange={(color) => updateThemeProperty("secondary", color)}
+                      color={theme.secondaryColor}
+                      onChange={(color) => updateTheme({ secondaryColor: color })}
+                      description="The supporting color used for secondary elements and accents"
                     />
                     
                     <ColorPicker
-                      label="Text Color"
-                      description="Main text color"
-                      value={theme.text}
-                      onChange={(color) => updateThemeProperty("text", color)}
+                      label="Accent Color"
+                      color={theme.accentColor}
+                      onChange={(color) => updateTheme({ accentColor: color })}
+                      description="An additional highlight color for special elements and emphasis"
                     />
                     
                     <ColorPicker
                       label="Background Color"
-                      description="Main background color"
-                      value={theme.background}
-                      onChange={(color) => updateThemeProperty("background", color)}
+                      color={theme.backgroundColor}
+                      onChange={(color) => updateTheme({ backgroundColor: color })}
+                      description="The main background color of your site"
+                    />
+                    
+                    <ColorPicker
+                      label="Text Color"
+                      color={theme.textColor}
+                      onChange={(color) => updateTheme({ textColor: color })}
+                      description="The primary text color that will be used throughout your site"
                     />
                   </div>
-                </TabsContent>
+                </div>
                 
-                {/* Typography tab */}
-                <TabsContent value="typography" className="space-y-6">
+                <Separator />
+                
+                <ColorExtractor onSelectColors={handleColorsExtracted} />
+              </TabsContent>
+              
+              <TabsContent value="layout" className="space-y-6 mt-0">
+                <div>
+                  <h3 className="text-base font-semibold mb-4">Layout & Typography</h3>
+                  
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="fontFamily">Font Family</Label>
-                      <Select 
-                        value={theme.font} 
-                        onValueChange={(value) => updateThemeProperty("font", value)}
+                      <div className="flex justify-between">
+                        <Label htmlFor="fontFamily">Font Family</Label>
+                        <span className="text-xs text-muted-foreground">
+                          {theme.fontFamily.split(',')[0]}
+                        </span>
+                      </div>
+                      <Select
+                        value={theme.fontFamily}
+                        onValueChange={(value) => updateTheme({ fontFamily: value })}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger id="fontFamily" className="w-full">
                           <SelectValue placeholder="Select a font" />
                         </SelectTrigger>
                         <SelectContent>
-                          {FONT_OPTIONS.map(font => (
-                            <SelectItem key={font.value} value={font.value}>
-                              <span style={{ fontFamily: font.value }}>{font.label}</span>
+                          {fontFamilies.map((font) => (
+                            <SelectItem
+                              key={font}
+                              value={font}
+                              style={{ fontFamily: font }}
+                            >
+                              {font.split(',')[0]}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -229,194 +253,231 @@ export function BusinessThemeEditor({
                     </div>
                     
                     <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="appearance">Dark Mode</Label>
-                        <Select 
-                          value={theme.appearance} 
-                          onValueChange={(value) => updateThemeProperty("appearance", value as "light" | "dark" | "system")}
-                        >
-                          <SelectTrigger className="w-36">
-                            <SelectValue placeholder="Select mode" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="light">Light Mode</SelectItem>
-                            <SelectItem value="dark">Dark Mode</SelectItem>
-                            <SelectItem value="system">System Preference</SelectItem>
-                          </SelectContent>
-                        </Select>
+                      <div className="flex justify-between">
+                        <Label htmlFor="borderRadius">Border Radius</Label>
+                        <span className="text-xs text-muted-foreground">{theme.borderRadius}px</span>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        Choose light mode, dark mode, or follow system preference
-                      </p>
-                    </div>
-                  </div>
-                </TabsContent>
-                
-                {/* Layout tab */}
-                <TabsContent value="layout" className="space-y-6">
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="borderRadius">Border Radius</Label>
-                      <div className="grid grid-cols-2 gap-4">
-                        <Slider 
-                          defaultValue={[parseFloat(theme.borderRadius || "0.375") * 16]} 
-                          max={16} 
-                          step={1}
-                          onValueChange={(values) => {
-                            const value = values[0];
-                            updateThemeProperty("borderRadius", `${value / 16}rem`);
-                          }}
-                        />
-                        <Input 
-                          value={theme.borderRadius} 
-                          onChange={(e) => updateThemeProperty("borderRadius", e.target.value)}
-                          className="w-24 font-mono"
-                        />
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Adjust the roundness of corners (0 for square, 0.5rem for rounded)
-                      </p>
+                      <Slider
+                        id="borderRadius"
+                        min={0}
+                        max={24}
+                        step={1}
+                        value={[theme.borderRadius]}
+                        onValueChange={(value) => handleNumericChange('borderRadius', value)}
+                      />
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="spacing">Base Spacing</Label>
-                      <div className="grid grid-cols-2 gap-4">
-                        <Slider 
-                          defaultValue={[parseFloat(theme.spacing || "1")]} 
-                          max={2} 
-                          min={0.5}
-                          step={0.125}
-                          onValueChange={(values) => {
-                            const value = values[0];
-                            updateThemeProperty("spacing", `${value}rem`);
-                          }}
-                        />
-                        <Input 
-                          value={theme.spacing} 
-                          onChange={(e) => updateThemeProperty("spacing", e.target.value)}
-                          className="w-24 font-mono"
-                        />
+                      <div className="flex justify-between">
+                        <Label htmlFor="spacing">Spacing</Label>
+                        <span className="text-xs text-muted-foreground">{theme.spacing}px</span>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        Adjust the default spacing between elements
-                      </p>
+                      <Slider
+                        id="spacing"
+                        min={4}
+                        max={32}
+                        step={2}
+                        value={[theme.spacing]}
+                        onValueChange={(value) => handleNumericChange('spacing', value)}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="buttonStyle">Button Style</Label>
+                      <Select
+                        value={theme.buttonStyle || 'default'}
+                        onValueChange={(value) => 
+                          updateTheme({ 
+                            buttonStyle: value as 'default' | 'rounded' | 'square' | 'pill' 
+                          })
+                        }
+                      >
+                        <SelectTrigger id="buttonStyle" className="w-full">
+                          <SelectValue placeholder="Button style" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {buttonStyles.map((style) => (
+                            <SelectItem key={style.value} value={style.value}>
+                              {style.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="cardStyle">Card Style</Label>
+                      <Select
+                        value={theme.cardStyle || 'default'}
+                        onValueChange={(value) => 
+                          updateTheme({ 
+                            cardStyle: value as 'default' | 'elevated' | 'flat' | 'bordered' 
+                          })
+                        }
+                      >
+                        <SelectTrigger id="cardStyle" className="w-full">
+                          <SelectValue placeholder="Card style" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {cardStyles.map((style) => (
+                            <SelectItem key={style.value} value={style.value}>
+                              {style.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
-                </TabsContent>
-                
-                {/* Advanced tab */}
-                <TabsContent value="advanced" className="space-y-6">
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="advanced" className="space-y-6 mt-0">
+                <div>
+                  <h3 className="text-base font-semibold mb-4">Advanced Settings</h3>
+                  
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="themeName">Theme Name</Label>
-                      <Input 
-                        id="themeName" 
-                        value={theme.name} 
-                        onChange={(e) => updateThemeProperty("name", e.target.value)}
+                      <Input
+                        id="themeName"
+                        value={theme.name}
+                        onChange={(e) => updateTheme({ name: e.target.value })}
+                        placeholder="My Custom Theme"
                       />
-                      <p className="text-sm text-muted-foreground">
-                        Give your theme a custom name
-                      </p>
-                    </div>
-                    
-                    {/* These features are planned for future implementation
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <Switch 
-                          id="enableAnimations" 
-                          checked={false} 
-                          onCheckedChange={(checked) => {}} 
-                        />
-                        <Label htmlFor="enableAnimations">Enable animations</Label>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Toggle animations and transitions
-                      </p>
                     </div>
                     
                     <div className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <Switch 
-                          id="reducedMotion" 
-                          checked={false} 
-                          onCheckedChange={(checked) => {}} 
-                        />
-                        <Label htmlFor="reducedMotion">Reduced motion</Label>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Enable for users who prefer reduced motion
+                      <Label htmlFor="appearance">Appearance Mode</Label>
+                      <Select
+                        value={theme.appearance}
+                        onValueChange={(value) => 
+                          updateTheme({ 
+                            appearance: value as 'light' | 'dark' | 'system' 
+                          })
+                        }
+                      >
+                        <SelectTrigger id="appearance" className="w-full">
+                          <SelectValue placeholder="Appearance mode" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {appearanceModes.map((mode) => (
+                            <SelectItem key={mode.value} value={mode.value}>
+                              {mode.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="variant">Theme Variant</Label>
+                      <Select
+                        value={theme.variant || 'professional'}
+                        onValueChange={(value) => 
+                          updateTheme({ 
+                            variant: value as 'professional' | 'tint' | 'vibrant' | 'custom' 
+                          })
+                        }
+                      >
+                        <SelectTrigger id="variant" className="w-full">
+                          <SelectValue placeholder="Theme variant" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="professional">Professional</SelectItem>
+                          <SelectItem value="tint">Tint</SelectItem>
+                          <SelectItem value="vibrant">Vibrant</SelectItem>
+                          <SelectItem value="custom">Custom</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Affects how color intensities are applied throughout the interface
                       </p>
                     </div>
-                    */}
+                    
+                    <div className="space-y-4 pt-2">
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="customCSS">Custom CSS</Label>
+                          <p className="text-xs text-muted-foreground">
+                            Add custom CSS rules to further customize your theme
+                          </p>
+                        </div>
+                      </div>
+                      <textarea
+                        id="customCSS"
+                        value={theme.customCSS || ''}
+                        onChange={(e) => updateTheme({ customCSS: e.target.value })}
+                        className="w-full min-h-[120px] rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm"
+                        placeholder="/* Custom CSS rules */"
+                      />
+                    </div>
                   </div>
-                </TabsContent>
-              </Tabs>
-              
-              {/* Action buttons */}
-              {!readOnly && (
-                <div className="mt-6 flex justify-between">
-                  <Button 
-                    variant="outline" 
-                    onClick={handleReset}
-                    disabled={!isDirty || isSaving}
-                  >
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Reset
-                  </Button>
-                  
-                  <Button 
-                    onClick={handleSave} 
-                    disabled={!isDirty || isSaving}
-                  >
-                    {isSaving ? (
-                      <>Saving...</>
-                    ) : (
-                      <>
-                        <Save className="mr-2 h-4 w-4" />
-                        Save Changes
-                      </>
-                    )}
-                  </Button>
                 </div>
-              )}
-              
-              {/* Save error message */}
-              {saveError && (
-                <Alert variant="destructive" className="mt-4">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription>{saveError}</AlertDescription>
-                </Alert>
-              )}
-              
-              {/* Save success message */}
-              {!isDirty && !saveError && !isSaving && (
-                <Alert className="mt-4 bg-green-50 border-green-200">
-                  <Check className="h-4 w-4 text-green-600" />
-                  <AlertDescription className="text-green-600">Theme saved successfully.</AlertDescription>
-                </Alert>
-              )}
-            </CardContent>
-          </Card>
+              </TabsContent>
+            </ScrollArea>
+          </Tabs>
         </div>
-        
-        {/* Preview panel */}
-        <div className="lg:col-span-7">
-          <Card>
-            <CardHeader>
-              <CardTitle>Live Preview</CardTitle>
-              <CardDescription>
-                See how your theme will look across different elements
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ThemePreview 
-                previewTheme={previewTheme} 
-                showControls={false} 
-              />
-            </CardContent>
-          </Card>
+      </Card>
+      
+      {/* Preview Panel */}
+      <Card className={cn(
+        "flex-1 overflow-hidden transition-all duration-300",
+        isPreviewMode ? "w-full" : "lg:w-1/2"
+      )}>
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold">Theme Preview</h2>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowPreviewControls(!showPreviewControls)}
+              >
+                <Settings2 className="mr-2 h-4 w-4" />
+                {showPreviewControls ? 'Hide Controls' : 'Controls'}
+              </Button>
+              <Button 
+                variant={isPreviewMode ? "default" : "outline"}
+                size="sm" 
+                onClick={togglePreviewMode}
+              >
+                {isPreviewMode ? (
+                  <>
+                    <EyeOff className="mr-2 h-4 w-4" />
+                    Exit Full Preview
+                  </>
+                ) : (
+                  <>
+                    <Eye className="mr-2 h-4 w-4" />
+                    Full Preview
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+          
+          <ThemePreview 
+            theme={theme} 
+            className="w-full" 
+          />
+          
+          {showPreviewControls && (
+            <div className="mt-6 flex justify-end">
+              <Button 
+                variant="default"
+                size="sm" 
+                onClick={saveTheme}
+                disabled={!hasUnsavedChanges || isSaving}
+              >
+                <Heart className="mr-2 h-4 w-4" />
+                {isSaving ? 'Saving...' : 'Save This Theme'}
+              </Button>
+            </div>
+          )}
         </div>
-      </div>
+      </Card>
     </div>
   );
-}
+};
+
+export default BusinessThemeEditor;

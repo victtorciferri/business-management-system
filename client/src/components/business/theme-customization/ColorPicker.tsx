@@ -1,200 +1,183 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Copy, Check } from 'lucide-react';
-import { 
-  Popover, 
-  PopoverContent, 
-  PopoverTrigger 
-} from "@/components/ui/popover";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import React, { useState, useEffect, useRef } from 'react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
+import { CheckIcon, CopyIcon, PaletteIcon } from 'lucide-react';
 
 interface ColorPickerProps {
-  value: string;
+  label: string;
+  color: string;
   onChange: (color: string) => void;
-  label?: string;
+  className?: string;
   description?: string;
   presetColors?: string[];
 }
 
-export default function ColorPicker({
-  value,
-  onChange,
+/**
+ * ColorPicker Component
+ * 
+ * A color picker component with hex input and visual color selection.
+ * Includes preset colors for quick selection and color value copy functionality.
+ */
+export function ColorPicker({
   label,
+  color,
+  onChange,
+  className,
   description,
   presetColors = [
-    '#1E3A8A', // Blue
-    '#9333EA', // Purple
-    '#10B981', // Green
-    '#F59E0B', // Amber
-    '#EF4444', // Red
-    '#EC4899', // Pink
-    '#6B7280', // Gray
-    '#000000', // Black
+    '#111827', // Gray 900
+    '#1F2937', // Gray 800
+    '#374151', // Gray 700
+    '#4B5563', // Gray 600
+    '#6B7280', // Gray 500
+    '#9CA3AF', // Gray 400
+    '#D1D5DB', // Gray 300
+    '#E5E7EB', // Gray 200
+    '#F3F4F6', // Gray 100
+    '#F9FAFB', // Gray 50
     '#FFFFFF', // White
+    '#EF4444', // Red
+    '#F59E0B', // Amber
+    '#10B981', // Emerald
+    '#3B82F6', // Blue
+    '#6366F1', // Indigo
+    '#8B5CF6', // Violet
+    '#EC4899', // Pink
   ]
-}: ColorPickerProps) {
-  const [color, setColor] = useState(value || '#1E3A8A');
+}) {
+  const [currentColor, setCurrentColor] = useState(color);
+  const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Update local state when external value changes
+  // Sync with external color value
   useEffect(() => {
-    if (value) {
-      setColor(value);
-    }
-  }, [value]);
+    setCurrentColor(color);
+  }, [color]);
 
   // Handle color input change
   const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newColor = e.target.value;
-    setColor(newColor);
-    onChange(newColor);
-  };
-
-  // Handle hex input change
-  const handleHexChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let hex = e.target.value;
+    setCurrentColor(newColor);
     
-    // Ensure hex starts with #
-    if (!hex.startsWith('#')) {
-      hex = '#' + hex;
-    }
-    
-    // Basic hex validation
-    if (/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)) {
-      setColor(hex);
-      onChange(hex);
-    } else if (hex.length <= 7) {
-      // Allow typing but don't update parent until valid
-      setColor(hex);
+    // Only update parent if it's a valid hex color
+    if (/^#[0-9A-F]{6}$/i.test(newColor)) {
+      onChange(newColor);
     }
   };
 
-  // Handle color preset selection
-  const handlePresetClick = (presetColor: string) => {
-    setColor(presetColor);
+  // Handle color swatch click
+  const handleColorSwatchClick = (presetColor: string) => {
+    setCurrentColor(presetColor);
     onChange(presetColor);
+    setIsOpen(false);
   };
 
-  // Copy color to clipboard
-  const copyToClipboard = () => {
-    if (inputRef.current) {
-      navigator.clipboard.writeText(color);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+  // Handle copy color value
+  const handleCopyColor = () => {
+    navigator.clipboard.writeText(currentColor);
+    setCopied(true);
+    
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
     }
-  };
-
-  // Get contrasting text color for a background
-  const getContrastColor = (hexColor: string): string => {
-    // Remove # if present
-    hexColor = hexColor.replace('#', '');
     
-    // Convert to RGB
-    const r = parseInt(hexColor.substr(0, 2), 16);
-    const g = parseInt(hexColor.substr(2, 2), 16);
-    const b = parseInt(hexColor.substr(4, 2), 16);
-    
-    // Calculate luminance using YIQ formula
-    const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
-    
-    return (yiq >= 128) ? '#000000' : '#FFFFFF';
+    timeoutRef.current = setTimeout(() => {
+      setCopied(false);
+    }, 2000);
   };
 
   return (
-    <div className="color-picker">
-      {label && (
-        <div className="flex flex-col space-y-1.5 mb-2">
-          <Label>{label}</Label>
-          {description && (
-            <p className="text-sm text-muted-foreground">{description}</p>
-          )}
-        </div>
-      )}
-      
-      <div className="flex gap-2">
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className="w-[60px] h-[32px] p-0 border-2"
-              style={{ 
-                backgroundColor: color,
-                borderColor: getContrastColor(color),
-              }}
-            >
-              <span className="sr-only">Open color picker</span>
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent 
-            className="w-64 p-3"
-            side="right"
-            align="start"
+    <div className={cn("mb-4", className)}>
+      <div className="flex items-center justify-between mb-2">
+        <Label htmlFor={`color-${label.replace(/\s+/g, '-').toLowerCase()}`}>
+          {label}
+        </Label>
+        <div className="flex items-center">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 rounded-full mr-1"
+            onClick={handleCopyColor}
           >
-            <div className="flex flex-col gap-2">
-              <div className="flex gap-2">
-                <div
-                  className="w-12 h-12 rounded-md border"
-                  style={{ backgroundColor: color }}
-                />
-                <div className="space-y-1 flex-1">
-                  <div className="flex items-center gap-2">
-                    <Input
-                      ref={inputRef}
-                      type="text"
-                      value={color}
-                      onChange={handleHexChange}
-                      className="h-8 font-mono"
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={copyToClipboard}
-                    >
-                      {copied ? (
-                        <Check className="h-4 w-4" />
-                      ) : (
-                        <Copy className="h-4 w-4" />
+            {copied ? 
+              <CheckIcon className="h-3.5 w-3.5 text-green-500" /> : 
+              <CopyIcon className="h-3.5 w-3.5 text-muted-foreground" />
+            }
+            <span className="sr-only">Copy color value</span>
+          </Button>
+          
+          <Popover open={isOpen} onOpenChange={setIsOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="icon" className="h-7 w-7 p-0 border-2" style={{ backgroundColor: currentColor }}>
+                <PaletteIcon className="h-4 w-4 sr-only" />
+                <span className="sr-only">Open color picker</span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64">
+              <div className="mb-3">
+                <Label className="mb-2 block">Select Color</Label>
+                <div className="grid grid-cols-6 gap-2 mb-3">
+                  {presetColors.map((presetColor, index) => (
+                    <button
+                      key={`${presetColor}-${index}`}
+                      type="button"
+                      className={cn(
+                        "h-6 w-6 rounded-md border border-gray-200 flex items-center justify-center",
+                        currentColor.toLowerCase() === presetColor.toLowerCase() && "ring-2 ring-primary ring-offset-1"
                       )}
-                    </Button>
-                  </div>
+                      style={{ backgroundColor: presetColor }}
+                      onClick={() => handleColorSwatchClick(presetColor)}
+                    >
+                      {currentColor.toLowerCase() === presetColor.toLowerCase() && (
+                        <CheckIcon className="h-3 w-3 text-white" />
+                      )}
+                      <span className="sr-only">Select color {presetColor}</span>
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2">
                   <Input
-                    type="color"
-                    value={color}
+                    id={`color-${label.replace(/\s+/g, '-').toLowerCase()}`}
+                    type="text"
+                    value={currentColor}
                     onChange={handleColorChange}
-                    className="h-8"
+                    className="w-full font-mono"
+                    placeholder="#000000"
+                  />
+                  <input
+                    type="color"
+                    value={currentColor}
+                    onChange={(e) => {
+                      setCurrentColor(e.target.value);
+                      onChange(e.target.value);
+                    }}
+                    className="h-10 w-10 border-0 p-0 rounded overflow-hidden"
                   />
                 </div>
               </div>
-              
-              <div className="grid grid-cols-5 gap-1 mt-2">
-                {presetColors.map((presetColor) => (
-                  <button
-                    key={presetColor}
-                    className={`w-8 h-8 rounded-md border ${
-                      presetColor === color ? 'ring-2 ring-offset-1 ring-primary' : ''
-                    }`}
-                    style={{ backgroundColor: presetColor }}
-                    onClick={() => handlePresetClick(presetColor)}
-                    title={presetColor}
-                    type="button"
-                  />
-                ))}
-              </div>
-            </div>
-          </PopoverContent>
-        </Popover>
-        
-        <div className="flex-1">
-          <Input
-            value={color}
-            onChange={handleHexChange}
-            className="h-[32px] font-mono"
-          />
+            </PopoverContent>
+          </Popover>
         </div>
+      </div>
+      {description && (
+        <p className="text-sm text-muted-foreground mb-2">{description}</p>
+      )}
+      <div className="flex items-center">
+        <Input
+          id={`color-input-${label.replace(/\s+/g, '-').toLowerCase()}`}
+          type="text"
+          value={currentColor}
+          onChange={handleColorChange}
+          className="w-full font-mono"
+          placeholder="#000000"
+        />
       </div>
     </div>
   );
 }
+
+export default ColorPicker;
