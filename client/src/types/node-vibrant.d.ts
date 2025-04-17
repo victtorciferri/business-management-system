@@ -6,6 +6,7 @@ declare module 'node-vibrant' {
     population: number;
     bodyTextColor: string;
     titleTextColor: string;
+    getHex(): string;
   }
 
   interface Palette {
@@ -23,9 +24,5 @@ declare module 'node-vibrant' {
     getPalette(): Promise<Palette>;
   }
 
-  const Vibrant: {
-    from(src: string | Blob): VibrantStatic;
-  };
-
-  export default Vibrant;
+  export function from(src: string | Blob): VibrantStatic;
 }
