@@ -94,11 +94,35 @@ export async function updateThemeForBusiness(businessId: number, theme: Theme): 
     // Ensure we have a complete theme by merging with defaults
     const completeTheme = getEffectiveTheme(validatedTheme);
     
+    // Convert new theme format to legacy theme_settings format
+    const legacyThemeSettings = {
+      variant: 'professional',
+      cardStyle: 'default',
+      textColor: completeTheme.text,
+      appearance: completeTheme.appearance || 'light',
+      fontFamily: completeTheme.font ? `${completeTheme.font}, sans-serif` : 'Inter, sans-serif',
+      accentColor: completeTheme.secondary, // Use secondary as accent color
+      buttonStyle: 'default',
+      borderRadius: completeTheme.borderRadius ? parseInt(completeTheme.borderRadius) : 8,
+      primaryColor: completeTheme.primary,
+      secondaryColor: completeTheme.secondary,
+      backgroundColor: completeTheme.background
+    };
+    
+    console.log(`Updating theme for business ${businessId}:`);
+    console.log(`New theme format:`, completeTheme);
+    console.log(`Legacy theme_settings format:`, legacyThemeSettings);
+    
+    // Update both theme and theme_settings columns to ensure compatibility
     await db.execute(sql`
       UPDATE users
-      SET theme = ${JSON.stringify(completeTheme)}::jsonb
+      SET 
+        theme = ${JSON.stringify(completeTheme)}::jsonb,
+        theme_settings = ${JSON.stringify(legacyThemeSettings)}::jsonb
       WHERE id = ${businessId}
     `);
+    
+    console.log(`Successfully updated theme for business ${businessId}`);
   } catch (error) {
     console.error("Error updating theme for business:", error);
     throw new Error("Failed to update theme");
