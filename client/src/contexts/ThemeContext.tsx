@@ -1,7 +1,9 @@
 import { createContext, useContext, ReactNode, useState, useEffect } from "react";
 import { useBusinessContext } from "./BusinessContext";
+import { Theme as BusinessTheme } from "@shared/config";
+import { useQuery } from "@tanstack/react-query";
 
-// Define theme settings interface
+// Define theme settings interface for legacy theme settings
 export interface ThemeSettings {
   primaryColor: string;
   secondaryColor: string;
@@ -16,8 +18,17 @@ export interface ThemeSettings {
   // Add more theme properties as needed
 }
 
-// Default theme values (this is just a fallback, actual defaults come from BusinessConfig)
-const defaultTheme: ThemeSettings = {
+// New theme interface with direct color values
+export interface Theme {
+  primary: string;
+  secondary: string;
+  background: string;
+  text: string;
+  appearance?: "light" | "dark" | "system";
+}
+
+// Default theme values (this is just a fallback, actual defaults come from API)
+const defaultThemeSettings: ThemeSettings = {
   primaryColor: "indigo-600",
   secondaryColor: "gray-200",
   accentColor: "amber-500",
@@ -30,10 +41,21 @@ const defaultTheme: ThemeSettings = {
   appearance: "system",
 };
 
+// Default business theme with hex colors
+const defaultBusinessTheme: Theme = {
+  primary: "#1E3A8A",    // Indigo-600 equivalent
+  secondary: "#9333EA",  // Purple-600 equivalent
+  background: "#FFFFFF", // White
+  text: "#111827",       // Gray-900 equivalent
+  appearance: "system",
+};
+
 // Context interface
 interface ThemeContextType {
   theme: ThemeSettings;
+  businessTheme: Theme;
   updateTheme: (newTheme: Partial<ThemeSettings>) => void;
+  updateBusinessTheme: (newTheme: Partial<Theme>) => void;
   // CSS variable getters
   getPrimaryColor: () => string;
   getSecondaryColor: () => string;
@@ -44,13 +66,15 @@ interface ThemeContextType {
   getButtonClass: () => string;
   getCardClass: () => string;
   isDarkMode: boolean;
-  toggleDarkMode: () => void; // Added toggle function
+  toggleDarkMode: () => void;
 }
 
 // Create context with default values
 const ThemeContext = createContext<ThemeContextType>({
-  theme: defaultTheme,
+  theme: defaultThemeSettings,
+  businessTheme: defaultBusinessTheme,
   updateTheme: () => {},
+  updateBusinessTheme: () => {},
   getPrimaryColor: () => "text-indigo-600",
   getSecondaryColor: () => "bg-gray-200",
   getAccentColor: () => "text-amber-500",
@@ -60,7 +84,7 @@ const ThemeContext = createContext<ThemeContextType>({
   getButtonClass: () => "rounded-md",
   getCardClass: () => "shadow-md",
   isDarkMode: false,
-  toggleDarkMode: () => {}, // Added default value
+  toggleDarkMode: () => {},
 });
 
 // Helper to detect system dark mode preference
@@ -74,8 +98,27 @@ const getSystemPreference = (): boolean => {
 // Provider component
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const { business, config } = useBusinessContext();
-  const [theme, setTheme] = useState<ThemeSettings>(defaultTheme);
+  const [theme, setTheme] = useState<ThemeSettings>(defaultThemeSettings);
+  const [businessTheme, setBusinessTheme] = useState<Theme>(defaultBusinessTheme);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+  
+  // Define the expected response type
+  interface ThemeResponse {
+    theme: Theme;
+  }
+  
+  // Fetch the default theme on startup
+  const { data: defaultThemeData } = useQuery<ThemeResponse>({
+    queryKey: ['/api/default-theme'],
+    enabled: true,
+    staleTime: Infinity, // Default theme shouldn't change during a session
+  });
+  
+  // Fetch business theme when business context is available
+  const { data: businessThemeData } = useQuery<ThemeResponse>({
+    queryKey: ['/api/business/theme'],
+    enabled: !!business?.id, // Only run query when business ID is available
+  });
   
   // Function to set dark mode class on document
   const applyDarkMode = (isDark: boolean) => {
@@ -105,11 +148,46 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Update theme when business config changes
+  // Use default theme data when available
+  useEffect(() => {
+    if (defaultThemeData?.theme) {
+      console.log('Default theme loaded from API:', defaultThemeData.theme);
+      setBusinessTheme(defaultThemeData.theme);
+    }
+  }, [defaultThemeData]);
+  
+  // Use business theme data when available
+  useEffect(() => {
+    if (businessThemeData?.theme) {
+      console.log('Business theme loaded from API:', businessThemeData.theme);
+      setBusinessTheme(businessThemeData.theme);
+      
+      // Apply appearance setting if it exists
+      if (businessThemeData.theme.appearance) {
+        switch (businessThemeData.theme.appearance) {
+          case 'dark':
+            console.log('Applying dark mode from business theme');
+            applyDarkMode(true);
+            break;
+          case 'light':
+            console.log('Applying light mode from business theme');
+            applyDarkMode(false);
+            break;
+          case 'system':
+          default:
+            const systemIsDark = getSystemPreference();
+            console.log('Applying system preference:', systemIsDark ? 'dark' : 'light');
+            applyDarkMode(systemIsDark);
+            break;
+        }
+      }
+    }
+  }, [businessThemeData]);
+  
+  // Legacy: Update theme when business config changes (for backward compatibility)
   useEffect(() => {
     if (config && config.themeSettings) {
-      // Always use the theme from business config 
-      // (it already merges defaults with business settings)
+      // Use the theme from business config 
       setTheme(config.themeSettings);
       
       // Apply appearance setting if it exists
@@ -133,7 +211,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       }
     } else {
       // Fallback to default theme if config is not available
-      setTheme(defaultTheme);
+      setTheme(defaultThemeSettings);
       applyDarkMode(getSystemPreference());
     }
   }, [config]);
@@ -180,6 +258,47 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         case 'system':
           applyDarkMode(getSystemPreference());
           break;
+      }
+    }
+  };
+  
+  // Update business theme function for the new API
+  const updateBusinessTheme = (newTheme: Partial<Theme>) => {
+    setBusinessTheme(prevTheme => ({
+      ...prevTheme,
+      ...newTheme
+    }));
+    
+    // If appearance is updated, apply it immediately
+    if (newTheme.appearance) {
+      switch (newTheme.appearance) {
+        case 'dark':
+          applyDarkMode(true);
+          break;
+        case 'light':
+          applyDarkMode(false);
+          break;
+        case 'system':
+          applyDarkMode(getSystemPreference());
+          break;
+      }
+    }
+    
+    // Update theme via API if we have a business context
+    if (business && business.id) {
+      try {
+        fetch('/api/business/theme', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            theme: {
+              ...businessTheme,
+              ...newTheme
+            }
+          }),
+        });
+      } catch (error) {
+        console.error('Failed to update business theme:', error);
       }
     }
   };
@@ -240,7 +359,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   
   const value = {
     theme,
+    businessTheme,
     updateTheme,
+    updateBusinessTheme,
     getPrimaryColor,
     getSecondaryColor,
     getAccentColor,

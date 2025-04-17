@@ -1,7 +1,8 @@
-import { pgTable, text, serial, integer, timestamp, boolean, numeric, primaryKey, index, foreignKey } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, boolean, numeric, primaryKey, index, foreignKey, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
+import { defaultTheme } from "./config";
 
 // User schema (for authentication)
 export const users = pgTable("users", {
@@ -28,6 +29,8 @@ export const users = pgTable("users", {
   maxServiceCount: integer("max_service_count").default(10),
   maxCustomerCount: integer("max_customer_count").default(100),
   maxAppointmentCount: integer("max_appointment_count").default(500),
+  // Theme configuration - new field separate from themeSettings
+  theme: jsonb("theme").default(JSON.stringify(defaultTheme)),
   // Payment processing and marketplace configuration
   platformFeePercentage: numeric("platform_fee_percentage").default("2.00"), // Default platform fee percentage (can be adjusted per business)
   // MercadoPago integration fields for marketplace payment split

@@ -18,6 +18,8 @@ import {
   users,
   User
 } from "@shared/schema";
+import { getThemeForBusiness, updateThemeForBusiness } from "./utils/themeUtils";
+import { defaultTheme, Theme } from "@shared/config";
 
 // Extend the Express Session to include user
 declare module 'express-session' {
@@ -53,8 +55,84 @@ const transporter = nodemailer.createTransport({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  /**
+   * GET /api/default-theme
+   * Get the default theme for reference - accessible without authentication or business context
+   * This endpoint is placed BEFORE the business extractor middleware
+   */
+  app.get("/api/default-theme", (_req: Request, res: Response) => {
+    return res.json({ theme: defaultTheme });
+  });
+  
   // Apply the business extractor middleware to all routes
   app.use(businessExtractor);
+
+  /**
+   * GET /api/business/theme
+   * Returns the current theme for the authenticated business
+   * Requires authentication and business context
+   */
+  app.get("/api/business/theme", (req: Request, res: Response) => {
+    // Check if we have a business context
+    const businessId = req.business?.id;
+    if (!businessId) {
+      return res.status(404).json({ message: "Business not found" });
+    }
+    
+    // Get the theme for this business
+    getThemeForBusiness(businessId)
+      .then(theme => {
+        res.json({
+          theme
+        });
+      })
+      .catch(error => {
+        console.error("Error getting business theme:", error);
+        res.status(500).json({ message: "Failed to retrieve theme" });
+      });
+  });
+
+  /**
+   * POST /api/business/theme
+   * Updates the theme for the authenticated business
+   * Requires authentication and business context
+   */
+  app.post("/api/business/theme", (req: Request, res: Response) => {
+    // Check if we have a business context
+    const businessId = req.business?.id;
+    if (!businessId) {
+      return res.status(404).json({ message: "Business not found" });
+    }
+    
+    // Validate theme data
+    const themeData = req.body.theme as Partial<Theme>;
+    if (!themeData) {
+      return res.status(400).json({ message: "Missing theme data" });
+    }
+    
+    // Get current theme to merge with updates
+    getThemeForBusiness(businessId)
+      .then(currentTheme => {
+        // Merge current theme with updates
+        const updatedTheme: Theme = {
+          ...currentTheme,
+          ...themeData
+        };
+        
+        // Update the theme
+        return updateThemeForBusiness(businessId, updatedTheme);
+      })
+      .then(() => {
+        res.json({ 
+          success: true,
+          message: "Theme updated successfully" 
+        });
+      })
+      .catch(error => {
+        console.error("Error updating business theme:", error);
+        res.status(500).json({ message: "Failed to update theme" });
+      });
+  });
   
   // Add a custom middleware to inject business data into HTML responses
   app.use(async (req, res, next) => {
@@ -1839,6 +1917,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
    * Update business theme settings
    * This endpoint updates the theme settings for the current logged-in business
    */
+  /**
+   * GET /api/business/theme
+   * Retrieve the theme for the current business
+   */
+  app.get("/api/business/theme", async (req: Request, res: Response) => {
+    try {
+      if (!req.session?.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const userId = req.session.user.id;
+      
+      // Get the theme for the business
+      const theme = await getThemeForBusiness(userId);
+      
+      return res.json({ theme });
+    } catch (error) {
+      console.error('Error fetching business theme:', error);
+      return res.status(500).json({ message: "Failed to fetch business theme" });
+    }
+  });
+  
+  /**
+   * POST /api/business/theme
+   * Update the theme for the current business
+   */
+  app.post("/api/business/theme", async (req: Request, res: Response) => {
+    try {
+      if (!req.session?.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const userId = req.session.user.id;
+      const { theme } = req.body;
+      
+      if (!theme || typeof theme !== 'object') {
+        return res.status(400).json({ message: "Invalid theme format" });
+      }
+      
+      // Validate required theme properties
+      const requiredProperties = ['primary', 'secondary', 'background', 'text'];
+      for (const prop of requiredProperties) {
+        if (typeof theme[prop] !== 'string' || !theme[prop].match(/^#[0-9A-Fa-f]{6}$/)) {
+          return res.status(400).json({ 
+            message: `Invalid theme property: ${prop}. Must be a valid hex color.`
+          });
+        }
+      }
+      
+      // Update the theme in the database
+      await updateThemeForBusiness(userId, theme);
+      
+      return res.json({ 
+        message: "Theme updated successfully",
+        theme
+      });
+    } catch (error) {
+      console.error('Error updating business theme:', error);
+      return res.status(500).json({ message: "Failed to update business theme" });
+    }
+  });
+  
+  /**
+   * GET /api/business/default-theme
+   * Get the default theme for reference - this should be accessible without authentication
+   */
+  app.get("/api/business/default-theme", (_req: Request, res: Response) => {
+    return res.json({ theme: defaultTheme });
+  });
+  
+  /**
+   * Legacy endpoint - Kept for backward compatibility
+   * This endpoint will be deprecated in future versions
+   */
   app.patch("/api/business/theme-settings", async (req: Request, res: Response) => {
     try {
       if (!req.session?.user) {
@@ -1883,6 +2035,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         SET theme_settings = $1::jsonb
         WHERE id = $2
       `, [JSON.stringify(themeSettings), userId]);
+      
+      // Also update the new theme column for consistency
+      const theme = {
+        primary: themeSettings.primaryColor || '#1E3A8A',
+        secondary: themeSettings.secondaryColor || '#9333EA',
+        background: themeSettings.backgroundColor || '#FFFFFF',
+        text: themeSettings.textColor || '#111827'
+      };
+      
+      await updateThemeForBusiness(userId, theme);
       
       return res.json({ success: true, themeSettings });
     } catch (error) {
