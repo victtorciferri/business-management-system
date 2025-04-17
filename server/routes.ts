@@ -64,6 +64,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return res.json({ theme: defaultTheme });
   });
   
+  /**
+   * GET /api/themes/presets
+   * Get a list of predefined theme presets
+   * This endpoint is accessible without authentication or business context
+   */
+  app.get("/api/themes/presets", (_req: Request, res: Response) => {
+    try {
+      // Import theme presets from the shared module
+      const { allThemePresets } = require('../shared/themePresets');
+      
+      // Return all theme presets and categories
+      res.json({ 
+        presets: allThemePresets.map((preset: any) => preset.theme),
+        categories: Array.from(new Set(allThemePresets.map((preset: any) => preset.category)))
+      });
+    } catch (error) {
+      console.error('Error loading theme presets:', error);
+      res.status(500).json({ 
+        error: 'Failed to load theme presets',
+        message: 'An error occurred while loading theme presets.' 
+      });
+    }
+  });
+  
   // Apply the business extractor middleware to all routes
   app.use(businessExtractor);
 

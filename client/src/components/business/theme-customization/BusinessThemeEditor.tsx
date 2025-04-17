@@ -13,7 +13,9 @@ import { Theme as ContextTheme } from "../../../contexts/ThemeContext";
 import { Theme } from "@shared/config";
 import { ThemePresetSelector } from "./ThemePresetSelector";
 import { ColorExtractor } from "./ColorExtractor";
-import { Save, RefreshCw, Paintbrush, EyeIcon, Check } from 'lucide-react';
+import { FontSelector } from "./FontSelector";
+import { Save, RefreshCw, Paintbrush, EyeIcon, Check, X as XIcon } from 'lucide-react';
+import { applyTheme, resetTheme } from '../../../utils/applyTheme';
 
 // Color picker with preview
 const ColorPicker = ({ label, value, onChange }: { label: string; value: string; onChange: (color: string) => void }) => {
@@ -37,43 +39,7 @@ const ColorPicker = ({ label, value, onChange }: { label: string; value: string;
   );
 };
 
-// Font selector component
-const FontSelector = ({ value, onChange }: { value: string; onChange: (font: string) => void }) => {
-  const fontOptions = [
-    { value: 'Inter', label: 'Inter (Default)' },
-    { value: 'Roboto', label: 'Roboto' },
-    { value: 'Montserrat', label: 'Montserrat' },
-    { value: 'Open Sans', label: 'Open Sans' },
-    { value: 'Lato', label: 'Lato' },
-    { value: 'Poppins', label: 'Poppins' },
-    { value: 'Playfair Display', label: 'Playfair Display' },
-    { value: 'Merriweather', label: 'Merriweather' },
-    { value: 'Source Sans Pro', label: 'Source Sans Pro' },
-    { value: 'Raleway', label: 'Raleway' },
-  ];
-
-  return (
-    <div className="mb-4">
-      <Label htmlFor="font-family" className="block mb-1">Font Family</Label>
-      <Select value={value} onValueChange={onChange}>
-        <SelectTrigger id="font-family" className="w-full">
-          <SelectValue placeholder="Select font" />
-        </SelectTrigger>
-        <SelectContent>
-          {fontOptions.map(font => (
-            <SelectItem 
-              key={font.value} 
-              value={font.value} 
-              style={{ fontFamily: font.value }}
-            >
-              {font.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
-  );
-};
+// Font selector is now imported from './FontSelector'
 
 // Border radius selector component
 const BorderRadiusSelector = ({ value, onChange }: { value: string; onChange: (value: string) => void }) => {
@@ -309,9 +275,15 @@ export function BusinessThemeEditor({
   const handlePreview = () => {
     try {
       setPreviewActive(true);
-      // Here we would apply the theme to the document for preview
-      // This is a simplified version - in a real implementation we'd
-      // apply this to CSS variables temporarily
+      
+      // Store the current theme in session storage for potential reset
+      if (!sessionStorage.getItem('previousTheme')) {
+        sessionStorage.setItem('previousTheme', JSON.stringify(businessTheme || theme));
+      }
+      
+      // Apply the theme using our applyTheme utility
+      applyTheme(theme);
+      
       toast({
         title: "Preview mode active",
         description: "This is a preview of how your theme will look. Save to apply permanently.",
@@ -372,9 +344,33 @@ export function BusinessThemeEditor({
     }
   };
 
+  // Cancel preview and restore previous theme
+  const cancelPreview = () => {
+    // Restore the previous theme from session storage if it exists
+    const previousThemeJSON = sessionStorage.getItem('previousTheme');
+    if (previousThemeJSON) {
+      try {
+        const previousTheme = JSON.parse(previousThemeJSON) as Theme;
+        // Clear CSS variables first, then apply the previous theme
+        resetTheme(); // Using the imported utility directly
+        applyTheme(previousTheme); 
+        // Clear the stored theme
+        sessionStorage.removeItem('previousTheme');
+      } catch (error) {
+        console.error('Error restoring previous theme:', error);
+      }
+    }
+    
+    setPreviewActive(false);
+    toast({
+      title: "Preview cancelled",
+      description: "Theme preview has been cancelled and original theme restored.",
+    });
+  };
+
   // Reset theme to defaults
-  const resetTheme = () => {
-    setTheme({
+  const resetThemeToDefaults = () => {
+    const defaultTheme: Theme = {
       name: 'Default Theme',
       primary: '#1E3A8A',
       secondary: '#9333EA',
@@ -384,7 +380,12 @@ export function BusinessThemeEditor({
       font: 'Inter',
       borderRadius: '0.375rem',
       spacing: '1rem'
-    });
+    };
+    
+    setTheme(defaultTheme);
+    // First clear existing CSS variables, then apply the default theme
+    resetTheme(); // Using the imported utility directly, not calling recursively
+    applyTheme(defaultTheme);
     
     toast({
       title: "Theme reset",
@@ -524,16 +525,23 @@ export function BusinessThemeEditor({
         <Separator className="my-6" />
         
         <div className="flex justify-between items-center">
-          <Button variant="outline" onClick={resetTheme}>
+          <Button variant="outline" onClick={resetThemeToDefaults}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Reset to Defaults
           </Button>
           
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handlePreview} disabled={loading || previewActive}>
-              <EyeIcon className="h-4 w-4 mr-2" />
-              {previewActive ? 'Preview Active' : 'Preview Theme'}
-            </Button>
+            {previewActive ? (
+              <Button variant="outline" onClick={cancelPreview}>
+                <XIcon className="h-4 w-4 mr-2" />
+                Cancel Preview
+              </Button>
+            ) : (
+              <Button variant="outline" onClick={handlePreview} disabled={loading}>
+                <EyeIcon className="h-4 w-4 mr-2" />
+                Preview Theme
+              </Button>
+            )}
             <Button onClick={saveTheme} disabled={loading}>
               {loading ? (
                 <>

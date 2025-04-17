@@ -1,58 +1,69 @@
 /**
- * Theme presets for different business categories
- * These presets provide starting points for business to customize their themes
+ * Theme Presets
+ * A collection of predefined themes for different business categories
+ * Each theme is organized by industry category for easy selection
  */
+
 import { Theme } from './config';
 
 export interface ThemePreset {
   id: string;
   name: string;
-  description: string;
   category: string;
+  description: string;
   theme: Theme;
 }
 
-// Business category for organization and filtering
-export type BusinessCategory = 
-  | 'salon'
-  | 'spa'
-  | 'fitness'
-  | 'medical'
-  | 'restaurant'
-  | 'retail'
-  | 'professional'
-  | 'other';
-
-// Salon and beauty theme presets
-const salonPresets: ThemePreset[] = [
+/**
+ * Salon and Beauty themes
+ * Sophisticated, elegant designs for beauty-related businesses
+ */
+const salonThemes: ThemePreset[] = [
   {
-    id: 'elegant-salon',
-    name: 'Elegant Salon',
-    description: 'Sophisticated palette with gold accents for upscale salons',
+    id: 'salon-elegant',
+    name: 'Salon Elegante',
     category: 'salon',
+    description: 'Sophisticated and luxurious theme for upscale salons',
     theme: {
-      name: 'Elegant Salon',
-      primary: '#C9A87E', // Gold
-      secondary: '#7E3F65', // Plum 
-      background: '#FFFFFF', // White
-      text: '#2D2D2D', // Dark gray
+      name: 'Salon Elegante',
+      primary: '#A16B56',
+      secondary: '#D4B89E',
+      background: '#FDFBF9',
+      text: '#2D2A26',
       appearance: 'light',
       font: 'Playfair Display',
-      borderRadius: '0.5rem',
+      borderRadius: '0.25rem',
       spacing: '1.25rem'
     }
   },
   {
-    id: 'modern-salon',
-    name: 'Modern Salon',
-    description: 'Clean and contemporary look for modern salons',
+    id: 'salon-modern',
+    name: 'Modern Stylist',
     category: 'salon',
+    description: 'Clean, minimalist design for contemporary salons',
     theme: {
-      name: 'Modern Salon',
-      primary: '#FF5678', // Coral pink
-      secondary: '#333F50', // Slate 
-      background: '#F8F9FA', // Light gray
-      text: '#191C1F', // Near black
+      name: 'Modern Stylist',
+      primary: '#FF5A5F',
+      secondary: '#00A699',
+      background: '#FFFFFF',
+      text: '#484848',
+      appearance: 'light',
+      font: 'Poppins',
+      borderRadius: '0.5rem',
+      spacing: '1rem'
+    }
+  },
+  {
+    id: 'salon-bold',
+    name: 'Bold Beauty',
+    category: 'salon',
+    description: 'Vibrant, eye-catching design for trendy salons',
+    theme: {
+      name: 'Bold Beauty',
+      primary: '#FF3366',
+      secondary: '#9013FE',
+      background: '#F8F9FA',
+      text: '#212529',
       appearance: 'light',
       font: 'Montserrat',
       borderRadius: '0.75rem',
@@ -61,290 +72,271 @@ const salonPresets: ThemePreset[] = [
   }
 ];
 
-// Spa and wellness theme presets
-const spaPresets: ThemePreset[] = [
+/**
+ * Fitness and Wellness themes
+ * Energetic, motivational designs for fitness businesses
+ */
+const fitnessThemes: ThemePreset[] = [
   {
-    id: 'tranquil-spa',
-    name: 'Tranquil Spa',
-    description: 'Calming earth tones for wellness and relaxation businesses',
-    category: 'spa',
+    id: 'fitness-energetic',
+    name: 'Energetic Fitness',
+    category: 'fitness',
+    description: 'Dynamic, high-energy theme for gyms and fitness centers',
     theme: {
-      name: 'Tranquil Spa',
-      primary: '#8BAF93', // Sage green
-      secondary: '#6B88A0', // Slate blue 
-      background: '#F7F3ED', // Soft cream
-      text: '#44484A', // Charcoal
+      name: 'Energetic Fitness',
+      primary: '#FF4500',
+      secondary: '#FFB900',
+      background: '#F7F9FC',
+      text: '#1A1A1A',
+      appearance: 'light',
+      font: 'Roboto',
+      borderRadius: '0.5rem',
+      spacing: '1rem'
+    }
+  },
+  {
+    id: 'fitness-minimal',
+    name: 'Minimal Strength',
+    category: 'fitness',
+    description: 'Clean, focused design for strength training and performance gyms',
+    theme: {
+      name: 'Minimal Strength',
+      primary: '#121212',
+      secondary: '#505050',
+      background: '#FFFFFF',
+      text: '#333333',
+      appearance: 'light',
+      font: 'Oswald',
+      borderRadius: '0.25rem',
+      spacing: '1.125rem'
+    }
+  },
+  {
+    id: 'wellness-calm',
+    name: 'Wellness Calm',
+    category: 'fitness',
+    description: 'Serene, balanced design for yoga and wellness studios',
+    theme: {
+      name: 'Wellness Calm',
+      primary: '#57B894',
+      secondary: '#87CEEB',
+      background: '#FCFCFC',
+      text: '#333333',
       appearance: 'light',
       font: 'Lato',
       borderRadius: '1rem',
-      spacing: '1.5rem'
-    }
-  },
-  {
-    id: 'luxury-wellness',
-    name: 'Luxury Wellness',
-    description: 'Rich, luxurious design for high-end wellness centers',
-    category: 'spa',
-    theme: {
-      name: 'Luxury Wellness',
-      primary: '#5C7C9D', // Steel blue
-      secondary: '#D7B377', // Gold
-      background: '#FBFBFB', // Off white
-      text: '#333333', // Dark gray
-      appearance: 'light',
-      font: 'Cormorant Garamond',
-      borderRadius: '0.25rem',
       spacing: '1.25rem'
     }
   }
 ];
 
-// Fitness and gym theme presets
-const fitnessPresets: ThemePreset[] = [
+/**
+ * Medical and Healthcare themes
+ * Professional, trustworthy designs for healthcare providers
+ */
+const medicalThemes: ThemePreset[] = [
   {
-    id: 'energetic-fitness',
-    name: 'Energetic Fitness',
-    description: 'Bold and energetic design for gyms and fitness studios',
-    category: 'fitness',
-    theme: {
-      name: 'Energetic Fitness',
-      primary: '#FF4040', // Bright red
-      secondary: '#2C2C2C', // Dark gray 
-      background: '#F9F9F9', // Light gray
-      text: '#1A1A1A', // Near black
-      appearance: 'light',
-      font: 'Roboto',
-      borderRadius: '0.5rem',
-      spacing: '1rem'
-    }
-  },
-  {
-    id: 'minimal-strength',
-    name: 'Minimal Strength',
-    description: 'Clean, minimalist design for modern fitness centers',
-    category: 'fitness',
-    theme: {
-      name: 'Minimal Strength',
-      primary: '#3D3D3D', // Dark gray
-      secondary: '#17A2B8', // Teal 
-      background: '#FFFFFF', // White
-      text: '#212529', // Dark gray
-      appearance: 'light',
-      font: 'Inter',
-      borderRadius: '0.375rem',
-      spacing: '1rem'
-    }
-  }
-];
-
-// Medical and healthcare theme presets
-const medicalPresets: ThemePreset[] = [
-  {
-    id: 'trustworthy-medical',
-    name: 'Trustworthy Medical',
-    description: 'Professional and reassuring palette for healthcare providers',
+    id: 'medical-professional',
+    name: 'Medical Professional',
     category: 'medical',
+    description: 'Trustworthy, clean design for medical practices',
     theme: {
-      name: 'Trustworthy Medical',
-      primary: '#2C6BAC', // Medical blue
-      secondary: '#60BB6E', // Healing green 
-      background: '#F8FBFD', // Light blue-white
-      text: '#333333', // Dark gray
+      name: 'Medical Professional',
+      primary: '#0077B6',
+      secondary: '#90E0EF',
+      background: '#FFFFFF',
+      text: '#333333',
       appearance: 'light',
       font: 'Nunito Sans',
-      borderRadius: '0.5rem',
-      spacing: '1rem'
-    }
-  },
-  {
-    id: 'modern-clinic',
-    name: 'Modern Clinic',
-    description: 'Clean and modern design for contemporary medical practices',
-    category: 'medical',
-    theme: {
-      name: 'Modern Clinic',
-      primary: '#5773C2', // Blueberry
-      secondary: '#F3F5F9', // Light lavender 
-      background: '#FFFFFF', // White
-      text: '#2D3748', // Dark slate
-      appearance: 'light',
-      font: 'Open Sans',
-      borderRadius: '0.75rem',
-      spacing: '1.25rem'
-    }
-  }
-];
-
-// Restaurant and food theme presets
-const restaurantPresets: ThemePreset[] = [
-  {
-    id: 'culinary-delight',
-    name: 'Culinary Delight',
-    description: 'Warm and inviting palette for restaurants and cafés',
-    category: 'restaurant',
-    theme: {
-      name: 'Culinary Delight',
-      primary: '#D94E4E', // Rustic red
-      secondary: '#2D3A3A', // Deep pine 
-      background: '#FFF8F0', // Cream
-      text: '#3D3B38', // Rich brown
-      appearance: 'light',
-      font: 'Merriweather',
-      borderRadius: '0.25rem',
-      spacing: '1.25rem'
-    }
-  },
-  {
-    id: 'bistro-charm',
-    name: 'Bistro Charm',
-    description: 'Classic bistro-inspired design for eateries',
-    category: 'restaurant',
-    theme: {
-      name: 'Bistro Charm',
-      primary: '#9B786F', // Rustic terra
-      secondary: '#475657', // Slate 
-      background: '#FFFCF7', // Off white
-      text: '#332E2C', // Dark brown
-      appearance: 'light',
-      font: 'Libre Baskerville',
       borderRadius: '0.375rem',
       spacing: '1rem'
     }
-  }
-];
-
-// Retail and shop theme presets
-const retailPresets: ThemePreset[] = [
+  },
   {
-    id: 'boutique-retail',
-    name: 'Boutique Retail',
-    description: 'Elegant and fashionable palette for boutique stores',
-    category: 'retail',
+    id: 'dental-bright',
+    name: 'Dental Bright',
+    category: 'medical',
+    description: 'Bright, friendly design for dental practices',
     theme: {
-      name: 'Boutique Retail',
-      primary: '#B76E79', // Dusty rose
-      secondary: '#2D2F35', // Charcoal 
-      background: '#FAFAFA', // Light gray
-      text: '#1D1D1D', // Near black
+      name: 'Dental Bright',
+      primary: '#4CC9F0',
+      secondary: '#F72585',
+      background: '#F8F9FA',
+      text: '#212529',
       appearance: 'light',
-      font: 'DM Sans',
-      borderRadius: '0.75rem',
+      font: 'Quicksand',
+      borderRadius: '0.5rem',
       spacing: '1rem'
     }
   },
   {
-    id: 'modern-marketplace',
-    name: 'Modern Marketplace',
-    description: 'Contemporary design for diverse retail environments',
-    category: 'retail',
+    id: 'therapy-calm',
+    name: 'Therapy Calm',
+    category: 'medical',
+    description: 'Calming, reassuring design for therapy and mental health practices',
     theme: {
-      name: 'Modern Marketplace',
-      primary: '#4A6FA5', // Steel blue
-      secondary: '#95A3B3', // Gray blue 
-      background: '#FFFFFF', // White
-      text: '#393939', // Dark gray
+      name: 'Therapy Calm',
+      primary: '#7209B7',
+      secondary: '#3A0CA3',
+      background: '#F7F7FC',
+      text: '#2B2D42',
       appearance: 'light',
-      font: 'Poppins',
+      font: 'Raleway',
       borderRadius: '0.5rem',
       spacing: '1.25rem'
     }
   }
 ];
 
-// Professional services theme presets
-const professionalPresets: ThemePreset[] = [
+/**
+ * Professional Services themes
+ * Professional, business-oriented designs for service providers
+ */
+const professionalThemes: ThemePreset[] = [
   {
-    id: 'corporate-trust',
-    name: 'Corporate Trust',
-    description: 'Professional and dependable design for business services',
+    id: 'consulting-premium',
+    name: 'Consulting Premium',
     category: 'professional',
+    description: 'Sophisticated, premium design for consulting firms',
     theme: {
-      name: 'Corporate Trust',
-      primary: '#1B4965', // Deep navy
-      secondary: '#5FA8D3', // Sky blue 
-      background: '#FFFFFF', // White
-      text: '#333333', // Dark gray
+      name: 'Consulting Premium',
+      primary: '#2C3E50',
+      secondary: '#E67E22',
+      background: '#FFFFFF',
+      text: '#333333',
       appearance: 'light',
-      font: 'Source Sans Pro',
+      font: 'Montserrat',
       borderRadius: '0.25rem',
       spacing: '1rem'
     }
   },
   {
-    id: 'creative-agency',
-    name: 'Creative Agency',
-    description: 'Bold and creative palette for design agencies',
+    id: 'legal-traditional',
+    name: 'Legal Traditional',
     category: 'professional',
+    description: 'Classic, authoritative design for legal practices',
     theme: {
-      name: 'Creative Agency',
-      primary: '#FF5126', // Vibrant orange
-      secondary: '#2F3B54', // Dark slate 
-      background: '#FAFAFA', // Light gray
-      text: '#222222', // Near black
+      name: 'Legal Traditional',
+      primary: '#1E3A8A',
+      secondary: '#9333EA',
+      background: '#FFFFFF',
+      text: '#333333',
       appearance: 'light',
-      font: 'Work Sans',
-      borderRadius: '1rem',
-      spacing: '1.5rem'
+      font: 'Libre Baskerville',
+      borderRadius: '0.25rem',
+      spacing: '1rem'
+    }
+  },
+  {
+    id: 'tech-modern',
+    name: 'Tech Modern',
+    category: 'professional',
+    description: 'Modern, innovative design for tech companies',
+    theme: {
+      name: 'Tech Modern',
+      primary: '#6200EA',
+      secondary: '#03DAC6',
+      background: '#FAFAFA',
+      text: '#1D1D1D',
+      appearance: 'light',
+      font: 'Inter',
+      borderRadius: '0.75rem',
+      spacing: '1rem'
     }
   }
 ];
 
-// Other/general theme presets
-const otherPresets: ThemePreset[] = [
+/**
+ * Dark Mode Variants
+ * Dark versions of selected themes for businesses preferring dark mode
+ */
+const darkThemes: ThemePreset[] = [
   {
-    id: 'night-mode',
-    name: 'Night Mode',
-    description: 'Dark theme option for any business type',
-    category: 'other',
+    id: 'dark-professional',
+    name: 'Dark Professional',
+    category: 'dark',
+    description: 'Sleek dark theme for a professional appearance',
     theme: {
-      name: 'Night Mode',
-      primary: '#BB86FC', // Lavender
-      secondary: '#03DAC5', // Teal 
-      background: '#121212', // Near black
-      text: '#E1E1E1', // Light gray
+      name: 'Dark Professional',
+      primary: '#BB86FC',
+      secondary: '#03DAC6',
+      background: '#121212',
+      text: '#E1E1E1',
       appearance: 'dark',
-      font: 'Roboto',
+      font: 'Inter',
       borderRadius: '0.5rem',
       spacing: '1rem'
     }
   },
   {
-    id: 'minimalist',
-    name: 'Minimalist',
-    description: 'Clean and simple design for any business',
-    category: 'other',
+    id: 'dark-luxury',
+    name: 'Dark Luxury',
+    category: 'dark',
+    description: 'Premium dark theme with gold accents',
     theme: {
-      name: 'Minimalist',
-      primary: '#3E3E3E', // Dark gray
-      secondary: '#BBBBBB', // Medium gray 
-      background: '#FFFFFF', // White
-      text: '#1A1A1A', // Near black
-      appearance: 'light',
-      font: 'Inter',
+      name: 'Dark Luxury',
+      primary: '#FFD700',
+      secondary: '#C0C0C0',
+      background: '#1A1A1A',
+      text: '#FFFFFF',
+      appearance: 'dark',
+      font: 'Playfair Display',
       borderRadius: '0.25rem',
+      spacing: '1.25rem'
+    }
+  },
+  {
+    id: 'dark-minimal',
+    name: 'Dark Minimal',
+    category: 'dark',
+    description: 'Minimalist dark theme for a clean, modern look',
+    theme: {
+      name: 'Dark Minimal',
+      primary: '#64FFDA',
+      secondary: '#FF7597',
+      background: '#0A0A0A',
+      text: '#F5F5F5',
+      appearance: 'dark',
+      font: 'Poppins',
+      borderRadius: '0.75rem',
       spacing: '1rem'
     }
   }
 ];
 
-// All presets combined
+/**
+ * Combined list of all theme presets
+ */
 export const allThemePresets: ThemePreset[] = [
-  ...salonPresets,
-  ...spaPresets,
-  ...fitnessPresets,
-  ...medicalPresets,
-  ...restaurantPresets,
-  ...retailPresets,
-  ...professionalPresets,
-  ...otherPresets
+  ...salonThemes,
+  ...fitnessThemes,
+  ...medicalThemes,
+  ...professionalThemes,
+  ...darkThemes
 ];
 
-// Get presets by category
-export const getPresetsByCategory = (category: BusinessCategory): ThemePreset[] => {
+/**
+ * Function to get theme presets by category
+ * @param category The category to filter by
+ * @returns Array of theme presets in the specified category
+ */
+export function getThemePresetsByCategory(category: string): ThemePreset[] {
   return allThemePresets.filter(preset => preset.category === category);
-};
+}
 
-// Get a preset by ID
-export const getPresetById = (id: string): ThemePreset | undefined => {
+/**
+ * Function to get a theme preset by ID
+ * @param id The ID of the theme preset to find
+ * @returns The theme preset or undefined if not found
+ */
+export function getThemePresetById(id: string): ThemePreset | undefined {
   return allThemePresets.find(preset => preset.id === id);
-};
+}
+
+/**
+ * Get all available theme categories
+ * @returns Array of unique theme categories
+ */
+export function getAllThemeCategories(): string[] {
+  return Array.from(new Set(allThemePresets.map(preset => preset.category)));
+}
