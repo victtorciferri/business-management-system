@@ -1,0 +1,144 @@
+Full Business Theme System
+🎯 Objective
+Implement a complete business theme editor UI that supports:
+
+Full editing of theme (colors, font, spacing, border radius)
+
+Live preview before saving
+
+Ability to apply and customize from presets
+
+Color palette generation from uploaded logo
+
+Theme saved per business via API
+
+✅ Tech Stack
+React + Vite + TypeScript · Tailwind CSS (keep) · node-vibrant for color extraction
+
+🛠️ Instructions
+1. 🧼 Cleanup Old Theme Logic
+Remove old per-business theme attempts.
+⚠️ Do not touch existing global light/dark mode—it stays.
+
+2. 🔧 Define Theme Types
+src/config/theme.ts
+
+ts
+Copiar
+Editar
+export type Theme = {
+  primary: string;
+  secondary: string;
+  background: string;
+  text: string;
+  font: string;
+  borderRadius: string;
+  spacing: string;
+};
+3. 🎛️ Create Theme Editor UI
+New component: ThemeEditor.tsx
+
+Inputs for all theme fields (color pickers, font dropdown, spacing, etc.)
+
+Section for preset selection
+
+Logo upload that triggers color extraction
+
+“Apply Theme” and “Save Theme” buttons
+
+Live preview of changes before saving
+
+4. 🌈 Color Extraction from Logo
+Use node-vibrant:
+
+ts
+Copiar
+Editar
+import Vibrant from "node-vibrant";
+
+const extractColors = async (url: string) => {
+  const palette = await Vibrant.from(url).getPalette();
+  return {
+    primary: palette.Vibrant?.hex,
+    secondary: palette.Muted?.hex,
+    background: palette.LightVibrant?.hex,
+    text: palette.DarkMuted?.hex,
+  };
+};
+5. 🔄 Fetch & Save Theme
+Fetch business theme:
+
+ts
+Copiar
+Editar
+GET /api/business/:id/theme
+→ Store result in global state
+→ Apply as CSS variables (see below)
+Save theme:
+
+ts
+Copiar
+Editar
+POST /api/business/:id/theme
+→ Send full theme JSON from UI
+Fetch presets:
+
+ts
+Copiar
+Editar
+GET /api/themes/presets
+→ Use to render preset cards
+6. 🎨 Apply Theme with CSS Variables
+applyTheme.ts:
+
+ts
+Copiar
+Editar
+export const applyTheme = (theme: Theme) => {
+  const root = document.documentElement;
+  root.style.setProperty("--theme-primary", theme.primary);
+  root.style.setProperty("--theme-secondary", theme.secondary);
+  root.style.setProperty("--theme-background", theme.background);
+  root.style.setProperty("--theme-text", theme.text);
+  root.style.setProperty("--theme-font", theme.font);
+  root.style.setProperty("--theme-radius", theme.borderRadius);
+  root.style.setProperty("--theme-spacing", theme.spacing);
+};
+Call this when theme is loaded or changed.
+
+7. ⚙️ Extend Tailwind to Use CSS Variables
+In tailwind.config.js:
+
+js
+Copiar
+Editar
+theme: {
+  extend: {
+    colors: {
+      primary: "var(--theme-primary)",
+      secondary: "var(--theme-secondary)",
+      background: "var(--theme-background)",
+      text: "var(--theme-text)",
+    },
+    fontFamily: {
+      body: "var(--theme-font)",
+    },
+    borderRadius: {
+      theme: "var(--theme-radius)",
+    },
+    spacing: {
+      theme: "var(--theme-spacing)",
+    },
+  },
+}
+✅ Final Result
+Full business theme system (independent from light/dark)
+
+Presets, preview, logo-based suggestions
+
+Stored and fetched per business
+
+Follows Tailwind, TypeScript, modular best practices
+
+Fully Replit AI-compatible & scalable
+
