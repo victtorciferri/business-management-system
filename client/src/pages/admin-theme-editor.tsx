@@ -27,7 +27,7 @@ import { ThemeEditor } from "@/components/business/theme-customization/ThemeEdit
 import { BusinessThemeEditor } from "@/components/business/theme-customization/BusinessThemeEditor";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ArrowLeft, Eye, Save, Shield, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Eye, Save, Shield, AlertTriangle, Paintbrush } from "lucide-react";
 
 // Type for admin business data
 interface AdminBusiness {
@@ -240,8 +240,10 @@ export default function AdminThemeEditor({ businessId: propBusinessId }: AdminTh
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink onClick={() => setLocation("/admin-dashboard")}>
-                <Shield className="h-4 w-4 mr-1" />
-                Admin Dashboard
+                <div className="flex items-center">
+                  <Shield className="h-4 w-4 mr-1.5 flex-shrink-0" />
+                  <span>Admin Dashboard</span>
+                </div>
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
@@ -277,14 +279,18 @@ export default function AdminThemeEditor({ businessId: propBusinessId }: AdminTh
           </TabsList>
           
           <Card className="mb-4 border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800">
-            <CardContent className="py-3">
+            <CardContent className="py-4">
               <Alert className="bg-transparent border-0 p-0">
-                <AlertTriangle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                <AlertTitle className="text-blue-700 dark:text-blue-300">About Theme Editors</AlertTitle>
-                <AlertDescription className="text-blue-700 dark:text-blue-300 text-sm">
-                  <p className="mb-2"><strong>Business Theme</strong>: The new simplified theme editor that uses direct color values. This is recommended for most businesses.</p>
-                  <p><strong>Advanced Theme Editor</strong>: The legacy theme editor with more detailed customization options.</p>
-                </AlertDescription>
+                <div className="flex items-start">
+                  <AlertTriangle className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <AlertTitle className="text-blue-700 dark:text-blue-300 mb-1">About Theme Editors</AlertTitle>
+                    <AlertDescription className="text-blue-700 dark:text-blue-300 text-sm">
+                      <p className="mb-2"><strong>Business Theme</strong>: The new simplified theme editor that uses direct color values. This is recommended for most businesses.</p>
+                      <p><strong>Advanced Theme Editor</strong>: The legacy theme editor with more detailed customization options.</p>
+                    </AlertDescription>
+                  </div>
+                </div>
               </Alert>
             </CardContent>
           </Card>
@@ -292,9 +298,12 @@ export default function AdminThemeEditor({ businessId: propBusinessId }: AdminTh
           <TabsContent value="new">
             <div className="mb-4">
               <Card>
-                <CardHeader>
-                  <CardTitle>Business Theme Settings</CardTitle>
-                  <CardDescription>
+                <CardHeader className="pb-3">
+                  <div className="flex items-center gap-2">
+                    <Paintbrush className="h-5 w-5 text-primary" />
+                    <CardTitle>Business Theme Settings</CardTitle>
+                  </div>
+                  <CardDescription className="mt-1.5">
                     Color customization for {business.name}'s theme
                   </CardDescription>
                 </CardHeader>
@@ -333,57 +342,88 @@ export default function AdminThemeEditor({ businessId: propBusinessId }: AdminTh
         
         {previewActive && (
           <Card>
-            <CardHeader>
-              <CardTitle>Theme Preview</CardTitle>
-              <CardDescription>
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <Eye className="h-5 w-5 text-primary" />
+                <CardTitle>Theme Preview</CardTitle>
+              </div>
+              <CardDescription className="mt-1.5">
                 This is a preview of how the theme will look
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <h3 className="text-sm font-medium mb-2">Primary Color</h3>
-                  <div 
-                    className="h-12 rounded-md border flex items-center justify-center"
-                    style={{ backgroundColor: previewTheme.primaryColor || businessConfig.primaryColor }}
-                  >
-                    <span className="font-medium" style={{ color: "#ffffff" }}>
-                      {previewTheme.primaryColor || businessConfig.primaryColor}
-                    </span>
+              <div className="mb-4 p-3 rounded-md bg-slate-50 dark:bg-slate-900 border border-dashed">
+                <p className="text-sm text-center text-muted-foreground">
+                  This is a real-time preview of the theme settings. All CSS variables have been updated to reflect these changes.
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-sm font-medium mb-2">Primary Color</h3>
+                    <div className="flex items-center gap-3">
+                      <div 
+                        className="w-8 h-8 rounded-md border flex-shrink-0"
+                        style={{ backgroundColor: previewTheme.primaryColor || businessConfig.primaryColor }}
+                      ></div>
+                      <div 
+                        className="flex-1 h-10 rounded-md border flex items-center justify-center"
+                        style={{ backgroundColor: previewTheme.primaryColor || businessConfig.primaryColor }}
+                      >
+                        <span className="font-medium text-sm" style={{ color: "#ffffff" }}>
+                          {previewTheme.primaryColor || businessConfig.primaryColor}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-sm font-medium mb-2">Secondary Color</h3>
+                    <div className="flex items-center gap-3">
+                      <div 
+                        className="w-8 h-8 rounded-md border flex-shrink-0"
+                        style={{ backgroundColor: previewTheme.secondaryColor || businessConfig.secondaryColor }}
+                      ></div>
+                      <div 
+                        className="flex-1 h-10 rounded-md border flex items-center justify-center"
+                        style={{ backgroundColor: previewTheme.secondaryColor || businessConfig.secondaryColor }}
+                      >
+                        <span className="font-medium text-sm" style={{ color: "#ffffff" }}>
+                          {previewTheme.secondaryColor || businessConfig.secondaryColor}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 
-                <div>
-                  <h3 className="text-sm font-medium mb-2">Secondary Color</h3>
-                  <div 
-                    className="h-12 rounded-md border flex items-center justify-center"
-                    style={{ backgroundColor: previewTheme.secondaryColor || businessConfig.secondaryColor }}
-                  >
-                    <span className="font-medium" style={{ color: "#ffffff" }}>
-                      {previewTheme.secondaryColor || businessConfig.secondaryColor}
-                    </span>
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-sm font-medium mb-2">Accent Color</h3>
+                    <div className="flex items-center gap-3">
+                      <div 
+                        className="w-8 h-8 rounded-md border flex-shrink-0"
+                        style={{ backgroundColor: previewTheme.accentColor || businessConfig.accentColor }}
+                      ></div>
+                      <div 
+                        className="flex-1 h-10 rounded-md border flex items-center justify-center"
+                        style={{ backgroundColor: previewTheme.accentColor || businessConfig.accentColor }}
+                      >
+                        <span className="font-medium text-sm" style={{ color: "#ffffff" }}>
+                          {previewTheme.accentColor || businessConfig.accentColor}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                </div>
-                
-                <div>
-                  <h3 className="text-sm font-medium mb-2">Accent Color</h3>
-                  <div 
-                    className="h-12 rounded-md border flex items-center justify-center"
-                    style={{ backgroundColor: previewTheme.accentColor || businessConfig.accentColor }}
-                  >
-                    <span className="font-medium" style={{ color: "#ffffff" }}>
-                      {previewTheme.accentColor || businessConfig.accentColor}
-                    </span>
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="text-sm font-medium mb-2">Font Family</h3>
-                  <div 
-                    className="h-12 rounded-md border flex items-center justify-center px-4"
-                    style={{ fontFamily: previewTheme.fontFamily || "system-ui, sans-serif" }}
-                  >
-                    <span>The quick brown fox jumps over the lazy dog</span>
+                  
+                  <div>
+                    <h3 className="text-sm font-medium mb-2">Font Family</h3>
+                    <div 
+                      className="h-10 rounded-md border flex items-center justify-center px-4 bg-white dark:bg-slate-800"
+                      style={{ fontFamily: previewTheme.fontFamily || "system-ui, sans-serif" }}
+                    >
+                      <span className="text-sm">The quick brown fox jumps over the lazy dog</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -394,8 +434,10 @@ export default function AdminThemeEditor({ businessId: propBusinessId }: AdminTh
       
       <div className="mt-8">
         <Button variant="outline" onClick={() => setLocation("/admin-dashboard")}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Admin Dashboard
+          <div className="flex items-center">
+            <ArrowLeft className="mr-2 h-4 w-4 flex-shrink-0" />
+            <span>Back to Admin Dashboard</span>
+          </div>
         </Button>
       </div>
     </div>

@@ -74,9 +74,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Import theme presets from the shared module
       const { allThemePresets } = require('../shared/themePresets');
       
-      // Return all theme presets and categories
+      // Return all theme presets with complete information and categories
       res.json({ 
-        presets: allThemePresets.map((preset: any) => preset.theme),
+        presets: allThemePresets,
         categories: Array.from(new Set(allThemePresets.map((preset: any) => preset.category)))
       });
     } catch (error) {
