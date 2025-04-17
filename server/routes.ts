@@ -2853,6 +2853,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/admin/business/:id/theme", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { theme } = req.body;
+      
+      if (!theme) {
+        return res.status(400).json({ message: "Theme data is required" });
+      }
+      
+      // Validate theme data with basic checks
+      if (!theme.primary || !theme.secondary || !theme.background || !theme.text) {
+        return res.status(400).json({ 
+          message: "Invalid theme data. Required fields: primary, secondary, background, text" 
+        });
+      }
+      
+      // Update theme settings in the database
+      await db.execute(sql`
+        UPDATE users
+        SET theme_settings = ${JSON.stringify(theme)}
+        WHERE id = ${parseInt(id, 10)}
+      `);
+      
+      // Return updated theme data
+      res.json({ 
+        message: "Theme updated successfully",
+        theme
+      });
+    } catch (error) {
+      console.error("Error updating theme:", error);
+      res.status(500).json({ message: "Failed to update theme" });
+    }
+  });
+  
+  // Keep the legacy PUT endpoint for backward compatibility
   app.put("/api/admin/business/:id/theme", requireAdmin, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
