@@ -358,8 +358,8 @@ function App() {
       <AuthProvider>
         <BusinessContextProvider>
           <ThemeProvider>
-            <DarkModeInitializer />
             <AppContent />
+            <DarkModeInitializer />
           </ThemeProvider>
         </BusinessContextProvider>
       </AuthProvider>

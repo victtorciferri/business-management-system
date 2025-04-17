@@ -11,6 +11,14 @@ interface ThemeContextType {
   isSaving: boolean;
   isPreviewMode: boolean;
   setPreviewMode: (mode: boolean) => void;
+  
+  // Theme utility functions
+  getPrimaryColor: () => string;
+  getTextColor: () => string;
+  getBackgroundColor: () => string;
+  getButtonClass: () => string;
+  isDarkMode: boolean;
+  toggleDarkMode: () => void;
 }
 
 export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -35,6 +43,18 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
   const [originalTheme, setOriginalTheme] = useState<Theme>(fullInitialTheme);
   const [isSaving, setIsSaving] = useState(false);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+  
+  // Detect system preference for dark mode on initial load
+  useEffect(() => {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const storedMode = localStorage.getItem('theme-mode');
+    if (storedMode) {
+      setIsDarkMode(storedMode === 'dark');
+    } else {
+      setIsDarkMode(prefersDark);
+    }
+  }, []);
   
   // Update theme when initialTheme changes
   useEffect(() => {
@@ -102,6 +122,32 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
   
   // Track if there are unsaved changes
   const hasUnsavedChanges = JSON.stringify(theme) !== JSON.stringify(originalTheme);
+
+  // Toggle dark mode
+  const toggleDarkMode = useCallback(() => {
+    setIsDarkMode(prev => {
+      const newMode = !prev;
+      localStorage.setItem('theme-mode', newMode ? 'dark' : 'light');
+      return newMode;
+    });
+  }, []);
+
+  // Theme utility functions
+  const getPrimaryColor = useCallback(() => {
+    return `text-${theme.primaryColor}-600`;
+  }, [theme.primaryColor]);
+
+  const getTextColor = useCallback(() => {
+    return 'text-gray-800';
+  }, []);
+
+  const getBackgroundColor = useCallback(() => {
+    return `bg-${theme.backgroundColor || 'white'}`;
+  }, [theme.backgroundColor]);
+
+  const getButtonClass = useCallback(() => {
+    return `bg-${theme.primaryColor}-600 hover:bg-${theme.primaryColor}-700 text-white`;
+  }, [theme.primaryColor]);
   
   const value = {
     theme,
@@ -112,6 +158,14 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     isSaving,
     isPreviewMode,
     setPreviewMode: setIsPreviewMode,
+    
+    // Theme utility functions
+    getPrimaryColor,
+    getTextColor,
+    getBackgroundColor,
+    getButtonClass,
+    isDarkMode,
+    toggleDarkMode
   };
   
   return (

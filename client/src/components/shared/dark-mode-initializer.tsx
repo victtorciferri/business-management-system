@@ -1,87 +1,49 @@
 import { useEffect } from 'react';
-import { useTheme } from '@/contexts/ThemeContext';
 import { useLocation } from 'wouter';
-import { useBusinessContext } from '@/contexts/BusinessContext';
 
 /**
- * DarkModeInitializer is a component that ensures dark mode gets properly
- * applied across the entire application when the theme settings change.
- * It's designed to be included at the top level of the application.
+ * DarkModeInitializer is a simplified component that ensures dark mode gets 
+ * properly applied based on system preference. It avoids context dependencies
+ * to prevent circular dependencies in the React tree.
  */
 export default function DarkModeInitializer() {
-  const { theme, isDarkMode } = useTheme();
   const [location] = useLocation();
-  const { business } = useBusinessContext();
-  
-  // Determine if this is a business portal page or admin page
-  const isBusinessPortalPage = business?.businessSlug && location.includes(`/${business.businessSlug}`);
-  const isAdminPage = location.includes('/admin') || location.includes('/platform-admin');
 
-  // Apply dark mode class to document.documentElement based on theme settings
+  // Apply dark mode class based on system preference
   useEffect(() => {
-    // Skip dark mode application for business portal pages - these should
-    // use their own theme settings and not the global dark mode
-    if (isBusinessPortalPage && business?.themeSettings?.appearance) {
-      console.log('Business portal page detected, respecting business appearance settings');
-      return;
-    }
+    // Get stored preference or use system preference
+    const storedPreference = localStorage.getItem('theme-mode');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const shouldUseDarkMode = storedPreference === 'dark' || 
+      (storedPreference !== 'light' && prefersDark);
     
-    console.log('DarkModeInitializer: Appearance setting is', theme.appearance);
-    
-    // Special case for salonelegante
-    if (location.includes('/salonelegante')) {
-      console.log('DarkModeInitializer: Found salonelegante path, applying dark mode');
+    // Apply appropriate class
+    if (shouldUseDarkMode) {
+      console.log('DarkModeInitializer: Using dark mode based on preference');
       document.documentElement.classList.add('dark');
-      return;
+    } else {
+      console.log('DarkModeInitializer: Using light mode based on preference');
+      document.documentElement.classList.remove('dark');
     }
     
-    if (!theme.appearance) {
-      console.log('No appearance setting found, defaulting to system preference');
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (prefersDark) {
-        console.log('Applying system preference:', 'dark');
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-      return;
-    }
-    
-    switch (theme.appearance) {
-      case 'dark':
-        console.log('DarkModeInitializer: Setting dark mode');
-        document.documentElement.classList.add('dark');
-        
-        // Force a style recalculation
-        document.body.classList.add('dark-mode-active');
-        setTimeout(() => {
-          document.body.classList.remove('dark-mode-active');
-        }, 10);
-        break;
-        
-      case 'light':
-        console.log('DarkModeInitializer: Setting light mode');
-        document.documentElement.classList.remove('dark');
-        break;
-        
-      case 'system':
-        console.log('DarkModeInitializer: Using system preference');
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        if (prefersDark) {
-          console.log('Applying system preference:', 'dark');
+    // Listen for system preference changes
+    const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e: MediaQueryListEvent) => {
+      // Only apply system preference changes if no explicit preference is stored
+      if (!localStorage.getItem('theme-mode')) {
+        if (e.matches) {
           document.documentElement.classList.add('dark');
         } else {
           document.documentElement.classList.remove('dark');
         }
-        break;
-    }
-  }, [theme.appearance, location, business, isBusinessPortalPage]);
-
-  // Add debug info for dark mode status
-  useEffect(() => {
-    console.log('DarkModeInitializer current dark mode state:', isDarkMode);
-    console.log('HTML classList contains dark:', document.documentElement.classList.contains('dark'));
-  }, [isDarkMode]);
+      }
+    };
+    
+    darkModeMediaQuery.addEventListener('change', handleChange);
+    return () => {
+      darkModeMediaQuery.removeEventListener('change', handleChange);
+    };
+  }, [location]);
 
   return null; // This component doesn't render anything
 }

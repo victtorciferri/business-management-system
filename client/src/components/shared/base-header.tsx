@@ -101,7 +101,7 @@ export default function BaseHeader({
             <Link href={portalType === 'business' && slug ? `/${slug}` : buildUrl('/customer-portal')}>
               <a className="flex items-center">
                 {renderLogo()}
-                <h1 className={`text-xl font-bold ${isDarkMode ? 'text-foreground' : getTextColor()}`}>
+                <h1 className={`text-xl font-bold ${isDarkMode ? 'text-foreground' : 'text-gray-800'}`}>
                   {logoText}
                   {portalType === 'customer' && (
                     <span className={`${isDarkMode ? 'text-primary' : getPrimaryColor()} font-normal ml-2`}>
@@ -120,7 +120,7 @@ export default function BaseHeader({
                 key={item.path}
                 variant={item.isActive ? "default" : "ghost"}
                 size="sm"
-                className={`flex items-center ${getButtonClass()} ${
+                className={`flex items-center ${isDarkMode ? 'bg-primary hover:bg-primary/80 text-white' : 'bg-gray-600 hover:bg-gray-700 text-white'} ${
                   isDarkMode && !item.isActive 
                     ? 'text-muted-foreground hover:text-foreground hover:bg-muted' 
                     : ''

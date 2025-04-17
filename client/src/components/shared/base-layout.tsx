@@ -3,7 +3,7 @@ import { ReactNode, useEffect } from "react";
 import BaseHeader, { NavigationItem } from "./base-header";
 import { useLocation } from "wouter";
 import { useTheme } from "@/contexts/ThemeContext";
-import { ThemeSettings } from "@/contexts/ThemeContext";
+import { Theme } from '@shared/config';
 
 export interface BaseLayoutProps {
   children: ReactNode;
@@ -14,7 +14,7 @@ export interface BaseLayoutProps {
   logoText?: string;
   footerText?: string;
   queryParams?: Record<string, string | null>;
-  themeConfig?: ThemeSettings; // Pass theme settings from business config
+  themeConfig?: Theme; // Pass theme settings from business config
 }
 
 export default function BaseLayout({

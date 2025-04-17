@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { from as vibrantFrom } from 'node-vibrant';
+import vibrantWrapper from '@/utils/vibrant-wrapper';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -65,8 +65,7 @@ export const ColorExtractor: React.FC<ColorExtractorProps> = ({
       
       // Extract colors using Vibrant
       const image = await createImageBitmap(file);
-      const vibrant = vibrantFrom(file);
-      const swatches = await vibrant.getPalette();
+      const swatches = await vibrantWrapper.extractColors(file);
       
       // Map swatches to palette colors
       const extractedPalette: PaletteColor[] = [];
