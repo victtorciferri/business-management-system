@@ -145,28 +145,32 @@ function AppContent() {
   return (
     isBusinessPortal ? (
       <div className="min-h-screen bg-background">
-        <Switch>
-          {/* For business subpages like /:slug/services */}
-          <Route path="/:slug/:subPath*">
-            {(params: { slug: string, 'subPath*'?: string }) => (
-              <BusinessPortal 
-                slug={params.slug} 
-                subPath={params['subPath*'] || ''} 
-                initialData={businessData}
-              />
-            )}
-          </Route>
-          {/* For main business page /:slug */}
-          <Route path="/:slug">
-            {(params: { slug: string }) => (
-              <BusinessPortal 
-                slug={params.slug}
-                initialData={businessData}
-              />
-            )}
-          </Route>
-          <Route component={NotFound} />
-        </Switch>
+        <BusinessContextProvider>
+          <ThemeProvider>
+            <Switch>
+              {/* For business subpages like /:slug/services */}
+              <Route path="/:slug/:subPath*">
+                {(params: { slug: string, 'subPath*'?: string }) => (
+                  <BusinessPortal 
+                    slug={params.slug} 
+                    subPath={params['subPath*'] || ''} 
+                    initialData={businessData}
+                  />
+                )}
+              </Route>
+              {/* For main business page /:slug */}
+              <Route path="/:slug">
+                {(params: { slug: string }) => (
+                  <BusinessPortal 
+                    slug={params.slug}
+                    initialData={businessData}
+                  />
+                )}
+              </Route>
+              <Route component={NotFound} />
+            </Switch>
+          </ThemeProvider>
+        </BusinessContextProvider>
       </div>
     ) : (
       <Layout currentUser={currentUser}>

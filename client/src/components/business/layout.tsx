@@ -67,6 +67,7 @@ export default function BusinessLayout({ children, business, slug }: BusinessLay
       slug={slug}
       portalType="business"
       logoText={business.businessName}
+      themeConfig={business.themeSettings}
     >
       {children}
     </BaseLayout>
