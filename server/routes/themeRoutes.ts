@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import { themePresets } from '@shared/themePresets';
+import { allThemePresets } from '@shared/themePresets';
 import { defaultTheme } from '@shared/config';
 import { getThemeForBusiness, updateThemeForBusiness, validateTheme } from '../utils/themeUtils';
 
@@ -18,7 +18,7 @@ router.get('/default-theme', (req: Request, res: Response) => {
  * Returns all available theme presets
  */
 router.get('/themes/presets', (req: Request, res: Response) => {
-  res.json({ presets: themePresets });
+  res.json({ presets: allThemePresets });
 });
 
 /**

@@ -5,12 +5,26 @@ export default {
   content: ["./client/index.html", "./client/src/**/*.{js,jsx,ts,tsx}"],
   theme: {
     extend: {
+      fontFamily: {
+        theme: "var(--theme-font, 'Inter'), sans-serif",
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        theme: "var(--theme-radius, 0.375rem)",
+      },
+      spacing: {
+        theme: "var(--theme-spacing, 1rem)",
       },
       colors: {
+        // Business theme colors
+        "theme-primary": "var(--theme-primary, #1E3A8A)",
+        "theme-secondary": "var(--theme-secondary, #9333EA)",
+        "theme-background": "var(--theme-background, #FFFFFF)",
+        "theme-text": "var(--theme-text, #111827)",
+        
+        // Standard UI colors
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {

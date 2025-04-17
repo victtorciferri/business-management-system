@@ -3,7 +3,7 @@ import { useLocation, useParams } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Theme } from "@/contexts/ThemeContext";
+import { Theme } from "@shared/config";
 import { 
   Card, 
   CardContent, 
@@ -103,6 +103,7 @@ export default function AdminThemeEditor({ businessId: propBusinessId }: AdminTh
   
   // Business theme (new format) configuration state
   const [businessTheme, setBusinessTheme] = useState<Theme>({
+    name: "Default",
     primary: "#4f46e5",
     secondary: "#9333EA",
     background: "#FFFFFF",
@@ -123,6 +124,7 @@ export default function AdminThemeEditor({ businessId: propBusinessId }: AdminTh
             if (themeData.theme) {
               // New theme format
               setBusinessTheme({
+                name: themeData.theme.name || business?.name || "Custom Theme",
                 primary: themeData.theme.primary || "#4f46e5",
                 secondary: themeData.theme.secondary || "#9333EA",
                 background: themeData.theme.background || "#FFFFFF",

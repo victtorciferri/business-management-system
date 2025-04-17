@@ -1,7 +1,11 @@
 import { createContext, useContext, ReactNode, useState, useEffect } from "react";
 import { useBusinessContext } from "./BusinessContext";
-import { Theme as BusinessTheme } from "@shared/config";
+import { Theme as ThemeConfig, defaultTheme } from "@shared/config";
 import { useQuery } from "@tanstack/react-query";
+import { applyTheme, resetTheme } from "../utils/applyTheme";
+
+// For backward compatibility, re-export ThemeConfig
+export type Theme = ThemeConfig;
 
 // Define theme settings interface for legacy theme settings
 export interface ThemeSettings {
@@ -18,14 +22,7 @@ export interface ThemeSettings {
   // Add more theme properties as needed
 }
 
-// New theme interface with direct color values
-export interface Theme {
-  primary: string;
-  secondary: string;
-  background: string;
-  text: string;
-  appearance?: "light" | "dark" | "system";
-}
+// Legacy interface type just for reference - we use the shared Theme interface from @shared/config
 
 // Default theme values (this is just a fallback, actual defaults come from API)
 const defaultThemeSettings: ThemeSettings = {
@@ -42,20 +39,24 @@ const defaultThemeSettings: ThemeSettings = {
 };
 
 // Default business theme with hex colors
-const defaultBusinessTheme: Theme = {
+const defaultBusinessTheme: ThemeConfig = {
+  name: "Default",
   primary: "#1E3A8A",    // Indigo-600 equivalent
   secondary: "#9333EA",  // Purple-600 equivalent
   background: "#FFFFFF", // White
   text: "#111827",       // Gray-900 equivalent
   appearance: "system",
+  font: "Inter",
+  borderRadius: "0.375rem",
+  spacing: "1rem"
 };
 
 // Context interface
 interface ThemeContextType {
   theme: ThemeSettings;
-  businessTheme: Theme;
+  businessTheme: ThemeConfig;
   updateTheme: (newTheme: Partial<ThemeSettings>) => void;
-  updateBusinessTheme: (newTheme: Partial<Theme>) => void;
+  updateBusinessTheme: (newTheme: Partial<ThemeConfig>) => void;
   // CSS variable getters
   getPrimaryColor: () => string;
   getSecondaryColor: () => string;
@@ -99,12 +100,12 @@ const getSystemPreference = (): boolean => {
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const { business, config } = useBusinessContext();
   const [theme, setTheme] = useState<ThemeSettings>(defaultThemeSettings);
-  const [businessTheme, setBusinessTheme] = useState<Theme>(defaultBusinessTheme);
+  const [businessTheme, setBusinessTheme] = useState<ThemeConfig>(defaultBusinessTheme);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   
   // Define the expected response type
   interface ThemeResponse {
-    theme: Theme;
+    theme: ThemeConfig;
   }
   
   // Fetch the default theme on startup
@@ -153,6 +154,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (defaultThemeData?.theme) {
       console.log('Default theme loaded from API:', defaultThemeData.theme);
       setBusinessTheme(defaultThemeData.theme);
+      
+      // Apply the theme using CSS variables
+      applyTheme(defaultThemeData.theme);
     }
   }, [defaultThemeData]);
   
@@ -161,6 +165,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (businessThemeData?.theme) {
       console.log('Business theme loaded from API:', businessThemeData.theme);
       setBusinessTheme(businessThemeData.theme);
+      
+      // Apply the theme using CSS variables
+      applyTheme(businessThemeData.theme);
       
       // Apply appearance setting if it exists
       if (businessThemeData.theme.appearance) {
@@ -263,11 +270,18 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   };
   
   // Update business theme function for the new API
-  const updateBusinessTheme = (newTheme: Partial<Theme>) => {
-    setBusinessTheme(prevTheme => ({
-      ...prevTheme,
+  const updateBusinessTheme = (newTheme: Partial<ThemeConfig>) => {
+    // Create a new theme by merging the previous theme with the new changes
+    const updatedTheme = {
+      ...businessTheme,
       ...newTheme
-    }));
+    };
+    
+    // Update the state with the new theme
+    setBusinessTheme(updatedTheme);
+    
+    // Apply theme CSS variables to the document
+    applyTheme(updatedTheme);
     
     // If appearance is updated, apply it immediately
     if (newTheme.appearance) {
@@ -287,14 +301,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     // Update theme via API if we have a business context
     if (business && business.id) {
       try {
+        console.log('Saving theme to API:', updatedTheme);
         fetch('/api/business/theme', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
-            theme: {
-              ...businessTheme,
-              ...newTheme
-            }
+            theme: updatedTheme
           }),
         });
       } catch (error) {

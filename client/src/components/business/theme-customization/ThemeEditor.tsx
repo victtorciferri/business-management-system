@@ -44,10 +44,10 @@ export function ThemeEditor({ onPreview, onSave, initialConfig }: ThemeEditorPro
     accentColor?: string;
     industryType?: string;
   } = {
-    primaryColor: initialConfig?.primaryColor || contextData.config?.primaryColor,
-    secondaryColor: initialConfig?.secondaryColor || contextData.config?.secondaryColor,
-    accentColor: initialConfig?.accentColor || contextData.config?.accentColor,
-    industryType: initialConfig?.industryType || contextData.config?.industryType,
+    primaryColor: initialConfig?.primaryColor || contextData.config?.themeSettings?.primaryColor,
+    secondaryColor: initialConfig?.secondaryColor || contextData.config?.themeSettings?.secondaryColor,
+    accentColor: initialConfig?.accentColor || contextData.config?.themeSettings?.accentColor,
+    industryType: initialConfig?.industryType || 'general',
   };
   
   const refreshBusinessData = contextData.refreshBusinessData;
