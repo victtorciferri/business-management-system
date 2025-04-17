@@ -1,5 +1,5 @@
-const { drizzle } = require('drizzle-orm/neon-serverless');
-const { Pool } = require('@neondatabase/serverless');
+const { drizzle } = require('drizzle-orm/pg');
+const { Pool } = require('pg');
 const { sql } = require('drizzle-orm');
 
 /**
@@ -79,7 +79,7 @@ async function migrateThemeColumn() {
     process.exit(1);
   }
   
-  await client.end();
+  await pool.end();
   console.log('Theme migration finished');
 }
 

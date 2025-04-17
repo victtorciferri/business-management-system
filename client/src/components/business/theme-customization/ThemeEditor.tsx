@@ -171,8 +171,27 @@ export function ThemeEditor({ onPreview, onSave, initialConfig }: ThemeEditorPro
         }
       } else {
         // Regular business mode - use standard endpoints
-        // Update theme settings
-        const themeResponse = await fetch('/api/business/theme-settings', {
+        // Update theme settings - use both legacy and new API for backward compatibility
+        
+        // New API: Business theme with direct color values
+        const themeResponse = await fetch('/api/business/theme', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            theme: {
+              primary: themeSettings.primaryColor,
+              secondary: themeSettings.secondaryColor,
+              background: themeSettings.backgroundColor,
+              text: themeSettings.textColor,
+              appearance: themeSettings.appearance
+            }
+          })
+        });
+        
+        // Legacy API: Keep for backward compatibility
+        const legacyThemeResponse = await fetch('/api/business/theme-settings', {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -193,8 +212,13 @@ export function ThemeEditor({ onPreview, onSave, initialConfig }: ThemeEditorPro
           })
         });
         
+        // Check for errors with the new API
         if (!themeResponse.ok) {
-          throw new Error(`Failed to update theme settings: ${themeResponse.statusText}`);
+          console.warn(`New theme API failed: ${themeResponse.statusText}`);
+          // If legacy API also failed, throw an error
+          if (!legacyThemeResponse.ok) {
+            throw new Error(`Failed to update theme settings: ${themeResponse.statusText}`);
+          }
         }
         
         // Update industry type if it's specified

@@ -29,8 +29,22 @@ export const users = pgTable("users", {
   maxServiceCount: integer("max_service_count").default(10),
   maxCustomerCount: integer("max_customer_count").default(100),
   maxAppointmentCount: integer("max_appointment_count").default(500),
-  // Theme configuration - new field separate from themeSettings
-  theme: jsonb("theme").default(JSON.stringify(defaultTheme)),
+  // Legacy theme settings - for backward compatibility
+  themeSettings: jsonb("theme_settings").$type<{
+    variant?: string;
+    primaryColor?: string;
+    secondaryColor?: string;
+    accentColor?: string;
+    textColor?: string;
+    backgroundColor?: string;
+    fontFamily?: string;
+    borderRadius?: number;
+    buttonStyle?: "rounded" | "square" | "pill";
+    cardStyle?: "elevated" | "flat" | "bordered";
+    appearance?: "light" | "dark" | "system";
+  }>(),
+  // New theme configuration - used for the new theming system
+  theme: jsonb("theme").$type<Theme>().default(JSON.stringify(defaultTheme)),
   // Payment processing and marketplace configuration
   platformFeePercentage: numeric("platform_fee_percentage").default("2.00"), // Default platform fee percentage (can be adjusted per business)
   // MercadoPago integration fields for marketplace payment split

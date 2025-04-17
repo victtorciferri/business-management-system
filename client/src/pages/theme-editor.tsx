@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useBusinessContext } from '@/contexts/BusinessContext';
 import { ThemeEditor } from '@/components/business/theme-customization/ThemeEditor';
+import BusinessThemeEditor from '@/components/business/theme-customization/BusinessThemeEditor';
 import { Container, Section } from '@/components/ui/layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -8,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'wouter';
 import { ArrowLeft, AlertTriangle, Paintbrush, Eye } from 'lucide-react';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 export default function ThemeEditorPage() {
   const { business, isLoading } = useBusinessContext();
@@ -112,10 +114,36 @@ export default function ThemeEditorPage() {
           </div>
           
           <div className="mt-4">
-            <ThemeEditor 
-              onPreview={handlePreview}
-              onSave={handleSave}
-            />
+            <Tabs defaultValue="new">
+              <TabsList className="mb-4">
+                <TabsTrigger value="new">Business Theme</TabsTrigger>
+                <TabsTrigger value="legacy">Advanced Theme Editor</TabsTrigger>
+              </TabsList>
+              
+              <Card className="mb-4 border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800">
+                <CardContent className="py-3">
+                  <Alert className="bg-transparent border-0 p-0">
+                    <AlertTriangle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <AlertTitle className="text-blue-700 dark:text-blue-300">About Theme Editors</AlertTitle>
+                    <AlertDescription className="text-blue-700 dark:text-blue-300 text-sm">
+                      <p className="mb-2"><strong>Business Theme</strong>: The new simplified theme editor that uses direct color values. This is recommended for most users.</p>
+                      <p><strong>Advanced Theme Editor</strong>: The legacy theme editor with more detailed customization options.</p>
+                    </AlertDescription>
+                  </Alert>
+                </CardContent>
+              </Card>
+              
+              <TabsContent value="legacy">
+                <ThemeEditor 
+                  onPreview={handlePreview}
+                  onSave={handleSave}
+                />
+              </TabsContent>
+              
+              <TabsContent value="new">
+                <BusinessThemeEditor />
+              </TabsContent>
+            </Tabs>
           </div>
           
           <Section>

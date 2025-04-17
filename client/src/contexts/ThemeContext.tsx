@@ -341,6 +341,19 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (business && business.id) {
       // We should persist this preference for the business
       try {
+        // New API - update business theme with appearance
+        fetch('/api/business/theme', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            theme: { 
+              ...businessTheme, 
+              appearance: newAppearance 
+            } 
+          }),
+        });
+        
+        // Legacy API - keep for backward compatibility
         fetch('/api/business/theme-settings', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
