@@ -14,7 +14,7 @@ import {
   users, services, customers, appointments, payments, products,
   productVariants, carts, cartItems, staffAvailability, customerAccessTokens
 } from "@shared/schema";
-import { db } from "./db";
+import { db, pool } from "./db";
 import { eq, and, gte, lte, desc } from "drizzle-orm";
 
 export class DatabaseStorage implements IStorage {
@@ -134,7 +134,47 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getServicesByUserId(userId: number): Promise<Service[]> {
-    return db.select().from(services).where(eq(services.userId, userId));
+    try {
+      // First, get the business details to obtain the businessSlug
+      const [business] = await db.select().from(users).where(eq(users.id, userId));
+      
+      if (!business) {
+        console.error(`No business found with user ID ${userId} for services lookup`);
+        return [];
+      }
+      
+      // Check if the services table has the business_slug column using introspection
+      const checkResult = await pool.query(`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'services' AND column_name = 'business_slug'
+      `);
+      
+      // If the business_slug column doesn't exist, use the old query approach
+      if (checkResult.rows.length === 0) {
+        console.log(`business_slug column not found in services table, using userId filter only`);
+        return db.select().from(services).where(eq(services.userId, userId));
+      }
+      
+      // Use the businessSlug in the query if the column exists in the schema
+      const businessSlug = business.businessSlug;
+      
+      if (!businessSlug) {
+        console.warn(`Business with ID ${userId} has no slug, falling back to user ID filtering`);
+        return db.select().from(services).where(eq(services.userId, userId));
+      }
+      
+      // Query services with both userId and businessSlug for better indexing
+      return db.select().from(services)
+               .where(and(
+                 eq(services.userId, userId),
+                 eq(services.businessSlug, businessSlug)
+               ));
+    } catch (error) {
+      console.error(`Error fetching services for user ID ${userId}:`, error);
+      // Return empty array instead of throwing, to prevent cascading errors
+      return []; 
+    }
   }
 
   async createService(service: InsertService): Promise<Service> {
