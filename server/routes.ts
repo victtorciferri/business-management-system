@@ -6,6 +6,7 @@ import { sql } from "drizzle-orm";
 import rateLimit from 'express-rate-limit';
 import { createPreference, processWebhook } from './mercadopago';
 import themeRoutes from './routes/themeRoutes';
+import themeApiRoutes from './routes/theme';
 import { convertLegacyThemeToTheme, convertThemeToLegacyTheme, updateThemeForBusiness, getThemeForBusiness } from './utils/themeUtils';
 import { 
   insertUserSchema, 
@@ -215,6 +216,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register theme-related routes
   app.use('/api/business', themeRoutes);
+  
+  // Register the new theme API routes
+  app.use(themeApiRoutes);
 
   /**
    * GET /api/business/theme
