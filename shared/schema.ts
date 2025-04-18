@@ -561,15 +561,20 @@ export const insertCustomerAccessTokenSchema = createInsertSchema(customerAccess
 export type CustomerAccessToken = typeof customerAccessTokens.$inferSelect;
 export type InsertCustomerAccessToken = z.infer<typeof insertCustomerAccessTokenSchema>;
 
-// Theme schema for storing business themes
+// Import our design token type
+import { DesignTokens } from './designTokens';
+
+// Theme schema for storing business themes - 2025 Edition
 export const themes = pgTable("themes", {
   id: serial("id").primaryKey(),
   businessId: integer("business_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   businessSlug: text("business_slug").notNull(),
   name: text("name").notNull().default("Default Theme"),
+  description: text("description"),
   isActive: boolean("is_active").default(true),
   isDefault: boolean("is_default").default(false),
-  // Theme properties
+  
+  // Legacy theme properties (for backwards compatibility)
   primaryColor: text("primary_color").default("#4f46e5"),
   secondaryColor: text("secondary_color").default("#06b6d4"),
   accentColor: text("accent_color").default("#f59e0b"),
@@ -582,12 +587,21 @@ export const themes = pgTable("themes", {
   cardStyle: text("card_style").default("default"),
   appearance: text("appearance").default("system"),
   variant: text("variant").default("professional"),
-  // Advanced theme properties (can be extended as needed)
-  colorPalette: jsonb("color_palette").$type<string[]>(),
-  headerStyle: text("header_style").default("standard"),
-  footerStyle: text("footer_style").default("standard"),
-  // Metadata
+  
+  // New design token system - complete theme definition
+  tokens: jsonb("tokens").$type<DesignTokens>(), // Complete design token system
+  
+  // Theme metadata
+  baseThemeId: text("base_theme_id"), // ID of the theme this extends (if any)
+  category: text("category").default("custom"),
+  tags: jsonb("tags").$type<string[]>(),
+  preview: text("preview"), // URL to preview image
+  thumbnail: text("thumbnail"), // URL to thumbnail image
+  popularity: integer("popularity").default(0), // For marketplace sorting
+  
+  // Business branding
   logoImageUrl: text("logo_image_url"),
+  
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => {
@@ -595,6 +609,7 @@ export const themes = pgTable("themes", {
     businessIdIdx: index("themes_business_id_idx").on(table.businessId),
     businessSlugIdx: index("themes_business_slug_idx").on(table.businessSlug),
     businessActiveIdx: index("themes_business_active_idx").on(table.businessId, table.isActive),
+    categoryIdx: index("themes_category_idx").on(table.category),
   };
 });
 
@@ -602,7 +617,9 @@ export const insertThemeSchema = createInsertSchema(themes).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+  popularity: true,
 });
 
 export type ThemeEntity = typeof themes.$inferSelect;
+export type InsertThemeEntity = typeof themes.$inferInsert;
 export type InsertThemeEntity = z.infer<typeof insertThemeSchema>;

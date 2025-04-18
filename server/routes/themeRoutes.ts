@@ -1,160 +1,307 @@
-import express, { Router, Request, Response } from 'express';
-import { db } from '../db';
-import { users, themes } from '@shared/schema';
-import { eq, desc } from 'drizzle-orm';
-import { storage } from '../storage';
-import { convertLegacyThemeToTheme, convertThemeToLegacyTheme } from '../utils/themeUtils';
-import { defaultTheme } from '@shared/config';
+/**
+ * Theme Routes - 2025 Edition
+ * 
+ * API routes for theme management and serving dynamic theme CSS.
+ */
 
-// Create a router instance
+import { Router, Request, Response } from 'express';
+import { storage } from '../storage';
+import { defaultThemes, getThemeById } from '../../shared/defaultThemes';
+import { getThemeCSS } from '../theme/cssVariableServer';
+import { Theme } from '../../shared/designTokens';
+import { db } from '../db';
+import { eq } from 'drizzle-orm';
+import { themes } from '../../shared/schema';
+
 const router = Router();
 
 /**
- * GET /api/business/theme
- * Get the current theme for the authenticated business
+ * Get theme CSS by theme ID
+ * 
+ * GET /api/themes/:themeId/css
  */
-router.get('/theme', async (req: Request, res: Response) => {
+router.get('/:themeId/css', async (req: Request, res: Response) => {
+  const { themeId } = req.params;
+  
   try {
-    if (!req.session.user) {
-      return res.status(401).json({ message: 'Not authenticated' });
-    }
-
-    // Get the business ID from the session
-    const businessId = req.session.user.id;
-
-    // First try to get an active theme from the themes table
-    let themeResult;
-    try {
-      themeResult = await db.select().from(themes)
-        .where(eq(themes.businessId, businessId))
-        .where(eq(themes.isActive, true))
-        .orderBy(desc(themes.updatedAt))
-        .limit(1);
-    } catch (error) {
-      console.error('Error fetching theme from database:', error);
-      // If themes table doesn't exist yet or other DB error, fall back to the user's theme setting
-    }
-
-    if (themeResult && themeResult.length > 0) {
-      // Return the active theme from the themes table
-      res.json({ theme: themeResult[0] });
-    } else {
-      // Get the user's theme settings from the users table
-      const user = await storage.getUser(businessId);
-      if (!user) {
-        return res.status(404).json({ message: 'Business not found' });
-      }
-
-      // Return the user's theme settings from the legacy format if available,
-      // otherwise return the new theme format, or default theme as fallback
-      if (user.themeSettings) {
-        // Convert legacy theme settings to new theme format
-        const theme = convertLegacyThemeToTheme(user.themeSettings);
-        res.json({ theme });
-      } else if (user.theme) {
-        res.json({ theme: user.theme });
-      } else {
-        res.json({ theme: defaultTheme });
-      }
-    }
-  } catch (error) {
-    console.error('Error getting theme:', error);
-    res.status(500).json({ message: 'Failed to get theme' });
-  }
-});
-
-/**
- * POST /api/business/theme
- * Update the theme for the authenticated business
- */
-router.post('/theme', async (req: Request, res: Response) => {
-  try {
-    if (!req.session.user) {
-      return res.status(401).json({ message: 'Not authenticated' });
-    }
-
-    // Get the business ID from the session
-    const businessId = req.session.user.id;
-    const theme = req.body.theme;
-
-    if (!theme) {
-      return res.status(400).json({ message: 'Theme data is required' });
-    }
-
-    // Update both new theme format and legacy theme settings for backward compatibility
-    const legacyThemeSettings = convertThemeToLegacyTheme(theme);
-
-    try {
-      // Update or insert theme into themes table
-      const existingTheme = await db.select().from(themes)
-        .where(eq(themes.businessId, businessId))
-        .where(eq(themes.isActive, true))
-        .limit(1);
-
-      if (existingTheme && existingTheme.length > 0) {
-        // Update existing theme
-        await db.update(themes)
-          .set({
-            ...theme,
-            updatedAt: new Date()
-          })
-          .where(eq(themes.id, existingTheme[0].id));
-      } else {
-        // Insert new theme
-        await db.insert(themes).values({
-          businessId,
-          businessSlug: req.session.user.businessSlug || '',
-          ...theme,
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        });
-      }
-    } catch (dbError) {
-      console.error('Error updating themes table:', dbError);
-      // Continue to update legacy theme settings even if themes table update fails
-    }
-
-    // Always update the legacy theme settings in the users table for backward compatibility
-    await db.update(users)
-      .set({
-        themeSettings: legacyThemeSettings,
-        theme: theme
-      })
-      .where(eq(users.id, businessId));
-
-    // Return the updated theme
-    res.json({ 
-      theme,
-      message: 'Theme updated successfully' 
-    });
-  } catch (error) {
-    console.error('Error updating theme:', error);
-    res.status(500).json({ message: 'Failed to update theme' });
-  }
-});
-
-/**
- * GET /api/business/theme-presets
- * Get a list of theme presets for different industries
- */
-router.get('/theme-presets', (_req: Request, res: Response) => {
-  try {
-    // Import theme presets from the shared module
-    const { themePresets, industryPresets } = require('../../shared/themePresets');
+    // First check if it's a default theme
+    let theme = getThemeById(themeId);
     
-    // Return theme presets
-    res.json({ 
-      themePresets,
-      industryPresets
+    // If not found in defaults, try to find in the database
+    if (!theme) {
+      const [dbTheme] = await db.select().from(themes).where(eq(themes.id, parseInt(themeId)));
+      
+      if (dbTheme) {
+        // Convert DB theme to our Theme structure
+        theme = {
+          metadata: {
+            id: String(dbTheme.id),
+            name: dbTheme.name,
+            description: dbTheme.description || 'Custom theme',
+            author: 'User',
+            version: '1.0.0',
+            createdAt: dbTheme.createdAt.toISOString(),
+            updatedAt: dbTheme.updatedAt.toISOString(),
+            tags: [],
+            featured: false,
+          },
+          tokens: dbTheme.tokens as any,
+        };
+      }
+    }
+    
+    if (!theme) {
+      return res.status(404).json({ message: 'Theme not found' });
+    }
+    
+    // Generate and serve the CSS
+    const css = getThemeCSS(themeId, id => {
+      // This callback is the function to get a theme by ID
+      // We already have the theme, so we just need to check if the ID matches
+      return theme && theme.metadata.id === id ? theme : undefined;
     });
-  } catch (error) {
-    console.error('Error loading theme presets:', error);
-    res.status(500).json({ 
-      error: 'Failed to load theme presets',
-      message: 'An error occurred while loading theme presets.' 
-    });
+    
+    if (!css) {
+      return res.status(500).json({ message: 'Failed to generate theme CSS' });
+    }
+    
+    // Set headers for caching
+    res.setHeader('Content-Type', 'text/css');
+    res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+    res.send(css);
+  } catch (err) {
+    console.error('Error serving theme CSS:', err);
+    res.status(500).json({ message: 'Internal server error' });
   }
+});
+
+/**
+ * Get theme CSS for a business
+ * 
+ * GET /api/themes/business/:businessId/css
+ */
+router.get('/business/:businessId/css', async (req: Request, res: Response) => {
+  const { businessId } = req.params;
+  
+  try {
+    // Find the business and its theme
+    const businessIdNum = parseInt(businessId, 10);
+    
+    if (isNaN(businessIdNum)) {
+      return res.status(400).json({ message: 'Invalid business ID' });
+    }
+    
+    // Get the business's themes
+    const [businessTheme] = await db
+      .select()
+      .from(themes)
+      .where(eq(themes.businessId, businessIdNum))
+      .orderBy(theme => ({ id: 'desc' })) // Get the most recent theme
+      .limit(1);
+    
+    if (!businessTheme) {
+      // No custom theme found, use the default business theme
+      const defaultTheme = defaultThemes.modernBusiness;
+      
+      // Generate and serve the CSS
+      const css = getThemeCSS(defaultTheme.metadata.id, id => {
+        return id === defaultTheme.metadata.id ? defaultTheme : undefined;
+      });
+      
+      if (!css) {
+        return res.status(500).json({ message: 'Failed to generate theme CSS' });
+      }
+      
+      // Set headers for caching
+      res.setHeader('Content-Type', 'text/css');
+      res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+      res.send(css);
+      return;
+    }
+    
+    // Convert DB theme to our Theme structure
+    const theme: Theme = {
+      metadata: {
+        id: String(businessTheme.id),
+        name: businessTheme.name,
+        description: businessTheme.description || 'Business theme',
+        author: 'User',
+        version: '1.0.0',
+        createdAt: businessTheme.createdAt.toISOString(),
+        updatedAt: businessTheme.updatedAt.toISOString(),
+        tags: [],
+        featured: false,
+      },
+      tokens: businessTheme.tokens as any,
+    };
+    
+    // Generate and serve the CSS
+    const css = getThemeCSS(theme.metadata.id, id => {
+      return id === theme.metadata.id ? theme : undefined;
+    });
+    
+    if (!css) {
+      return res.status(500).json({ message: 'Failed to generate theme CSS' });
+    }
+    
+    // Set headers for caching
+    res.setHeader('Content-Type', 'text/css');
+    res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+    res.send(css);
+  } catch (err) {
+    console.error('Error serving business theme CSS:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+/**
+ * Get theme by slug
+ * This is useful for customer-facing portals with vanity URLs
+ * 
+ * GET /api/themes/slug/:slug/css
+ */
+router.get('/slug/:slug/css', async (req: Request, res: Response) => {
+  const { slug } = req.params;
+  
+  try {
+    // Find the business by slug
+    const business = await storage.getUserByBusinessSlug(slug);
+    
+    if (!business) {
+      return res.status(404).json({ message: 'Business not found' });
+    }
+    
+    // Get the business's themes
+    const [businessTheme] = await db
+      .select()
+      .from(themes)
+      .where(eq(themes.businessId, business.id))
+      .orderBy(theme => ({ id: 'desc' })) // Get the most recent theme
+      .limit(1);
+    
+    if (!businessTheme) {
+      // If they don't have a custom theme, use a default based on industry
+      let defaultTheme: Theme;
+      
+      switch (business.industryType) {
+        case 'beauty':
+          defaultTheme = defaultThemes.salonElegante;
+          break;
+        case 'creative':
+          defaultTheme = defaultThemes.creativeStudio;
+          break;
+        case 'tech':
+          defaultTheme = defaultThemes.techStartup;
+          break;
+        case 'food':
+          defaultTheme = defaultThemes.culinary;
+          break;
+        case 'health':
+          defaultTheme = defaultThemes.wellness;
+          break;
+        case 'retail':
+          defaultTheme = defaultThemes.retail;
+          break;
+        case 'education':
+          defaultTheme = defaultThemes.education;
+          break;
+        default:
+          defaultTheme = defaultThemes.modernBusiness;
+      }
+      
+      // Generate and serve the CSS
+      const css = getThemeCSS(defaultTheme.metadata.id, id => {
+        return id === defaultTheme.metadata.id ? defaultTheme : undefined;
+      });
+      
+      if (!css) {
+        return res.status(500).json({ message: 'Failed to generate theme CSS' });
+      }
+      
+      // Set headers for caching
+      res.setHeader('Content-Type', 'text/css');
+      res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+      res.send(css);
+      return;
+    }
+    
+    // Convert DB theme to our Theme structure
+    const theme: Theme = {
+      metadata: {
+        id: String(businessTheme.id),
+        name: businessTheme.name,
+        description: businessTheme.description || 'Business theme',
+        author: 'User',
+        version: '1.0.0',
+        createdAt: businessTheme.createdAt.toISOString(),
+        updatedAt: businessTheme.updatedAt.toISOString(),
+        tags: [],
+        featured: false,
+      },
+      tokens: businessTheme.tokens as any,
+    };
+    
+    // Generate and serve the CSS
+    const css = getThemeCSS(theme.metadata.id, id => {
+      return id === theme.metadata.id ? theme : undefined;
+    });
+    
+    if (!css) {
+      return res.status(500).json({ message: 'Failed to generate theme CSS' });
+    }
+    
+    // Set headers for caching
+    res.setHeader('Content-Type', 'text/css');
+    res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+    res.send(css);
+  } catch (err) {
+    console.error('Error serving business theme CSS by slug:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+/**
+ * Get all default themes
+ * 
+ * GET /api/themes/defaults
+ */
+router.get('/defaults', (_req: Request, res: Response) => {
+  const themes = Object.values(defaultThemes);
+  
+  // Remove tokens to keep the response light
+  const themesMeta = themes.map(theme => {
+    const { metadata } = theme;
+    return {
+      id: metadata.id,
+      name: metadata.name,
+      description: metadata.description,
+      author: metadata.author,
+      version: metadata.version,
+      thumbnail: metadata.thumbnail,
+      tags: metadata.tags,
+      industry: metadata.industry,
+      featured: metadata.featured,
+    };
+  });
+  
+  res.json(themesMeta);
+});
+
+/**
+ * Get default theme details
+ * 
+ * GET /api/themes/defaults/:themeId
+ */
+router.get('/defaults/:themeId', (req: Request, res: Response) => {
+  const { themeId } = req.params;
+  
+  const theme = getThemeById(themeId);
+  
+  if (!theme) {
+    return res.status(404).json({ message: 'Theme not found' });
+  }
+  
+  res.json(theme);
 });
 
 export default router;
