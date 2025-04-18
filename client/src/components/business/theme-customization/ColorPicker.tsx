@@ -47,7 +47,7 @@ export function ColorPicker({
     '#8B5CF6', // Violet
     '#EC4899', // Pink
   ]
-}) {
+}: ColorPickerProps) {
   const [currentColor, setCurrentColor] = useState(color || '#000000');
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
