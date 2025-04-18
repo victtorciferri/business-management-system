@@ -91,8 +91,18 @@ export function FontSelector({ id, value, onChange }: FontSelectorProps) {
     return acc;
   }, {} as Record<string, typeof fonts>);
   
+  // Use default font if value is undefined or empty
+  const safeValue = value || 'Inter, sans-serif';
+  
+  // Check if the provided value exists in our font list, if not default to Inter
+  const fontExists = fonts.some(font => font.value === safeValue);
+  const finalValue = fontExists ? safeValue : 'Inter, sans-serif';
+  
   return (
-    <Select value={value} onValueChange={onChange}>
+    <Select 
+      value={finalValue} 
+      onValueChange={(newValue) => onChange(newValue)}
+    >
       <SelectTrigger id={id} className="w-full">
         <SelectValue placeholder="Select a font" />
       </SelectTrigger>
