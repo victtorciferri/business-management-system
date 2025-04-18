@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { storage } from '../storage';
 import { db } from '../db';
-import { getThemeForBusiness, updateThemeForBusiness } from '../utils/themeUtils';
-import { Theme } from '@shared/config';
+import { getThemeForBusiness, updateThemeForBusiness, convertLegacyThemeToTheme, convertThemeToLegacyTheme } from '../utils/themeUtils';
+import { Theme, defaultTheme } from '@shared/config';
 
 /**
  * Middleware to handle theme operations
@@ -77,23 +77,13 @@ export const handlePublicThemeUpdate = async (req: Request, res: Response) => {
     // Convert between formats if needed to ensure compatibility
     let themeToSave = theme;
     
-    // If we got old format but need new format for database
+    // Convert formats using utility functions for consistency
     if (hasOldFormat && !hasNewFormat) {
-      themeToSave = {
-        ...theme,
-        name: theme.name || "Custom Theme",
-        primaryColor: theme.primary,
-        secondaryColor: theme.secondary,
-        backgroundColor: theme.background,
-        textColor: theme.text,
-        accentColor: theme.accent || "#f59e0b",
-        borderRadius: typeof theme.borderRadius === 'string' ? parseInt(theme.borderRadius, 10) : 8,
-        spacing: typeof theme.spacing === 'string' ? parseInt(theme.spacing, 10) : 16,
-        appearance: theme.appearance || "system",
-        fontFamily: theme.fontFamily || "Inter, sans-serif",
-        buttonStyle: theme.buttonStyle || "default",
-        cardStyle: theme.cardStyle || "default"
-      };
+      // We have old format (primary, secondary), convert to new format (primaryColor, etc)
+      themeToSave = convertLegacyThemeToTheme(theme);
+    } else if (hasNewFormat && !hasOldFormat) {
+      // We have new format (primaryColor, etc), convert to old format (primary, etc)
+      themeToSave = convertThemeToLegacyTheme(theme);
     }
     
     console.log(`Processing theme save via public API for business ${businessId}:`, themeToSave);

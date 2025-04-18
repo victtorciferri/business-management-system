@@ -5,6 +5,7 @@ import { db, pool } from "./db";
 import rateLimit from 'express-rate-limit';
 import { createPreference, processWebhook } from './mercadopago';
 import themeRoutes from './routes/themeRoutes';
+import { convertLegacyThemeToTheme, convertThemeToLegacyTheme, updateThemeForBusiness, getThemeForBusiness } from './utils/themeUtils';
 import { 
   insertUserSchema, 
   insertServiceSchema, 
@@ -17,9 +18,9 @@ import {
   insertCartItemSchema,
   insertCustomerAccessTokenSchema,
   users,
-  User
+  User,
+  themes
 } from "@shared/schema";
-import { getThemeForBusiness, updateThemeForBusiness } from "./utils/themeUtils";
 import { defaultTheme, Theme } from "@shared/config";
 import { themeMiddleware, handlePublicThemeUpdate } from "./middleware/themeMiddleware";
 
