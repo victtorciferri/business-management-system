@@ -6,9 +6,9 @@
  * optimized access to theme tokens.
  */
 
-import { useTheme } from '../../providers/ThemeProvider';
+import { useTheme } from '../providers/ThemeProvider';
 import { useMemo } from 'react';
-import { DesignTokens } from '../../../shared/designTokens';
+import { DesignTokens } from '../../shared/designTokens';
 
 /**
  * Options for creating a theme hook

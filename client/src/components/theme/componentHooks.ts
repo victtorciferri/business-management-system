@@ -26,7 +26,7 @@ export const useButtonTheme = createThemeHook(
     // State variations
     focusRingColor: tokens.colors?.focus || 'rgba(79, 70, 229, 0.4)',
     focusRingWidth: tokens.borders?.focus?.width || '2px',
-    disabledOpacity: tokens.opacity?.disabled || '0.5',
+    disabledOpacity: tokens.effects?.opacity?.disabled || '0.5',
     
     // Variants
     secondary: {
@@ -75,8 +75,8 @@ export const useButtonTheme = createThemeHook(
  */
 export const useCardTheme = createThemeHook(
   (tokens: DesignTokens) => ({
-    background: tokens.colors?.card || tokens.colors?.background?.surface || '#ffffff',
-    foreground: tokens.colors?.card?.foreground || tokens.colors?.foreground?.DEFAULT || '#1f2937',
+    background: tokens.colors?.background?.surface || '#ffffff',
+    foreground: tokens.colors?.foreground?.DEFAULT || '#1f2937',
     borderColor: tokens.colors?.border || '#e5e7eb',
     borderWidth: tokens.borders?.width?.DEFAULT || '1px',
     borderRadius: tokens.borders?.radius?.DEFAULT || '0.25rem',
