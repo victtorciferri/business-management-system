@@ -4,6 +4,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Clock, DollarSign, BadgeCheck, Calendar, Heart, Star, Sparkles, User as UserIcon } from "lucide-react";
 import { useLocation } from "wouter";
 import { BusinessMap } from "@/components/maps/BusinessMap";
+import { useContext } from "react";
+import { ThemeContext } from "@/contexts/ThemeContext";
 
 interface HomePageProps {
   business: Omit<User, "password">;
@@ -13,7 +15,12 @@ interface HomePageProps {
 
 export default function HomePage({ business, services, slug }: HomePageProps) {
   const [, setLocation] = useLocation();
-
+  const themeContext = useContext(ThemeContext);
+  
+  // Get theme colors
+  const primaryColor = themeContext?.theme?.primaryColor || '#4F46E5';
+  const secondaryColor = themeContext?.theme?.secondaryColor || '#9333EA';
+  
   // Display only a subset of services on homepage
   const featuredServices = services?.slice(0, 3) || [];
 
@@ -42,7 +49,7 @@ export default function HomePage({ business, services, slug }: HomePageProps) {
       <section className="relative py-12 overflow-hidden">
         <div className="absolute inset-0 opacity-5" 
           style={{ 
-            backgroundImage: 'radial-gradient(var(--primary) 1px, transparent 1px), radial-gradient(var(--secondary) 1px, transparent 1px)',
+            backgroundImage: `radial-gradient(${primaryColor} 1px, transparent 1px), radial-gradient(${secondaryColor} 1px, transparent 1px)`,
             backgroundSize: '40px 40px',
             backgroundPosition: '0 0, 20px 20px'
           }}
@@ -50,14 +57,14 @@ export default function HomePage({ business, services, slug }: HomePageProps) {
         <div 
           className="absolute top-0 left-0 w-full h-40 opacity-20"
           style={{ 
-            background: 'linear-gradient(to bottom, var(--primary) 0%, transparent 100%)',
+            background: `linear-gradient(to bottom, ${primaryColor} 0%, transparent 100%)`,
             clipPath: 'ellipse(80% 60% at 50% 0%)'
           }}
         />
         <div 
           className="absolute bottom-0 right-0 w-full h-40 opacity-20"
           style={{ 
-            background: 'linear-gradient(to top, var(--secondary) 0%, transparent 100%)',
+            background: `linear-gradient(to top, ${secondaryColor} 0%, transparent 100%)`,
             clipPath: 'ellipse(80% 60% at 50% 100%)'
           }}
         />
