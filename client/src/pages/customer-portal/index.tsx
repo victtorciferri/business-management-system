@@ -1,7 +1,6 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { useEffect } from "react";
 import { 
   Calendar, 
   CalendarIcon, 
@@ -28,45 +27,7 @@ export default function CustomerPortal() {
   // Get business data from context
   const { business, services, loading } = useBusinessContext();
   // Get theme data for styling
-  const { theme, getPrimaryColor, getTextColor, getBackgroundColor, updateTheme } = useTheme();
-  
-  // If business has a theme, update ThemeContext with it
-  useEffect(() => {
-    if (business && (business.themeSettings || business.theme)) {
-      // Prefer themeSettings (which is newer and more complete) over theme
-      const themeSource = business.themeSettings || business.theme;
-      console.log("Customer Portal: Updating theme from business:", themeSource);
-      
-      // Convert to expected format if needed
-      const themeToApply = {
-        primaryColor: themeSource.primaryColor || themeSource.primary || '#4f46e5',
-        secondaryColor: themeSource.secondaryColor || themeSource.secondary || '#06b6d4',
-        accentColor: themeSource.accentColor || themeSource.accent || '#f59e0b',
-        textColor: themeSource.textColor || themeSource.text || '#111827',
-        backgroundColor: themeSource.backgroundColor || themeSource.background || '#ffffff',
-        fontFamily: themeSource.fontFamily || themeSource.font || 'Inter, sans-serif',
-        borderRadius: themeSource.borderRadius || 8,
-        buttonStyle: themeSource.buttonStyle || 'default',
-        cardStyle: themeSource.cardStyle || 'default',
-        appearance: themeSource.appearance || 'light',
-        name: themeSource.name || 'Custom Theme',
-        variant: themeSource.variant || 'professional',
-        spacing: themeSource.spacing || 16,
-      };
-      
-      console.log("CustomerPortal: Theme being applied:", themeToApply);
-      updateTheme(themeToApply);
-      
-      // Apply theme to CSS variables - this is the critical part for visual changes
-      import("@/utils/applyTheme").then(module => {
-        const { applyTheme } = module;
-        applyTheme(themeToApply);
-        console.log("CustomerPortal: Applied theme to CSS variables");
-      });
-    } else {
-      console.log("Customer Portal: No business theme found");
-    }
-  }, [business, updateTheme]);
+  const { theme, getPrimaryColor, getTextColor, getBackgroundColor } = useTheme();
   
   // Display only a subset of services on homepage
   const featuredServices = services?.slice(0, 3) || [];
@@ -102,7 +63,7 @@ export default function CustomerPortal() {
       <div className="container mx-auto py-10">
         <div className="flex flex-col items-center mb-10 text-center">
           <h1 className="text-4xl font-bold tracking-tight mb-4">
-            <span className={`bg-gradient-to-r from-primary to-${theme.secondaryColor ? theme.secondaryColor.replace('#', '') : 'indigo-500'} text-transparent bg-clip-text`}>
+            <span className="bg-gradient-to-r from-primary to-indigo-500 text-transparent bg-clip-text">
               {business?.businessName || 'Business Portal'}
             </span>
           </h1>

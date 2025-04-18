@@ -18,29 +18,6 @@ export interface ThemePreset {
  * These provide starting points for different business types
  */
 export const themePresets: ThemePreset[] = [
-  // Default preset that matches the current site appearance
-  {
-    id: 'default',
-    name: 'Default',
-    description: 'The default system appearance with modern gradient elements',
-    category: 'general',
-    theme: {
-      ...defaultTheme,
-      name: "Default",
-      variant: "professional",
-      primaryColor: "#4f46e5", // Indigo-600
-      secondaryColor: "#9333EA", // Purple-600
-      accentColor: "#f59e0b", // Amber-500
-      backgroundColor: "#ffffff",
-      textColor: "#111827", // Gray-900
-      fontFamily: "Inter, system-ui, sans-serif",
-      borderRadius: 8,
-      spacing: 16,
-      buttonStyle: "default",
-      cardStyle: "bordered",
-      appearance: "system",
-    }
-  },
   // Salon & Beauty
   {
     id: 'elegant-spa',
