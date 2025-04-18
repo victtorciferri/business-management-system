@@ -27,7 +27,30 @@ export default function CustomerPortal() {
   // Get business data from context
   const { business, services, loading } = useBusinessContext();
   // Get theme data for styling
-  const { theme, getPrimaryColor, getTextColor, getBackgroundColor } = useTheme();
+  const { theme, getPrimaryColor, getTextColor, getBackgroundColor, updateTheme } = useTheme();
+  
+  // If business has a theme, update ThemeContext with it
+  useEffect(() => {
+    if (business && business.theme) {
+      console.log("Customer Portal: Updating theme from business:", business.theme);
+      // Convert to expected format if needed
+      const themeToApply = {
+        primaryColor: business.theme.primary || '#4f46e5',
+        secondaryColor: business.theme.secondary || '#06b6d4',
+        accentColor: business.theme.accent || '#f59e0b',
+        textColor: business.theme.text || '#111827',
+        backgroundColor: business.theme.background || '#ffffff',
+        fontFamily: business.theme.font || 'Inter, sans-serif',
+        borderRadius: business.theme.borderRadius || 8,
+        buttonStyle: business.theme.buttonStyle || 'default',
+        cardStyle: business.theme.cardStyle || 'default',
+        appearance: business.theme.appearance || 'light'
+      };
+      updateTheme(themeToApply);
+    } else {
+      console.log("Customer Portal: No business theme found");
+    }
+  }, [business, updateTheme]);
   
   // Display only a subset of services on homepage
   const featuredServices = services?.slice(0, 3) || [];
