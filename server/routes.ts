@@ -124,7 +124,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Update the theme in the database using the utility function
-      await updateThemeForBusiness(parseInt(businessId, 10), theme);
+      await updateThemeForBusiness(parseInt(businessId, 10), theme, db);
       
       // Log the action for audit purposes
       console.log(`Public API updated theme for business ID ${businessId}: ${JSON.stringify(theme)}`);

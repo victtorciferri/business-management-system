@@ -5,12 +5,13 @@ import { useToast } from '@/hooks/use-toast';
 interface ThemeContextType {
   theme: Theme;
   updateTheme: (updates: Partial<Theme>) => void;
-  saveTheme: () => Promise<void>;
+  saveTheme: () => Promise<{success: boolean, error?: string}>;
   resetTheme: () => void;
   hasUnsavedChanges: boolean;
   isSaving: boolean;
   isPreviewMode: boolean;
   setPreviewMode: (mode: boolean) => void;
+  setTheme: (theme: Theme) => void;
   
   // Theme utility functions
   getPrimaryColor: () => string;
@@ -19,6 +20,9 @@ interface ThemeContextType {
   getButtonClass: () => string;
   isDarkMode: boolean;
   toggleDarkMode: () => void;
+  
+  // Admin-specific functions
+  saveThemeForBusiness?: (businessId: number, theme: Theme) => Promise<{success: boolean, error?: string}>;
 }
 
 export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -183,6 +187,70 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     return `bg-${theme.primaryColor}-600 hover:bg-${theme.primaryColor}-700 text-white`;
   }, [theme.primaryColor]);
   
+  // Admin-specific function to save a theme for a specific business
+  const saveThemeForBusiness = useCallback(async (businessId: number, themeToSave: Theme): Promise<{success: boolean, error?: string}> => {
+    try {
+      setIsSaving(true);
+      
+      // First try the admin route with authentication
+      let response = await fetch(`/api/admin/business/${businessId}/theme`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ theme: themeToSave }),
+        credentials: 'include'
+      });
+      
+      // If admin route fails with 401, try the public endpoint
+      if (response.status === 401) {
+        console.log('Admin route authentication failed, trying public endpoint');
+        response = await fetch(`/api/public/theme/${businessId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ theme: themeToSave })
+        });
+      }
+      
+      // Get the response text regardless of the status
+      const responseText = await response.text();
+      let responseData;
+      
+      try {
+        // Try to parse as JSON if possible
+        responseData = JSON.parse(responseText);
+      } catch (e) {
+        // If it's not valid JSON, use the text as is
+        responseData = { message: responseText };
+      }
+      
+      if (!response.ok) {
+        console.error(`Server error (${response.status}) when saving theme for business ${businessId}:`, responseData);
+        return {
+          success: false,
+          error: responseData.message || `Failed to save theme for business ${businessId}`
+        };
+      }
+      
+      toast({
+        title: "Theme saved",
+        description: `Business theme has been saved successfully.`,
+      });
+      
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error saving theme for business:', error);
+      return {
+        success: false,
+        error: error.message || "There was a problem saving the theme."
+      };
+    } finally {
+      setIsSaving(false);
+    }
+  }, [toast]);
+  
   const value = {
     theme,
     updateTheme,
@@ -192,6 +260,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     isSaving,
     isPreviewMode,
     setPreviewMode: setIsPreviewMode,
+    setTheme,
     
     // Theme utility functions
     getPrimaryColor,
@@ -199,7 +268,10 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     getBackgroundColor,
     getButtonClass,
     isDarkMode,
-    toggleDarkMode
+    toggleDarkMode,
+    
+    // Admin functions
+    saveThemeForBusiness
   };
   
   return (
