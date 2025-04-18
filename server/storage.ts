@@ -22,6 +22,17 @@ export interface IStorage {
   getUserByCustomDomain(domain: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   
+  // Theme methods
+  getThemeById(id: number): Promise<any | undefined>;
+  getThemesByBusinessId(businessId: number): Promise<any[]>;
+  getThemesByBusinessSlug(businessSlug: string): Promise<any[]>;
+  getActiveTheme(businessId: number): Promise<any | undefined>;
+  getDefaultTheme(businessId: number): Promise<any | undefined>;
+  createTheme(theme: any): Promise<any>;
+  updateTheme(id: number, theme: any): Promise<any | undefined>;
+  deleteTheme(id: number): Promise<boolean>;
+  activateTheme(id: number): Promise<any | undefined>;
+  
   // Service methods
   getService(id: number): Promise<Service | undefined>;
   getServicesByUserId(userId: number): Promise<Service[]>;

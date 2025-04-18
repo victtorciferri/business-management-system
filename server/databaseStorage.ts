@@ -11,8 +11,9 @@ import {
   CartItem, InsertCartItem,
   StaffAvailability, InsertStaffAvailability,
   CustomerAccessToken, InsertCustomerAccessToken,
+  ThemeEntity, InsertThemeEntity,
   users, services, customers, appointments, payments, products,
-  productVariants, carts, cartItems, staffAvailability, customerAccessTokens
+  productVariants, carts, cartItems, staffAvailability, customerAccessTokens, themes
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, and, gte, lte, desc } from "drizzle-orm";
@@ -651,6 +652,197 @@ export class DatabaseStorage implements IStorage {
       return customer || undefined;
     } catch (error) {
       console.error("Error fetching customer by email and business ID:", error);
+      return undefined;
+    }
+  }
+
+  // Theme methods
+  async getThemeById(id: number): Promise<ThemeEntity | undefined> {
+    try {
+      const [theme] = await db.select().from(themes).where(eq(themes.id, id));
+      return theme || undefined;
+    } catch (error) {
+      console.error(`Error fetching theme by ID ${id}:`, error);
+      return undefined;
+    }
+  }
+
+  async getThemesByBusinessId(businessId: number): Promise<ThemeEntity[]> {
+    try {
+      return await db.select().from(themes)
+        .where(eq(themes.businessId, businessId))
+        .orderBy(desc(themes.updatedAt));
+    } catch (error) {
+      console.error(`Error fetching themes for business ID ${businessId}:`, error);
+      return [];
+    }
+  }
+
+  async getThemesByBusinessSlug(businessSlug: string): Promise<ThemeEntity[]> {
+    try {
+      return await db.select().from(themes)
+        .where(eq(themes.businessSlug, businessSlug))
+        .orderBy(desc(themes.updatedAt));
+    } catch (error) {
+      console.error(`Error fetching themes for business slug ${businessSlug}:`, error);
+      return [];
+    }
+  }
+
+  async getActiveTheme(businessId: number): Promise<ThemeEntity | undefined> {
+    try {
+      const [theme] = await db.select().from(themes)
+        .where(and(
+          eq(themes.businessId, businessId),
+          eq(themes.isActive, true)
+        ));
+      
+      if (!theme) {
+        // If no active theme is found, try to get the default theme
+        return this.getDefaultTheme(businessId);
+      }
+      
+      return theme;
+    } catch (error) {
+      console.error(`Error fetching active theme for business ID ${businessId}:`, error);
+      return undefined;
+    }
+  }
+
+  async getDefaultTheme(businessId: number): Promise<ThemeEntity | undefined> {
+    try {
+      const [theme] = await db.select().from(themes)
+        .where(and(
+          eq(themes.businessId, businessId),
+          eq(themes.isDefault, true)
+        ));
+      
+      return theme || undefined;
+    } catch (error) {
+      console.error(`Error fetching default theme for business ID ${businessId}:`, error);
+      return undefined;
+    }
+  }
+
+  async createTheme(theme: InsertThemeEntity): Promise<ThemeEntity> {
+    try {
+      // If this theme is marked as active, deactivate all other themes
+      if (theme.isActive) {
+        await db.update(themes)
+          .set({ isActive: false })
+          .where(eq(themes.businessId, theme.businessId));
+      }
+      
+      // If this theme is marked as default, update existing default theme
+      if (theme.isDefault) {
+        await db.update(themes)
+          .set({ isDefault: false })
+          .where(and(
+            eq(themes.businessId, theme.businessId),
+            eq(themes.isDefault, true)
+          ));
+      }
+      
+      // Create the new theme
+      const [newTheme] = await db.insert(themes).values(theme).returning();
+      return newTheme;
+    } catch (error) {
+      console.error('Error creating theme:', error);
+      throw error;
+    }
+  }
+
+  async updateTheme(id: number, themeUpdate: Partial<InsertThemeEntity>): Promise<ThemeEntity | undefined> {
+    try {
+      // Get the current theme to get the businessId
+      const [existingTheme] = await db.select().from(themes).where(eq(themes.id, id));
+      
+      if (!existingTheme) {
+        return undefined;
+      }
+      
+      // If this theme is being set as active, deactivate other themes
+      if (themeUpdate.isActive && !existingTheme.isActive) {
+        await db.update(themes)
+          .set({ isActive: false })
+          .where(eq(themes.businessId, existingTheme.businessId));
+      }
+      
+      // If this theme is being set as default, update other default theme
+      if (themeUpdate.isDefault && !existingTheme.isDefault) {
+        await db.update(themes)
+          .set({ isDefault: false })
+          .where(and(
+            eq(themes.businessId, existingTheme.businessId),
+            eq(themes.isDefault, true)
+          ));
+      }
+      
+      // Update the theme
+      const [updatedTheme] = await db.update(themes)
+        .set({
+          ...themeUpdate,
+          updatedAt: new Date()
+        })
+        .where(eq(themes.id, id))
+        .returning();
+      
+      return updatedTheme || undefined;
+    } catch (error) {
+      console.error(`Error updating theme ID ${id}:`, error);
+      return undefined;
+    }
+  }
+
+  async deleteTheme(id: number): Promise<boolean> {
+    try {
+      // Check if this is the default theme
+      const [existingTheme] = await db.select().from(themes).where(eq(themes.id, id));
+      
+      if (!existingTheme) {
+        return false;
+      }
+      
+      // Cannot delete the default theme
+      if (existingTheme.isDefault) {
+        console.warn(`Cannot delete default theme (ID: ${id})`);
+        return false;
+      }
+      
+      const result = await db.delete(themes).where(eq(themes.id, id));
+      return !!result;
+    } catch (error) {
+      console.error(`Error deleting theme ID ${id}:`, error);
+      return false;
+    }
+  }
+
+  async activateTheme(id: number): Promise<ThemeEntity | undefined> {
+    try {
+      // Get the theme to find the businessId
+      const [theme] = await db.select().from(themes).where(eq(themes.id, id));
+      
+      if (!theme) {
+        return undefined;
+      }
+      
+      // Deactivate all themes for this business
+      await db.update(themes)
+        .set({ isActive: false })
+        .where(eq(themes.businessId, theme.businessId));
+      
+      // Activate the requested theme
+      const [activatedTheme] = await db.update(themes)
+        .set({ 
+          isActive: true,
+          updatedAt: new Date()
+        })
+        .where(eq(themes.id, id))
+        .returning();
+      
+      return activatedTheme || undefined;
+    } catch (error) {
+      console.error(`Error activating theme ID ${id}:`, error);
       return undefined;
     }
   }

@@ -219,6 +219,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register the new theme API routes
   app.use(themeApiRoutes);
+  
+  // Make the theme API available directly for specific routes
+  app.get('/api/themes', (req, res) => themeApiRoutes(req, res));
+  app.get('/api/themes/active', (req, res) => themeApiRoutes(req, res));
+  app.get('/api/themes/:id', (req, res) => themeApiRoutes(req, res));
+  app.post('/api/themes', (req, res) => themeApiRoutes(req, res));
+  app.put('/api/themes/:id', (req, res) => themeApiRoutes(req, res));
+  app.delete('/api/themes/:id', (req, res) => themeApiRoutes(req, res));
+  app.post('/api/themes/:id/activate', (req, res) => themeApiRoutes(req, res));
 
   /**
    * GET /api/business/theme
