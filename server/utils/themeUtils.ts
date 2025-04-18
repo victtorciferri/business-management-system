@@ -10,27 +10,63 @@ import { PgDatabase } from 'drizzle-orm/pg-core';
 export function convertLegacyThemeToTheme(legacyTheme: any): any {
   if (!legacyTheme) return defaultTheme;
 
-  // Handle case where it's already in the new format
-  if (legacyTheme.primary !== undefined) {
-    return legacyTheme;
+  // Handle case where it's already in the new format with either naming convention
+  if (legacyTheme.primary !== undefined || legacyTheme.primaryColor !== undefined) {
+    // Normalize property names to ensure both naming conventions are available
+    return {
+      name: legacyTheme.name || "Custom Theme",
+      // Support both naming conventions
+      primary: legacyTheme.primary || legacyTheme.primaryColor || defaultTheme.primary,
+      primaryColor: legacyTheme.primaryColor || legacyTheme.primary || defaultTheme.primary,
+      secondary: legacyTheme.secondary || legacyTheme.secondaryColor || defaultTheme.secondary,
+      secondaryColor: legacyTheme.secondaryColor || legacyTheme.secondary || defaultTheme.secondary,
+      background: legacyTheme.background || legacyTheme.backgroundColor || defaultTheme.background,
+      backgroundColor: legacyTheme.backgroundColor || legacyTheme.background || defaultTheme.background,
+      text: legacyTheme.text || legacyTheme.textColor || defaultTheme.text,
+      textColor: legacyTheme.textColor || legacyTheme.text || defaultTheme.text,
+      accent: legacyTheme.accent || legacyTheme.accentColor || defaultTheme.accent,
+      accentColor: legacyTheme.accentColor || legacyTheme.accent || defaultTheme.accent,
+      borderRadius: typeof legacyTheme.borderRadius === 'number' 
+        ? legacyTheme.borderRadius  
+        : (legacyTheme.borderRadius || defaultTheme.borderRadius),
+      spacing: typeof legacyTheme.spacing === 'number'
+        ? legacyTheme.spacing
+        : (legacyTheme.spacing || defaultTheme.spacing),
+      appearance: legacyTheme.appearance || defaultTheme.appearance,
+      fontFamily: legacyTheme.fontFamily || legacyTheme.font || defaultTheme.fontFamily,
+      font: legacyTheme.font || legacyTheme.fontFamily || defaultTheme.fontFamily,
+      buttonStyle: legacyTheme.buttonStyle || 'default',
+      cardStyle: legacyTheme.cardStyle || 'default',
+      variant: legacyTheme.variant || 'professional'
+    };
   }
 
-  // Convert from legacy format to new format
+  // Convert from very legacy format to new format with both naming conventions
   return {
     name: legacyTheme.name || "Custom Theme",
+    // Include both naming conventions for maximum compatibility
     primary: legacyTheme.primaryColor || defaultTheme.primary,
+    primaryColor: legacyTheme.primaryColor || defaultTheme.primary,
     secondary: legacyTheme.secondaryColor || defaultTheme.secondary,
+    secondaryColor: legacyTheme.secondaryColor || defaultTheme.secondary,
     background: legacyTheme.backgroundColor || defaultTheme.background,
+    backgroundColor: legacyTheme.backgroundColor || defaultTheme.background,
     text: legacyTheme.textColor || defaultTheme.text,
+    textColor: legacyTheme.textColor || defaultTheme.text,
     accent: legacyTheme.accentColor || defaultTheme.accent,
+    accentColor: legacyTheme.accentColor || defaultTheme.accent,
     borderRadius: typeof legacyTheme.borderRadius === 'number' 
-      ? `${legacyTheme.borderRadius}px` 
+      ? legacyTheme.borderRadius 
       : (legacyTheme.borderRadius || defaultTheme.borderRadius),
     spacing: typeof legacyTheme.spacing === 'number'
-      ? `${legacyTheme.spacing}px`
+      ? legacyTheme.spacing
       : (legacyTheme.spacing || defaultTheme.spacing),
     appearance: legacyTheme.appearance || defaultTheme.appearance,
-    fontFamily: legacyTheme.fontFamily || defaultTheme.fontFamily
+    fontFamily: legacyTheme.fontFamily || defaultTheme.fontFamily,
+    font: legacyTheme.fontFamily || defaultTheme.fontFamily,
+    buttonStyle: legacyTheme.buttonStyle || 'default',
+    cardStyle: legacyTheme.cardStyle || 'default',
+    variant: legacyTheme.variant || 'professional'
   };
 }
 
