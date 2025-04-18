@@ -806,13 +806,15 @@ export interface ThemeMetadata {
   description: string;
   author: string;
   version: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
   thumbnail?: string; // URL to theme preview image
   tags: string[];
   industry?: string;
   featured: boolean;
   baseTheme?: string; // ID of theme this extends (if any)
+  seasonal?: boolean; // Whether this is a seasonal theme
+  variant?: 'professional' | 'vibrant' | 'elegant' | 'minimal'; // Theme style variant
 }
 
 /**

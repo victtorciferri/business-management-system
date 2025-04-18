@@ -382,7 +382,8 @@ export const minimalDark: Theme = createThemeFromPalette(
 /**
  * Collection of all default themes
  */
-export const defaultThemes: Record<string, Theme> = {
+// Initial themes export
+const initialThemes: Record<string, Theme> = {
   modernBusiness,
   darkProfessional,
   salonElegante,
@@ -399,7 +400,7 @@ export const defaultThemes: Record<string, Theme> = {
 /**
  * Default theme categories
  */
-export const themeCategories = [
+const initialThemeCategories = [
   {
     id: 'featured',
     name: 'Featured',
@@ -457,7 +458,7 @@ export function getThemeById(id: string): Theme | undefined {
  * Get themes by category
  */
 export function getThemesByCategory(categoryId: string): Theme[] {
-  const category = themeCategories.find(cat => cat.id === categoryId);
+  const category = initialThemeCategories.find(cat => cat.id === categoryId);
   return category ? category.themes : [];
 }
 
@@ -497,6 +498,647 @@ export function getSalonEleganteTheme(): Theme {
 }
 
 /**
+ * Financial Services
+ * A trustworthy, secure theme for financial institutions and services
+ */
+export const financial: Theme = createThemeFromPalette(
+  {
+    primary: '#065f46',   // Emerald 800
+    secondary: '#047857', // Emerald 700
+    accent: '#0891b2',    // Cyan 600
+    background: '#ffffff',
+    text: '#1e293b',      // Slate 800
+  },
+  {
+    id: 'financial',
+    name: 'Financial Services',
+    description: 'A trustworthy and secure theme, perfect for financial institutions, banks, and financial services.',
+    author: 'System',
+    version: '1.0.0',
+    tags: ['financial', 'professional', 'secure', 'trustworthy'],
+    industry: 'finance',
+    featured: false,
+  },
+  {
+    variant: 'professional',
+    borderRadius: 4,
+    fontFamily: {
+      heading: fontStacks.display,
+      body: fontStacks.sans,
+    },
+    shadowIntensity: 'medium',
+  }
+);
+
+/**
+ * Legal Services
+ * A professional, authoritative theme for legal services
+ */
+export const legal: Theme = createThemeFromPalette(
+  {
+    primary: '#1e40af',   // Blue 800
+    secondary: '#1d4ed8', // Blue 700
+    accent: '#4f46e5',    // Indigo 600
+    background: '#f8fafc', // Slate 50
+    text: '#0f172a',      // Slate 900
+  },
+  {
+    id: 'legal',
+    name: 'Legal Services',
+    description: 'A professional and authoritative theme, perfect for law firms, legal practices, and legal services.',
+    author: 'System',
+    version: '1.0.0',
+    tags: ['legal', 'professional', 'authoritative', 'serious'],
+    industry: 'legal',
+    featured: false,
+  },
+  {
+    variant: 'professional',
+    borderRadius: 4,
+    fontFamily: {
+      heading: fontStacks.serif,
+      body: fontStacks.sans,
+    },
+    shadowIntensity: 'soft',
+  }
+);
+
+/**
+ * Healthcare
+ * A clean, trusted theme for healthcare services
+ */
+export const healthcare: Theme = createThemeFromPalette(
+  {
+    primary: '#0891b2',   // Cyan 600
+    secondary: '#0e7490', // Cyan 700
+    accent: '#14b8a6',    // Teal 500
+    background: '#ffffff',
+    text: '#1e293b',      // Slate 800
+  },
+  {
+    id: 'healthcare',
+    name: 'Healthcare',
+    description: 'A clean and trusted theme, perfect for hospitals, clinics, and healthcare providers.',
+    author: 'System',
+    version: '1.0.0',
+    tags: ['healthcare', 'medical', 'clean', 'professional'],
+    industry: 'healthcare',
+    featured: false,
+  },
+  {
+    variant: 'professional',
+    borderRadius: 8,
+    fontFamily: {
+      heading: fontStacks.sans,
+      body: fontStacks.sans,
+    },
+    shadowIntensity: 'soft',
+  }
+);
+
+/**
+ * Real Estate
+ * A spacious, elegant theme for real estate businesses
+ */
+export const realEstate: Theme = createThemeFromPalette(
+  {
+    primary: '#475569',   // Slate 600
+    secondary: '#334155', // Slate 700
+    accent: '#f59e0b',    // Amber 500
+    background: '#ffffff',
+    text: '#111827',      // Gray 900
+  },
+  {
+    id: 'real-estate',
+    name: 'Real Estate',
+    description: 'A spacious and elegant theme, perfect for real estate agencies, property management, and realtors.',
+    author: 'System',
+    version: '1.0.0',
+    tags: ['real-estate', 'property', 'elegant', 'professional'],
+    industry: 'real-estate',
+    featured: false,
+  },
+  {
+    variant: 'elegant',
+    borderRadius: 6,
+    fontFamily: {
+      heading: fontStacks.serif,
+      body: fontStacks.sans,
+    },
+    shadowIntensity: 'medium',
+  }
+);
+
+/**
+ * Fitness
+ * An energetic, motivational theme for fitness businesses
+ */
+export const fitness: Theme = createThemeFromPalette(
+  {
+    primary: '#dc2626',   // Red 600
+    secondary: '#b91c1c', // Red 700
+    accent: '#fbbf24',    // Amber 400
+    background: '#f9fafb', // Gray 50
+    text: '#1f2937',      // Gray 800
+  },
+  {
+    id: 'fitness',
+    name: 'Fitness',
+    description: 'An energetic and motivational theme, perfect for gyms, fitness studios, and personal trainers.',
+    author: 'System',
+    version: '1.0.0',
+    tags: ['fitness', 'gym', 'energetic', 'bold'],
+    industry: 'fitness',
+    featured: false,
+  },
+  {
+    variant: 'vibrant',
+    borderRadius: 8,
+    fontFamily: {
+      heading: fontStacks.sans,
+      body: fontStacks.sans,
+    },
+    shadowIntensity: 'sharp',
+    animationSpeed: 'fast',
+  }
+);
+
+/**
+ * Wedding & Events
+ * A romantic, elegant theme for wedding and event planners
+ */
+export const wedding: Theme = createThemeFromPalette(
+  {
+    primary: '#be185d',   // Pink 800
+    secondary: '#db2777', // Pink 600
+    accent: '#c084fc',    // Purple 400
+    background: '#fffbf5', // Custom cream
+    text: '#713f12',      // Stone 800
+  },
+  {
+    id: 'wedding',
+    name: 'Wedding & Events',
+    description: 'A romantic and elegant theme, perfect for wedding planners, event organizers, and venues.',
+    author: 'System',
+    version: '1.0.0',
+    tags: ['wedding', 'events', 'romantic', 'elegant'],
+    industry: 'events',
+    featured: false,
+  },
+  {
+    variant: 'elegant',
+    borderRadius: 12,
+    fontFamily: {
+      heading: fontStacks.serif,
+      body: fontStacks.sans,
+    },
+    shadowIntensity: 'soft',
+    animationSpeed: 'normal',
+  }
+);
+
+/**
+ * Manufacturing
+ * A robust, industrial theme for manufacturing and industrial businesses
+ */
+export const manufacturing: Theme = createThemeFromPalette(
+  {
+    primary: '#f59e0b',   // Amber 500
+    secondary: '#d97706', // Amber 600
+    accent: '#404040',    // Gray 700
+    background: '#f5f5f5', // Gray 100
+    text: '#262626',      // Gray 800
+  },
+  {
+    id: 'manufacturing',
+    name: 'Manufacturing',
+    description: 'A robust and industrial theme, perfect for manufacturing, construction, and industrial businesses.',
+    author: 'System',
+    version: '1.0.0',
+    tags: ['manufacturing', 'industrial', 'construction', 'robust'],
+    industry: 'manufacturing',
+    featured: false,
+  },
+  {
+    variant: 'professional',
+    borderRadius: 2,
+    fontFamily: {
+      heading: fontStacks.sans,
+      body: fontStacks.sans,
+    },
+    shadowIntensity: 'sharp',
+  }
+);
+
+/**
+ * High Contrast Light
+ * An accessibility-focused light theme with maximum contrast
+ */
+export const highContrastLight: Theme = createThemeFromPalette(
+  {
+    primary: '#000000',   // Black
+    secondary: '#0000EE', // Bright blue
+    accent: '#8B0000',    // Dark red
+    background: '#ffffff', // White
+    text: '#000000',      // Black
+  },
+  {
+    id: 'high-contrast-light',
+    name: 'High Contrast Light',
+    description: 'An accessibility-focused light theme with maximum contrast for readability.',
+    author: 'System',
+    version: '1.0.0',
+    tags: ['accessibility', 'high-contrast', 'light', 'readable'],
+    industry: 'general',
+    featured: false,
+  },
+  {
+    variant: 'minimal',
+    borderRadius: 4,
+    fontFamily: {
+      heading: fontStacks.sansAccessible,
+      body: fontStacks.sansAccessible,
+    },
+    shadowIntensity: 'none',
+    contrastLevel: 'maximum',
+  }
+);
+
+/**
+ * High Contrast Dark
+ * An accessibility-focused dark theme with maximum contrast
+ */
+export const highContrastDark: Theme = createThemeFromPalette(
+  {
+    primary: '#ffffff',   // White
+    secondary: '#55FFFF', // Bright cyan
+    accent: '#FFD700',    // Gold
+    background: '#000000', // Black
+    text: '#ffffff',      // White
+  },
+  {
+    id: 'high-contrast-dark',
+    name: 'High Contrast Dark',
+    description: 'An accessibility-focused dark theme with maximum contrast for readability.',
+    author: 'System',
+    version: '1.0.0',
+    tags: ['accessibility', 'high-contrast', 'dark', 'readable'],
+    industry: 'general',
+    featured: false,
+  },
+  {
+    variant: 'minimal',
+    borderRadius: 4,
+    fontFamily: {
+      heading: fontStacks.sansAccessible,
+      body: fontStacks.sansAccessible,
+    },
+    shadowIntensity: 'none',
+    contrastLevel: 'maximum',
+  }
+);
+
+/**
+ * Monochrome Light
+ * A sophisticated black and white light theme
+ */
+export const monochromeLight: Theme = createThemeFromPalette(
+  {
+    primary: '#000000',   // Black
+    secondary: '#404040', // Gray 700
+    accent: '#737373',    // Gray 500
+    background: '#ffffff', // White
+    text: '#171717',      // Gray 900
+  },
+  {
+    id: 'monochrome-light',
+    name: 'Monochrome Light',
+    description: 'A sophisticated black and white theme with clean, minimalist aesthetics.',
+    author: 'System',
+    version: '1.0.0',
+    tags: ['monochrome', 'black-and-white', 'light', 'minimal'],
+    industry: 'general',
+    featured: false,
+  },
+  {
+    variant: 'minimal',
+    borderRadius: 0,
+    fontFamily: {
+      heading: fontStacks.sans,
+      body: fontStacks.sans,
+      mono: fontStacks.mono,
+    },
+    shadowIntensity: 'soft',
+  }
+);
+
+/**
+ * Monochrome Dark
+ * A sophisticated black and white dark theme
+ */
+export const monochromeDark: Theme = createThemeFromPalette(
+  {
+    primary: '#ffffff',   // White
+    secondary: '#d4d4d4', // Gray 300
+    accent: '#a3a3a3',    // Gray 400
+    background: '#171717', // Gray 900
+    text: '#fafafa',      // Gray 50
+  },
+  {
+    id: 'monochrome-dark',
+    name: 'Monochrome Dark',
+    description: 'A sophisticated black and white dark theme with clean, minimalist aesthetics.',
+    author: 'System',
+    version: '1.0.0',
+    tags: ['monochrome', 'black-and-white', 'dark', 'minimal'],
+    industry: 'general',
+    featured: false,
+  },
+  {
+    variant: 'minimal',
+    borderRadius: 0,
+    fontFamily: {
+      heading: fontStacks.sans,
+      body: fontStacks.sans,
+      mono: fontStacks.mono,
+    },
+    shadowIntensity: 'medium',
+  }
+);
+
+/**
+ * Standard Light
+ * Our default light theme with balanced aesthetics
+ */
+export const standardLight: Theme = createThemeFromPalette(
+  {
+    primary: '#3b82f6',   // Blue 500
+    secondary: '#6366f1', // Indigo 500
+    accent: '#8b5cf6',    // Violet 500
+    background: '#ffffff', // White
+    text: '#111827',      // Gray 900
+  },
+  {
+    id: 'standard-light',
+    name: 'Standard Light',
+    description: 'Our default light theme with balanced aesthetics, suitable for most applications.',
+    author: 'System',
+    version: '1.0.0',
+    tags: ['standard', 'light', 'balanced', 'default'],
+    industry: 'general',
+    featured: false,
+  },
+  {
+    variant: 'professional',
+    borderRadius: 6,
+    fontFamily: {
+      heading: fontStacks.sans,
+      body: fontStacks.sans,
+    },
+    shadowIntensity: 'medium',
+  }
+);
+
+/**
+ * Standard Dark
+ * Our default dark theme with balanced aesthetics
+ */
+export const standardDark: Theme = createThemeFromPalette(
+  {
+    primary: '#60a5fa',   // Blue 400
+    secondary: '#818cf8', // Indigo 400
+    accent: '#a78bfa',    // Violet 400
+    background: '#1e1e2e', // Custom dark blue background
+    text: '#f9fafb',      // Gray 50
+  },
+  {
+    id: 'standard-dark',
+    name: 'Standard Dark',
+    description: 'Our default dark theme with balanced aesthetics, suitable for most applications.',
+    author: 'System',
+    version: '1.0.0',
+    tags: ['standard', 'dark', 'balanced', 'default'],
+    industry: 'general',
+    featured: false,
+  },
+  {
+    variant: 'professional',
+    borderRadius: 6,
+    fontFamily: {
+      heading: fontStacks.sans,
+      body: fontStacks.sans,
+    },
+    shadowIntensity: 'medium',
+  }
+);
+
+/**
+ * Create dark variant of an existing theme
+ */
+export function createDarkVariantOf(theme: Theme, options: { preserveAccent?: boolean } = {}): Theme {
+  // Extract original theme info
+  const { metadata, tokens } = theme;
+  
+  // Create a new metadata object for the dark variant
+  const darkMetadata = {
+    ...metadata,
+    id: `${metadata.id}-dark`,
+    name: `${metadata.name} Dark`,
+    description: `Dark variant of ${metadata.name} theme.`,
+    tags: [...(metadata.tags || []), 'dark'],
+  };
+  
+  // Apply color transformations for dark mode
+  const darkTokens = { ...tokens };
+  
+  // Invert background and text colors
+  if (darkTokens.colors) {
+    darkTokens.colors = {
+      ...darkTokens.colors,
+      background: {
+        ...(darkTokens.colors.background || {}),
+        DEFAULT: '#121212', // Standard dark background
+      },
+      foreground: {
+        ...(darkTokens.colors.foreground || {}),
+        DEFAULT: '#f9fafb', // Light text for dark mode
+      },
+    };
+    
+    // Adjust primary color to be more visible in dark mode
+    if (darkTokens.colors.primary && !options.preserveAccent) {
+      darkTokens.colors.primary = {
+        ...darkTokens.colors.primary,
+        DEFAULT: tokens.colors?.primary?.light || tokens.colors?.primary?.DEFAULT || '#60a5fa',
+      };
+    }
+  }
+  
+  // Return the new dark theme
+  return {
+    metadata: darkMetadata,
+    tokens: darkTokens,
+  };
+}
+
+/**
+ * Create light variant of an existing theme
+ */
+export function createLightVariantOf(theme: Theme): Theme {
+  // Extract original theme info
+  const { metadata, tokens } = theme;
+  
+  // Skip if the theme is already light
+  if (!metadata.id.includes('dark')) {
+    return theme;
+  }
+  
+  // Create a new metadata object for the light variant
+  const lightMetadata = {
+    ...metadata,
+    id: metadata.id.replace('-dark', '-light'),
+    name: metadata.name.replace('Dark', 'Light'),
+    description: `Light variant of ${metadata.name.replace('Dark', '')} theme.`,
+    tags: [...(metadata.tags || []).filter(tag => tag !== 'dark'), 'light'],
+  };
+  
+  // Apply color transformations for light mode
+  const lightTokens = { ...tokens };
+  
+  // Invert background and text colors
+  if (lightTokens.colors) {
+    lightTokens.colors = {
+      ...lightTokens.colors,
+      background: {
+        ...(lightTokens.colors.background || {}),
+        DEFAULT: '#ffffff', // Standard light background
+      },
+      foreground: {
+        ...(lightTokens.colors.foreground || {}),
+        DEFAULT: '#111827', // Dark text for light mode
+      },
+    };
+    
+    // Adjust primary color to be more visible in light mode
+    if (lightTokens.colors.primary) {
+      lightTokens.colors.primary = {
+        ...lightTokens.colors.primary,
+        DEFAULT: '#3b82f6', // Blue 500 - standard primary for light
+      };
+    }
+  }
+  
+  // Return the new light theme
+  return {
+    metadata: lightMetadata,
+    tokens: lightTokens,
+  };
+}
+
+/**
+ * Collection of all default themes
+ */
+export const allDefaultThemes: Record<string, Theme> = {
+  modernBusiness,
+  darkProfessional,
+  salonElegante,
+  creativeStudio,
+  techStartup,
+  wellness,
+  culinary,
+  retail,
+  education,
+  minimalLight,
+  minimalDark,
+  financial,
+  legal,
+  healthcare,
+  realEstate,
+  fitness,
+  wedding,
+  manufacturing,
+  highContrastLight,
+  highContrastDark,
+  monochromeLight,
+  monochromeDark,
+  standardLight,
+  standardDark,
+  
+  // Default theme aliases
+  light: standardLight,
+  dark: standardDark,
+  default: standardLight,
+};
+
+// Re-export with the original name for backward compatibility
+export const defaultThemes = allDefaultThemes;
+
+/**
+ * Default theme categories with our expanded themes
+ */
+const updatedThemeCategories = [
+  {
+    id: 'featured',
+    name: 'Featured',
+    description: 'Our selection of standout themes',
+    themes: [salonElegante, darkProfessional, modernBusiness, creativeStudio, techStartup],
+  },
+  {
+    id: 'business',
+    name: 'Business & Professional',
+    description: 'Themes for service-based and professional businesses',
+    themes: [modernBusiness, techStartup, financial, legal, retail, realEstate],
+  },
+  {
+    id: 'creative',
+    name: 'Creative & Design',
+    description: 'Expressive themes for creative industries',
+    themes: [creativeStudio, darkProfessional, wedding],
+  },
+  {
+    id: 'health',
+    name: 'Health & Wellness',
+    description: 'Themes for healthcare and wellness industries',
+    themes: [healthcare, wellness, fitness],
+  },
+  {
+    id: 'minimal',
+    name: 'Minimal & Clean',
+    description: 'Simple, clean themes that focus on content',
+    themes: [minimalLight, minimalDark, monochromeLight, monochromeDark],
+  },
+  {
+    id: 'industry',
+    name: 'Industry-Specific',
+    description: 'Themes tailored to specific industries',
+    themes: [salonElegante, culinary, manufacturing, education],
+  },
+  {
+    id: 'dark',
+    name: 'Dark Themes',
+    description: 'Sophisticated dark mode themes',
+    themes: [darkProfessional, minimalDark, standardDark, monochromeDark, highContrastDark],
+  },
+  {
+    id: 'light',
+    name: 'Light Themes',
+    description: 'Clean light mode themes',
+    themes: [standardLight, minimalLight, monochromeLight, highContrastLight],
+  },
+  {
+    id: 'accessibility',
+    name: 'Accessibility-Focused',
+    description: 'Themes designed for maximum readability and accessibility',
+    themes: [highContrastLight, highContrastDark],
+  },
+];
+
+/**
  * The system default theme used when no theme is explicitly selected
  */
-export const systemDefaultTheme = modernBusiness;
+export const systemDefaultTheme = standardLight;
+
+/**
+ * Export the combined theme categories
+ */
+export const themeCategories = updatedThemeCategories;

@@ -43,6 +43,33 @@ export const fontStacks = {
   
   // Handwriting fonts
   handwriting: 'Caveat, "Brush Script MT", cursive',
+  
+  // Accessible sans - optimized for legibility and screen readers
+  sansAccessible: 'Atkinson Hyperlegible, Inter, Arial, sans-serif',
+  
+  // Dyslexia-friendly font
+  dyslexic: 'OpenDyslexic, Comic Sans MS, Verdana, sans-serif',
+  
+  // Business fonts
+  business: 'Montserrat, Arial, "Helvetica Neue", sans-serif',
+  
+  // Technical fonts - good for documentation and technical content
+  technical: 'IBM Plex Sans, Roboto, system-ui, sans-serif',
+  
+  // Magazine style
+  magazine: 'Merriweather, Georgia, serif',
+  
+  // Modern sans
+  modern: 'Outfit, Inter, system-ui, sans-serif',
+  
+  // Minimal
+  minimal: 'DM Sans, system-ui, sans-serif',
+  
+  // Elegant
+  elegant: 'Cormorant Garamond, Playfair Display, Georgia, serif',
+  
+  // Clean with good readability for UI
+  ui: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
 };
 
 /**
