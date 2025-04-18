@@ -41,7 +41,7 @@ export default function HomePage({ business, services, slug }: HomePageProps) {
       {/* Hero Section */}
       <section className="relative">
         <div className="max-w-4xl mx-auto text-center px-4">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-indigo-500 text-transparent bg-clip-text">
+          <h1 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-secondary text-transparent bg-clip-text">
             Welcome to {business.businessName}
           </h1>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
@@ -124,7 +124,7 @@ export default function HomePage({ business, services, slug }: HomePageProps) {
       </section>
       
       {/* Why Choose Us */}
-      <section className="bg-gray-50 py-16">
+      <section className="bg-background py-16">
         <div className="max-w-5xl mx-auto px-4">
           <div className="text-center mb-10">
             <h2 className="text-3xl font-bold mb-4">Why Choose Us</h2>
@@ -134,7 +134,7 @@ export default function HomePage({ business, services, slug }: HomePageProps) {
           <div className="grid gap-6 md:grid-cols-3">
             <Card>
               <CardHeader className="text-center">
-                <div className="w-12 h-12 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-3">
+                <div className="w-12 h-12 mx-auto bg-primary/20 rounded-full flex items-center justify-center mb-3">
                   <BadgeCheck className="h-6 w-6 text-primary" />
                 </div>
                 <CardTitle>Professional Staff</CardTitle>
@@ -148,8 +148,8 @@ export default function HomePage({ business, services, slug }: HomePageProps) {
             
             <Card>
               <CardHeader className="text-center">
-                <div className="w-12 h-12 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-3">
-                  <Star className="h-6 w-6 text-primary" />
+                <div className="w-12 h-12 mx-auto bg-secondary/20 rounded-full flex items-center justify-center mb-3">
+                  <Star className="h-6 w-6 text-secondary" />
                 </div>
                 <CardTitle>Premium Products</CardTitle>
               </CardHeader>
@@ -162,8 +162,8 @@ export default function HomePage({ business, services, slug }: HomePageProps) {
             
             <Card>
               <CardHeader className="text-center">
-                <div className="w-12 h-12 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-3">
-                  <Heart className="h-6 w-6 text-primary" />
+                <div className="w-12 h-12 mx-auto bg-accent/20 rounded-full flex items-center justify-center mb-3">
+                  <Heart className="h-6 w-6 text-accent" />
                 </div>
                 <CardTitle>Customer Satisfaction</CardTitle>
               </CardHeader>
@@ -192,7 +192,7 @@ export default function HomePage({ business, services, slug }: HomePageProps) {
                   {[...Array(5)].map((_, i) => (
                     <Star 
                       key={i} 
-                      className={`h-4 w-4 ${i < testimonial.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} 
+                      className={`h-4 w-4 ${i < testimonial.rating ? 'text-primary fill-primary' : 'text-muted-foreground'}`} 
                     />
                   ))}
                 </div>
@@ -207,7 +207,10 @@ export default function HomePage({ business, services, slug }: HomePageProps) {
       </section>
       
       {/* CTA */}
-      <section className="bg-primary text-white py-16">
+      <section 
+        className="py-16 text-primary-foreground"
+        style={{ backgroundColor: 'var(--primary)' }}
+      >
         <div className="max-w-3xl mx-auto text-center px-4">
           <h2 className="text-3xl font-bold mb-6">Ready to Experience Our Services?</h2>
           <p className="text-lg opacity-90 mb-8">
