@@ -122,8 +122,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Add a custom middleware to inject business data into HTML responses
   app.use(async (req, res, next) => {
-    // Skip for API routes
-    if (req.path.startsWith('/api/')) {
+    // Skip for API routes and static assets
+    if (req.path.startsWith('/api/') || 
+        req.path.includes('.') || 
+        req.path.startsWith('/@') || 
+        req.path.startsWith('/src/')) {
       return next();
     }
     
@@ -134,26 +137,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get services for this business while we have the chance
       try {
         const services = await storage.getServicesByUserId(req.business.id);
-        const activeServices = services.filter(service => service.active);
+        const activeServices = services.filter(service => service.active || true);
         
         // Determine subpath for business portal routes
         let subPath = "";
-        if (req.originalUrl !== `/${req.business.businessSlug}`) {
-          const regex = new RegExp(`^/${req.business.businessSlug}/(.*)$`);
-          const match = req.originalUrl.match(regex);
-          if (match && match[1]) {
-            subPath = match[1].split('?')[0]; // Remove query params
+        const slug = req.business.businessSlug;
+        
+        if (slug && req.originalUrl !== `/${slug}`) {
+          const pathParts = req.originalUrl.split('/');
+          // Find the slug index in the path
+          const slugIndex = pathParts.findIndex(part => part === slug);
+          
+          if (slugIndex >= 0 && slugIndex < pathParts.length - 1) {
+            // Get everything after the slug
+            subPath = pathParts.slice(slugIndex + 1).join('/').split('?')[0];
           }
         }
         
         // Store business data for injection
-        req.app.locals.BUSINESS_DATA = {
+        const businessData = {
           business: req.business,
           services: activeServices,
           subPath: subPath
         };
         
-        console.log(`Stored business data for path ${req.path}: ${JSON.stringify(req.app.locals.BUSINESS_DATA).slice(0, 100)}...`);
+        // Store in res.locals for future middleware
+        res.locals.BUSINESS_DATA = businessData;
         
         // Override the res.send method to inject the business data
         const originalSend = res.send;
@@ -164,7 +173,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Create script tag with business data
             const businessDataScript = `
 <script>
-  window.BUSINESS_DATA = ${JSON.stringify(req.app.locals.BUSINESS_DATA)};
+  window.BUSINESS_DATA = ${JSON.stringify(businessData)};
 </script>`;
             
             // Inject before closing head tag

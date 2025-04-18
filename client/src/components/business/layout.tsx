@@ -22,7 +22,7 @@ interface BusinessLayoutProps {
 
 export default function BusinessLayout({ children, business, slug }: BusinessLayoutProps) {
   const [location] = useLocation();
-  const { theme, updateBusinessTheme } = useContext(ThemeContext);
+  const { theme, updateTheme } = useContext(ThemeContext);
   
   // Define business portal navigation items
   const navigationItems: NavigationItem[] = [
@@ -70,7 +70,7 @@ export default function BusinessLayout({ children, business, slug }: BusinessLay
       // First try to use the modern theme object if it exists
       if (business.theme) {
         console.log("BusinessLayout: Applying theme from business.theme", business.theme);
-        updateBusinessTheme(business.theme);
+        updateTheme(business.theme);
       }
       // Otherwise fallback to legacy theme settings
       else if (business.themeSettings) {
@@ -106,7 +106,7 @@ export default function BusinessLayout({ children, business, slug }: BusinessLay
         };
         
         // Apply theme
-        updateBusinessTheme(themeFromLegacy);
+        updateTheme(themeFromLegacy);
       }
     }
   }, [business, updateBusinessTheme]);
