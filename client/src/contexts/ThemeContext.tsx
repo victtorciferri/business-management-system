@@ -92,18 +92,36 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     try {
       setIsSaving(true);
       
-      // Simulate network delay
-      // You would replace this with an actual API call to save the theme
+      // Make API call to save the theme - include credentials to handle session authentication
       const response = await fetch('/api/business/theme', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ theme }),
+        credentials: 'include' // This ensures cookies/session is sent with the request
       });
       
+      // Get the response text regardless of the status
+      const responseText = await response.text();
+      let responseData;
+      
+      try {
+        // Try to parse as JSON if possible
+        responseData = JSON.parse(responseText);
+      } catch (e) {
+        // If it's not valid JSON, use the text as is
+        responseData = { message: responseText };
+      }
+      
       if (!response.ok) {
-        throw new Error('Failed to save theme');
+        if (response.status === 401) {
+          console.error('Authentication error when saving theme:', responseData);
+          throw new Error('Please log in to save theme changes');
+        } else {
+          console.error(`Server error (${response.status}) when saving theme:`, responseData);
+          throw new Error(responseData.message || 'Failed to save theme');
+        }
       }
       
       // Update the original theme to match the current theme
@@ -114,12 +132,12 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
         description: "Your theme has been saved successfully.",
       });
       
-      return await response.json();
-    } catch (error) {
+      return responseData;
+    } catch (error: any) {
       console.error('Error saving theme:', error);
       toast({
         title: "Error saving theme",
-        description: "There was a problem saving your theme. Please try again.",
+        description: error.message || "There was a problem saving your theme. Please try again.",
         variant: "destructive",
       });
       throw error;
