@@ -7,6 +7,7 @@ import rateLimit from 'express-rate-limit';
 import { createPreference, processWebhook } from './mercadopago';
 import themeRoutes from './routes/themeRoutes';
 import themeApiRoutes from './routes/themeApiRoutes';
+import themeTestRoutes from './routes/theme-test';
 import { convertLegacyThemeToTheme, convertThemeToLegacyTheme, updateThemeForBusiness, getThemeForBusiness } from './utils/themeUtils';
 import { 
   insertUserSchema, 
@@ -219,6 +220,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register the new theme API routes
   app.use(themeApiRoutes);
+  
+  // Register the theme test routes (for development only)
+  app.use(themeTestRoutes);
   
   // Make the theme API available directly for specific routes
   app.get('/api/themes', (req, res) => themeApiRoutes(req, res));

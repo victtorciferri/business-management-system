@@ -9,7 +9,8 @@ import {
   Cart, InsertCart,
   CartItem, InsertCartItem,
   StaffAvailability, InsertStaffAvailability,
-  CustomerAccessToken, InsertCustomerAccessToken
+  CustomerAccessToken, InsertCustomerAccessToken,
+  ThemeEntity, InsertThemeEntity
 } from "@shared/schema";
 import { DatabaseStorage } from "./databaseStorage";
 
@@ -23,15 +24,15 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   
   // Theme methods
-  getThemeById(id: number): Promise<any | undefined>;
-  getThemesByBusinessId(businessId: number): Promise<any[]>;
-  getThemesByBusinessSlug(businessSlug: string): Promise<any[]>;
-  getActiveTheme(businessId: number): Promise<any | undefined>;
-  getDefaultTheme(businessId: number): Promise<any | undefined>;
-  createTheme(theme: any): Promise<any>;
-  updateTheme(id: number, theme: any): Promise<any | undefined>;
+  getThemeById(id: number): Promise<ThemeEntity | undefined>;
+  getThemesByBusinessId(businessId: number): Promise<ThemeEntity[]>;
+  getThemesByBusinessSlug(businessSlug: string): Promise<ThemeEntity[]>;
+  getActiveTheme(businessId: number): Promise<ThemeEntity | undefined>;
+  getDefaultTheme(businessId: number): Promise<ThemeEntity | undefined>;
+  createTheme(theme: InsertThemeEntity): Promise<ThemeEntity>;
+  updateTheme(id: number, theme: Partial<InsertThemeEntity>): Promise<ThemeEntity | undefined>;
   deleteTheme(id: number): Promise<boolean>;
-  activateTheme(id: number): Promise<any | undefined>;
+  activateTheme(id: number): Promise<ThemeEntity | undefined>;
   
   // Service methods
   getService(id: number): Promise<Service | undefined>;
