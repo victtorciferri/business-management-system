@@ -12,6 +12,7 @@ import {
 import { useLocation } from "wouter";
 import { useBusinessContext } from "@/contexts/BusinessContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useEffect } from "react";
 
 interface CustomerPortalLayoutProps {
   children: React.ReactNode;
