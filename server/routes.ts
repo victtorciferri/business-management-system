@@ -1963,13 +1963,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid theme format" });
       }
       
-      // Validate required theme properties
-      const requiredProperties = ['primary', 'secondary', 'background', 'text'];
-      for (const prop of requiredProperties) {
-        if (typeof theme[prop] !== 'string' || !theme[prop].match(/^#[0-9A-Fa-f]{6}$/)) {
+      // Validate required theme properties - supporting both naming conventions
+      const requiredPropertyMappings = [
+        ['primary', 'primaryColor'],
+        ['secondary', 'secondaryColor'], 
+        ['background', 'backgroundColor'], 
+        ['text', 'textColor']
+      ];
+      
+      // Check each required property, allowing either naming convention
+      for (const [oldProp, newProp] of requiredPropertyMappings) {
+        // If neither property exists, return an error
+        if (!theme[oldProp] && !theme[newProp]) {
           return res.status(400).json({ 
-            message: `Invalid theme property: ${prop}. Must be a valid hex color.`
+            message: `Missing required theme property: ${oldProp} or ${newProp}. At least one must be provided.`
           });
+        }
+        
+        // If the old property exists, validate it
+        if (theme[oldProp] && (typeof theme[oldProp] !== 'string' || !theme[oldProp].match(/^#[0-9A-Fa-f]{6}$/))) {
+          return res.status(400).json({ 
+            message: `Invalid theme property: ${oldProp}. Must be a valid hex color.`
+          });
+        }
+        
+        // If the new property exists, validate it
+        if (theme[newProp] && (typeof theme[newProp] !== 'string' || !theme[newProp].match(/^#[0-9A-Fa-f]{6}$/))) {
+          return res.status(400).json({ 
+            message: `Invalid theme property: ${newProp}. Must be a valid hex color.`
+          });
+        }
+      }
+      
+      // Normalize the theme to ensure both naming conventions are present
+      for (const [oldProp, newProp] of requiredPropertyMappings) {
+        if (theme[oldProp] && !theme[newProp]) {
+          theme[newProp] = theme[oldProp];
+        } else if (theme[newProp] && !theme[oldProp]) {
+          theme[oldProp] = theme[newProp];
         }
       }
       
@@ -2046,14 +2077,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Also update the new theme column for consistency
       const theme = {
         name: "Legacy Settings",  // Add a name for the theme
+        // Include both naming conventions for maximum compatibility
         primary: themeSettings.primaryColor || '#1E3A8A',
+        primaryColor: themeSettings.primaryColor || '#1E3A8A',
         secondary: themeSettings.secondaryColor || '#9333EA',
+        secondaryColor: themeSettings.secondaryColor || '#9333EA',
         background: themeSettings.backgroundColor || '#FFFFFF',
+        backgroundColor: themeSettings.backgroundColor || '#FFFFFF',
         text: themeSettings.textColor || '#111827',
+        textColor: themeSettings.textColor || '#111827',
+        accent: themeSettings.accentColor || '#F59E0B',
+        accentColor: themeSettings.accentColor || '#F59E0B',
         appearance: themeSettings.appearance || 'system',
-        font: defaultTheme.font,
-        borderRadius: defaultTheme.borderRadius,
-        spacing: defaultTheme.spacing
+        fontFamily: themeSettings.fontFamily || defaultTheme.fontFamily,
+        font: themeSettings.fontFamily || defaultTheme.fontFamily,
+        borderRadius: themeSettings.borderRadius || defaultTheme.borderRadius,
+        spacing: themeSettings.spacing || defaultTheme.spacing,
+        buttonStyle: themeSettings.buttonStyle || 'default',
+        cardStyle: themeSettings.cardStyle || 'default',
+        variant: themeSettings.variant || 'professional'
       };
       
       await updateThemeForBusiness(userId, theme);

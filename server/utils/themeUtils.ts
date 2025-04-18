@@ -76,9 +76,32 @@ export function convertLegacyThemeToTheme(legacyTheme: any): any {
 export function convertThemeToLegacyTheme(theme: any): any {
   if (!theme) return null;
 
-  // Handle case where it's already in legacy format
-  if (theme.primaryColor !== undefined) {
-    return theme;
+  // Handle case where it's already in legacy format with primaryColor
+  if (theme.primaryColor !== undefined && !theme.primary) {
+    // Already in the legacy format, but normalize to ensure all properties are present
+    return {
+      name: theme.name || "Custom Theme",
+      primaryColor: theme.primaryColor || defaultTheme.primary,
+      secondaryColor: theme.secondaryColor || defaultTheme.secondary,
+      backgroundColor: theme.backgroundColor || defaultTheme.background,
+      textColor: theme.textColor || defaultTheme.text,
+      accentColor: theme.accentColor || defaultTheme.accent,
+      borderRadius: typeof theme.borderRadius === 'number' ? theme.borderRadius : 8,
+      spacing: typeof theme.spacing === 'number' ? theme.spacing : 16,
+      appearance: theme.appearance || defaultTheme.appearance,
+      fontFamily: theme.fontFamily || theme.font || defaultTheme.fontFamily,
+      buttonStyle: theme.buttonStyle || 'default',
+      cardStyle: theme.cardStyle || 'default',
+      variant: theme.variant || 'professional',
+      
+      // Also add old format properties for backwards compatibility
+      primary: theme.primaryColor || defaultTheme.primary,
+      secondary: theme.secondaryColor || defaultTheme.secondary,
+      background: theme.backgroundColor || defaultTheme.background,
+      text: theme.textColor || defaultTheme.text,
+      accent: theme.accentColor || defaultTheme.accent,
+      font: theme.fontFamily || theme.font || defaultTheme.fontFamily
+    };
   }
 
   // Extract numeric value from string with units (like "8px" -> 8)
@@ -91,21 +114,30 @@ export function convertThemeToLegacyTheme(theme: any): any {
     return 8; // default
   };
 
-  // Convert from new format to legacy format
+  // Convert from old format to legacy format with both naming conventions
   return {
     name: theme.name || "Custom Theme",
-    primaryColor: theme.primary || defaultTheme.primary,
-    secondaryColor: theme.secondary || defaultTheme.secondary,
-    backgroundColor: theme.background || defaultTheme.background,
-    textColor: theme.text || defaultTheme.text,
-    accentColor: theme.accent || defaultTheme.accent,
+    // Include both naming conventions for maximum compatibility
+    primaryColor: theme.primaryColor || theme.primary || defaultTheme.primary,
+    secondaryColor: theme.secondaryColor || theme.secondary || defaultTheme.secondary,
+    backgroundColor: theme.backgroundColor || theme.background || defaultTheme.background,
+    textColor: theme.textColor || theme.text || defaultTheme.text,
+    accentColor: theme.accentColor || theme.accent || defaultTheme.accent,
     borderRadius: extractNumeric(theme.borderRadius || defaultTheme.borderRadius),
     spacing: extractNumeric(theme.spacing || defaultTheme.spacing),
     appearance: theme.appearance || defaultTheme.appearance,
-    fontFamily: theme.fontFamily || defaultTheme.fontFamily,
+    fontFamily: theme.fontFamily || theme.font || defaultTheme.fontFamily,
     buttonStyle: theme.buttonStyle || 'default',
     cardStyle: theme.cardStyle || 'default',
-    variant: theme.variant || 'professional'
+    variant: theme.variant || 'professional',
+    
+    // Also include old format properties for backwards compatibility
+    primary: theme.primary || theme.primaryColor || defaultTheme.primary,
+    secondary: theme.secondary || theme.secondaryColor || defaultTheme.secondary,
+    background: theme.background || theme.backgroundColor || defaultTheme.background,
+    text: theme.text || theme.textColor || defaultTheme.text,
+    accent: theme.accent || theme.accentColor || defaultTheme.accent,
+    font: theme.font || theme.fontFamily || defaultTheme.fontFamily
   };
 }
 
