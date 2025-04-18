@@ -41,8 +41,16 @@ export default function HomePage({ business, services, slug }: HomePageProps) {
       {/* Hero Section */}
       <section className="relative">
         <div className="max-w-4xl mx-auto text-center px-4">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-secondary text-transparent bg-clip-text">
-            Welcome to {business.businessName}
+          <h1 className="text-4xl md:text-5xl font-bold mb-6 text-transparent">
+            <span 
+              style={{ 
+                background: 'linear-gradient(to right, var(--primary), var(--secondary))',
+                WebkitBackgroundClip: 'text',
+                backgroundClip: 'text' 
+              }}
+            >
+              Welcome to {business.businessName}
+            </span>
           </h1>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
             Experience exceptional beauty and wellness services tailored to your needs. 

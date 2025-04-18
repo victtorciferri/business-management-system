@@ -214,7 +214,14 @@ export default function BusinessPortal({ slug, subPath, initialData }: BusinessP
         <div className="container mx-auto py-10">
           <div className="flex flex-col items-center mb-10 text-center">
             <h1 className="text-4xl font-bold tracking-tight mb-4">
-              <span className={`bg-gradient-to-r from-primary to-${theme?.secondaryColor ? theme.secondaryColor.replace('#', '') : 'indigo-500'} text-transparent bg-clip-text`}>
+              <span 
+                className="text-transparent bg-clip-text"
+                style={{ 
+                  background: `linear-gradient(to right, var(--primary), ${theme?.secondaryColor || 'var(--secondary)'})`,
+                  WebkitBackgroundClip: 'text',
+                  backgroundClip: 'text'
+                }}
+              >
                 {business.businessName}
               </span>
             </h1>
