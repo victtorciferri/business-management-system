@@ -20,6 +20,8 @@ import ThemePreview from './ThemePreview';
 import ColorPicker from './ColorPicker';
 import ColorExtractor from './ColorExtractor';
 import ThemePresetSelector from './ThemePresetSelector';
+import SalonEleganteThemeCapture from './SalonEleganteThemeCapture';
+import { FontSelector } from './FontSelector';
 
 interface BusinessThemeEditorProps {
   className?: string;
@@ -282,23 +284,105 @@ export const BusinessThemeEditor: React.FC<BusinessThemeEditorProps> = ({
             
             <ScrollArea className="h-[600px] pr-4">
               <TabsContent value="presets" className="mt-0">
-                <ThemePresetSelector 
-                  onSelectPreset={(preset) => {
-                    updateTheme(preset);
-                  }}
-                />
+                <div className="space-y-6">
+                  {/* Salon Elegante Featured Theme */}
+                  <div>
+                    <h3 className="text-base font-semibold mb-4 flex items-center">
+                      <Heart className="mr-2 h-4 w-4 text-rose-500" />
+                      Featured Theme
+                    </h3>
+                    <SalonEleganteThemeCapture 
+                      onApply={(theme) => updateTheme(theme)}
+                      isApplied={
+                        theme?.primaryColor === "#8b5cf6" && 
+                        theme?.accentColor === "#f59e0b" && 
+                        theme?.backgroundColor === "#1f2937" &&
+                        theme?.appearance === "dark"
+                      }
+                    />
+                  </div>
+                  
+                  <Separator className="my-6" />
+                  
+                  {/* Standard Theme Presets */}
+                  <h3 className="text-base font-semibold mb-4">Theme Gallery</h3>
+                  <ThemePresetSelector 
+                    onSelectPreset={(preset) => {
+                      updateTheme(preset);
+                    }}
+                  />
+                </div>
               </TabsContent>
               
               <TabsContent value="colors" className="space-y-6 mt-0">
                 <div>
                   <h3 className="text-base font-semibold mb-4">Theme Colors</h3>
                   
+                  {/* Salon Elegante Palette Recommendation */}
+                  {theme?.appearance === "dark" && (
+                    <div className="mb-4 p-3 bg-primary/10 rounded-md border border-primary/20">
+                      <h4 className="text-sm font-medium mb-2 flex items-center">
+                        <Heart className="text-rose-500 mr-2 h-4 w-4" />
+                        Salon Elegante Color Palette
+                      </h4>
+                      <p className="text-xs mb-3">
+                        Using the elegant dark theme with purple and amber accents for a sophisticated look.
+                      </p>
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        <div 
+                          className="h-6 w-6 rounded-md cursor-pointer ring-1 ring-inset ring-white/10"
+                          style={{ backgroundColor: '#8b5cf6' }}
+                          onClick={() => updateTheme({ primaryColor: '#8b5cf6' })}
+                          title="Salon Elegante Purple"
+                        />
+                        <div 
+                          className="h-6 w-6 rounded-md cursor-pointer ring-1 ring-inset ring-white/10"
+                          style={{ backgroundColor: '#7c3aed' }}
+                          onClick={() => updateTheme({ secondaryColor: '#7c3aed' })}
+                          title="Deep Purple"
+                        />
+                        <div 
+                          className="h-6 w-6 rounded-md cursor-pointer ring-1 ring-inset ring-white/10"
+                          style={{ backgroundColor: '#f59e0b' }}
+                          onClick={() => updateTheme({ accentColor: '#f59e0b' })}
+                          title="Amber Accent"
+                        />
+                        <div 
+                          className="h-6 w-6 rounded-md cursor-pointer ring-1 ring-inset ring-white/10"
+                          style={{ backgroundColor: '#1f2937' }}
+                          onClick={() => updateTheme({ backgroundColor: '#1f2937' })}
+                          title="Dark Background"
+                        />
+                        <div 
+                          className="h-6 w-6 rounded-md cursor-pointer ring-1 ring-inset ring-white/10"
+                          style={{ backgroundColor: '#f9fafb' }}
+                          onClick={() => updateTheme({ textColor: '#f9fafb' })}
+                          title="Light Text"
+                        />
+                      </div>
+                    </div>
+                  )}
+
                   <div className="space-y-4">
                     <ColorPicker
                       label="Primary Color"
                       color={theme?.primaryColor || "#4f46e5"}
                       onChange={(color) => updateTheme({ primaryColor: color })}
                       description="The main color of your brand, used for primary buttons and elements"
+                      presetColors={[
+                        "#8b5cf6", // Salon Elegante Purple
+                        "#7c3aed", // Deep Purple
+                        "#4f46e5", // Indigo
+                        "#3b82f6", // Blue 
+                        "#0ea5e9", // Sky
+                        "#14b8a6", // Teal
+                        "#10b981", // Emerald
+                        "#84cc16", // Lime
+                        "#ef4444", // Red
+                        "#f97316", // Orange
+                        "#f59e0b", // Amber
+                        "#ec4899", // Pink
+                      ]}
                     />
                     
                     <ColorPicker
@@ -320,6 +404,15 @@ export const BusinessThemeEditor: React.FC<BusinessThemeEditorProps> = ({
                       color={theme?.backgroundColor || "#FFFFFF"}
                       onChange={(color) => updateTheme({ backgroundColor: color })}
                       description="The main background color of your site"
+                      presetColors={[
+                        "#ffffff", // White (Light Mode)
+                        "#f9fafb", // Gray 50
+                        "#f3f4f6", // Gray 100
+                        "#1f2937", // Salon Elegante Dark
+                        "#111827", // Gray 900
+                        "#18181b", // Zinc 900
+                        "#0f172a", // Slate 900
+                      ]}
                     />
                     
                     <ColorPicker
@@ -327,6 +420,14 @@ export const BusinessThemeEditor: React.FC<BusinessThemeEditorProps> = ({
                       color={theme?.textColor || "#111827"}
                       onChange={(color) => updateTheme({ textColor: color })}
                       description="The primary text color that will be used throughout your site"
+                      presetColors={[
+                        "#111827", // Dark text (Light Mode)
+                        "#374151", // Gray 700
+                        "#6b7280", // Gray 500
+                        "#f9fafb", // Light text (Dark Mode - Salon Elegante)
+                        "#e5e7eb", // Gray 200
+                        "#9ca3af", // Gray 400
+                      ]}
                     />
                   </div>
                 </div>
@@ -348,25 +449,17 @@ export const BusinessThemeEditor: React.FC<BusinessThemeEditorProps> = ({
                           {theme?.fontFamily ? theme.fontFamily.split(',')[0] : 'Default'}
                         </span>
                       </div>
-                      <Select
-                        value={theme?.fontFamily || 'Inter, system-ui, sans-serif'}
-                        onValueChange={(value) => updateTheme({ fontFamily: value })}
-                      >
-                        <SelectTrigger id="fontFamily" className="w-full">
-                          <SelectValue placeholder="Select a font" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {fontFamilies.map((font) => (
-                            <SelectItem
-                              key={font}
-                              value={font}
-                              style={{ fontFamily: font }}
-                            >
-                              {font.split(',')[0]}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <FontSelector
+                        id="fontFamily"
+                        value={theme?.fontFamily || 'Inter, sans-serif'}
+                        onChange={(value) => updateTheme({ fontFamily: value })}
+                      />
+                      {theme?.fontFamily?.includes('Playfair Display') && (
+                        <div className="mt-2 p-2 bg-primary/10 rounded-md text-xs text-foreground border border-primary/20">
+                          <div className="font-medium mb-1">Playfair Display</div>
+                          <p>This elegant serif font is used in the Salon Elegante theme for a sophisticated look.</p>
+                        </div>
+                      )}
                     </div>
                     
                     <div className="space-y-2">
