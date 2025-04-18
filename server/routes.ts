@@ -21,6 +21,7 @@ import {
 } from "@shared/schema";
 import { getThemeForBusiness, updateThemeForBusiness } from "./utils/themeUtils";
 import { defaultTheme, Theme } from "@shared/config";
+import { themeMiddleware, handlePublicThemeUpdate } from "./middleware/themeMiddleware";
 
 // Extend the Express Session to include user
 declare module 'express-session' {
@@ -141,6 +142,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Apply the business extractor middleware to all routes
   app.use(businessExtractor);
+  
+  // Apply theme middleware to all routes after business extractor
+  app.use(themeMiddleware);
   
   // Register theme-related routes
   app.use('/api/business', themeRoutes);
