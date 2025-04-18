@@ -75,12 +75,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/themes/presets", (_req: Request, res: Response) => {
     try {
       // Import theme presets from the shared module
-      const { allThemePresets } = require('../shared/themePresets');
+      const { themePresets, getPresetsByCategory, getPresetCategories } = require('@shared/themePresets');
       
       // Return all theme presets with complete information and categories
       res.json({ 
-        presets: allThemePresets,
-        categories: Array.from(new Set(allThemePresets.map((preset: any) => preset.category)))
+        presets: themePresets,
+        categories: getPresetCategories()
       });
     } catch (error) {
       console.error('Error loading theme presets:', error);
@@ -419,8 +419,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Business not found" });
       }
       
-      // Get services for this business
-      const services = await storage.getServicesByUserId(business.id);
+      // Get services for this business using direct SQL query if storage method fails
+      let services = [];
+      try {
+        // Try regular storage method first
+        services = await storage.getServicesByUserId(business.id);
+      } catch (error) {
+        // If error contains "business_slug" column not found, use direct SQL
+        if (error.toString().includes("business_slug")) {
+          console.log("business_slug column not found in services table, using userId filter only");
+          try {
+            // Direct SQL query using only user_id for filtering
+            const result = await pool.query(`
+              SELECT * FROM services WHERE user_id = $1 ORDER BY id
+            `, [business.id]);
+            
+            services = result.rows.map(row => ({
+              id: row.id,
+              userId: row.user_id,
+              name: row.name,
+              description: row.description,
+              duration: row.duration,
+              price: row.price,
+              color: row.color,
+              active: row.active
+            }));
+          } catch (sqlError) {
+            console.error("Error fetching services with direct SQL:", sqlError);
+            services = []; // Default to empty if both methods fail
+          }
+        } else {
+          console.error("Error fetching services:", error);
+          services = []; // Default to empty array if error
+        }
+      }
       const activeServices = services.filter(service => service.active);
       
       // Determine subpath for business portal routes if from referer
