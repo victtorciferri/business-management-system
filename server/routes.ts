@@ -6,7 +6,7 @@ import { sql } from "drizzle-orm";
 import rateLimit from 'express-rate-limit';
 import { createPreference, processWebhook } from './mercadopago';
 import themeRoutes from './routes/themeRoutes';
-import themeApiRoutes from './routes/theme';
+import themeApiRoutes from './routes/themeApiRoutes';
 import { convertLegacyThemeToTheme, convertThemeToLegacyTheme, updateThemeForBusiness, getThemeForBusiness } from './utils/themeUtils';
 import { 
   insertUserSchema, 

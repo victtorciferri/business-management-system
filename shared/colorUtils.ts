@@ -273,3 +273,11 @@ export function generateCssVariables(baseName: string, palette: Record<number, C
   
   return variables;
 }
+
+/**
+ * Simple wrapper around generateColorPalette
+ * Used in the theme editor when loading a theme
+ */
+export function generatePaletteFromColor(color: string): ColorPalette {
+  return generateColorPalette(color);
+}
