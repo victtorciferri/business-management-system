@@ -49,11 +49,19 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
   useEffect(() => {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const storedMode = localStorage.getItem('theme-mode');
-    if (storedMode) {
-      setIsDarkMode(storedMode === 'dark');
+    const shouldUseDarkMode = storedMode === 'dark' || (storedMode !== 'light' && prefersDark);
+    
+    // Update state
+    setIsDarkMode(shouldUseDarkMode);
+    
+    // Also ensure HTML class is applied
+    if (shouldUseDarkMode) {
+      document.documentElement.classList.add('dark');
     } else {
-      setIsDarkMode(prefersDark);
+      document.documentElement.classList.remove('dark');
     }
+    
+    console.log('ThemeContext: Initial dark mode set to', shouldUseDarkMode ? 'dark' : 'light');
   }, []);
   
   // Update theme when initialTheme changes
@@ -128,6 +136,14 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     setIsDarkMode(prev => {
       const newMode = !prev;
       localStorage.setItem('theme-mode', newMode ? 'dark' : 'light');
+      
+      // Apply dark mode class to document
+      if (newMode) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+      
       return newMode;
     });
   }, []);
