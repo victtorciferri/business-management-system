@@ -67,42 +67,103 @@ export default function BusinessLayout({ children, business, slug }: BusinessLay
   // Add effect to apply the theme when business is loaded
   useEffect(() => {
     if (business) {
-      // First try to use the modern theme object if it exists
-      if (business.theme) {
-        console.log("BusinessLayout: Applying theme from business.theme", business.theme);
-        updateTheme(business.theme);
-      }
-      // Otherwise fallback to legacy theme settings
-      else if (business.themeSettings) {
+      // First check if themeSettings contains the new theme format properties
+      if (business.themeSettings && (
+        business.themeSettings.primaryColor || 
+        business.themeSettings.secondaryColor || 
+        business.themeSettings.accentColor
+      )) {
         console.log("BusinessLayout: Applying theme from themeSettings", business.themeSettings);
         
-        // Convert legacy theme settings to new theme format if needed
+        // Convert to proper Theme format
+        const themeFromSettings = {
+          name: business.themeSettings.name || "Business Theme",
+          primaryColor: business.themeSettings.primaryColor || "#4F46E5",
+          secondaryColor: business.themeSettings.secondaryColor || "#9333EA",
+          accentColor: business.themeSettings.accentColor || "#F59E0B",
+          backgroundColor: business.themeSettings.backgroundColor || "#FFFFFF",
+          textColor: business.themeSettings.textColor || "#111827",
+          fontFamily: business.themeSettings.fontFamily || "Inter, system-ui, sans-serif",
+          borderRadius: typeof business.themeSettings.borderRadius === 'number' 
+            ? business.themeSettings.borderRadius 
+            : (business.themeSettings.borderRadius === 'rounded-md' ? 8 : 4),
+          spacing: typeof business.themeSettings.spacing === 'number'
+            ? business.themeSettings.spacing
+            : 16,
+          buttonStyle: business.themeSettings.buttonStyle || "default",
+          cardStyle: business.themeSettings.cardStyle || "default",
+          appearance: business.themeSettings.appearance || "light",
+          variant: business.themeSettings.variant || "professional",
+          colorPalette: business.themeSettings.colorPalette || []
+        };
+        
+        // Apply theme
+        updateTheme(themeFromSettings);
+      }
+      // Next try to use the theme object if it exists
+      else if (business.theme) {
+        console.log("BusinessLayout: Applying theme from business.theme", business.theme);
+        
+        // Convert legacy theme format to our new format if needed
+        const properTheme = {
+          name: business.theme.name || "Business Theme",
+          primaryColor: business.theme.primaryColor || business.theme.primary || "#4F46E5",
+          secondaryColor: business.theme.secondaryColor || business.theme.secondary || "#9333EA",
+          accentColor: business.theme.accentColor || "#F59E0B",
+          backgroundColor: business.theme.backgroundColor || business.theme.background || "#FFFFFF",
+          textColor: business.theme.textColor || business.theme.text || "#111827",
+          fontFamily: business.theme.fontFamily || business.theme.font || "Inter, system-ui, sans-serif",
+          borderRadius: typeof business.theme.borderRadius === 'number' 
+            ? business.theme.borderRadius 
+            : 8,
+          spacing: typeof business.theme.spacing === 'number'
+            ? business.theme.spacing
+            : 16,
+          buttonStyle: business.theme.buttonStyle || "default",
+          cardStyle: business.theme.cardStyle || "default",
+          appearance: business.theme.appearance || "light",
+          variant: business.theme.variant || "professional",
+          colorPalette: business.theme.colorPalette || []
+        };
+        
+        updateTheme(properTheme);
+      }
+      // Fallback to legacy theme settings in older format
+      else if (business.themeSettings) {
+        console.log("BusinessLayout: Applying legacy theme from themeSettings", business.themeSettings);
+        
+        // Convert very old legacy theme settings to new theme format
         const themeFromLegacy = {
           name: "Business Theme",
-          primary: business.themeSettings.primaryColor ? 
+          primaryColor: business.themeSettings.primaryColor ? 
             (business.themeSettings.primaryColor.startsWith('#') ? 
               business.themeSettings.primaryColor : 
               `#${business.themeSettings.primaryColor.replace('indigo-600', '4F46E5')}`) : 
             "#4F46E5",
-          secondary: business.themeSettings.secondaryColor ? 
+          secondaryColor: business.themeSettings.secondaryColor ? 
             (business.themeSettings.secondaryColor.startsWith('#') ? 
               business.themeSettings.secondaryColor : 
               `#${business.themeSettings.secondaryColor.replace('gray-200', 'E5E7EB')}`) : 
             "#9333EA",
-          background: business.themeSettings.backgroundColor ? 
+          backgroundColor: business.themeSettings.backgroundColor ? 
             (business.themeSettings.backgroundColor.startsWith('#') ? 
               business.themeSettings.backgroundColor : 
               `#${business.themeSettings.backgroundColor.replace('white', 'FFFFFF')}`) : 
             "#FFFFFF",
-          text: business.themeSettings.textColor ? 
+          textColor: business.themeSettings.textColor ? 
             (business.themeSettings.textColor.startsWith('#') ? 
               business.themeSettings.textColor : 
               `#${business.themeSettings.textColor.replace('gray-800', '1F2937')}`) : 
             "#111827",
-          appearance: business.themeSettings.appearance || "system",
-          font: "Inter",
-          borderRadius: "0.375rem",
-          spacing: "1rem"
+          accentColor: "#F59E0B",
+          appearance: business.themeSettings.appearance || "light",
+          fontFamily: "Inter, system-ui, sans-serif",
+          borderRadius: 8,
+          spacing: 16,
+          buttonStyle: "default",
+          cardStyle: "default",
+          variant: "professional",
+          colorPalette: []
         };
         
         // Apply theme
