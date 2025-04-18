@@ -1,548 +1,441 @@
-import { Request, Response, Router } from 'express';
+/**
+ * Theme Routes - 2025 Edition
+ * 
+ * API routes for theme management and customization.
+ */
+
+import { Router, Request, Response } from 'express';
+import { storage } from '../storage';
 import { db } from '../db';
-import { users, themes, insertThemeSchema } from '../../shared/schema';
+import { themes } from '../../shared/schema';
+import { eq, and } from 'drizzle-orm';
 import { z } from 'zod';
-import { eq, and, desc } from 'drizzle-orm';
-import { ThemeEntity } from '../../shared/schema';
 import { DesignTokens } from '../../shared/designTokens';
-import { ColorPalette } from '../../shared/colorUtils';
-import { TypographySettings } from '../../shared/typographyUtils';
-import { SpacingSettings } from '../../shared/spacingUtils';
 
 const router = Router();
 
-/**
- * Combine color, typography, and spacing settings into design tokens
- */
-function combineIntoDesignTokens(
-  colorPalette: ColorPalette | null, 
-  typographySettings: TypographySettings,
-  spacingSettings: SpacingSettings
-): DesignTokens {
-  // Create a basic design tokens structure
-  return {
-    colors: {
-      primary: colorPalette?.shades || {},
-      secondary: {},
-      accent: {},
-      neutral: {},
-      success: {},
-      warning: {},
-      danger: {},
-      info: {},
-      background: {},
-      surface: {},
-      text: {},
-      border: {},
-    },
-    typography: {
-      fontFamily: {
-        heading: typographySettings.headingFont.name,
-        body: typographySettings.bodyFont.name,
-        mono: typographySettings.monoFont.name,
-      },
-      fontSize: {
-        // Convert type scale values to the design token structure
-        ...Object.entries(typographySettings.scale.values).reduce((acc, [key, value]) => {
-          acc[key] = value.size;
-          return acc;
-        }, {} as Record<string, string>),
-      },
-      fontWeight: typographySettings.fontWeights,
-      lineHeight: {
-        none: '1',
-        tight: '1.25',
-        snug: '1.375',
-        normal: '1.5',
-        relaxed: '1.625',
-        loose: '2',
-      },
-      letterSpacing: {
-        tighter: '-0.05em',
-        tight: '-0.025em',
-        normal: '0em',
-        wide: '0.025em',
-        wider: '0.05em',
-        widest: '0.1em',
-      },
-      // Additional typography tokens
-      textStyles: typographySettings.textStyles,
-    },
-    spacing: {
-      // Convert spacing values to design token structure
-      ...Object.entries(spacingSettings.scale.values).reduce((acc, [key, value]) => {
-        acc[key] = value;
-        return acc;
-      }, {} as Record<string, string>),
-      // Additional spacing tokens
-      layout: {
-        contentWidth: spacingSettings.layout.contentWidth,
-        maxWidth: spacingSettings.layout.maxWidth,
-        containerPadding: spacingSettings.layout.containerPadding,
-        sectionSpacing: spacingSettings.layout.sectionSpacing,
-        componentSpacing: spacingSettings.layout.componentSpacing,
-      },
-      grid: {
-        columns: spacingSettings.layout.gridSystem.columns,
-        gutter: spacingSettings.layout.gridSystem.gutter,
-        margins: spacingSettings.layout.gridSystem.margins,
-        columnWidth: spacingSettings.layout.gridSystem.columnWidth,
-        breakpoints: spacingSettings.layout.gridSystem.breakpoints,
-      },
-    },
-    borders: {
-      width: {
-        none: '0',
-        thin: '1px',
-        thick: '2px',
-        heavy: '4px',
-      },
-      radius: {
-        none: '0',
-        sm: '0.125rem',
-        md: '0.25rem',
-        lg: '0.5rem',
-        xl: '1rem',
-        full: '9999px',
-      },
-      style: {
-        solid: 'solid',
-        dashed: 'dashed',
-        dotted: 'dotted',
-      },
-    },
-    shadows: {
-      none: 'none',
-      sm: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-      md: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-      lg: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-      xl: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-      '2xl': '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-      inner: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)',
-    },
-    effects: {
-      opacity: {
-        0: '0',
-        25: '0.25',
-        50: '0.5',
-        75: '0.75',
-        100: '1',
-      },
-      blur: {
-        none: '0',
-        sm: '4px',
-        md: '8px',
-        lg: '16px',
-        xl: '24px',
-      },
-      transition: {
-        slow: '0.3s ease-in-out',
-        medium: '0.2s ease-in-out',
-        fast: '0.1s ease-in-out',
-      },
-    },
-    components: {
-      button: {
-        variants: {
-          primary: {},
-          secondary: {},
-          outline: {},
-          ghost: {},
-          link: {},
-        },
-        sizes: {
-          xs: {},
-          sm: {},
-          md: {},
-          lg: {},
-          xl: {},
-        },
-      },
-      input: {
-        variants: {
-          default: {},
-          filled: {},
-          outlined: {},
-        },
-        sizes: {
-          sm: {},
-          md: {},
-          lg: {},
-        },
-      },
-      card: {
-        variants: {
-          default: {},
-          elevated: {},
-          outlined: {},
-        },
-      },
-      modal: {
-        sizes: {
-          sm: {},
-          md: {},
-          lg: {},
-          xl: {},
-          full: {},
-        },
-      },
-      tabs: {
-        variants: {
-          default: {},
-          outline: {},
-          underline: {},
-        },
-      },
-      tooltip: {
-        sizes: {
-          sm: {},
-          md: {},
-          lg: {},
-        },
-      },
-    },
-  };
-}
+// Validation schemas for theme operations
+const createThemeSchema = z.object({
+  name: z.string().min(1, "Theme name is required"),
+  description: z.string().optional(),
+  primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Primary color must be a valid hex color"),
+  secondaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Secondary color must be a valid hex color").optional(),
+  accentColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Accent color must be a valid hex color").optional(),
+  textColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Text color must be a valid hex color").optional(),
+  backgroundColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Background color must be a valid hex color").optional(),
+  fontFamily: z.string().optional(),
+  borderRadius: z.number().optional(),
+  spacing: z.number().optional(),
+  isDefault: z.boolean().optional(),
+  isActive: z.boolean().optional(),
+  category: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  tokens: z.record(z.any()).optional(),
+});
+
+const updateThemeSchema = createThemeSchema.partial();
 
 /**
- * Get all themes for a business
+ * GET /api/themes
+ * Get all themes for the authenticated business
  */
-router.get('/api/themes', async (req: Request, res: Response) => {
-  const { businessId, businessSlug } = req.query;
-  
-  if (!businessId && !businessSlug) {
-    return res.status(400).json({ message: 'businessId or businessSlug is required' });
-  }
-  
+router.get('/themes', async (req: Request, res: Response) => {
   try {
-    let themeResults;
-    
-    if (businessId) {
-      themeResults = await db.select().from(themes)
-        .where(eq(themes.businessId, Number(businessId)))
-        .orderBy(desc(themes.updatedAt));
-    } else {
-      themeResults = await db.select().from(themes)
-        .where(eq(themes.businessSlug, String(businessSlug)))
-        .orderBy(desc(themes.updatedAt));
+    // Check if we have a business context from the business extractor middleware
+    if (!req.business) {
+      return res.status(401).json({ message: 'Authentication required' });
     }
+
+    const businessId = req.business.id;
     
-    return res.status(200).json(themeResults);
+    // Get all themes for this business
+    const allThemes = await storage.getThemesByBusinessId(businessId);
+    
+    return res.status(200).json({ themes: allThemes });
   } catch (error) {
     console.error('Error fetching themes:', error);
-    return res.status(500).json({ message: 'Failed to fetch themes' });
+    return res.status(500).json({ 
+      message: 'Failed to fetch themes',
+      error: String(error)
+    });
   }
 });
 
 /**
- * Get active theme for a business
+ * GET /api/themes/active
+ * Get the active theme for the authenticated business
  */
-router.get('/api/themes/active', async (req: Request, res: Response) => {
-  const { businessId, businessSlug } = req.query;
-  
-  if (!businessId && !businessSlug) {
-    return res.status(400).json({ message: 'businessId or businessSlug is required' });
-  }
-  
+router.get('/themes/active', async (req: Request, res: Response) => {
   try {
-    let themeResult;
-    
-    if (businessId) {
-      const [theme] = await db.select().from(themes)
-        .where(and(
-          eq(themes.businessId, Number(businessId)),
-          eq(themes.isActive, true)
-        ))
-        .limit(1);
-        
-      themeResult = theme;
-    } else {
-      const [theme] = await db.select().from(themes)
-        .where(and(
-          eq(themes.businessSlug, String(businessSlug)),
-          eq(themes.isActive, true)
-        ))
-        .limit(1);
-        
-      themeResult = theme;
+    // Check if we have a business context from the business extractor middleware
+    if (!req.business) {
+      return res.status(401).json({ message: 'Authentication required' });
     }
+
+    const businessId = req.business.id;
     
-    if (!themeResult) {
-      // If no active theme found, try to get the default theme
-      if (businessId) {
-        const [defaultTheme] = await db.select().from(themes)
-          .where(and(
-            eq(themes.businessId, Number(businessId)),
-            eq(themes.isDefault, true)
-          ))
-          .limit(1);
-          
-        themeResult = defaultTheme;
-      } else {
-        const [defaultTheme] = await db.select().from(themes)
-          .where(and(
-            eq(themes.businessSlug, String(businessSlug)),
-            eq(themes.isDefault, true)
-          ))
-          .limit(1);
-          
-        themeResult = defaultTheme;
-      }
+    // Get the active theme for this business
+    const activeTheme = await storage.getActiveTheme(businessId);
+    
+    if (!activeTheme) {
+      // If no active theme, try to get the default theme
+      const defaultTheme = await storage.getDefaultTheme(businessId);
       
-      // If still no theme found, return 404
-      if (!themeResult) {
+      if (!defaultTheme) {
         return res.status(404).json({ message: 'No active theme found' });
       }
+      
+      return res.status(200).json({ theme: defaultTheme });
     }
     
-    return res.status(200).json(themeResult);
+    return res.status(200).json({ theme: activeTheme });
   } catch (error) {
     console.error('Error fetching active theme:', error);
-    return res.status(500).json({ message: 'Failed to fetch active theme' });
+    return res.status(500).json({ 
+      message: 'Failed to fetch active theme',
+      error: String(error)
+    });
   }
 });
 
 /**
+ * GET /api/themes/:id
  * Get a specific theme by ID
  */
-router.get('/api/themes/:id', async (req: Request, res: Response) => {
-  const { id } = req.params;
-  
+router.get('/themes/:id', async (req: Request, res: Response) => {
   try {
-    const [theme] = await db.select().from(themes)
-      .where(eq(themes.id, Number(id)))
-      .limit(1);
-      
+    const { id } = req.params;
+    
+    // Check if we have a business context from the business extractor middleware
+    if (!req.business) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+
+    // Parse the ID as an integer
+    const themeId = parseInt(id, 10);
+    if (isNaN(themeId)) {
+      return res.status(400).json({ message: 'Invalid theme ID' });
+    }
+    
+    // Get the theme
+    const theme = await storage.getThemeById(themeId);
+    
     if (!theme) {
       return res.status(404).json({ message: 'Theme not found' });
     }
     
-    return res.status(200).json(theme);
+    // Make sure the theme belongs to this business
+    if (theme.businessId !== req.business.id) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+    
+    return res.status(200).json({ theme });
   } catch (error) {
     console.error('Error fetching theme:', error);
-    return res.status(500).json({ message: 'Failed to fetch theme' });
+    return res.status(500).json({ 
+      message: 'Failed to fetch theme',
+      error: String(error)
+    });
   }
 });
 
 /**
- * Create a new theme
+ * POST /api/themes
+ * Create a new theme for the authenticated business
  */
-router.post('/api/themes', async (req: Request, res: Response) => {
-  const {
-    businessId,
-    businessSlug,
-    name,
-    description,
-    primaryColor,
-    colorPalette,
-    typographySettings,
-    spacingSettings,
-    isDefault,
-    isActive
-  } = req.body;
-  
-  if (!businessId || !businessSlug) {
-    return res.status(400).json({ message: 'businessId and businessSlug are required' });
-  }
-  
+router.post('/themes', async (req: Request, res: Response) => {
   try {
-    // Verify the business exists
-    const [business] = await db.select().from(users)
-      .where(eq(users.id, businessId))
-      .limit(1);
+    // Check if we have a business context from the business extractor middleware
+    if (!req.business) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+
+    const businessId = req.business.id;
+    const businessSlug = req.business.businessSlug;
+    
+    if (!businessSlug) {
+      return res.status(400).json({ message: 'Business slug is required' });
+    }
+
+    // Validate the request body
+    const validationResult = createThemeSchema.safeParse(req.body);
+    if (!validationResult.success) {
+      return res.status(400).json({ 
+        message: 'Invalid theme data',
+        errors: validationResult.error.errors
+      });
+    }
+    
+    const themeData = validationResult.data;
+    
+    // If isActive is true, update all other themes to be inactive
+    if (themeData.isActive) {
+      const businessThemes = await db.select().from(themes).where(eq(themes.businessId, businessId));
       
-    if (!business) {
-      return res.status(404).json({ message: 'Business not found' });
+      for (const theme of businessThemes) {
+        await db.update(themes)
+          .set({ isActive: false })
+          .where(eq(themes.id, theme.id));
+      }
     }
     
-    // If this is the active theme, deactivate all other themes
-    if (isActive) {
-      await db.update(themes)
-        .set({ isActive: false })
-        .where(eq(themes.businessId, businessId));
-    }
-    
-    // If this is the default theme, update the existing default theme
-    if (isDefault) {
-      await db.update(themes)
-        .set({ isDefault: false })
-        .where(and(
-          eq(themes.businessId, businessId),
-          eq(themes.isDefault, true)
-        ));
-    }
-    
-    // Convert the color palette, typography, and spacing settings into design tokens
-    const designTokens = combineIntoDesignTokens(
-      colorPalette,
-      typographySettings,
-      spacingSettings
-    );
-    
-    // Create the theme
-    const [newTheme] = await db.insert(themes)
-      .values({
-        businessId,
-        businessSlug,
-        name: name || 'Custom Theme',
-        description: description || 'Custom theme created in Theme Editor',
-        primaryColor: primaryColor || '#4f46e5',
-        isActive: isActive || false,
-        isDefault: isDefault || false,
-        tokens: designTokens,
-        category: 'custom',
-        tags: ['custom', 'theme-editor']
-      })
-      .returning();
+    // If isDefault is true, update all other themes to not be default
+    if (themeData.isDefault) {
+      const businessThemes = await db.select().from(themes).where(eq(themes.businessId, businessId));
       
-    return res.status(201).json(newTheme);
+      for (const theme of businessThemes) {
+        await db.update(themes)
+          .set({ isDefault: false })
+          .where(eq(themes.id, theme.id));
+      }
+    }
+    
+    // Create the new theme
+    const newTheme = await storage.createTheme({
+      businessId,
+      businessSlug,
+      name: themeData.name,
+      description: themeData.description || '',
+      primaryColor: themeData.primaryColor,
+      secondaryColor: themeData.secondaryColor || '#06b6d4',
+      accentColor: themeData.accentColor || '#f59e0b',
+      textColor: themeData.textColor || '#111827',
+      backgroundColor: themeData.backgroundColor || '#ffffff',
+      fontFamily: themeData.fontFamily || 'Inter, sans-serif',
+      borderRadius: themeData.borderRadius || 8,
+      spacing: themeData.spacing || 16,
+      isDefault: themeData.isDefault || false,
+      isActive: themeData.isActive || false,
+      category: themeData.category || 'custom',
+      tags: themeData.tags || ['custom'],
+      tokens: themeData.tokens || {} as DesignTokens,
+    });
+    
+    return res.status(201).json({ 
+      message: 'Theme created successfully',
+      theme: newTheme
+    });
   } catch (error) {
     console.error('Error creating theme:', error);
-    return res.status(500).json({ message: 'Failed to create theme' });
+    return res.status(500).json({ 
+      message: 'Failed to create theme',
+      error: String(error)
+    });
   }
 });
 
 /**
+ * PUT /api/themes/:id
  * Update an existing theme
  */
-router.put('/api/themes/:id', async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const {
-    name,
-    description,
-    primaryColor,
-    colorPalette,
-    typographySettings,
-    spacingSettings,
-    isDefault,
-    isActive
-  } = req.body;
-  
+router.put('/themes/:id', async (req: Request, res: Response) => {
   try {
-    // Check if the theme exists and get the businessId
-    const [existingTheme] = await db.select().from(themes)
-      .where(eq(themes.id, Number(id)))
-      .limit(1);
-      
+    const { id } = req.params;
+    
+    // Check if we have a business context from the business extractor middleware
+    if (!req.business) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+
+    // Parse the ID as an integer
+    const themeId = parseInt(id, 10);
+    if (isNaN(themeId)) {
+      return res.status(400).json({ message: 'Invalid theme ID' });
+    }
+    
+    // Get the theme to update
+    const existingTheme = await storage.getThemeById(themeId);
+    
     if (!existingTheme) {
       return res.status(404).json({ message: 'Theme not found' });
     }
     
-    // If this is being set as the active theme, deactivate all other themes
-    if (isActive && !existingTheme.isActive) {
-      await db.update(themes)
-        .set({ isActive: false })
-        .where(eq(themes.businessId, existingTheme.businessId));
+    // Make sure the theme belongs to this business
+    if (existingTheme.businessId !== req.business.id) {
+      return res.status(403).json({ message: 'Access denied' });
     }
     
-    // If this is being set as the default theme, update the existing default theme
-    if (isDefault && !existingTheme.isDefault) {
-      await db.update(themes)
-        .set({ isDefault: false })
-        .where(and(
-          eq(themes.businessId, existingTheme.businessId),
-          eq(themes.isDefault, true)
-        ));
+    // Validate the request body
+    const validationResult = updateThemeSchema.safeParse(req.body);
+    if (!validationResult.success) {
+      return res.status(400).json({ 
+        message: 'Invalid theme data',
+        errors: validationResult.error.errors
+      });
     }
     
-    // Convert the color palette, typography, and spacing settings into design tokens
-    let designTokens = existingTheme.tokens as DesignTokens;
+    const themeData = validationResult.data;
     
-    if (colorPalette || typographySettings || spacingSettings) {
-      designTokens = combineIntoDesignTokens(
-        colorPalette || null,
-        typographySettings || designTokens.typography as any,
-        spacingSettings || designTokens.spacing as any
-      );
+    // If isActive is being set to true, update all other themes to be inactive
+    if (themeData.isActive) {
+      const businessThemes = await db.select().from(themes).where(eq(themes.businessId, req.business.id));
+      
+      for (const theme of businessThemes) {
+        if (theme.id !== themeId) {
+          await db.update(themes)
+            .set({ isActive: false })
+            .where(eq(themes.id, theme.id));
+        }
+      }
+    }
+    
+    // If isDefault is being set to true, update all other themes to not be default
+    if (themeData.isDefault) {
+      const businessThemes = await db.select().from(themes).where(eq(themes.businessId, req.business.id));
+      
+      for (const theme of businessThemes) {
+        if (theme.id !== themeId) {
+          await db.update(themes)
+            .set({ isDefault: false })
+            .where(eq(themes.id, theme.id));
+        }
+      }
     }
     
     // Update the theme
-    const [updatedTheme] = await db.update(themes)
-      .set({
-        name: name || existingTheme.name,
-        description: description || existingTheme.description,
-        primaryColor: primaryColor || existingTheme.primaryColor,
-        isActive: isActive !== undefined ? isActive : existingTheme.isActive,
-        isDefault: isDefault !== undefined ? isDefault : existingTheme.isDefault,
-        tokens: designTokens,
-        updatedAt: new Date()
-      })
-      .where(eq(themes.id, Number(id)))
-      .returning();
-      
-    return res.status(200).json(updatedTheme);
+    const updatedTheme = await storage.updateTheme(themeId, themeData);
+    
+    return res.status(200).json({ 
+      message: 'Theme updated successfully',
+      theme: updatedTheme
+    });
   } catch (error) {
     console.error('Error updating theme:', error);
-    return res.status(500).json({ message: 'Failed to update theme' });
+    return res.status(500).json({ 
+      message: 'Failed to update theme',
+      error: String(error)
+    });
   }
 });
 
 /**
+ * DELETE /api/themes/:id
  * Delete a theme
  */
-router.delete('/api/themes/:id', async (req: Request, res: Response) => {
-  const { id } = req.params;
-  
+router.delete('/themes/:id', async (req: Request, res: Response) => {
   try {
-    // Check if the theme exists
-    const [existingTheme] = await db.select().from(themes)
-      .where(eq(themes.id, Number(id)))
-      .limit(1);
-      
+    const { id } = req.params;
+    
+    // Check if we have a business context from the business extractor middleware
+    if (!req.business) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+
+    // Parse the ID as an integer
+    const themeId = parseInt(id, 10);
+    if (isNaN(themeId)) {
+      return res.status(400).json({ message: 'Invalid theme ID' });
+    }
+    
+    // Get the theme to delete
+    const existingTheme = await storage.getThemeById(themeId);
+    
     if (!existingTheme) {
       return res.status(404).json({ message: 'Theme not found' });
     }
     
-    // Cannot delete the default theme
+    // Make sure the theme belongs to this business
+    if (existingTheme.businessId !== req.business.id) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+    
+    // Check if this is the only theme or if it's the default theme
+    const businessThemes = await db.select().from(themes).where(eq(themes.businessId, req.business.id));
+    
+    if (businessThemes.length === 1) {
+      return res.status(400).json({ message: 'Cannot delete the only theme for a business' });
+    }
+    
     if (existingTheme.isDefault) {
       return res.status(400).json({ message: 'Cannot delete the default theme' });
     }
     
     // Delete the theme
-    await db.delete(themes)
-      .where(eq(themes.id, Number(id)));
-      
-    return res.status(200).json({ message: 'Theme deleted successfully' });
+    const deleted = await storage.deleteTheme(themeId);
+    
+    if (deleted) {
+      return res.status(200).json({ message: 'Theme deleted successfully' });
+    } else {
+      return res.status(500).json({ message: 'Failed to delete theme' });
+    }
   } catch (error) {
     console.error('Error deleting theme:', error);
-    return res.status(500).json({ message: 'Failed to delete theme' });
+    return res.status(500).json({ 
+      message: 'Failed to delete theme',
+      error: String(error)
+    });
   }
 });
 
 /**
- * Set a theme as active
+ * POST /api/themes/:id/activate
+ * Activate a theme (set it as the active theme)
  */
-router.post('/api/themes/:id/activate', async (req: Request, res: Response) => {
-  const { id } = req.params;
-  
+router.post('/themes/:id/activate', async (req: Request, res: Response) => {
   try {
-    // Check if the theme exists and get the businessId
-    const [existingTheme] = await db.select().from(themes)
-      .where(eq(themes.id, Number(id)))
-      .limit(1);
-      
+    const { id } = req.params;
+    
+    // Check if we have a business context from the business extractor middleware
+    if (!req.business) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+
+    // Parse the ID as an integer
+    const themeId = parseInt(id, 10);
+    if (isNaN(themeId)) {
+      return res.status(400).json({ message: 'Invalid theme ID' });
+    }
+    
+    // Get the theme to activate
+    const existingTheme = await storage.getThemeById(themeId);
+    
     if (!existingTheme) {
       return res.status(404).json({ message: 'Theme not found' });
     }
     
-    // Deactivate all other themes for this business
-    await db.update(themes)
-      .set({ isActive: false })
-      .where(eq(themes.businessId, existingTheme.businessId));
+    // Make sure the theme belongs to this business
+    if (existingTheme.businessId !== req.business.id) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
     
-    // Activate this theme
-    const [updatedTheme] = await db.update(themes)
-      .set({
-        isActive: true,
-        updatedAt: new Date()
-      })
-      .where(eq(themes.id, Number(id)))
-      .returning();
-      
-    return res.status(200).json(updatedTheme);
+    // Activate the theme
+    const activatedTheme = await storage.activateTheme(themeId);
+    
+    return res.status(200).json({ 
+      message: 'Theme activated successfully',
+      theme: activatedTheme
+    });
   } catch (error) {
     console.error('Error activating theme:', error);
-    return res.status(500).json({ message: 'Failed to activate theme' });
+    return res.status(500).json({ 
+      message: 'Failed to activate theme',
+      error: String(error)
+    });
+  }
+});
+
+/**
+ * GET /api/themes/business/:slug
+ * Get themes for a specific business by slug (for public access)
+ */
+router.get('/themes/business/:slug', async (req: Request, res: Response) => {
+  try {
+    const { slug } = req.params;
+    
+    // Get themes for this business
+    const businessThemes = await storage.getThemesByBusinessSlug(slug);
+    
+    if (businessThemes.length === 0) {
+      return res.status(404).json({ message: 'No themes found for this business' });
+    }
+    
+    return res.status(200).json({ themes: businessThemes });
+  } catch (error) {
+    console.error('Error fetching business themes:', error);
+    return res.status(500).json({ 
+      message: 'Failed to fetch business themes',
+      error: String(error)
+    });
   }
 });
 
