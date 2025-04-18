@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Theme } from '@shared/config';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -14,6 +14,7 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Paintbrush, LayoutGrid, Undo2, Save, Eye, Palette, EyeOff, Settings2, Heart } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 import ThemePreview from './ThemePreview';
 import ColorPicker from './ColorPicker';
@@ -22,6 +23,11 @@ import ThemePresetSelector from './ThemePresetSelector';
 
 interface BusinessThemeEditorProps {
   className?: string;
+  isAdminMode?: boolean;
+  businessId?: number;
+  initialTheme?: Theme;
+  onSaveTheme?: (theme: Theme) => Promise<void>;
+  onSave?: () => void;
 }
 
 /**
@@ -29,20 +35,100 @@ interface BusinessThemeEditorProps {
  * 
  * The main editor for customizing the business theme.
  * It combines different customization components with a live preview.
+ * 
+ * Can operate in two modes:
+ * 1. Normal mode - Uses the ThemeContext for state and saving
+ * 2. Admin mode - Uses local state and external save handlers to update a business theme as admin
  */
 export const BusinessThemeEditor: React.FC<BusinessThemeEditorProps> = ({
-  className
+  className,
+  isAdminMode = false,
+  businessId,
+  initialTheme,
+  onSaveTheme,
+  onSave
 }) => {
-  const { 
-    theme, 
-    updateTheme, 
-    saveTheme, 
-    resetTheme, 
-    hasUnsavedChanges, 
-    isSaving,
-    isPreviewMode,
-    setPreviewMode
-  } = useTheme();
+  const themeContext = useTheme();
+  const { toast } = useToast();
+  
+  // Local state for admin mode
+  const [adminTheme, setAdminTheme] = useState<Theme>(initialTheme || {
+    name: "Default Theme",
+    primary: "#4f46e5",
+    secondary: "#9333EA",
+    background: "#FFFFFF",
+    text: "#111827",
+    appearance: "system",
+    spacing: "1rem",
+    borderRadius: "0.5rem"
+  });
+  const [adminIsSaving, setAdminIsSaving] = useState(false);
+  const [adminOriginalTheme, setAdminOriginalTheme] = useState<Theme>(adminTheme);
+  
+  // Use local state in admin mode, otherwise use context
+  const theme = isAdminMode ? adminTheme : themeContext.theme;
+  const isSaving = isAdminMode ? adminIsSaving : themeContext.isSaving;
+  const hasUnsavedChanges = isAdminMode 
+    ? JSON.stringify(adminTheme) !== JSON.stringify(adminOriginalTheme)
+    : themeContext.hasUnsavedChanges;
+  const isPreviewMode = isAdminMode ? false : themeContext.isPreviewMode;
+  
+  // Update functions for admin mode
+  const updateTheme = useCallback((updates: Partial<Theme>) => {
+    if (isAdminMode) {
+      setAdminTheme(prev => ({ ...prev, ...updates }));
+    } else {
+      themeContext.updateTheme(updates);
+    }
+  }, [isAdminMode, themeContext]);
+  
+  const resetTheme = useCallback(() => {
+    if (isAdminMode) {
+      setAdminTheme(adminOriginalTheme);
+      toast({
+        title: "Theme reset",
+        description: "Your changes have been discarded and the theme has been reset.",
+      });
+    } else {
+      themeContext.resetTheme();
+    }
+  }, [isAdminMode, adminOriginalTheme, toast, themeContext]);
+  
+  const saveTheme = useCallback(async () => {
+    if (isAdminMode) {
+      try {
+        setAdminIsSaving(true);
+        
+        if (onSaveTheme) {
+          await onSaveTheme(adminTheme);
+        }
+        
+        setAdminOriginalTheme(adminTheme);
+        
+        if (onSave) {
+          onSave();
+        }
+        
+        return { success: true };
+      } catch (error: any) {
+        console.error('Error saving theme in admin mode:', error);
+        toast({
+          title: "Error saving theme",
+          description: error.message || "There was a problem saving the theme. Please try again.",
+          variant: "destructive",
+        });
+        throw error;
+      } finally {
+        setAdminIsSaving(false);
+      }
+    } else {
+      return themeContext.saveTheme();
+    }
+  }, [isAdminMode, adminTheme, onSaveTheme, onSave, themeContext, toast]);
+  
+  const setPreviewMode = isAdminMode 
+    ? () => {} // No-op in admin mode
+    : themeContext.setPreviewMode;
   
   const [activeTab, setActiveTab] = useState('colors');
   const [showPreviewControls, setShowPreviewControls] = useState(false);

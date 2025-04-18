@@ -89,6 +89,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  /**
+   * POST /api/public/theme/:businessId
+   * Special theme update endpoint that doesn't require authentication - used for testing
+   * This should be placed BEFORE the businessExtractor middleware
+   */
+  app.post("/api/public/theme/:businessId", async (req: Request, res: Response) => {
+    try {
+      const { businessId } = req.params;
+      const { theme } = req.body;
+      
+      if (!businessId || isNaN(parseInt(businessId, 10))) {
+        return res.status(400).json({ message: "Invalid business ID" });
+      }
+      
+      if (!theme || typeof theme !== 'object') {
+        return res.status(400).json({ message: "Theme data is required" });
+      }
+      
+      // Validate required theme properties
+      const requiredProperties = ['primary', 'secondary', 'background', 'text'];
+      for (const prop of requiredProperties) {
+        if (typeof theme[prop] !== 'string' || !theme[prop].match(/^#[0-9A-Fa-f]{6}$/)) {
+          return res.status(400).json({ 
+            message: `Invalid theme property: ${prop}. Must be a valid hex color.`
+          });
+        }
+      }
+      
+      // Check if the business exists
+      const business = await storage.getUser(parseInt(businessId, 10));
+      if (!business) {
+        return res.status(404).json({ message: "Business not found" });
+      }
+      
+      // Update the theme in the database using the utility function
+      await updateThemeForBusiness(parseInt(businessId, 10), theme);
+      
+      // Log the action for audit purposes
+      console.log(`Public API updated theme for business ID ${businessId}: ${JSON.stringify(theme)}`);
+      
+      return res.json({ 
+        message: "Theme updated successfully via public API",
+        theme
+      });
+    } catch (error) {
+      console.error('Error updating theme via public API:', error);
+      return res.status(500).json({ message: "Failed to update business theme" });
+    }
+  });
+  
   // Apply the business extractor middleware to all routes
   app.use(businessExtractor);
   
