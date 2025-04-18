@@ -2,6 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db, pool } from "./db";
+import { sql } from "drizzle-orm";
 import rateLimit from 'express-rate-limit';
 import { createPreference, processWebhook } from './mercadopago';
 import themeRoutes from './routes/themeRoutes';
@@ -30,7 +31,7 @@ declare module 'express-session' {
     user: User;
   }
 }
-import { eq, sql, desc } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { z } from "zod";
 import Stripe from "stripe";
 import nodemailer from "nodemailer";
@@ -74,13 +75,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
    */
   app.get("/api/themes/presets", (_req: Request, res: Response) => {
     try {
-      // Import theme presets from the shared module
-      const { themePresets, getPresetsByCategory, getPresetCategories } = require('@shared/themePresets');
-      
-      // Return all theme presets with complete information and categories
-      res.json({ 
-        presets: themePresets,
-        categories: getPresetCategories()
+      // Import directly with ES modules syntax
+      import('@shared/themePresets').then(({ themePresets, getPresetCategories }) => {
+        // Return all theme presets with complete information and categories
+        res.json({ 
+          presets: themePresets,
+          categories: getPresetCategories()
+        });
+      }).catch(err => {
+        console.error('Error importing theme presets:', err);
+        res.status(500).json({ 
+          error: 'Failed to load theme presets',
+          message: 'An error occurred while loading theme presets.'
+        });
       });
     } catch (error) {
       console.error('Error loading theme presets:', error);
@@ -429,10 +436,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (error.toString().includes("business_slug")) {
           console.log("business_slug column not found in services table, using userId filter only");
           try {
-            // Direct SQL query using only user_id for filtering
-            const result = await pool.query(`
-              SELECT * FROM services WHERE user_id = $1 ORDER BY id
-            `, [business.id]);
+            // Direct SQL query using only user_id for filtering (avoid business_slug column)
+            const result = await db.execute(sql`
+              SELECT * FROM services WHERE user_id = ${business.id} ORDER BY id
+            `);
             
             services = result.rows.map(row => ({
               id: row.id,
