@@ -90,11 +90,14 @@ export function ColorPicker({
     }, 2000);
   };
 
+  // Generate a safe ID from the label, fallback to a random ID if label is undefined
+  const safeId = label ? `color-${label.replace(/\s+/g, '-').toLowerCase()}` : `color-${Math.random().toString(36).substring(2, 9)}`;
+  
   return (
     <div className={cn("mb-4", className)}>
       <div className="flex items-center justify-between mb-2">
-        <Label htmlFor={`color-${label.replace(/\s+/g, '-').toLowerCase()}`}>
-          {label}
+        <Label htmlFor={safeId}>
+          {label || "Color"}
         </Label>
         <div className="flex items-center">
           <Button
@@ -141,7 +144,7 @@ export function ColorPicker({
                 </div>
                 <div className="flex items-center gap-2">
                   <Input
-                    id={`color-${label.replace(/\s+/g, '-').toLowerCase()}`}
+                    id={safeId}
                     type="text"
                     value={currentColor}
                     onChange={handleColorChange}
@@ -168,7 +171,7 @@ export function ColorPicker({
       )}
       <div className="flex items-center">
         <Input
-          id={`color-input-${label.replace(/\s+/g, '-').toLowerCase()}`}
+          id={`color-input-${safeId}`}
           type="text"
           value={currentColor}
           onChange={handleColorChange}
