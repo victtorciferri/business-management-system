@@ -73,10 +73,10 @@ export default function BaseHeader({
     const logoInitial = logoText.substring(0, 1).toUpperCase();
     const gradientClasses = isDarkMode 
       ? 'bg-gradient-to-br from-purple-600 to-indigo-800'
-      : `bg-gradient-to-br from-${theme.primaryColor} to-${theme.accentColor}`;
+      : 'bg-gradient-to-br from-blue-600 to-indigo-600';
       
     return (
-      <div className={`h-10 w-10 rounded-${theme.borderRadius} ${gradientClasses} flex items-center justify-center text-white font-bold text-xl mr-3`}>
+      <div className={`h-10 w-10 rounded-md ${gradientClasses} flex items-center justify-center text-white font-bold text-xl mr-3`}>
         {logoInitial}
       </div>
     );
@@ -120,10 +120,10 @@ export default function BaseHeader({
                 key={item.path}
                 variant={item.isActive ? "default" : "ghost"}
                 size="sm"
-                className={`flex items-center ${isDarkMode ? 'bg-primary hover:bg-primary/80 text-white' : 'bg-gray-600 hover:bg-gray-700 text-white'} ${
-                  isDarkMode && !item.isActive 
-                    ? 'text-muted-foreground hover:text-foreground hover:bg-muted' 
-                    : ''
+                className={`flex items-center ${
+                  item.isActive 
+                    ? (isDarkMode ? 'bg-primary hover:bg-primary/80 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white')
+                    : (isDarkMode ? 'text-muted-foreground hover:text-foreground hover:bg-muted' : 'text-gray-700 hover:text-gray-900')
                 }`}
                 onClick={() => navigate(buildUrl(item.path))}
               >

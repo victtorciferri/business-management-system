@@ -79,8 +79,41 @@ const RESERVED_PATHS = [
   'login', 'register', 'logout', 'signup',
   'profile', 'settings', 'theme', 'templates',
   'images', 'css', 'js', 'fonts', 'favicon.ico',
-  'robots.txt', 'sitemap.xml', 'manifest.json'
+  'robots.txt', 'sitemap.xml', 'manifest.json',
+  '@react-refresh', '@fs', '@id', '@vite'
 ];
+
+// Simple in-memory cache for business lookups
+// This significantly reduces database queries for common paths
+const slugCache: Record<string, {
+  business: Omit<User, "password"> | null, 
+  timestamp: number,
+  config?: BusinessConfig
+}> = {};
+
+const domainCache: Record<string, {
+  business: Omit<User, "password"> | null, 
+  timestamp: number,
+  config?: BusinessConfig
+}> = {};
+
+// Cache duration in milliseconds (5 minutes)
+const CACHE_DURATION = 5 * 60 * 1000;
+
+// Clear expired cache entries periodically (every minute)
+setInterval(() => {
+  const now = Date.now();
+  Object.keys(slugCache).forEach(key => {
+    if (now - slugCache[key].timestamp > CACHE_DURATION) {
+      delete slugCache[key];
+    }
+  });
+  Object.keys(domainCache).forEach(key => {
+    if (now - domainCache[key].timestamp > CACHE_DURATION) {
+      delete domainCache[key];
+    }
+  });
+}, 60 * 1000);
 
 /**
  * Middleware to extract business information from:
@@ -93,23 +126,44 @@ export async function businessExtractor(req: Request, res: Response, next: NextF
   try {
     let businessSlug: string | undefined;
     
-    // Log incoming request path for debugging (less verbose)
-    console.log(`Business extractor middleware processing path: ${req.path}`);
+    // Skip verbose logging for static assets and development URLs
+    const isStaticAssetOrDevPath = req.path.includes('.') || 
+                                  req.path.startsWith('/src/') || 
+                                  req.path.startsWith('/@') ||
+                                  req.path.startsWith('/_next');
+    
+    if (!isStaticAssetOrDevPath) {
+      console.log(`Business extractor processing: ${req.path}`);
+    }
     
     // First check if the user is authenticated and has a business context
     if (req.isAuthenticated && req.isAuthenticated() && req.user) {
       // For authenticated users, we may already have a business context from their session
-      // This is useful for admin and dashboard views where the current user = current business
       if (req.user.businessSlug && req.user.role !== 'admin') {
         try {
+          // Check the slug cache first
+          const cacheKey = req.user.businessSlug;
+          if (slugCache[cacheKey] && Date.now() - slugCache[cacheKey].timestamp < CACHE_DURATION) {
+            if (slugCache[cacheKey].business) {
+              req.business = slugCache[cacheKey].business;
+              req.businessConfig = slugCache[cacheKey].config;
+              return next();
+            }
+          }
+          
           const business = await storage.getUserByBusinessSlug(req.user.businessSlug);
           if (business) {
-            // Remove password and create a properly typed sanitized business object
             const { password, ...sanitizedBusiness } = business;
-            // The 'as any' is a temporary workaround for the type mismatch
             req.business = sanitizedBusiness as any;
+            await attachBusinessConfig(req);
             
-            // Skip the rest of the middleware
+            // Cache the business data
+            slugCache[cacheKey] = {
+              business: sanitizedBusiness as any,
+              timestamp: Date.now(),
+              config: req.businessConfig
+            };
+            
             return next();
           }
         } catch (err) {
@@ -120,12 +174,8 @@ export async function businessExtractor(req: Request, res: Response, next: NextF
     
     // Check if we have a path parameter slug
     if (req.params.slug) {
-      console.log(`Found slug parameter: ${req.params.slug}`);
-      // Only treat as business slug if it's not a reserved path
       if (!RESERVED_PATHS.includes(req.params.slug)) {
         businessSlug = req.params.slug;
-      } else {
-        console.log(`Slug parameter is a reserved word: ${req.params.slug}`);
       }
     }
     // Special handling for /api/business/:slug endpoint
@@ -134,28 +184,19 @@ export async function businessExtractor(req: Request, res: Response, next: NextF
       if (pathSegments.length >= 3 && pathSegments[0] === 'api' && pathSegments[1] === 'business') {
         if (!RESERVED_PATHS.includes(pathSegments[2])) {
           businessSlug = pathSegments[2];
-          console.log(`Extracted business slug from API path: ${businessSlug}`);
-        } else {
-          console.log(`Skipping business slug extraction for reserved API path: ${pathSegments[2]}`);
         }
       }
     }
     // Check if the URL path starts with a potential business slug
-    // This handles URLs like /salonelegante or /salonelegante/services
-    else if (req.path !== '/' && req.path !== '/business-portal') {
-      // Extract the first segment of the path
+    else if (req.path !== '/' && req.path !== '/business-portal' && !isStaticAssetOrDevPath) {
       const pathSegments = req.path.split('/').filter(Boolean);
       if (pathSegments.length > 0) {
         const potentialSlug = pathSegments[0];
-        console.log(`Extracted potential slug from path: ${potentialSlug}`);
         
         if (!potentialSlug.startsWith('@') && 
             !potentialSlug.includes('.') && 
             !RESERVED_PATHS.includes(potentialSlug)) {
           businessSlug = potentialSlug;
-          console.log(`Using path segment as business slug: ${businessSlug}`);
-        } else {
-          console.log(`Skipping path segment as business slug (reserved word): ${potentialSlug}`);
         }
       }
     }
@@ -172,47 +213,60 @@ export async function businessExtractor(req: Request, res: Response, next: NextF
         // Remove port if present
         const cleanedHost = host.split(':')[0];
         
-        try {
-          // Direct query for custom domain to debug issues
-          const domainQueryResult = await db.execute(
-            sql`SELECT * FROM users WHERE custom_domain = ${cleanedHost}`
-          );
-          const domainRows = domainQueryResult.rows || [];
-          console.log(`Direct SQL query result for custom domain '${cleanedHost}':`, domainRows);
+        // Check cache for this domain
+        if (domainCache[cleanedHost] && 
+            Date.now() - domainCache[cleanedHost].timestamp < CACHE_DURATION) {
           
-          // Try to look up the business by custom domain
-          const businessByDomain = await storage.getUserByCustomDomain(cleanedHost);
-          
-          if (businessByDomain) {
-            console.log(`Business found for custom domain ${cleanedHost}: ${businessByDomain.businessName}`);
-            // Remove password and create a properly typed sanitized business object
-            const { password, ...sanitizedBusiness } = businessByDomain;
-            // The 'as any' is a temporary workaround for the type mismatch
-            req.business = sanitizedBusiness as any;
-            
-            // Load business configuration including theme settings
-            await attachBusinessConfig(req);
-            
-            // Skip the remaining checks
+          if (domainCache[cleanedHost].business) {
+            req.business = domainCache[cleanedHost].business;
+            req.businessConfig = domainCache[cleanedHost].config;
             return next();
           }
-        } catch (err) {
-          console.error('Error fetching business by custom domain:', err);
+          // If the domain was cached as not found, skip the db query
+          else if (domainCache[cleanedHost].business === null) {
+            // Skip to subdomain check
+          }
+        } 
+        else {
+          // Not in cache, do the lookup
+          try {
+            const businessByDomain = await storage.getUserByCustomDomain(cleanedHost);
+            
+            if (businessByDomain) {
+              const { password, ...sanitizedBusiness } = businessByDomain;
+              req.business = sanitizedBusiness as any;
+              await attachBusinessConfig(req);
+              
+              // Cache the successful result
+              domainCache[cleanedHost] = {
+                business: sanitizedBusiness as any,
+                timestamp: Date.now(),
+                config: req.businessConfig
+              };
+              
+              return next();
+            } 
+            else {
+              // Cache the "not found" result to avoid repeated lookups
+              domainCache[cleanedHost] = {
+                business: null,
+                timestamp: Date.now()
+              };
+            }
+          } catch (err) {
+            console.error(`Error looking up domain '${cleanedHost}':`, err);
+          }
         }
         
         // Fallback to subdomain logic if custom domain lookup fails
         if (!host.includes('appointease.com')) {
-          // Extract subdomain
           const domainParts = host.split('.');
           
           if (domainParts.length >= 1) {
-            // Use the first part as the slug
             const potentialSubdomainSlug = domainParts[0];
             
-            // Don't treat reserved paths as business slugs
             if (!RESERVED_PATHS.includes(potentialSubdomainSlug)) {
               businessSlug = potentialSubdomainSlug;
-              console.log(`Using subdomain as business slug: ${businessSlug}`);
             }
           }
         }
@@ -221,35 +275,47 @@ export async function businessExtractor(req: Request, res: Response, next: NextF
     
     // If we found a potential business slug, look it up in the database
     if (businessSlug) {
+      // Check the cache first
+      if (slugCache[businessSlug] && 
+          Date.now() - slugCache[businessSlug].timestamp < CACHE_DURATION) {
+        
+        if (slugCache[businessSlug].business) {
+          req.business = slugCache[businessSlug].business;
+          req.businessConfig = slugCache[businessSlug].config;
+        }
+        
+        return next();
+      }
+      
+      // Not in cache, do the lookup
       try {
-        console.log(`Looking up business with slug: ${businessSlug}`);
-        
-        // Direct query for slug to debug issues
-        const slugQueryResult = await db.execute(
-          sql`SELECT * FROM users WHERE business_slug = ${businessSlug}`
-        );
-        const slugRows = slugQueryResult.rows || [];
-        console.log(`Direct SQL query result for slug '${businessSlug}':`, slugRows);
-        
         const business = await storage.getUserByBusinessSlug(businessSlug);
         
         if (business) {
-          console.log(`Business found for slug ${businessSlug}: ${business.businessName}`);
-          // Remove password and create a properly typed sanitized business object
           const { password, ...sanitizedBusiness } = business;
-          // The 'as any' is a temporary workaround for the type mismatch
           req.business = sanitizedBusiness as any;
-          
-          // Load business configuration including theme settings
           await attachBusinessConfig(req);
+          
+          // Cache the result
+          slugCache[businessSlug] = {
+            business: sanitizedBusiness as any,
+            timestamp: Date.now(),
+            config: req.businessConfig
+          };
         } else {
-          console.log(`No business found for slug: ${businessSlug}`);
+          // Cache the negative result too
+          slugCache[businessSlug] = {
+            business: null,
+            timestamp: Date.now()
+          };
+          
+          if (!isStaticAssetOrDevPath) {
+            console.log(`No business found for slug: ${businessSlug}`);
+          }
         }
       } catch (err) {
         console.error(`Error looking up business slug '${businessSlug}':`, err);
       }
-    } else {
-      console.log('No business slug identified for this request');
     }
     
     // Continue to the next middleware/route handler
@@ -269,89 +335,89 @@ async function attachBusinessConfig(req: Request) {
   if (!req.business || !req.business.id) return;
   
   try {
-    // Check if the business has theme settings
-    const themeResult = await db.execute(
-      sql`SELECT theme_settings, industry_type FROM users WHERE id = ${req.business.id}`
-    );
+    // Default theme settings - used as fallback
+    let themeSettings = {
+      primaryColor: '#4f46e5',
+      secondaryColor: '#06b6d4',
+      accentColor: '#f59e0b',
+      textColor: '#1f2937',
+      backgroundColor: '#ffffff',
+      fontFamily: 'sans-serif',
+      borderRadius: 'rounded-md',
+      buttonStyle: 'rounded',
+      cardStyle: 'elevated',
+    };
     
-    const rows = themeResult.rows || [];
+    let industryType = 'general';
     
-    if (rows.length > 0) {
-      const row = rows[0];
-      
-      // Parse theme settings if it exists
-      let themeSettings = {
-        primaryColor: '#4f46e5',
-        secondaryColor: '#06b6d4',
-        accentColor: '#f59e0b',
-        textColor: '#1f2937',
-        backgroundColor: '#ffffff',
-        fontFamily: 'sans-serif',
-        borderRadius: 'rounded-md',
-        buttonStyle: 'rounded',
-        cardStyle: 'elevated',
-      };
-      
-      // If theme_settings column exists and has data, merge with defaults
-      if (row.theme_settings) {
-        try {
-          const parsedSettings = typeof row.theme_settings === 'string' 
-            ? JSON.parse(row.theme_settings) 
-            : row.theme_settings;
-            
-          themeSettings = { ...themeSettings, ...parsedSettings };
-        } catch (e) {
-          console.error('Error parsing theme settings:', e);
-        }
+    // First try to use the business object's properties if already present
+    if (req.business.themeSettings) {
+      try {
+        // Handle both string and object cases
+        const parsedSettings = typeof req.business.themeSettings === 'string'
+          ? JSON.parse(req.business.themeSettings)
+          : req.business.themeSettings;
+        
+        themeSettings = { ...themeSettings, ...parsedSettings };
+      } catch (e) {
+        // Silent error - will use defaults
       }
-      
-      // Create a business config object with only the properties we know exist on the business object
-      const businessConfig: BusinessConfig = {
-        id: req.business.id,
-        name: req.business.businessName,
-        slug: req.business.businessSlug,
-        email: req.business.email,
-        phone: req.business.phone,
-        
-        // Theme settings
-        themeSettings,
-        
-        // Industry type
-        industryType: (row.industry_type as string) || 'general',
-        
-        // Default configurations - these would be customizable in a full implementation
-        showMap: true,
-        showTestimonials: true,
-        showServices: true,
-        showPhone: true,
-        showAddress: true,
-        showEmail: true,
-        
-        locale: 'en',
-        timeZone: 'UTC',
-        currencyCode: 'USD',
-        currencySymbol: '$',
-        
-        use24HourFormat: false,
-        appointmentBuffer: 15,
-        allowSameTimeSlotForDifferentServices: false,
-        cancellationWindowHours: 24,
-        
-        customTexts: {},
-      };
-      
-      // Add optional fields if they exist on the business object
-      if ('address' in req.business) businessConfig.address = req.business.address as string | null;
-      if ('city' in req.business) businessConfig.city = req.business.city as string | null;
-      if ('state' in req.business) businessConfig.state = req.business.state as string | null;
-      if ('postalCode' in req.business) businessConfig.postalCode = req.business.postalCode as string | null;
-      if ('country' in req.business) businessConfig.country = req.business.country as string | null;
-      if ('latitude' in req.business) businessConfig.latitude = req.business.latitude as string | null;
-      if ('longitude' in req.business) businessConfig.longitude = req.business.longitude as string | null;
-      
-      // Attach config to request
-      req.businessConfig = businessConfig;
     }
+    
+    if (req.business.industryType) {
+      industryType = req.business.industryType;
+    }
+    
+    // Create a business config object
+    const businessConfig: BusinessConfig = {
+      id: req.business.id,
+      name: req.business.businessName,
+      slug: req.business.businessSlug,
+      email: req.business.email,
+      phone: req.business.phone,
+      
+      // Theme settings
+      themeSettings,
+      
+      // Industry type
+      industryType: industryType,
+      
+      // Display options with defaults
+      showMap: req.business.showMap ?? true,
+      showTestimonials: req.business.showTestimonials ?? true,
+      showServices: req.business.showServices ?? true,
+      showPhone: req.business.showPhone ?? true,
+      showAddress: req.business.showAddress ?? true,
+      showEmail: req.business.showEmail ?? true,
+      
+      // Localization settings with defaults
+      locale: req.business.locale || 'en',
+      timeZone: req.business.businessTimeZone || 'UTC',
+      currencyCode: req.business.currencyCode || 'USD',
+      currencySymbol: req.business.currencySymbol || '$',
+      
+      // Business settings with defaults
+      use24HourFormat: req.business.use24HourFormat ?? false,
+      appointmentBuffer: req.business.appointmentBuffer || 15,
+      allowSameTimeSlotForDifferentServices: 
+        req.business.allowSameTimeSlotForDifferentServices ?? false,
+      cancellationWindowHours: req.business.cancellationWindowHours || 24,
+      
+      // Custom texts
+      customTexts: req.business.customTexts || {},
+    };
+    
+    // Add optional fields if they exist on the business object
+    if ('address' in req.business) businessConfig.address = req.business.address as string | null;
+    if ('city' in req.business) businessConfig.city = req.business.city as string | null;
+    if ('state' in req.business) businessConfig.state = req.business.state as string | null;
+    if ('postalCode' in req.business) businessConfig.postalCode = req.business.postalCode as string | null;
+    if ('country' in req.business) businessConfig.country = req.business.country as string | null;
+    if ('latitude' in req.business) businessConfig.latitude = req.business.latitude as string | null;
+    if ('longitude' in req.business) businessConfig.longitude = req.business.longitude as string | null;
+    
+    // Attach config to request
+    req.businessConfig = businessConfig;
   } catch (err) {
     console.error('Error attaching business config:', err);
   }
