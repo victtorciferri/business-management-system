@@ -3,8 +3,6 @@ import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
-import { useButtonTheme } from "@/components/theme/componentHooks"
-import { useTheme } from "../../providers/ThemeProvider"
 
 // Define the button variants with dynamic class generation
 const buttonVariants = cva(
@@ -49,15 +47,11 @@ export interface ButtonProps
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
-    // Use the button theme hook to get component-specific tokens
-    const buttonTheme = useButtonTheme();
-    const { getVariableRef } = useTheme();
-    
-    // Apply dynamic style attributes based on theme tokens
+    // Simple CSS variables for now
     const dynamicStyle = {
       /* Set dynamic CSS styles for runtime theme control */
-      "--button-focus-ring-color": getVariableRef("colors.focus", buttonTheme.focusRingColor),
-      "--button-border-radius": getVariableRef("borders.radius.DEFAULT", buttonTheme.borderRadius),
+      "--button-focus-ring-color": "#4f46e5", 
+      "--button-border-radius": "0.25rem", // Default border radius
     } as React.CSSProperties;
     
     const Comp = asChild ? Slot : "button"
