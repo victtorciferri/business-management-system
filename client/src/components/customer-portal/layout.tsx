@@ -93,7 +93,7 @@ export default function CustomerPortalLayout({
       portalType="customer"
       logoText={config.name || business?.businessName || "Business Portal"}
       queryParams={queryParams}
-      // Use theme from ThemeContext rather than config.themeSettings
+      themeConfig={theme} // Pass theme from ThemeContext to BaseLayout
       // This ensures we're using the most up-to-date theme from the database
     >
       {children}

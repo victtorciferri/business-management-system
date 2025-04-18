@@ -32,21 +32,29 @@ export default function CustomerPortal() {
   
   // If business has a theme, update ThemeContext with it
   useEffect(() => {
-    if (business && business.theme) {
-      console.log("Customer Portal: Updating theme from business:", business.theme);
+    if (business && (business.themeSettings || business.theme)) {
+      // Prefer themeSettings (which is newer and more complete) over theme
+      const themeSource = business.themeSettings || business.theme;
+      console.log("Customer Portal: Updating theme from business:", themeSource);
+      
       // Convert to expected format if needed
       const themeToApply = {
-        primaryColor: business.theme.primary || '#4f46e5',
-        secondaryColor: business.theme.secondary || '#06b6d4',
-        accentColor: business.theme.accent || '#f59e0b',
-        textColor: business.theme.text || '#111827',
-        backgroundColor: business.theme.background || '#ffffff',
-        fontFamily: business.theme.font || 'Inter, sans-serif',
-        borderRadius: business.theme.borderRadius || 8,
-        buttonStyle: business.theme.buttonStyle || 'default',
-        cardStyle: business.theme.cardStyle || 'default',
-        appearance: business.theme.appearance || 'light'
+        primaryColor: themeSource.primaryColor || themeSource.primary || '#4f46e5',
+        secondaryColor: themeSource.secondaryColor || themeSource.secondary || '#06b6d4',
+        accentColor: themeSource.accentColor || themeSource.accent || '#f59e0b',
+        textColor: themeSource.textColor || themeSource.text || '#111827',
+        backgroundColor: themeSource.backgroundColor || themeSource.background || '#ffffff',
+        fontFamily: themeSource.fontFamily || themeSource.font || 'Inter, sans-serif',
+        borderRadius: themeSource.borderRadius || 8,
+        buttonStyle: themeSource.buttonStyle || 'default',
+        cardStyle: themeSource.cardStyle || 'default',
+        appearance: themeSource.appearance || 'light',
+        name: themeSource.name || 'Custom Theme',
+        variant: themeSource.variant || 'professional',
+        spacing: themeSource.spacing || 16,
       };
+      
+      console.log("CustomerPortal: Theme being applied:", themeToApply);
       updateTheme(themeToApply);
     } else {
       console.log("Customer Portal: No business theme found");
