@@ -213,17 +213,22 @@ export default function BusinessPortal({ slug, subPath, initialData }: BusinessP
       {!subPath ? (
         <div className="container mx-auto py-10">
           <div className="flex flex-col items-center mb-10 text-center">
-            <h1 className="text-4xl font-bold tracking-tight mb-4">
-              <span 
-                className="text-transparent bg-clip-text"
+            <h1 className="text-4xl font-bold tracking-tight mb-4 relative">
+              <span className="relative z-10 drop-shadow-sm">
+                {business.businessName}
+              </span>
+              <div 
+                className="absolute inset-0 opacity-80 blur-[1px] -z-10"
                 style={{ 
-                  background: `linear-gradient(to right, var(--primary), ${theme?.secondaryColor || 'var(--secondary)'})`,
+                  background: `linear-gradient(135deg, var(--primary), var(--secondary))`,
                   WebkitBackgroundClip: 'text',
-                  backgroundClip: 'text'
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  textFillColor: 'transparent'
                 }}
               >
                 {business.businessName}
-              </span>
+              </div>
             </h1>
             <p className="text-lg text-muted-foreground max-w-xl">
               Book your next appointment online and enjoy the best beauty and wellness services
