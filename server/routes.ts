@@ -469,6 +469,111 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  /**
+   * GET /api/business/id/:id
+   * Get business data for a specific business by ID
+   * Used by the customer portal when accessed via businessId parameter
+   */
+  app.get("/api/business/id/:id", async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      
+      if (!id || isNaN(parseInt(id, 10))) {
+        return res.status(400).json({ message: "Valid business ID is required" });
+      }
+      
+      console.log(`API request for business with ID: ${id}`);
+      
+      // Use the same approach as the business/:slug endpoint
+      const { Pool } = await import('@neondatabase/serverless');
+      const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+      
+      // Find by ID
+      let result = await pool.query('SELECT * FROM users WHERE id = $1', [parseInt(id, 10)]);
+      
+      if (!result.rows || result.rows.length === 0) {
+        return res.status(404).json({ message: "Business not found" });
+      }
+      
+      // Process business data similar to the slug endpoint
+      const business = {
+        id: result.rows[0].id,
+        username: result.rows[0].username,
+        password: result.rows[0].password,
+        email: result.rows[0].email,
+        businessName: result.rows[0].business_name,
+        businessSlug: result.rows[0].business_slug,
+        customDomain: result.rows[0].custom_domain,
+        phone: result.rows[0].phone,
+        address: result.rows[0].address,
+        city: result.rows[0].city,
+        state: result.rows[0].state,
+        postalCode: result.rows[0].postal_code,
+        country: result.rows[0].country,
+        latitude: result.rows[0].latitude,
+        longitude: result.rows[0].longitude,
+        themeSettings: result.rows[0].theme_settings || {
+          primaryColor: '#4f46e5',
+          secondaryColor: '#06b6d4',
+          accentColor: '#f59e0b',
+          textColor: '#111827',
+          backgroundColor: '#ffffff',
+          fontFamily: 'Inter, sans-serif',
+          borderRadius: 8,
+          buttonStyle: 'default',
+          cardStyle: 'default',
+          appearance: 'light',
+        },
+        theme: result.rows[0].theme || {
+          name: "Professional Default",
+          primary: '#4f46e5',
+          secondary: '#06b6d4',
+          text: '#111827',
+          background: '#ffffff',
+          borderRadius: 8,
+          fontFamily: 'Inter, sans-serif',
+          appearance: 'light',
+        },
+        industryType: result.rows[0].industry_type || 'general',
+        createdAt: new Date(result.rows[0].created_at)
+      };
+      
+      console.log(`Mapped business object by ID:`, business);
+      
+      // Get services for this business using parameterized query
+      const servicesResult = await pool.query(
+        'SELECT * FROM services WHERE user_id = $1 AND active = true',
+        [business.id]
+      );
+      
+      // Map service rows to camelCase properties
+      const services = servicesResult.rows.map(row => ({
+        id: row.id,
+        userId: row.user_id,
+        name: row.name,
+        description: row.description,
+        duration: row.duration,
+        price: row.price,
+        color: row.color,
+        active: row.active
+      }));
+      
+      // Return business data excluding sensitive information
+      const { password: _, ...businessData } = business;
+      
+      // Return JSON response
+      const response = {
+        business: businessData,
+        services: services
+      };
+      
+      res.json(response);
+    } catch (error) {
+      console.error(`Error fetching business data by ID: ${error}`);
+      res.status(500).json({ message: "Failed to fetch business data" });
+    }
+  });
+  
   // Endpoint for the frontend to check current business context
   app.get("/api/current-business", async (req: Request, res: Response) => {
     try {

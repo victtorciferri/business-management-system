@@ -78,6 +78,13 @@ export default function CustomerPortalLayout({
     }
   ];
   
+  // Log the current theme for debugging
+  useEffect(() => {
+    console.log('CustomerPortalLayout: Current theme from ThemeContext:', theme);
+    console.log('CustomerPortalLayout: Business context:', business);
+    console.log('CustomerPortalLayout: Business ID from URL:', businessId);
+  }, [theme, business, businessId]);
+  
   return (
     <BaseLayout
       business={business}
@@ -85,7 +92,8 @@ export default function CustomerPortalLayout({
       portalType="customer"
       logoText={config.name || business?.businessName || "Business Portal"}
       queryParams={queryParams}
-      themeConfig={config.themeSettings}
+      // Use theme from ThemeContext rather than config.themeSettings
+      // This ensures we're using the most up-to-date theme from the database
     >
       {children}
     </BaseLayout>

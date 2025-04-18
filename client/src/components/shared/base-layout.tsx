@@ -47,8 +47,33 @@ export default function BaseLayout({
         console.log('Forcing light mode in BaseLayout');
         document.documentElement.classList.remove('dark');
       }
+    } else if (business && business.theme) {
+      // If no themeConfig but we have a business with theme, apply that theme
+      console.log('Applying business.theme in BaseLayout:', business.theme);
+      updateTheme({
+        primaryColor: business.theme.primary || '#4f46e5',
+        secondaryColor: business.theme.secondary || '#06b6d4',
+        accentColor: business.theme.accent || '#f59e0b',
+        textColor: business.theme.text || '#111827',
+        backgroundColor: business.theme.background || '#ffffff',
+        fontFamily: business.theme.font || 'Inter, sans-serif',
+        borderRadius: typeof business.theme.borderRadius === 'string' ? business.theme.borderRadius : '8px',
+        buttonStyle: business.theme.buttonStyle || 'default',
+        cardStyle: business.theme.cardStyle || 'default',
+        appearance: business.theme.appearance || 'system'
+      });
+      
+      // Apply dark mode based on theme settings
+      if (business.theme.appearance === 'dark' || 
+         (business.theme.appearance === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        console.log('Forcing dark mode from business.theme');
+        document.documentElement.classList.add('dark');
+      } else {
+        console.log('Forcing light mode from business.theme');
+        document.documentElement.classList.remove('dark');
+      }
     }
-  }, [themeConfig, updateTheme]);
+  }, [themeConfig, business, updateTheme]);
   
   // Log current dark mode state
   useEffect(() => {
