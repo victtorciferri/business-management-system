@@ -18,6 +18,41 @@ export interface ThemePreset {
  * These provide starting points for different business types
  */
 export const themePresets: ThemePreset[] = [
+  // Salon Elegante (Featured)
+  {
+    id: 'salon-elegante',
+    name: 'Salon Elegante',
+    description: 'The signature elegant dark theme for sophisticated salon services',
+    category: 'featured',
+    theme: {
+      ...defaultTheme,
+      name: "Salon Elegante",
+      variant: "professional",
+      primaryColor: "#8b5cf6", // Signature purple
+      secondaryColor: "#7c3aed", // Deeper purple
+      accentColor: "#f59e0b",  // Amber accent
+      backgroundColor: "#1f2937", // Dark background
+      textColor: "#f9fafb", // Light text for dark mode
+      fontFamily: "Playfair Display, serif",
+      borderRadius: 8,
+      spacing: 16,
+      buttonStyle: "default",
+      cardStyle: "elevated",
+      appearance: "dark",
+      // Custom CSS for additional styling
+      customCSS: `
+        .salon-elegante-theme h1, 
+        .salon-elegante-theme h2, 
+        .salon-elegante-theme h3 {
+          font-family: "Playfair Display", serif;
+        }
+        
+        .salon-elegante-theme .custom-accent {
+          color: #f59e0b;
+        }
+      `
+    }
+  },
   // Salon & Beauty
   {
     id: 'elegant-spa',
@@ -279,5 +314,11 @@ export const getPresetCategories = (): string[] => {
       categories.add(preset.category);
     }
   });
-  return Array.from(categories);
+  
+  // Order categories with 'featured' first and then alphabetically
+  return Array.from(categories).sort((a, b) => {
+    if (a === 'featured') return -1;
+    if (b === 'featured') return 1;
+    return a.localeCompare(b);
+  });
 };
