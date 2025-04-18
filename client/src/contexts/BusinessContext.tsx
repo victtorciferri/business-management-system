@@ -164,17 +164,35 @@ export const BusinessProvider: React.FC<{
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
 
-  // Extract business slug from location
+  // Extract business slug from location or URL parameters
   const extractedSlug = extractBusinessSlug(location);
+  
+  // Check for business ID or slug in URL parameters (for customer portal)
+  const getBusinessFromUrlParams = () => {
+    if (typeof window === 'undefined') return null;
+    const params = new URLSearchParams(window.location.search);
+    const businessId = params.get('businessId');
+    const businessSlug = params.get('businessSlug');
+    return businessId || businessSlug || null;
+  };
+  
+  const urlParamBusiness = getBusinessFromUrlParams();
 
-  // Fetch business data based on slug
-  const fetchBusinessData = async (slug: string) => {
+  // Fetch business data based on slug or ID
+  const fetchBusinessData = async (slugOrId: string) => {
     setIsLoading(true);
     setError(null);
     
     try {
+      // Determine if we have an ID (numeric) or a slug
+      const isId = !isNaN(Number(slugOrId));
+      const endpoint = isId 
+        ? `/api/business/id/${slugOrId}` 
+        : `/api/business/${slugOrId}`;
+      
+      console.log(`BusinessContext: Fetching business data from ${endpoint}`);
       // Fetch business data from API
-      const response = await fetch(`/api/business/${slug}`);
+      const response = await fetch(endpoint);
       
       if (!response.ok) {
         throw new Error(`Failed to load business data: ${response.statusText}`);
@@ -271,15 +289,19 @@ export const BusinessProvider: React.FC<{
     }
   };
 
-  // Effect to load business data when slug changes
+  // Effect to load business data when slug or URL params change
   useEffect(() => {
     if (extractedSlug) {
       fetchBusinessData(extractedSlug);
+    } else if (urlParamBusiness) {
+      // If no slug in URL path but we have a business ID/slug in URL params (customer portal)
+      console.log(`BusinessContext: Loading business from URL parameter: ${urlParamBusiness}`);
+      fetchBusinessData(urlParamBusiness);
     } else {
       // Check if current user is logged in and has a business
       // This would be implemented in a real application
     }
-  }, [extractedSlug]);
+  }, [extractedSlug, urlParamBusiness]);
 
   return (
     <BusinessContext.Provider
