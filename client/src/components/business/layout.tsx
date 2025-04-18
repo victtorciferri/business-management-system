@@ -109,7 +109,7 @@ export default function BusinessLayout({ children, business, slug }: BusinessLay
         updateTheme(themeFromLegacy);
       }
     }
-  }, [business, updateBusinessTheme]);
+  }, [business, updateTheme]);
 
   return (
     <BaseLayout
