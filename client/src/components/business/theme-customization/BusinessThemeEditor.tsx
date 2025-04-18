@@ -338,11 +338,11 @@ export const BusinessThemeEditor: React.FC<BusinessThemeEditorProps> = ({
                       <div className="flex justify-between">
                         <Label htmlFor="fontFamily">Font Family</Label>
                         <span className="text-xs text-muted-foreground">
-                          {theme.fontFamily.split(',')[0]}
+                          {theme.fontFamily ? theme.fontFamily.split(',')[0] : 'Default'}
                         </span>
                       </div>
                       <Select
-                        value={theme.fontFamily}
+                        value={theme.fontFamily || ''}
                         onValueChange={(value) => updateTheme({ fontFamily: value })}
                       >
                         <SelectTrigger id="fontFamily" className="w-full">

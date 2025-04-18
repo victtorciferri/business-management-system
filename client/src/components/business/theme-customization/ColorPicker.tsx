@@ -7,8 +7,8 @@ import { cn } from '@/lib/utils';
 import { CheckIcon, CopyIcon, PaletteIcon } from 'lucide-react';
 
 interface ColorPickerProps {
-  label: string;
-  color: string;
+  label?: string;
+  color?: string;
   onChange: (color: string) => void;
   className?: string;
   description?: string;
@@ -48,7 +48,7 @@ export function ColorPicker({
     '#EC4899', // Pink
   ]
 }) {
-  const [currentColor, setCurrentColor] = useState(color);
+  const [currentColor, setCurrentColor] = useState(color || '#000000');
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -90,8 +90,10 @@ export function ColorPicker({
     }, 2000);
   };
 
-  // Generate a safe ID from the label, fallback to a random ID if label is undefined
-  const safeId = label ? `color-${label.replace(/\s+/g, '-').toLowerCase()}` : `color-${Math.random().toString(36).substring(2, 9)}`;
+  // Generate a safe ID from the label, fallback to a random ID if label is undefined or empty
+  const safeId = label && typeof label === 'string' ? 
+    `color-${label.replace(/\s+/g, '-').toLowerCase()}` : 
+    `color-${Math.random().toString(36).substring(2, 9)}`;
   
   return (
     <div className={cn("mb-4", className)}>
@@ -130,12 +132,12 @@ export function ColorPicker({
                       type="button"
                       className={cn(
                         "h-6 w-6 rounded-md border border-gray-200 flex items-center justify-center",
-                        currentColor.toLowerCase() === presetColor.toLowerCase() && "ring-2 ring-primary ring-offset-1"
+                        currentColor && presetColor && currentColor.toLowerCase() === presetColor.toLowerCase() && "ring-2 ring-primary ring-offset-1"
                       )}
                       style={{ backgroundColor: presetColor }}
                       onClick={() => handleColorSwatchClick(presetColor)}
                     >
-                      {currentColor.toLowerCase() === presetColor.toLowerCase() && (
+                      {currentColor && presetColor && currentColor.toLowerCase() === presetColor.toLowerCase() && (
                         <CheckIcon className="h-3 w-3 text-white" />
                       )}
                       <span className="sr-only">Select color {presetColor}</span>
