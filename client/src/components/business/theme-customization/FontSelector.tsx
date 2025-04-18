@@ -1,5 +1,6 @@
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 
 interface FontSelectorProps {
   id?: string;
@@ -7,8 +8,29 @@ interface FontSelectorProps {
   onChange: (value: string) => void;
 }
 
+interface FontOption {
+  name: string;
+  value: string;
+  category: string;
+  description?: string;
+}
+
 // Available fonts
-const fonts = [
+const fonts: FontOption[] = [
+  // Featured - our special fonts for branded themes
+  {
+    name: 'Playfair Display',
+    value: '"Playfair Display", serif',
+    category: 'Featured',
+    description: 'Elegant serif font used in Salon Elegante theme'
+  },
+  {
+    name: 'Manrope',
+    value: 'Manrope, sans-serif',
+    category: 'Featured',
+    description: 'Modern sans-serif for professional businesses'
+  },
+  // Sans-serif fonts
   {
     name: 'Inter',
     value: 'Inter, sans-serif',
@@ -44,11 +66,7 @@ const fonts = [
     value: '"Source Sans Pro", sans-serif',
     category: 'Sans-serif',
   },
-  {
-    name: 'Playfair Display',
-    value: '"Playfair Display", serif',
-    category: 'Serif',
-  },
+  // Serif fonts
   {
     name: 'Merriweather',
     value: 'Merriweather, serif',
@@ -64,6 +82,7 @@ const fonts = [
     value: '"PT Serif", serif',
     category: 'Serif',
   },
+  // Monospace fonts
   {
     name: 'JetBrains Mono',
     value: '"JetBrains Mono", monospace',
@@ -83,13 +102,13 @@ const fonts = [
 
 export function FontSelector({ id, value, onChange }: FontSelectorProps) {
   // Group fonts by category
-  const fontCategories = fonts.reduce((acc, font) => {
+  const fontCategories = fonts.reduce<Record<string, FontOption[]>>((acc, font) => {
     if (!acc[font.category]) {
       acc[font.category] = [];
     }
     acc[font.category].push(font);
     return acc;
-  }, {} as Record<string, typeof fonts>);
+  }, {});
   
   // Use default font if value is undefined or empty
   const safeValue = value || 'Inter, sans-serif';
@@ -117,8 +136,21 @@ export function FontSelector({ id, value, onChange }: FontSelectorProps) {
                 key={font.name}
                 value={font.value}
                 style={{ fontFamily: font.value }}
+                className={category === 'Featured' ? 'flex flex-col items-start' : ''}
               >
-                {font.name}
+                <div className="flex items-center justify-between w-full">
+                  <span>{font.name}</span>
+                  {category === 'Featured' && (
+                    <Badge variant="outline" className="ml-2 px-1.5 py-0.5 text-[10px] bg-primary/10 text-primary border-primary/30">
+                      Featured
+                    </Badge>
+                  )}
+                </div>
+                {category === 'Featured' && 'description' in font && (
+                  <span className="text-xs text-muted-foreground mt-0.5">
+                    {font.description}
+                  </span>
+                )}
               </SelectItem>
             ))}
           </React.Fragment>
