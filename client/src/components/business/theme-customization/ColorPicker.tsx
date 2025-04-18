@@ -55,7 +55,7 @@ export function ColorPicker({
 
   // Sync with external color value
   useEffect(() => {
-    setCurrentColor(color);
+    setCurrentColor(color || '#000000');
   }, [color]);
 
   // Handle color input change
@@ -148,14 +148,14 @@ export function ColorPicker({
                   <Input
                     id={safeId}
                     type="text"
-                    value={currentColor}
+                    value={currentColor || '#000000'}
                     onChange={handleColorChange}
                     className="w-full font-mono"
                     placeholder="#000000"
                   />
                   <input
                     type="color"
-                    value={currentColor}
+                    value={currentColor || '#000000'}
                     onChange={(e) => {
                       setCurrentColor(e.target.value);
                       onChange(e.target.value);
@@ -175,7 +175,7 @@ export function ColorPicker({
         <Input
           id={`color-input-${safeId}`}
           type="text"
-          value={currentColor}
+          value={currentColor || '#000000'}
           onChange={handleColorChange}
           className="w-full font-mono"
           placeholder="#000000"

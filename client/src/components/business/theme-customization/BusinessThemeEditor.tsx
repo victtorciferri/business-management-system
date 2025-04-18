@@ -289,35 +289,35 @@ export const BusinessThemeEditor: React.FC<BusinessThemeEditorProps> = ({
                   <div className="space-y-4">
                     <ColorPicker
                       label="Primary Color"
-                      color={theme.primaryColor}
+                      color={theme?.primaryColor || "#4f46e5"}
                       onChange={(color) => updateTheme({ primaryColor: color })}
                       description="The main color of your brand, used for primary buttons and elements"
                     />
                     
                     <ColorPicker
                       label="Secondary Color"
-                      color={theme.secondaryColor}
+                      color={theme?.secondaryColor || "#9333EA"}
                       onChange={(color) => updateTheme({ secondaryColor: color })}
                       description="The supporting color used for secondary elements and accents"
                     />
                     
                     <ColorPicker
                       label="Accent Color"
-                      color={theme.accentColor}
+                      color={theme?.accentColor || "#f59e0b"}
                       onChange={(color) => updateTheme({ accentColor: color })}
                       description="An additional highlight color for special elements and emphasis"
                     />
                     
                     <ColorPicker
                       label="Background Color"
-                      color={theme.backgroundColor}
+                      color={theme?.backgroundColor || "#FFFFFF"}
                       onChange={(color) => updateTheme({ backgroundColor: color })}
                       description="The main background color of your site"
                     />
                     
                     <ColorPicker
                       label="Text Color"
-                      color={theme.textColor}
+                      color={theme?.textColor || "#111827"}
                       onChange={(color) => updateTheme({ textColor: color })}
                       description="The primary text color that will be used throughout your site"
                     />
