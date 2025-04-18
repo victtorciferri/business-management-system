@@ -312,6 +312,7 @@ export default function AdminThemeEditor({ businessId: propBusinessId }: AdminTh
                   <BusinessThemeEditor 
                     initialTheme={businessTheme}
                     businessId={businessId}
+                    isAdminMode={true}
                     onSaveTheme={handleSaveBusinessTheme}
                     onSave={() => handleSaveComplete()}
                   />
