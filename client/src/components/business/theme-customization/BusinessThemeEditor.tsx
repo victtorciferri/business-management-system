@@ -52,15 +52,22 @@ export const BusinessThemeEditor: React.FC<BusinessThemeEditorProps> = ({
   const { toast } = useToast();
   
   // Local state for admin mode
+  // Use a more complete default theme with properly typed properties
   const [adminTheme, setAdminTheme] = useState<Theme>(initialTheme || {
     name: "Default Theme",
-    primary: "#4f46e5",
-    secondary: "#9333EA",
-    background: "#FFFFFF",
-    text: "#111827",
+    primaryColor: "#4f46e5",
+    secondaryColor: "#9333EA",
+    accentColor: "#f59e0b",
+    backgroundColor: "#FFFFFF",
+    textColor: "#111827",
+    fontFamily: "Inter, system-ui, sans-serif",
+    borderRadius: 8,
+    spacing: 16,
+    buttonStyle: "default",
+    cardStyle: "default",
     appearance: "system",
-    spacing: "1rem",
-    borderRadius: "0.5rem"
+    variant: "professional",
+    customCSS: ""
   });
   const [adminIsSaving, setAdminIsSaving] = useState(false);
   const [adminOriginalTheme, setAdminOriginalTheme] = useState<Theme>(adminTheme);
