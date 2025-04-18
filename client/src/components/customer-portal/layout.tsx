@@ -79,11 +79,44 @@ export default function CustomerPortalLayout({
     }
   ];
   
-  // Log the current theme for debugging
+  // Handle theme application
   useEffect(() => {
     console.log('CustomerPortalLayout: Current theme from ThemeContext:', theme);
     console.log('CustomerPortalLayout: Business context:', business);
     console.log('CustomerPortalLayout: Business ID from URL:', businessId);
+    
+    // Apply theme directly as CSS variables
+    if (theme) {
+      // Get the document root element
+      const root = document.documentElement;
+      
+      // Direct application of theme values as CSS variables
+      if (theme.primaryColor) {
+        console.log('CustomerPortalLayout: Directly setting primary color:', theme.primaryColor);
+        root.style.setProperty('--primary', theme.primaryColor);
+      }
+      
+      if (theme.secondaryColor) {
+        console.log('CustomerPortalLayout: Directly setting secondary color:', theme.secondaryColor);
+        root.style.setProperty('--secondary', theme.secondaryColor);
+      }
+      
+      if (theme.accentColor) {
+        console.log('CustomerPortalLayout: Directly setting accent color:', theme.accentColor);
+        root.style.setProperty('--accent', theme.accentColor);
+      }
+      
+      if (theme.backgroundColor) {
+        console.log('CustomerPortalLayout: Directly setting background color:', theme.backgroundColor);
+        root.style.setProperty('--background', theme.backgroundColor);
+      }
+      
+      // Also import and use the proper theme utility
+      import('@/utils/applyTheme').then(({ applyTheme }) => {
+        console.log('CustomerPortalLayout: Applying theme using applyTheme utility');
+        applyTheme(theme);
+      });
+    }
   }, [theme, business, businessId]);
   
   return (

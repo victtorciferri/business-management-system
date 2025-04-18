@@ -5,11 +5,17 @@ import type { Theme } from "../types/theme";
  * Apply theme settings to a root element (usually :root or a specific container for preview)
  */
 export function applyTheme(theme: Theme): void {
+  console.log('applyTheme called with theme:', theme);
+  
   // Get the document root element
   const root = document.documentElement;
   
   // Apply the theme CSS variables
   applyThemeToElement(theme, root);
+  
+  // Log the result
+  console.log('CSS variables applied to document root. Current primary color:', 
+    getComputedStyle(document.documentElement).getPropertyValue('--primary'));
 }
 
 /**
@@ -24,41 +30,60 @@ export function applyThemeToPreview(theme: Theme, element: HTMLElement): void {
  * Apply theme settings to a DOM element by setting CSS variables
  */
 function applyThemeToElement(theme: Theme, element: HTMLElement): void {
+  console.log('applyThemeToElement starting with element:', element);
+  
   // Colors
   if (theme.primaryColor) {
-    element.style.setProperty('--primary', hslToHsla(hexToHSL(theme.primaryColor)));
+    console.log('Setting primary color:', theme.primaryColor);
+    const hslValue = hslToHsla(hexToHSL(theme.primaryColor));
+    console.log('  -> HSL value:', hslValue);
+    element.style.setProperty('--primary', hslValue);
     element.style.setProperty('--primary-foreground', getContrastColor(theme.primaryColor));
+  } else {
+    console.log('No primaryColor found in theme:', theme);
   }
   
   if (theme.secondaryColor) {
-    element.style.setProperty('--secondary', hslToHsla(hexToHSL(theme.secondaryColor)));
+    console.log('Setting secondary color:', theme.secondaryColor);
+    const hslValue = hslToHsla(hexToHSL(theme.secondaryColor));
+    console.log('  -> HSL value:', hslValue);
+    element.style.setProperty('--secondary', hslValue);
     element.style.setProperty('--secondary-foreground', getContrastColor(theme.secondaryColor));
   }
   
   if (theme.accentColor) {
+    console.log('Setting accent color:', theme.accentColor);
     element.style.setProperty('--accent', hslToHsla(hexToHSL(theme.accentColor)));
     element.style.setProperty('--accent-foreground', getContrastColor(theme.accentColor));
   }
   
   if (theme.backgroundColor) {
+    console.log('Setting background color:', theme.backgroundColor);
     element.style.setProperty('--background', hslToHsla(hexToHSL(theme.backgroundColor)));
     element.style.setProperty('--foreground', getContrastColor(theme.backgroundColor));
   }
   
   // Font
   if (theme.fontFamily) {
+    console.log('Setting font family:', theme.fontFamily);
     element.style.setProperty('--font-sans', theme.fontFamily);
   }
   
   // Border radius
   if (theme.borderRadius) {
-    element.style.setProperty('--radius', theme.borderRadius);
+    console.log('Setting border radius:', theme.borderRadius);
+    element.style.setProperty('--radius', typeof theme.borderRadius === 'number' ? 
+      `${theme.borderRadius}px` : theme.borderRadius);
   }
   
   // Spacing
   if (theme.spacing) {
-    element.style.setProperty('--spacing', theme.spacing);
+    console.log('Setting spacing:', theme.spacing);
+    element.style.setProperty('--spacing', typeof theme.spacing === 'number' ? 
+      `${theme.spacing}px` : theme.spacing);
   }
+  
+  console.log('Theme application complete for element');
 }
 
 /**

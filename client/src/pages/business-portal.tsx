@@ -110,7 +110,23 @@ export default function BusinessPortal({ slug, subPath, initialData }: BusinessP
     if (themeData?.theme) {
       console.log("Applying business theme:", themeData.theme);
       updateBusinessTheme(themeData.theme); // Use updateBusinessTheme instead of setTheme
+      
+      // Apply theme to CSS variables
       applyTheme(themeData.theme);
+      
+      // Also directly set CSS variables on :root to ensure they're applied
+      // This is a backup approach in case the applyTheme function doesn't work
+      const root = document.documentElement;
+      
+      if (themeData.theme.primaryColor) {
+        console.log("Directly setting primary CSS variable:", themeData.theme.primaryColor);
+        root.style.setProperty('--primary', themeData.theme.primaryColor);
+      }
+      
+      if (themeData.theme.secondaryColor) {
+        console.log("Directly setting secondary CSS variable:", themeData.theme.secondaryColor);
+        root.style.setProperty('--secondary', themeData.theme.secondaryColor);
+      }
     }
   }, [themeData, updateBusinessTheme]);
   
