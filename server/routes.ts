@@ -75,19 +75,121 @@ export async function registerRoutes(app: Express): Promise<Server> {
    */
   app.get("/api/themes/presets", (_req: Request, res: Response) => {
     try {
-      // Import directly with ES modules syntax
-      import('@shared/themePresets').then(({ themePresets, getPresetCategories }) => {
-        // Return all theme presets with complete information and categories
-        res.json({ 
-          presets: themePresets,
-          categories: getPresetCategories()
-        });
-      }).catch(err => {
-        console.error('Error importing theme presets:', err);
-        res.status(500).json({ 
-          error: 'Failed to load theme presets',
-          message: 'An error occurred while loading theme presets.'
-        });
+      // Using hard-coded presets to avoid import issues
+      const defaultTheme = {
+        name: 'Default Theme',
+        primaryColor: '#0077B6',
+        secondaryColor: '#023E8A',
+        accentColor: '#48CAE4',
+        backgroundColor: '#FFFFFF',
+        textColor: '#111827',
+        fontFamily: 'Inter, system-ui, sans-serif',
+        borderRadius: 8,
+        spacing: 16,
+        buttonStyle: 'default',
+        cardStyle: 'default',
+        appearance: 'light',
+        variant: 'professional',
+        colorPalette: [],
+      };
+      
+      const presets = [
+        {
+          id: 'elegant-spa',
+          name: 'Elegant Spa',
+          description: 'A sophisticated and calming theme for salons and spas',
+          category: 'beauty',
+          theme: {
+            ...defaultTheme,
+            name: "Elegant Spa",
+            variant: "professional",
+            primaryColor: "#9D7E79",
+            secondaryColor: "#694E4E",
+            accentColor: "#D4B2A7",
+            backgroundColor: "#FAF6F6",
+            textColor: "#362F2F",
+            fontFamily: "Playfair Display, serif",
+            borderRadius: 8,
+            spacing: 16,
+            buttonStyle: "rounded",
+            cardStyle: "elevated",
+            appearance: "light",
+          }
+        },
+        {
+          id: 'modern-salon',
+          name: 'Modern Salon',
+          description: 'A bold and contemporary look for modern salons',
+          category: 'beauty',
+          theme: {
+            ...defaultTheme,
+            name: "Modern Salon",
+            variant: "vibrant",
+            primaryColor: "#FF5A5F",
+            secondaryColor: "#484848",
+            accentColor: "#FFB400",
+            backgroundColor: "#FFFFFF",
+            textColor: "#2D2D2D",
+            fontFamily: "Poppins, sans-serif",
+            borderRadius: 12,
+            spacing: 18,
+            buttonStyle: "pill",
+            cardStyle: "default",
+            appearance: "light",
+          }
+        },
+        {
+          id: 'fitness-studio',
+          name: 'Fitness Studio',
+          description: 'An energetic theme for fitness and training services',
+          category: 'fitness',
+          theme: {
+            ...defaultTheme,
+            name: "Fitness Studio",
+            variant: "vibrant",
+            primaryColor: "#FF3D00",
+            secondaryColor: "#212121",
+            accentColor: "#FFC107",
+            backgroundColor: "#FAFAFA",
+            textColor: "#212121",
+            fontFamily: "Montserrat, sans-serif",
+            borderRadius: 4,
+            spacing: 16,
+            buttonStyle: "square",
+            cardStyle: "default",
+            appearance: "light",
+          }
+        },
+        {
+          id: 'dark-professional',
+          name: 'Dark Professional',
+          description: 'A sleek dark theme for professional services',
+          category: 'dark',
+          theme: {
+            ...defaultTheme,
+            name: "Dark Professional",
+            variant: "professional",
+            primaryColor: "#60A5FA",
+            secondaryColor: "#A78BFA",
+            accentColor: "#F472B6",
+            backgroundColor: "#111827",
+            textColor: "#F9FAFB",
+            fontFamily: "Inter, system-ui, sans-serif",
+            borderRadius: 8,
+            spacing: 16,
+            buttonStyle: "default",
+            cardStyle: "bordered",
+            appearance: "dark",
+          }
+        }
+      ];
+      
+      const categories = ['beauty', 'fitness', 'dark'];
+      
+      // Return all theme presets with complete information and categories
+      res.json({ 
+        presets: presets,
+        categories: categories
       });
     } catch (error) {
       console.error('Error loading theme presets:', error);
