@@ -55,15 +55,48 @@ export const handlePublicThemeUpdate = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Theme data is required" });
     }
     
-    // Validate required theme properties
-    const requiredProperties = ['primary', 'secondary', 'background', 'text'];
-    for (const prop of requiredProperties) {
-      if (typeof theme[prop] !== 'string' || !theme[prop].match(/^#[0-9A-Fa-f]{6}$/)) {
-        return res.status(400).json({ 
-          message: `Invalid theme property: ${prop}. Must be a valid hex color.`
-        });
-      }
+    // Basic validation for theme properties - accept either legacy or new format
+    // The new format uses primaryColor, secondaryColor, etc.
+    // The old format used primary, secondary, etc.
+    const hasNewFormat = theme.primaryColor !== undefined && 
+                         theme.secondaryColor !== undefined && 
+                         theme.backgroundColor !== undefined && 
+                         theme.textColor !== undefined;
+                         
+    const hasOldFormat = theme.primary !== undefined && 
+                         theme.secondary !== undefined && 
+                         theme.background !== undefined && 
+                         theme.text !== undefined;
+    
+    if (!hasNewFormat && !hasOldFormat) {
+      return res.status(400).json({ 
+        message: `Invalid theme format. Theme must include color properties.`
+      });
     }
+    
+    // Convert between formats if needed to ensure compatibility
+    let themeToSave = theme;
+    
+    // If we got old format but need new format for database
+    if (hasOldFormat && !hasNewFormat) {
+      themeToSave = {
+        ...theme,
+        name: theme.name || "Custom Theme",
+        primaryColor: theme.primary,
+        secondaryColor: theme.secondary,
+        backgroundColor: theme.background,
+        textColor: theme.text,
+        accentColor: theme.accent || "#f59e0b",
+        borderRadius: typeof theme.borderRadius === 'string' ? parseInt(theme.borderRadius, 10) : 8,
+        spacing: typeof theme.spacing === 'string' ? parseInt(theme.spacing, 10) : 16,
+        appearance: theme.appearance || "system",
+        fontFamily: theme.fontFamily || "Inter, sans-serif",
+        buttonStyle: theme.buttonStyle || "default",
+        cardStyle: theme.cardStyle || "default"
+      };
+    }
+    
+    console.log(`Processing theme save via public API for business ${businessId}:`, themeToSave);
     
     // Check if the business exists
     const business = await storage.getUser(parseInt(businessId, 10));
@@ -72,14 +105,14 @@ export const handlePublicThemeUpdate = async (req: Request, res: Response) => {
     }
     
     // Update the theme in the database using the utility function
-    await updateThemeForBusiness(parseInt(businessId, 10), theme, db);
+    await updateThemeForBusiness(parseInt(businessId, 10), themeToSave, db);
     
     // Log the action for audit purposes
-    console.log(`Public API updated theme for business ID ${businessId}: ${JSON.stringify(theme)}`);
+    console.log(`Public API updated theme for business ID ${businessId}`);
     
     return res.json({ 
       message: "Theme updated successfully via public API",
-      theme
+      theme: themeToSave
     });
   } catch (error) {
     console.error('Error updating theme via public API:', error);

@@ -92,53 +92,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   /**
    * POST /api/public/theme/:businessId
-   * Special theme update endpoint that doesn't require authentication - used for testing
+   * Special theme update endpoint that doesn't require authentication
    * This should be placed BEFORE the businessExtractor middleware
    */
-  app.post("/api/public/theme/:businessId", async (req: Request, res: Response) => {
-    try {
-      const { businessId } = req.params;
-      const { theme } = req.body;
-      
-      if (!businessId || isNaN(parseInt(businessId, 10))) {
-        return res.status(400).json({ message: "Invalid business ID" });
-      }
-      
-      if (!theme || typeof theme !== 'object') {
-        return res.status(400).json({ message: "Theme data is required" });
-      }
-      
-      // Validate required theme properties
-      const requiredProperties = ['primary', 'secondary', 'background', 'text'];
-      for (const prop of requiredProperties) {
-        if (typeof theme[prop] !== 'string' || !theme[prop].match(/^#[0-9A-Fa-f]{6}$/)) {
-          return res.status(400).json({ 
-            message: `Invalid theme property: ${prop}. Must be a valid hex color.`
-          });
-        }
-      }
-      
-      // Check if the business exists
-      const business = await storage.getUser(parseInt(businessId, 10));
-      if (!business) {
-        return res.status(404).json({ message: "Business not found" });
-      }
-      
-      // Update the theme in the database using the utility function
-      await updateThemeForBusiness(parseInt(businessId, 10), theme, db);
-      
-      // Log the action for audit purposes
-      console.log(`Public API updated theme for business ID ${businessId}: ${JSON.stringify(theme)}`);
-      
-      return res.json({ 
-        message: "Theme updated successfully via public API",
-        theme
-      });
-    } catch (error) {
-      console.error('Error updating theme via public API:', error);
-      return res.status(500).json({ message: "Failed to update business theme" });
-    }
-  });
+  app.post("/api/public/theme/:businessId", handlePublicThemeUpdate);
   
   // Apply the business extractor middleware to all routes
   app.use(businessExtractor);
@@ -2867,28 +2824,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Theme settings update endpoint (Admin or Business owner)
+  // Theme settings update endpoint for Admin
   app.get("/api/admin/business/:id/theme", requireAdmin, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       
-      // Fetch theme settings using the JSONB column
+      if (!id || isNaN(parseInt(id, 10))) {
+        return res.status(400).json({ message: "Invalid business ID" });
+      }
+      
+      const businessId = parseInt(id, 10);
+      console.log(`Admin requesting theme for business ID: ${businessId}`);
+      
+      // Use the themeOperations from middleware if available
+      if ((req as any).themeOperations && (req as any).themeOperations.getTheme) {
+        const theme = await (req as any).themeOperations.getTheme(businessId);
+        if (theme) {
+          return res.json({ theme });
+        }
+      }
+      
+      // Fallback: Fetch theme settings using the JSONB column
       const result = await db.execute(sql`
         SELECT 
           id, 
           business_name, 
           business_slug,
           theme_settings,
+          theme,
           industry_type
         FROM users
-        WHERE id = ${parseInt(id, 10)}
+        WHERE id = ${businessId}
       `);
       
       if (!result.rows || result.rows.length === 0) {
         return res.status(404).json({ message: "Business not found" });
       }
       
-      // Use JSONB theme_settings or provide default values if not set
+      // Check for theme in this order: 1. new format in theme column, 2. legacy format in theme_settings
+      if (result.rows[0].theme) {
+        // Return theme from the new format column
+        return res.json({ theme: result.rows[0].theme });
+      } else if (result.rows[0].theme_settings) {
+        // Convert and return from the legacy format
+        const theme = convertLegacyThemeToTheme(result.rows[0].theme_settings);
+        return res.json({ theme });
+      }
+      
+      // Use default values if nothing is set
       const defaultThemeSettings = {
         name: "Professional Default",  // Add a name for the theme
         primaryColor: '#4f46e5',
@@ -2925,29 +2908,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const { theme } = req.body;
       
-      if (!theme) {
+      if (!id || isNaN(parseInt(id, 10))) {
+        return res.status(400).json({ message: "Invalid business ID" });
+      }
+      
+      if (!theme || typeof theme !== 'object') {
         return res.status(400).json({ message: "Theme data is required" });
       }
       
-      // Validate theme data with basic checks
-      if (!theme.primary || !theme.secondary || !theme.background || !theme.text) {
-        return res.status(400).json({ 
-          message: "Invalid theme data. Required fields: primary, secondary, background, text" 
-        });
+      const businessId = parseInt(id, 10);
+      console.log(`Admin updating theme for business ID: ${businessId}`);
+      
+      // Use the themeOperations from middleware if available
+      if ((req as any).themeOperations && (req as any).themeOperations.updateTheme) {
+        const result = await (req as any).themeOperations.updateTheme(businessId, theme);
+        if (result) {
+          return res.json({ 
+            message: "Theme updated successfully via middleware",
+            theme
+          });
+        }
       }
       
-      // Update theme settings in the database
-      await db.execute(sql`
-        UPDATE users
-        SET theme_settings = ${JSON.stringify(theme)}
-        WHERE id = ${parseInt(id, 10)}
-      `);
-      
-      // Return updated theme data
-      res.json({ 
-        message: "Theme updated successfully",
-        theme
-      });
+      // Fallback: update theme directly using updateThemeForBusiness utility
+      try {
+        await updateThemeForBusiness(businessId, theme, db);
+        console.log(`Admin successfully updated theme for business ID: ${businessId}`);
+        
+        return res.json({ 
+          message: "Theme updated successfully",
+          theme
+        });
+      } catch (dbError) {
+        console.error('Error in database update:', dbError);
+        
+        // As a last resort, try direct SQL
+        console.log('Attempting direct SQL update as fallback...');
+        
+        // Check if the business exists first
+        const business = await storage.getUser(businessId);
+        if (!business) {
+          return res.status(404).json({ message: "Business not found" });
+        }
+        
+        // Convert legacy theme format if needed
+        const legacyThemeSettings = convertThemeToLegacyTheme(theme);
+        
+        // Update using the legacy format in theme_settings column
+        await db.execute(sql`
+          UPDATE users
+          SET theme_settings = ${JSON.stringify(legacyThemeSettings)}::jsonb,
+              theme = ${JSON.stringify(theme)}::jsonb,
+              updated_at = NOW()
+          WHERE id = ${businessId}
+        `);
+        
+        console.log(`Admin successfully updated theme via direct SQL for business ID: ${businessId}`);
+        
+        // Return updated theme data
+        return res.json({ 
+          message: "Theme updated successfully via direct SQL",
+          theme
+        });
+      }
     } catch (error) {
       console.error("Error updating theme:", error);
       res.status(500).json({ message: "Failed to update theme" });
