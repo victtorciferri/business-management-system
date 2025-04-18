@@ -407,6 +407,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   appointments: many(appointments),
   products: many(products),
   availability: many(staffAvailability),
+  themes: many(themes)
 }));
 
 export const servicesRelations = relations(services, ({ one, many }) => ({
@@ -622,4 +623,12 @@ export const insertThemeSchema = createInsertSchema(themes).omit({
 
 export type ThemeEntity = typeof themes.$inferSelect;
 export type InsertThemeEntity = typeof themes.$inferInsert;
-export type InsertThemeEntity = z.infer<typeof insertThemeSchema>;
+export type InsertThemeSchemaType = z.infer<typeof insertThemeSchema>;
+
+// Add relation for themes
+export const themesRelations = relations(themes, ({ one }) => ({
+  business: one(users, {
+    fields: [themes.businessId],
+    references: [users.id],
+  }),
+}));
