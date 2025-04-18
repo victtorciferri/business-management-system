@@ -98,18 +98,41 @@ export const BusinessThemeEditor: React.FC<BusinessThemeEditorProps> = ({
     if (isAdminMode) {
       try {
         setAdminIsSaving(true);
+        let result;
         
-        if (onSaveTheme) {
+        // Prefer using ThemeContext's saveThemeForBusiness if available and we have a business ID
+        if (themeContext.saveThemeForBusiness && businessId) {
+          console.log('Using ThemeContext.saveThemeForBusiness for business ID:', businessId);
+          result = await themeContext.saveThemeForBusiness(businessId, adminTheme);
+          
+          if (!result.success) {
+            throw new Error(result.error || 'Failed to save theme for business');
+          }
+        } 
+        // Fall back to props handler if context method isn't available
+        else if (onSaveTheme) {
+          console.log('Using onSaveTheme prop handler');
           await onSaveTheme(adminTheme);
+          result = { success: true };
+        } 
+        // No save method available
+        else {
+          console.error('No save method available in admin mode');
+          throw new Error('No save method available');
         }
         
         setAdminOriginalTheme(adminTheme);
+        
+        toast({
+          title: "Theme saved",
+          description: "The business theme has been saved successfully.",
+        });
         
         if (onSave) {
           onSave();
         }
         
-        return { success: true };
+        return result;
       } catch (error: any) {
         console.error('Error saving theme in admin mode:', error);
         toast({
@@ -117,14 +140,15 @@ export const BusinessThemeEditor: React.FC<BusinessThemeEditorProps> = ({
           description: error.message || "There was a problem saving the theme. Please try again.",
           variant: "destructive",
         });
-        throw error;
+        return { success: false, error: error.message };
       } finally {
         setAdminIsSaving(false);
       }
     } else {
+      // Use the context's saveTheme method for normal mode
       return themeContext.saveTheme();
     }
-  }, [isAdminMode, adminTheme, onSaveTheme, onSave, themeContext, toast]);
+  }, [isAdminMode, adminTheme, businessId, onSaveTheme, onSave, themeContext, toast]);
   
   const setPreviewMode = isAdminMode 
     ? () => {} // No-op in admin mode

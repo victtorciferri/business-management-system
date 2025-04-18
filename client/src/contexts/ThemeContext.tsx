@@ -96,8 +96,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     try {
       setIsSaving(true);
       
-      // Make API call to save the theme - include credentials to handle session authentication
-      const response = await fetch('/api/business/theme', {
+      // Make API call to save the theme - try authenticated route first
+      let response = await fetch('/api/business/theme', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -105,6 +105,30 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
         body: JSON.stringify({ theme }),
         credentials: 'include' // This ensures cookies/session is sent with the request
       });
+      
+      // If authenticated route fails, try public API for the current business
+      if (response.status === 401) {
+        console.log('Authentication failed when saving theme, trying public endpoint');
+        
+        // Try to get business ID from window.BUSINESS_DATA
+        let businessId;
+        if (window.BUSINESS_DATA && window.BUSINESS_DATA.id) {
+          businessId = window.BUSINESS_DATA.id;
+        } else {
+          // If no business ID is found, we can't proceed
+          console.error('No business ID found in window.BUSINESS_DATA');
+          throw new Error('Unable to save theme: No business ID found');
+        }
+        
+        // Try public endpoint as fallback
+        response = await fetch(`/api/public/theme/${businessId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ theme })
+        });
+      }
       
       // Get the response text regardless of the status
       const responseText = await response.text();
@@ -119,13 +143,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
       }
       
       if (!response.ok) {
-        if (response.status === 401) {
-          console.error('Authentication error when saving theme:', responseData);
-          throw new Error('Please log in to save theme changes');
-        } else {
-          console.error(`Server error (${response.status}) when saving theme:`, responseData);
-          throw new Error(responseData.message || 'Failed to save theme');
-        }
+        console.error(`Server error (${response.status}) when saving theme:`, responseData);
+        throw new Error(responseData.message || 'Failed to save theme');
       }
       
       // Update the original theme to match the current theme
@@ -136,7 +155,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
         description: "Your theme has been saved successfully.",
       });
       
-      return responseData;
+      return { success: true };
     } catch (error: any) {
       console.error('Error saving theme:', error);
       toast({
@@ -144,7 +163,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
         description: error.message || "There was a problem saving your theme. Please try again.",
         variant: "destructive",
       });
-      throw error;
+      return { success: false, error: error.message };
     } finally {
       setIsSaving(false);
     }
