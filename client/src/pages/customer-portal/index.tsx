@@ -56,6 +56,13 @@ export default function CustomerPortal() {
       
       console.log("CustomerPortal: Theme being applied:", themeToApply);
       updateTheme(themeToApply);
+      
+      // Apply theme to CSS variables - this is the critical part for visual changes
+      import("@/utils/applyTheme").then(module => {
+        const { applyTheme } = module;
+        applyTheme(themeToApply);
+        console.log("CustomerPortal: Applied theme to CSS variables");
+      });
     } else {
       console.log("Customer Portal: No business theme found");
     }

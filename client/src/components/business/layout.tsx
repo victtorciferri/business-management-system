@@ -99,6 +99,13 @@ export default function BusinessLayout({ children, business, slug }: BusinessLay
         
         // Apply theme
         updateTheme(themeFromSettings);
+        
+        // Apply theme to CSS variables
+        import("@/utils/applyTheme").then(module => {
+          const { applyTheme } = module;
+          applyTheme(themeFromSettings);
+          console.log("BusinessLayout: Applied themeSettings theme to CSS variables");
+        });
       }
       // Next try to use the theme object if it exists
       else if (business.theme) {
@@ -127,6 +134,13 @@ export default function BusinessLayout({ children, business, slug }: BusinessLay
         };
         
         updateTheme(properTheme);
+        
+        // Apply theme to CSS variables
+        import("@/utils/applyTheme").then(module => {
+          const { applyTheme } = module;
+          applyTheme(properTheme);
+          console.log("BusinessLayout: Applied business.theme to CSS variables");
+        });
       }
       // Fallback to legacy theme settings in older format
       else if (business.themeSettings) {
@@ -168,6 +182,13 @@ export default function BusinessLayout({ children, business, slug }: BusinessLay
         
         // Apply theme
         updateTheme(themeFromLegacy);
+        
+        // Apply theme to CSS variables
+        import("@/utils/applyTheme").then(module => {
+          const { applyTheme } = module;
+          applyTheme(themeFromLegacy);
+          console.log("BusinessLayout: Applied legacy theme to CSS variables");
+        });
       }
     }
   }, [business, updateTheme]);
