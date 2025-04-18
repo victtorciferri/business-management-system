@@ -338,11 +338,11 @@ export const BusinessThemeEditor: React.FC<BusinessThemeEditorProps> = ({
                       <div className="flex justify-between">
                         <Label htmlFor="fontFamily">Font Family</Label>
                         <span className="text-xs text-muted-foreground">
-                          {theme.fontFamily ? theme.fontFamily.split(',')[0] : 'Default'}
+                          {theme?.fontFamily ? theme.fontFamily.split(',')[0] : 'Default'}
                         </span>
                       </div>
                       <Select
-                        value={theme.fontFamily || ''}
+                        value={theme?.fontFamily || 'Inter, system-ui, sans-serif'}
                         onValueChange={(value) => updateTheme({ fontFamily: value })}
                       >
                         <SelectTrigger id="fontFamily" className="w-full">
@@ -365,14 +365,14 @@ export const BusinessThemeEditor: React.FC<BusinessThemeEditorProps> = ({
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <Label htmlFor="borderRadius">Border Radius</Label>
-                        <span className="text-xs text-muted-foreground">{theme.borderRadius}px</span>
+                        <span className="text-xs text-muted-foreground">{theme?.borderRadius || 8}px</span>
                       </div>
                       <Slider
                         id="borderRadius"
                         min={0}
                         max={24}
                         step={1}
-                        value={[theme.borderRadius]}
+                        value={[theme?.borderRadius || 8]}
                         onValueChange={(value) => handleNumericChange('borderRadius', value)}
                       />
                     </div>
@@ -380,14 +380,14 @@ export const BusinessThemeEditor: React.FC<BusinessThemeEditorProps> = ({
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <Label htmlFor="spacing">Spacing</Label>
-                        <span className="text-xs text-muted-foreground">{theme.spacing}px</span>
+                        <span className="text-xs text-muted-foreground">{theme?.spacing || 16}px</span>
                       </div>
                       <Slider
                         id="spacing"
                         min={4}
                         max={32}
                         step={2}
-                        value={[theme.spacing]}
+                        value={[theme?.spacing || 16]}
                         onValueChange={(value) => handleNumericChange('spacing', value)}
                       />
                     </div>
@@ -395,7 +395,7 @@ export const BusinessThemeEditor: React.FC<BusinessThemeEditorProps> = ({
                     <div className="space-y-2">
                       <Label htmlFor="buttonStyle">Button Style</Label>
                       <Select
-                        value={theme.buttonStyle || 'default'}
+                        value={theme?.buttonStyle || 'default'}
                         onValueChange={(value) => 
                           updateTheme({ 
                             buttonStyle: value as 'default' | 'rounded' | 'square' | 'pill' 
@@ -418,7 +418,7 @@ export const BusinessThemeEditor: React.FC<BusinessThemeEditorProps> = ({
                     <div className="space-y-2">
                       <Label htmlFor="cardStyle">Card Style</Label>
                       <Select
-                        value={theme.cardStyle || 'default'}
+                        value={theme?.cardStyle || 'default'}
                         onValueChange={(value) => 
                           updateTheme({ 
                             cardStyle: value as 'default' | 'elevated' | 'flat' | 'bordered' 
@@ -450,7 +450,7 @@ export const BusinessThemeEditor: React.FC<BusinessThemeEditorProps> = ({
                       <Label htmlFor="themeName">Theme Name</Label>
                       <Input
                         id="themeName"
-                        value={theme.name}
+                        value={theme?.name || "Default Theme"}
                         onChange={(e) => updateTheme({ name: e.target.value })}
                         placeholder="My Custom Theme"
                       />
@@ -459,7 +459,7 @@ export const BusinessThemeEditor: React.FC<BusinessThemeEditorProps> = ({
                     <div className="space-y-2">
                       <Label htmlFor="appearance">Appearance Mode</Label>
                       <Select
-                        value={theme.appearance}
+                        value={theme?.appearance || "system"}
                         onValueChange={(value) => 
                           updateTheme({ 
                             appearance: value as 'light' | 'dark' | 'system' 
@@ -482,7 +482,7 @@ export const BusinessThemeEditor: React.FC<BusinessThemeEditorProps> = ({
                     <div className="space-y-2">
                       <Label htmlFor="variant">Theme Variant</Label>
                       <Select
-                        value={theme.variant || 'professional'}
+                        value={theme?.variant || 'professional'}
                         onValueChange={(value) => 
                           updateTheme({ 
                             variant: value as 'professional' | 'tint' | 'vibrant' | 'custom' 
@@ -515,7 +515,7 @@ export const BusinessThemeEditor: React.FC<BusinessThemeEditorProps> = ({
                       </div>
                       <textarea
                         id="customCSS"
-                        value={theme.customCSS || ''}
+                        value={theme?.customCSS || ''}
                         onChange={(e) => updateTheme({ customCSS: e.target.value })}
                         className="w-full min-h-[120px] rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm"
                         placeholder="/* Custom CSS rules */"
