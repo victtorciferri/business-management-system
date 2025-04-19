@@ -211,7 +211,7 @@ export function GlobalThemeProvider({ children }: GlobalThemeProviderProps) {
     }
     
     return () => {
-      if (styleElement) {
+      if (styleElement && document.head.contains(styleElement)) {
         document.head.removeChild(styleElement);
       }
     };

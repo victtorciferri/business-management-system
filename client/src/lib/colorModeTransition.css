@@ -1,26 +1,59 @@
 /**
- * Color Mode Transition Styles - 2025 Edition
- * 
- * Provides smooth transitions between light and dark modes
+ * Color Mode Transition Styles
+ *
+ * These styles provide smooth transitions when switching between 
+ * light and dark color modes throughout the application.
  */
 
+/* Apply transitions to HTML element for global color changes */
+html {
+  /* Transition all color-related properties */
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+/* Apply transitions to specific elements that might need color transitions */
+*,
+*::before,
+*::after {
+  /* Only transition color-related properties to avoid layout shifts */
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+/* Disable transitions for elements where it might cause visual issues */
+.no-color-transitions,
+.no-color-transitions::before,
+.no-color-transitions::after {
+  transition-property: none;
+}
+
+/* Optimize performance by not transitioning certain properties */
+code, pre, iframe, video, canvas, img, svg {
+  transition-property: none;
+}
+
+/* Disable transitions on window resize or initial load to prevent visual flicker */
+.resize-animation-stopper * {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Custom class for emphasizing transitions on certain elements */
+.emphasize-mode-transition {
+  transition-duration: 500ms !important;
+}
+
+/* Utility class for immediate mode changes with no transition */
+.immediate-mode-change {
+  transition: none !important;
+}
+
+/* Dynamic variables updated by the theme system */
 :root {
-  --theme-transition-duration: 350ms;
-  --theme-transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-body, button, a, input, textarea, select, div, span, p, h1, h2, h3, h4, h5, h6 {
-  transition: background-color var(--theme-transition-duration) var(--theme-transition-timing),
-              color var(--theme-transition-duration) var(--theme-transition-timing),
-              border-color var(--theme-transition-duration) var(--theme-transition-timing),
-              box-shadow var(--theme-transition-duration) var(--theme-transition-timing);
-}
-
-/* For high-performance rendering, exclude transforms, opacity, and filters from transition */
-
-/* Disable transitions when the user prefers reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  body, button, a, input, textarea, select, div, span, p, h1, h2, h3, h4, h5, h6 {
-    transition: none !important;
-  }
+  /* These variables can be adjusted programmatically */
+  --color-mode-transition-duration: 300ms;
+  --color-mode-transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
 }

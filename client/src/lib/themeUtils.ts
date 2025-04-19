@@ -4,12 +4,14 @@
  * Utility functions for working with themes and design tokens.
  */
 
+import { GlobalTokens } from '@/providers/GlobalThemeContext';
+
 /**
  * Generates CSS variables from a theme tokens object
  * @param tokens Theme tokens object
  * @returns CSS variables string
  */
-export function generateCSSVariables(tokens: any): string {
+export function generateCSSVariables(tokens: GlobalTokens | Record<string, any>): string {
   if (!tokens) return '';
   
   let cssVars: string[] = [];
@@ -22,13 +24,14 @@ export function generateCSSVariables(tokens: any): string {
         cssVars.push(`--color-${colorName}: ${colorValue};`);
       } else if (typeof colorValue === 'object' && colorValue !== null) {
         // Handle object with color variants
-        Object.entries(colorValue).forEach(([variant, color]) => {
+        Object.entries(colorValue as Record<string, string>).forEach(([variant, color]) => {
           cssVars.push(`--color-${colorName}-${variant}: ${color};`);
         });
         
         // Add base as the default if it exists
-        if (colorValue.base) {
-          cssVars.push(`--color-${colorName}: ${colorValue.base};`);
+        const colorObj = colorValue as Record<string, string>;
+        if (colorObj.base) {
+          cssVars.push(`--color-${colorName}: ${colorObj.base};`);
         }
       }
     });
@@ -138,11 +141,11 @@ export function generateCSSVariables(tokens: any): string {
  * @param theme Theme object
  * @returns CSS string
  */
-export function themeToCSS(theme: any): string {
+export function themeToCSS(theme: GlobalTokens | Record<string, any> | null): string {
   if (!theme) return '';
   
   // Extract tokens from the theme
-  const tokens = theme.tokens || theme;
+  const tokens = 'tokens' in theme ? theme.tokens : theme;
   
   // Generate CSS variables
   const cssVariables = generateCSSVariables(tokens);
@@ -169,11 +172,11 @@ export function cssVar(name: string, fallback?: string): string {
  * @param className Class name for scoping
  * @returns CSS string
  */
-export function generateThemeClass(theme: any, className: string): string {
+export function generateThemeClass(theme: GlobalTokens | Record<string, any> | null, className: string): string {
   if (!theme || !className) return '';
   
   // Extract tokens from the theme
-  const tokens = theme.tokens || theme;
+  const tokens = 'tokens' in theme ? theme.tokens : theme;
   
   // Generate CSS variables
   const cssVariables = generateCSSVariables(tokens);
