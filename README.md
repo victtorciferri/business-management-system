@@ -8,8 +8,9 @@ A comprehensive business management system for small service-based businesses in
 - **Customers**: Manage customer information and history
 - **Services**: Manage service offerings with pricing and duration
 - **Appointments**: Schedule and track customer appointments
-- **Payments**: Process payments through Mercadopago (integration planned)
+- **Payments**: Process payments through Mercadopago
 - **Email Notifications**: Send reminders for upcoming appointments
+- **Advanced Theme System**: Comprehensive design token system for complete customization
 
 ## Tech Stack
 
@@ -18,7 +19,8 @@ A comprehensive business management system for small service-based businesses in
 - **Database**: PostgreSQL with Drizzle ORM
 - **Authentication**: Passport.js for user authentication
 - **API**: RESTful API endpoints for data access
-- **Payment Processing**: Mercadopago integration (coming soon)
+- **Payment Processing**: Mercadopago integration
+- **Theme Engine**: CSS variable-based design token system with multi-tenant support
 
 ## Getting Started
 
@@ -63,6 +65,7 @@ A comprehensive business management system for small service-based businesses in
   - `src/pages/`: Application pages
   - `src/hooks/`: Custom hooks
   - `src/lib/`: Utility functions
+  - `src/providers/`: Context providers including theme providers
 - `server/`: Backend Express application
   - `routes.ts`: API endpoints
   - `storage.ts`: Data access interface
@@ -70,6 +73,16 @@ A comprehensive business management system for small service-based businesses in
   - `seed.ts`: Database seeding
 - `shared/`: Shared code between frontend and backend
   - `schema.ts`: Database schema and types
+  - `designTokens.ts`: Theme system token definitions
+  - `themePresets.ts`: Pre-defined theme options
+  - `marketplaceThemes.ts`: Theme marketplace definitions
+- `docs/`: Project documentation
+  - `theme-system/`: Comprehensive theme system documentation
+    - Architecture diagrams
+    - Component integration guides
+    - API references
+    - Best practices
+    - Code examples
 
 ## License
 

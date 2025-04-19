@@ -2,6 +2,8 @@
 
 This directory contains practical examples of how to use the theme system in various scenarios.
 
+> **Note**: These are documentation examples only and are not meant to be imported directly into your code. They are provided as reference implementations to help you understand how to work with the theme system. The import paths and module references are for illustrative purposes.
+
 ## Component Examples
 
 ### [ThemeAwareButton.tsx](./ThemeAwareButton.tsx)
