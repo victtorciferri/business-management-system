@@ -38,7 +38,13 @@ interface GlobalThemeProviderProps {
 }
 
 // Hook for consuming the global theme context
-export const useGlobalTheme = () => useContext(GlobalThemeContext);
+export const useGlobalTheme = () => {
+  const context = useContext(GlobalThemeContext);
+  if (context === undefined) {
+    throw new Error('useGlobalTheme must be used within a GlobalThemeProvider');
+  }
+  return context;
+};
 
 export function GlobalThemeProvider({ children }: GlobalThemeProviderProps) {
   // Detect system dark mode preference
@@ -47,9 +53,26 @@ export function GlobalThemeProvider({ children }: GlobalThemeProviderProps) {
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   };
   
+  // Get initial system preference
   const [systemPreference, setSystemPreference] = useState<'light' | 'dark' | null>(getSystemPreference());
-  const [appearance, setAppearance] = useState<'light' | 'dark' | 'system'>('system');
-  const [darkMode, setDarkMode] = useState(appearance === 'dark' || (appearance === 'system' && systemPreference === 'dark'));
+  
+  // Load saved appearance preference from localStorage or default to system
+  const getSavedAppearance = (): 'light' | 'dark' | 'system' => {
+    if (typeof window === 'undefined') return 'system';
+    
+    const savedTheme = localStorage.getItem('color-theme');
+    if (savedTheme === 'light' || savedTheme === 'dark') {
+      return savedTheme;
+    }
+    return 'system';
+  };
+  
+  const [appearance, setAppearance] = useState<'light' | 'dark' | 'system'>(getSavedAppearance());
+  
+  // Determine dark mode based on appearance and system preference
+  const [darkMode, setDarkMode] = useState(
+    appearance === 'dark' || (appearance === 'system' && systemPreference === 'dark')
+  );
   const [radius, setRadius] = useState(8);
   const [styleElement, setStyleElement] = useState<HTMLStyleElement | null>(null);
   
@@ -169,14 +192,40 @@ export function GlobalThemeProvider({ children }: GlobalThemeProviderProps) {
     }
   }, [appearance, systemPreference]);
   
-  // Apply dark mode class to document
+  // Apply dark mode class to document with improved metadata
   useEffect(() => {
+    // Update the document class
     if (darkMode) {
       document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
+      document.documentElement.setAttribute('data-color-scheme', 'dark');
     } else {
+      document.documentElement.classList.add('light');
       document.documentElement.classList.remove('dark');
+      document.documentElement.setAttribute('data-color-scheme', 'light');
     }
-  }, [darkMode]);
+    
+    // Update the meta theme-color tag for mobile browsers
+    let metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (!metaThemeColor) {
+      metaThemeColor = document.createElement('meta');
+      metaThemeColor.setAttribute('name', 'theme-color');
+      document.head.appendChild(metaThemeColor);
+    }
+    
+    // Set appropriate color for the browser UI
+    metaThemeColor.setAttribute(
+      'content', 
+      darkMode ? globalTokens.colors.background.base : globalTokens.colors.background.base
+    );
+    
+    // Store preference in localStorage if not using system preference
+    if (appearance !== 'system') {
+      localStorage.setItem('color-theme', appearance);
+    } else {
+      localStorage.removeItem('color-theme');
+    }
+  }, [darkMode, appearance, globalTokens]);
   
   // Generate and inject CSS variables
   useEffect(() => {

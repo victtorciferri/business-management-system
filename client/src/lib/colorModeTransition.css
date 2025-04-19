@@ -1,0 +1,26 @@
+/**
+ * Color Mode Transition Styles - 2025 Edition
+ * 
+ * Provides smooth transitions between light and dark modes
+ */
+
+:root {
+  --theme-transition-duration: 350ms;
+  --theme-transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body, button, a, input, textarea, select, div, span, p, h1, h2, h3, h4, h5, h6 {
+  transition: background-color var(--theme-transition-duration) var(--theme-transition-timing),
+              color var(--theme-transition-duration) var(--theme-transition-timing),
+              border-color var(--theme-transition-duration) var(--theme-transition-timing),
+              box-shadow var(--theme-transition-duration) var(--theme-transition-timing);
+}
+
+/* For high-performance rendering, exclude transforms, opacity, and filters from transition */
+
+/* Disable transitions when the user prefers reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  body, button, a, input, textarea, select, div, span, p, h1, h2, h3, h4, h5, h6 {
+    transition: none !important;
+  }
+}
