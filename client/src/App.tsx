@@ -55,6 +55,7 @@ import DarkModeInitializer from "@/components/shared/dark-mode-initializer";
 
 // Pages
 import { ThemeShowcase } from "@/pages/ThemeShowcase";
+import { ThemeMarketplacePage } from "@/pages/ThemeMarketplacePage";
 
 function AppContent() {
   const { user: currentUser, isLoading: authLoading } = useAuth();

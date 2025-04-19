@@ -8,6 +8,7 @@ import { createPreference, processWebhook } from './mercadopago';
 import themeRoutes from './routes/themeRoutes';
 import themeApiRoutes from './routes/themeApiRoutes';
 import themeTestRoutes from './routes/theme-test';
+import themeMarketplaceRoutes from './routes/theme-marketplace';
 import { convertLegacyThemeToTheme, convertThemeToLegacyTheme, updateThemeForBusiness, getThemeForBusiness } from './utils/themeUtils';
 import { 
   insertUserSchema, 
@@ -223,6 +224,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register the theme test routes (for development only)
   app.use(themeTestRoutes);
+  
+  // Register the theme marketplace routes
+  app.use('/api/themes', themeMarketplaceRoutes);
   
   // Make the theme API available directly for specific routes
   app.get('/api/themes', (req, res) => themeApiRoutes(req, res));
