@@ -53,6 +53,9 @@ import { ThemeProvider } from "@/providers/ThemeProvider";
 import GlobalThemeProvider from "@/providers/GlobalThemeProvider";
 import DarkModeInitializer from "@/components/shared/dark-mode-initializer";
 
+// Pages
+import { ThemeShowcase } from "@/pages/ThemeShowcase";
+
 function AppContent() {
   const { user: currentUser, isLoading: authLoading } = useAuth();
   
@@ -347,6 +350,17 @@ function AppContent() {
                 <ThemeProvider>
                   <LegacyThemeProvider>
                     <ColorModeDemo />
+                  </LegacyThemeProvider>
+                </ThemeProvider>
+              </BusinessContextProvider>
+            </ProtectedRoute>
+          </Route>
+          <Route path="/theme-showcase">
+            <ProtectedRoute>
+              <BusinessContextProvider>
+                <ThemeProvider>
+                  <LegacyThemeProvider>
+                    <ThemeShowcase />
                   </LegacyThemeProvider>
                 </ThemeProvider>
               </BusinessContextProvider>
