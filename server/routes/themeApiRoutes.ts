@@ -7,7 +7,7 @@
 import { Router } from 'express';
 import { storage } from '../storage';
 import { themes } from '@shared/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { db } from '../db';
 
 const router = Router();
@@ -84,55 +84,178 @@ router.get('/themes/:themeId', async (req, res) => {
 
 // Get the active theme
 router.get('/themes/active', async (req, res) => {
-  // This is a fallback endpoint that returns a default theme
-  return res.json({
-    id: 0,
-    name: 'Global Default',
-    description: 'Default platform theme',
-    businessId: 0, 
-    isActive: true,
-    isDefault: true,
-    tokens: {
-      colors: {
-        primary: {
-          base: '#0070f3',
-          foreground: '#ffffff',
+  try {
+    // Check if we have a business context
+    if (req.business) {
+      const businessId = req.business.id;
+      
+      // Get the active theme for this business
+      const activeTheme = await storage.getActiveTheme(businessId);
+      
+      if (!activeTheme) {
+        // If no active theme, try to get the default theme
+        const defaultTheme = await storage.getDefaultTheme(businessId);
+        
+        if (!defaultTheme) {
+          // If no default theme either, return the global default
+          return res.json({
+            id: 0,
+            name: 'Global Default',
+            description: 'Default platform theme',
+            businessId: 0, 
+            isActive: true,
+            isDefault: true,
+            tokens: {
+              colors: {
+                primary: {
+                  base: '#0070f3',
+                  foreground: '#ffffff',
+                },
+                secondary: {
+                  base: '#f5f5f5',
+                  foreground: '#000000',
+                },
+                background: {
+                  base: '#ffffff',
+                  foreground: '#000000',
+                },
+                muted: {
+                  base: '#f5f5f5',
+                  foreground: '#6b7280',
+                },
+              },
+              typography: {
+                fontFamilies: {
+                  base: 'system-ui, sans-serif',
+                  heading: 'system-ui, sans-serif',
+                  mono: 'monospace',
+                },
+                fontSizes: {
+                  xs: '0.75rem',
+                  sm: '0.875rem',
+                  base: '1rem',
+                  lg: '1.125rem',
+                  xl: '1.25rem',
+                  '2xl': '1.5rem',
+                  '3xl': '1.875rem',
+                  '4xl': '2.25rem',
+                  '5xl': '3rem',
+                },
+              },
+            },
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
+        }
+        
+        return res.json(defaultTheme);
+      }
+      
+      return res.json(activeTheme);
+    } else {
+      // No business context, return the global default theme
+      return res.json({
+        id: 0,
+        name: 'Global Default',
+        description: 'Default platform theme',
+        businessId: 0, 
+        isActive: true,
+        isDefault: true,
+        tokens: {
+          colors: {
+            primary: {
+              base: '#0070f3',
+              foreground: '#ffffff',
+            },
+            secondary: {
+              base: '#f5f5f5',
+              foreground: '#000000',
+            },
+            background: {
+              base: '#ffffff',
+              foreground: '#000000',
+            },
+            muted: {
+              base: '#f5f5f5',
+              foreground: '#6b7280',
+            },
+          },
+          typography: {
+            fontFamilies: {
+              base: 'system-ui, sans-serif',
+              heading: 'system-ui, sans-serif',
+              mono: 'monospace',
+            },
+            fontSizes: {
+              xs: '0.75rem',
+              sm: '0.875rem',
+              base: '1rem',
+              lg: '1.125rem',
+              xl: '1.25rem',
+              '2xl': '1.5rem',
+              '3xl': '1.875rem',
+              '4xl': '2.25rem',
+              '5xl': '3rem',
+            },
+          },
         },
-        secondary: {
-          base: '#f5f5f5',
-          foreground: '#000000',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    }
+  } catch (error) {
+    console.error('Error fetching active theme:', error);
+    
+    // Return a fallback default theme on error
+    return res.json({
+      id: 0,
+      name: 'Global Default (Fallback)',
+      description: 'Default platform theme',
+      businessId: 0, 
+      isActive: true,
+      isDefault: true,
+      tokens: {
+        colors: {
+          primary: {
+            base: '#0070f3',
+            foreground: '#ffffff',
+          },
+          secondary: {
+            base: '#f5f5f5',
+            foreground: '#000000',
+          },
+          background: {
+            base: '#ffffff',
+            foreground: '#000000',
+          },
+          muted: {
+            base: '#f5f5f5',
+            foreground: '#6b7280',
+          },
         },
-        background: {
-          base: '#ffffff',
-          foreground: '#000000',
-        },
-        muted: {
-          base: '#f5f5f5',
-          foreground: '#6b7280',
+        typography: {
+          fontFamilies: {
+            base: 'system-ui, sans-serif',
+            heading: 'system-ui, sans-serif',
+            mono: 'monospace',
+          },
+          fontSizes: {
+            xs: '0.75rem',
+            sm: '0.875rem',
+            base: '1rem',
+            lg: '1.125rem',
+            xl: '1.25rem',
+            '2xl': '1.5rem',
+            '3xl': '1.875rem',
+            '4xl': '2.25rem',
+            '5xl': '3rem',
+          },
         },
       },
-      typography: {
-        fontFamilies: {
-          base: 'system-ui, sans-serif',
-          heading: 'system-ui, sans-serif',
-          mono: 'monospace',
-        },
-        fontSizes: {
-          xs: '0.75rem',
-          sm: '0.875rem',
-          base: '1rem',
-          lg: '1.125rem',
-          xl: '1.25rem',
-          '2xl': '1.5rem',
-          '3xl': '1.875rem',
-          '4xl': '2.25rem',
-          '5xl': '3rem',
-        },
-      },
-    },
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  });
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+  }
 });
 
 // Get the active theme for a business
@@ -143,15 +266,21 @@ router.get('/themes/active/business/:businessId', async (req, res) => {
       return res.status(400).json({ message: 'Invalid business ID' });
     }
     
-    const [activeTheme] = await db.select().from(themes)
-      .where(eq(themes.businessId, businessId))
-      .where(eq(themes.isActive, true));
+    const activeThemes = await db.select().from(themes)
+      .where(and(
+        eq(themes.businessId, businessId),
+        eq(themes.isActive, true)
+      ));
+    const activeTheme = activeThemes[0];
     
     if (!activeTheme) {
       // If no active theme, try to get the default theme
-      const [defaultTheme] = await db.select().from(themes)
-        .where(eq(themes.businessId, businessId))
-        .where(eq(themes.isDefault, true));
+      const defaultThemes = await db.select().from(themes)
+        .where(and(
+          eq(themes.businessId, businessId),
+          eq(themes.isDefault, true)
+        ));
+      const defaultTheme = defaultThemes[0];
       
       if (!defaultTheme) {
         return res.status(404).json({ message: 'No active or default theme found' });
