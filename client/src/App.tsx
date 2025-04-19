@@ -42,7 +42,12 @@ import { useState, useEffect } from "react";
 import { User } from "@shared/schema";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { BusinessContextProvider } from "@/contexts/BusinessContext";
-import { ThemeProvider } from "@/contexts/ThemeContext";
+
+// Legacy theme provider (for backward compatibility)
+import { ThemeProvider as LegacyThemeProvider } from "@/contexts/ThemeContext";
+
+// New 2025 theme providers
+import { ThemeProvider } from "@/providers/ThemeProvider";
 import DarkModeInitializer from "@/components/shared/dark-mode-initializer";
 
 function AppContent() {
@@ -146,29 +151,32 @@ function AppContent() {
     isBusinessPortal ? (
       <div className="min-h-screen bg-background">
         <BusinessContextProvider>
+          {/* Use the new theme provider with business context for business portals */}
           <ThemeProvider>
-            <Switch>
-              {/* For business subpages like /:slug/services */}
-              <Route path="/:slug/:subPath*">
-                {(params: { slug: string, 'subPath*'?: string }) => (
-                  <BusinessPortal 
-                    slug={params.slug} 
-                    subPath={params['subPath*'] || ''} 
-                    initialData={businessData}
-                  />
-                )}
-              </Route>
-              {/* For main business page /:slug */}
-              <Route path="/:slug">
-                {(params: { slug: string }) => (
-                  <BusinessPortal 
-                    slug={params.slug}
-                    initialData={businessData}
-                  />
-                )}
-              </Route>
-              <Route component={NotFound} />
-            </Switch>
+            <LegacyThemeProvider>
+              <Switch>
+                {/* For business subpages like /:slug/services */}
+                <Route path="/:slug/:subPath*">
+                  {(params: { slug: string, 'subPath*'?: string }) => (
+                    <BusinessPortal 
+                      slug={params.slug} 
+                      subPath={params['subPath*'] || ''} 
+                      initialData={businessData}
+                    />
+                  )}
+                </Route>
+                {/* For main business page /:slug */}
+                <Route path="/:slug">
+                  {(params: { slug: string }) => (
+                    <BusinessPortal 
+                      slug={params.slug}
+                      initialData={businessData}
+                    />
+                  )}
+                </Route>
+                <Route component={NotFound} />
+              </Switch>
+            </LegacyThemeProvider>
           </ThemeProvider>
         </BusinessContextProvider>
       </div>
@@ -184,32 +192,40 @@ function AppContent() {
           <Route path="/new-appointment">
             <Redirect to="/customer-portal/new-appointment" />
           </Route>
-          {/* Customer Portal Routes - Wrapped with BusinessContextProvider and ThemeProvider */}
+          {/* Customer Portal Routes - Wrapped with BusinessContextProvider and Theme Providers */}
           <Route path="/customer-portal">
             <BusinessContextProvider>
               <ThemeProvider>
-                <CustomerPortal />
+                <LegacyThemeProvider>
+                  <CustomerPortal />
+                </LegacyThemeProvider>
               </ThemeProvider>
             </BusinessContextProvider>
           </Route>
           <Route path="/customer-portal/new-appointment">
             <BusinessContextProvider>
               <ThemeProvider>
-                <NewAppointment />
+                <LegacyThemeProvider>
+                  <NewAppointment />
+                </LegacyThemeProvider>
               </ThemeProvider>
             </BusinessContextProvider>
           </Route>
           <Route path="/customer-portal/my-appointments">
             <BusinessContextProvider>
               <ThemeProvider>
-                <MyAppointments />
+                <LegacyThemeProvider>
+                  <MyAppointments />
+                </LegacyThemeProvider>
               </ThemeProvider>
             </BusinessContextProvider>
           </Route>
           <Route path="/customer-portal/services">
             <BusinessContextProvider>
               <ThemeProvider>
-                <CustomerServices />
+                <LegacyThemeProvider>
+                  <CustomerServices />
+                </LegacyThemeProvider>
               </ThemeProvider>
             </BusinessContextProvider>
           </Route>
@@ -314,7 +330,9 @@ function AppContent() {
             <ProtectedRoute>
               <BusinessContextProvider>
                 <ThemeProvider>
-                  <ThemeEditor />
+                  <LegacyThemeProvider>
+                    <ThemeEditor />
+                  </LegacyThemeProvider>
                 </ThemeProvider>
               </BusinessContextProvider>
             </ProtectedRoute>
@@ -323,7 +341,9 @@ function AppContent() {
             <ProtectedRoute>
               <BusinessContextProvider>
                 <ThemeProvider>
-                  <DashboardSettings />
+                  <LegacyThemeProvider>
+                    <DashboardSettings />
+                  </LegacyThemeProvider>
                 </ThemeProvider>
               </BusinessContextProvider>
             </ProtectedRoute>
@@ -332,7 +352,9 @@ function AppContent() {
             <ProtectedRoute>
               <BusinessContextProvider>
                 <ThemeProvider>
-                  <TemplateSettings />
+                  <LegacyThemeProvider>
+                    <TemplateSettings />
+                  </LegacyThemeProvider>
                 </ThemeProvider>
               </BusinessContextProvider>
             </ProtectedRoute>
@@ -357,9 +379,13 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <BusinessContextProvider>
+          {/* New Theme Provider from 2025 Edition */}
           <ThemeProvider>
-            <AppContent />
-            <DarkModeInitializer />
+            {/* Legacy ThemeProvider for backward compatibility */}
+            <LegacyThemeProvider>
+              <AppContent />
+              <DarkModeInitializer />
+            </LegacyThemeProvider>
           </ThemeProvider>
         </BusinessContextProvider>
       </AuthProvider>
