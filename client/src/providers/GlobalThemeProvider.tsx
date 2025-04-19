@@ -5,46 +5,14 @@
  * dark mode, theme preferences, and global theme token defaults.
  */
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { themeToCSS } from '@/lib/themeUtils';
-
-// Global theme context type
-export interface GlobalThemeContextType {
-  darkMode: boolean;
-  setDarkMode: (value: boolean) => void;
-  systemPreference: 'light' | 'dark' | null;
-  appearance: 'light' | 'dark' | 'system';
-  setAppearance: (value: 'light' | 'dark' | 'system') => void;
-  radius: number;
-  setRadius: (value: number) => void;
-  globalTokens: any;
-}
-
-// Create the context with default values
-const GlobalThemeContext = createContext<GlobalThemeContextType>({
-  darkMode: false,
-  setDarkMode: () => {},
-  systemPreference: null,
-  appearance: 'system',
-  setAppearance: () => {},
-  radius: 8,
-  setRadius: () => {},
-  globalTokens: {},
-});
+import { GlobalThemeContext, GlobalThemeContextType } from './GlobalThemeContext';
 
 // Provider props
 interface GlobalThemeProviderProps {
   children: React.ReactNode;
 }
-
-// Hook for consuming the global theme context
-export const useGlobalTheme = () => {
-  const context = useContext(GlobalThemeContext);
-  if (context === undefined) {
-    throw new Error('useGlobalTheme must be used within a GlobalThemeProvider');
-  }
-  return context;
-};
 
 export function GlobalThemeProvider({ children }: GlobalThemeProviderProps) {
   // Detect system dark mode preference

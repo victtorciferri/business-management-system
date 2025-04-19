@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import { GlobalThemeContext } from '@/providers/GlobalThemeContext';
+import { GlobalThemeContext } from '../providers/GlobalThemeContext.tsx';
 
 export function useGlobalTheme() {
   const context = useContext(GlobalThemeContext);

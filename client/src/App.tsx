@@ -26,6 +26,7 @@ import AdminThemeEditor from "@/pages/admin-theme-editor";
 import DashboardSettings from "@/pages/dashboard/settings";
 import TemplateSettings from "@/pages/dashboard/settings/theme/templates";
 import ThemeSelectorDemo from "@/pages/theme-selector-demo";
+import ColorModeDemo from "@/pages/color-mode-demo";
 
 // Payment-related pages
 import PaymentSuccess from "@/pages/payment/success";
@@ -333,6 +334,17 @@ function AppContent() {
                 <ThemeProvider>
                   <LegacyThemeProvider>
                     <ThemeSelectorDemo />
+                  </LegacyThemeProvider>
+                </ThemeProvider>
+              </BusinessContextProvider>
+            </ProtectedRoute>
+          </Route>
+          <Route path="/color-mode-demo">
+            <ProtectedRoute>
+              <BusinessContextProvider>
+                <ThemeProvider>
+                  <LegacyThemeProvider>
+                    <ColorModeDemo />
                   </LegacyThemeProvider>
                 </ThemeProvider>
               </BusinessContextProvider>

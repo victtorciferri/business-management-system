@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { useGlobalTheme } from '@/providers/GlobalThemeProvider';
+import { useGlobalTheme } from '@/hooks/useGlobalTheme';
 import '../../lib/colorModeTransition.css';
 
 interface ColorModeToggleProps {

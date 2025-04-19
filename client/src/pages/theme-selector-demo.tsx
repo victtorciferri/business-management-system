@@ -10,7 +10,7 @@ import { ThemeEntity } from '@shared/schema';
 import { ThemeSelector } from '@/components/theme-editor/ThemeSelector';
 import { ThemeAwareButton } from '@/components/theme-aware/ThemeAwareButton';
 import { useBusinessTheme } from '@/providers/MultiTenantThemeProvider';
-import { useGlobalTheme } from '@/providers/GlobalThemeProvider';
+import { useGlobalTheme } from '@/hooks/useGlobalTheme';
 
 export default function ThemeSelectorDemo() {
   const { darkMode, setDarkMode } = useGlobalTheme();
