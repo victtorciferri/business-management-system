@@ -1,34 +1,14 @@
-/**
- * ThemeProvider - 2025 Edition
- * 
- * The main theme provider that orchestrates the theme management system.
- * It wraps the GlobalThemeProvider and MultiTenantThemeProvider
- * and provides a unified interface for the theme system.
- */
-
 import React from 'react';
-import GlobalThemeProvider from './GlobalThemeProvider';
 import { MultiTenantThemeProvider } from './MultiTenantThemeProvider';
 
-interface ThemeProviderProps {
+export interface ThemeProviderProps {
   children: React.ReactNode;
-  businessId?: number;
-  businessSlug?: string;
 }
 
-export function ThemeProvider({ 
-  children, 
-  businessId, 
-  businessSlug 
-}: ThemeProviderProps) {
+export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   return (
-    <GlobalThemeProvider>
-      <MultiTenantThemeProvider 
-        businessId={businessId}
-        businessSlug={businessSlug}
-      >
-        {children}
-      </MultiTenantThemeProvider>
-    </GlobalThemeProvider>
+    <MultiTenantThemeProvider>
+      {children}
+    </MultiTenantThemeProvider>
   );
-}
+};

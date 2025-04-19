@@ -77,7 +77,7 @@ function AppContent() {
     'products', 'services', 'dashboard', 'appointments', 'customers',
     'staff-management', 'staff-profile', 'staff', 'staff-schedule',
     'new-appointment', 'customer-portal', 'error-testing', 'payment',
-    'theme-editor', 'platform-admin'
+    'theme-editor', 'theme-showcase', 'theme-marketplace', 'platform-admin'
   ];
   
   const potentialBusinessSlug = match && 
@@ -362,6 +362,17 @@ function AppContent() {
                 <ThemeProvider>
                   <LegacyThemeProvider>
                     <ThemeShowcase />
+                  </LegacyThemeProvider>
+                </ThemeProvider>
+              </BusinessContextProvider>
+            </ProtectedRoute>
+          </Route>
+          <Route path="/theme-marketplace">
+            <ProtectedRoute>
+              <BusinessContextProvider>
+                <ThemeProvider>
+                  <LegacyThemeProvider>
+                    <ThemeMarketplacePage />
                   </LegacyThemeProvider>
                 </ThemeProvider>
               </BusinessContextProvider>

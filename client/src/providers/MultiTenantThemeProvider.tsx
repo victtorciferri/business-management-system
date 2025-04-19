@@ -1,171 +1,301 @@
-/**
- * MultiTenantThemeProvider - 2025 Edition
- * 
- * This provider is responsible for loading and applying business-specific themes.
- * It offers theme context to child components with access to the active theme,
- * available themes, and theme switching functions.
- */
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { ThemeEntity } from '@shared/schema';
-import { getActiveTheme, getBusinessThemes } from '@/lib/themeApi';
-import { themeToCSS } from '@/lib/themeUtils';
-
-// Business theme context type
+// Define the context type
 export interface BusinessThemeContextType {
-  themes: ThemeEntity[];
-  activeTheme: ThemeEntity | null;
+  activeTheme: any | null;
+  defaultTheme: any | null;
+  businessThemes: any[];
   isLoading: boolean;
-  error: Error | null;
-  activeThemeId: number | null;
-  themeClasses: string;
-  theme: any; // Theme token object for components to consume
-  setActiveThemeId: (id: number) => void;
+  applyTheme: (theme: any) => Promise<void>;
+  setActiveTheme: (themeId: number) => Promise<void>;
+  setDefaultTheme: (themeId: number) => Promise<void>;
+  createTheme: (themeData: any) => Promise<any>;
+  updateTheme: (themeId: number, themeData: any) => Promise<any>;
+  deleteTheme: (themeId: number) => Promise<void>;
 }
 
-// Create the context with default values
+// Create the context with a default value
 const BusinessThemeContext = createContext<BusinessThemeContextType>({
-  themes: [],
   activeTheme: null,
+  defaultTheme: null,
+  businessThemes: [],
   isLoading: true,
-  error: null,
-  activeThemeId: null,
-  themeClasses: '',
-  theme: {},
-  setActiveThemeId: () => {},
+  applyTheme: async () => {},
+  setActiveTheme: async () => {},
+  setDefaultTheme: async () => {},
+  createTheme: async () => ({}),
+  updateTheme: async () => ({}),
+  deleteTheme: async () => {},
 });
 
-// Provider props
-interface MultiTenantThemeProviderProps {
-  children: React.ReactNode;
-  businessId?: number;
-  businessSlug?: string;
-}
-
-// Hook for consuming the business theme context
-export const useBusinessTheme = () => useContext(BusinessThemeContext);
-
-export function MultiTenantThemeProvider({
-  children,
-  businessId,
-  businessSlug,
-}: MultiTenantThemeProviderProps) {
-  const [themes, setThemes] = useState<ThemeEntity[]>([]);
-  const [activeTheme, setActiveTheme] = useState<ThemeEntity | null>(null);
-  const [activeThemeId, setActiveThemeId] = useState<number | null>(null);
+// Provider component
+export const MultiTenantThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [activeTheme, setActiveThemeState] = useState<any | null>(null);
+  const [defaultTheme, setDefaultThemeState] = useState<any | null>(null);
+  const [businessThemes, setBusinessThemes] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  const [styleElement, setStyleElement] = useState<HTMLStyleElement | null>(null);
-  
-  // Create a CSS class for the theme that includes the business identifier
-  // This ensures CSS variable scoping for multi-tenant scenarios
-  const businessIdentifier = businessId ? businessId.toString() : 
-                             businessSlug ? businessSlug : 
-                             'global';
-  const themeClass = `theme-${businessIdentifier}`;
-  
-  // Extract theme tokens into CSS variables
-  const getCssVariables = () => {
-    if (!activeTheme || !activeTheme.tokens) return '';
-    
-    // Remove the :root selector wrapper and just get the CSS variable definitions
-    const fullCss = themeToCSS(activeTheme.tokens, businessIdentifier.toString());
-    return fullCss.replace(/^:root \{\n/, '').replace(/\n\}$/, '').trim();
-  };
-  
-  const cssVariables = activeTheme ? getCssVariables() : '';
-  
-  // Load all available themes for this business
+  const { toast } = useToast();
+
+  // Load themes for the current business
   useEffect(() => {
-    const loadThemes = async () => {
+    // Fetch active theme from API
+    const fetchThemes = async () => {
       try {
-        setIsLoading(true);
-        const themes = await getBusinessThemes(businessId, businessSlug);
-        setThemes(themes);
-        setIsLoading(false);
-      } catch (err) {
-        console.error('Error loading themes:', err);
-        setError(err instanceof Error ? err : new Error('Failed to load themes'));
-        setIsLoading(false);
-      }
-    };
-    
-    loadThemes();
-  }, [businessId, businessSlug]);
-  
-  // Load the active theme
-  useEffect(() => {
-    const loadActiveTheme = async () => {
-      try {
-        const theme = await getActiveTheme(businessId, businessSlug);
-        setActiveTheme(theme);
-        if (theme) {
-          setActiveThemeId(theme.id);
+        // Fetch the active theme
+        const activeThemeResponse = await fetch('/api/themes/active');
+        if (!activeThemeResponse.ok) {
+          console.error('Error fetching active theme:', activeThemeResponse);
+          return;
         }
-      } catch (err) {
-        console.error('Error fetching active theme:', err);
-      }
-    };
-    
-    loadActiveTheme();
-  }, [businessId, businessSlug]);
-  
-  // When activeThemeId changes, update the active theme
-  useEffect(() => {
-    if (!activeThemeId || themes.length === 0) return;
-    
-    const theme = themes.find(t => t.id === activeThemeId);
-    if (theme) {
-      setActiveTheme(theme);
-    }
-  }, [activeThemeId, themes]);
-  
-  // Inject CSS variables into the document when the theme changes
-  useEffect(() => {
-    if (!cssVariables) return;
-    
-    // Create a style element if it doesn't exist
-    if (!styleElement) {
-      const style = document.createElement('style');
-      style.id = `theme-${businessIdentifier}-style`;
-      document.head.appendChild(style);
-      setStyleElement(style);
-    }
-    
-    // Update the style element with the new CSS variables
-    if (styleElement) {
-      styleElement.textContent = `
-        .${themeClass} {
-          ${cssVariables}
+        const activeThemeData = await activeThemeResponse.json();
+        setActiveThemeState(activeThemeData);
+        
+        // Fetch the default theme
+        const defaultThemeResponse = await fetch('/api/themes/default');
+        if (!defaultThemeResponse.ok) {
+          console.error('Error fetching default theme:', defaultThemeResponse);
+          return;
         }
-      `;
-    }
-    
-    // Cleanup function to remove the style element
-    return () => {
-      if (styleElement) {
-        document.head.removeChild(styleElement);
+        const defaultThemeData = await defaultThemeResponse.json();
+        setDefaultThemeState(defaultThemeData);
+        
+        // Fetch all business themes
+        const businessThemesResponse = await fetch('/api/themes');
+        if (!businessThemesResponse.ok) {
+          console.error('Error fetching business themes:', businessThemesResponse);
+          return;
+        }
+        const businessThemesData = await businessThemesResponse.json();
+        setBusinessThemes(businessThemesData);
+      } catch (error) {
+        console.error('Error loading themes:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
-  }, [cssVariables, businessIdentifier, styleElement, themeClass]);
-  
-  // Create contextual theme values for components to consume
-  const themeContext: BusinessThemeContextType = {
-    themes,
+
+    fetchThemes();
+  }, []);
+
+  // Apply a theme
+  const applyTheme = useCallback(async (theme: any) => {
+    try {
+      // Make API call to apply the theme
+      const response = await fetch('/api/themes/apply', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(theme),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to apply theme');
+      }
+
+      const updatedTheme = await response.json();
+      setActiveThemeState(updatedTheme);
+      
+      toast({
+        title: 'Theme Applied',
+        description: 'The theme has been successfully applied.',
+      });
+    } catch (error) {
+      console.error('Error applying theme:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to apply theme. Please try again.',
+        variant: 'destructive',
+      });
+      throw error;
+    }
+  }, [toast]);
+
+  // Set a theme as active
+  const setActiveTheme = useCallback(async (themeId: number) => {
+    try {
+      const response = await fetch(`/api/themes/${themeId}/activate`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to set active theme');
+      }
+
+      const updatedTheme = await response.json();
+      setActiveThemeState(updatedTheme);
+      
+      toast({
+        title: 'Theme Activated',
+        description: 'The selected theme is now active.',
+      });
+    } catch (error) {
+      console.error('Error setting active theme:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to activate theme. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  }, [toast]);
+
+  // Set a theme as default
+  const setDefaultTheme = useCallback(async (themeId: number) => {
+    try {
+      const response = await fetch(`/api/themes/${themeId}/default`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to set default theme');
+      }
+
+      const updatedTheme = await response.json();
+      setDefaultThemeState(updatedTheme);
+      
+      toast({
+        title: 'Default Theme Updated',
+        description: 'The selected theme is now the default theme.',
+      });
+    } catch (error) {
+      console.error('Error setting default theme:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to set default theme. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  }, [toast]);
+
+  // Create a new theme
+  const createTheme = useCallback(async (themeData: any) => {
+    try {
+      const response = await fetch('/api/themes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(themeData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create theme');
+      }
+
+      const newTheme = await response.json();
+      setBusinessThemes(prev => [...prev, newTheme]);
+      
+      toast({
+        title: 'Theme Created',
+        description: 'The new theme has been successfully created.',
+      });
+      
+      return newTheme;
+    } catch (error) {
+      console.error('Error creating theme:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to create theme. Please try again.',
+        variant: 'destructive',
+      });
+      throw error;
+    }
+  }, [toast]);
+
+  // Update a theme
+  const updateTheme = useCallback(async (themeId: number, themeData: any) => {
+    try {
+      const response = await fetch(`/api/themes/${themeId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(themeData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update theme');
+      }
+
+      const updatedTheme = await response.json();
+      setBusinessThemes(prev => prev.map(theme => 
+        theme.id === themeId ? updatedTheme : theme
+      ));
+      
+      // Update active/default theme if needed
+      if (activeTheme?.id === themeId) {
+        setActiveThemeState(updatedTheme);
+      }
+      
+      if (defaultTheme?.id === themeId) {
+        setDefaultThemeState(updatedTheme);
+      }
+      
+      toast({
+        title: 'Theme Updated',
+        description: 'The theme has been successfully updated.',
+      });
+      
+      return updatedTheme;
+    } catch (error) {
+      console.error('Error updating theme:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update theme. Please try again.',
+        variant: 'destructive',
+      });
+      throw error;
+    }
+  }, [activeTheme, defaultTheme, toast]);
+
+  // Delete a theme
+  const deleteTheme = useCallback(async (themeId: number) => {
+    try {
+      const response = await fetch(`/api/themes/${themeId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete theme');
+      }
+
+      setBusinessThemes(prev => prev.filter(theme => theme.id !== themeId));
+      
+      toast({
+        title: 'Theme Deleted',
+        description: 'The theme has been successfully deleted.',
+      });
+    } catch (error) {
+      console.error('Error deleting theme:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete theme. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  }, [toast]);
+
+  // Provide the context value
+  const contextValue = {
     activeTheme,
+    defaultTheme,
+    businessThemes,
     isLoading,
-    error,
-    activeThemeId,
-    themeClasses: themeClass,
-    theme: activeTheme?.tokens || {},
-    setActiveThemeId,
+    applyTheme,
+    setActiveTheme,
+    setDefaultTheme,
+    createTheme,
+    updateTheme,
+    deleteTheme,
   };
-  
+
   return (
-    <BusinessThemeContext.Provider value={themeContext}>
-      <div className={themeClass}>
-        {children}
-      </div>
+    <BusinessThemeContext.Provider value={contextValue}>
+      {children}
     </BusinessThemeContext.Provider>
   );
-}
+};
+
+// Custom hook to use the context
+export const useBusinessTheme = () => useContext(BusinessThemeContext);

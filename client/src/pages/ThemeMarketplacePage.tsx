@@ -10,7 +10,8 @@ import { ThemeMarketplace } from '@/components/theme-marketplace/ThemeMarketplac
 import { useBusinessTheme } from '@/providers/MultiTenantThemeProvider';
 import { PageHeader, PageHeaderDescription, PageHeaderHeading } from '@/components/ui/page-header';
 import { useToast } from '@/hooks/use-toast';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
+// Using a simple loading spinner instead of a separate component
+import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { Link } from 'wouter';
@@ -45,7 +46,7 @@ export function ThemeMarketplacePage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <LoadingSpinner size="lg" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
