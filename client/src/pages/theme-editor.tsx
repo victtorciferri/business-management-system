@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useBusinessContext } from '@/contexts/BusinessContext';
 import { ThemeEditor } from '@/components/business/theme-customization/ThemeEditor';
 import { BusinessThemeEditor } from '@/components/business/theme-customization/BusinessThemeEditor';
-import { Theme } from '@/contexts/ThemeContext';
 import { Container, Section } from '@/components/ui/layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -11,6 +10,20 @@ import { Link } from 'wouter';
 import { ArrowLeft, AlertTriangle, Paintbrush, Eye } from 'lucide-react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { ModernThemeEditor } from '@/components/theme-editor/ModernThemeEditor';
+import GlobalThemeProvider from '@/providers/GlobalThemeProvider';
+
+// Define local Theme type for theme preview
+interface Theme {
+  primaryColor?: string;
+  secondaryColor?: string;
+  accentColor?: string;
+  backgroundColor?: string;
+  textColor?: string;
+  borderRadius?: number;
+  fontFamily?: string;
+  [key: string]: any;
+}
 
 export default function ThemeEditorPage() {
   const { business, isLoading } = useBusinessContext();
@@ -125,10 +138,10 @@ export default function ThemeEditorPage() {
           </div>
           
           <div className="mt-4">
-            <Tabs defaultValue="new">
+            <Tabs defaultValue="modern">
               <TabsList className="mb-4">
-                <TabsTrigger value="new">Business Theme</TabsTrigger>
-                <TabsTrigger value="legacy">Advanced Theme Editor</TabsTrigger>
+                <TabsTrigger value="modern">Modern Theme System</TabsTrigger>
+                <TabsTrigger value="legacy">Legacy Theme Editors</TabsTrigger>
               </TabsList>
               
               <Card className="mb-4 border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800">
@@ -137,22 +150,39 @@ export default function ThemeEditorPage() {
                     <AlertTriangle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                     <AlertTitle className="text-blue-700 dark:text-blue-300">About Theme Editors</AlertTitle>
                     <AlertDescription className="text-blue-700 dark:text-blue-300 text-sm">
-                      <p className="mb-2"><strong>Business Theme</strong>: The new simplified theme editor that uses direct color values. This is recommended for most users.</p>
-                      <p><strong>Advanced Theme Editor</strong>: The legacy theme editor with more detailed customization options.</p>
+                      <p className="mb-2"><strong>Modern Theme System (2025)</strong>: The new sophisticated theme editor with comprehensive design tokens and component variants.</p>
+                      <p><strong>Legacy Theme Editors</strong>: Earlier versions of the theme editor for backward compatibility.</p>
                     </AlertDescription>
                   </Alert>
                 </CardContent>
               </Card>
               
-              <TabsContent value="legacy">
-                <ThemeEditor 
-                  onPreview={handlePreview}
-                  onSave={handleSave}
-                />
+              <TabsContent value="modern">
+                <GlobalThemeProvider>
+                  <ModernThemeEditor 
+                    onPreviewToggle={setIsPreviewActive}
+                  />
+                </GlobalThemeProvider>
               </TabsContent>
               
-              <TabsContent value="new">
-                <BusinessThemeEditor />
+              <TabsContent value="legacy">
+                <Tabs defaultValue="simple">
+                  <TabsList className="mb-4">
+                    <TabsTrigger value="simple">Business Theme</TabsTrigger>
+                    <TabsTrigger value="advanced">Advanced Theme Editor</TabsTrigger>
+                  </TabsList>
+                
+                  <TabsContent value="advanced">
+                    <ThemeEditor 
+                      onPreview={handlePreview}
+                      onSave={handleSave}
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="simple">
+                    <BusinessThemeEditor />
+                  </TabsContent>
+                </Tabs>
               </TabsContent>
             </Tabs>
           </div>

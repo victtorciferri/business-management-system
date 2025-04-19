@@ -1,110 +1,109 @@
-/**
- * VariantAwareButton Component - 2025 Edition
- *
- * A flexible button component that adapts to theme changes and supports
- * multiple variants and sizes using the component variant system.
- */
-
-import React, { forwardRef } from 'react';
-import { 
-  createButtonVariants, 
-  createVariantStyles 
-} from '@/lib/componentVariants';
+import React from 'react';
+import { Button, ButtonProps } from '@/components/ui/button';
+import { useThemeVars } from '@/hooks/use-theme-variables';
 import { cn } from '@/lib/utils';
 
-// Define the available button variants and sizes for TypeScript
-export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive' | 'link';
-export type ButtonSize = 'sm' | 'md' | 'lg' | 'xl';
+export type VariantButtonSize = 'sm' | 'md' | 'lg';
+export type VariantButtonType = 'primary' | 'secondary' | 'tertiary' | 'danger' | 'success';
 
-// Button props interface
-export interface VariantAwareButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: ButtonVariant;
-  size?: ButtonSize;
-  isLoading?: boolean;
-  leftIcon?: React.ReactNode;
-  rightIcon?: React.ReactNode;
-  fullWidth?: boolean;
+export interface VariantAwareButtonProps extends Omit<ButtonProps, 'variant' | 'size'> {
+  variant?: VariantButtonType;
+  size?: VariantButtonSize;
 }
 
-// Load button variants once on component initialization
-const buttonVariants = createButtonVariants();
-
-// Button component with forwardRef for ref passing
-export const VariantAwareButton = forwardRef<HTMLButtonElement, VariantAwareButtonProps>(
-  (
-    {
-      variant = 'primary',
-      size = 'md',
-      isLoading = false,
-      leftIcon,
-      rightIcon,
-      fullWidth = false,
-      className,
-      children,
-      disabled,
-      ...props
+/**
+ * A button component that adapts to the current theme variant and settings
+ */
+export function VariantAwareButton({
+  children,
+  variant = 'primary',
+  size = 'md',
+  className,
+  ...props
+}: VariantAwareButtonProps) {
+  const themeVars = useThemeVars();
+  
+  // Map our custom variants to shadcn button variants
+  const buttonVariantMap: Record<VariantButtonType, ButtonProps['variant']> = {
+    primary: 'default',
+    secondary: 'secondary',
+    tertiary: 'outline',
+    danger: 'destructive',
+    success: 'default'
+  };
+  
+  // Map our size variants to specific styles
+  const sizeStyles = {
+    sm: 'h-8 px-3 text-xs',
+    md: 'h-10 px-4',
+    lg: 'h-12 px-6 text-lg'
+  };
+  
+  // Apply theme variant-specific styles
+  const themeVariantStyles = {
+    professional: {
+      primary: 'shadow-sm',
+      secondary: 'shadow-sm',
+      tertiary: '',
+      danger: 'shadow-sm',
+      success: 'shadow-sm bg-green-600 hover:bg-green-700'
     },
-    ref
-  ) => {
-    // Get variant styles
-    const variantStyles = createVariantStyles(
-      buttonVariants, 
-      { variant, size, className }
-    );
-    
-    // Determine if button should be disabled
-    const isDisabled = disabled || isLoading;
-    
-    return (
-      <button
-        ref={ref}
-        className={cn(
-          variantStyles.className,
-          isLoading && 'opacity-70 cursor-progress',
-          fullWidth && 'w-full',
-          className
-        )}
-        style={variantStyles.style}
-        disabled={isDisabled}
-        {...props}
-      >
-        {isLoading && (
-          <span className="mr-2 inline-block animate-spin">
-            <svg
-              className="h-4 w-4"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              ></circle>
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              ></path>
-            </svg>
-          </span>
-        )}
+    vibrant: {
+      primary: 'shadow-md border-b-2 border-primary-900',
+      secondary: 'shadow-md border-b-2 border-secondary-900',
+      tertiary: 'border-2',
+      danger: 'shadow-md border-b-2 border-red-900',
+      success: 'shadow-md border-b-2 border-green-900 bg-green-500 hover:bg-green-600'
+    },
+    elegant: {
+      primary: 'font-serif shadow-sm',
+      secondary: 'font-serif shadow-sm',
+      tertiary: 'font-serif',
+      danger: 'font-serif shadow-sm',
+      success: 'font-serif shadow-sm bg-emerald-600 hover:bg-emerald-700'
+    },
+    minimal: {
+      primary: 'shadow-none',
+      secondary: 'shadow-none',
+      tertiary: 'shadow-none',
+      danger: 'shadow-none',
+      success: 'shadow-none bg-green-600 hover:bg-green-700'
+    }
+  };
+  
+  // Apply accessibility settings
+  const accessibilityStyles = {
+    highContrast: 'font-semibold',
+    reducedMotion: 'transition-none',
+    largeText: 'text-base'
+  };
+  
+  const currentVariant = themeVars?.variant || 'professional';
+  
+  return (
+    <Button
+      // Map our variant to shadcn button variant
+      variant={buttonVariantMap[variant]}
+      
+      // Combine all styles based on theme settings
+      className={cn(
+        // Apply size-specific styles
+        sizeStyles[size],
         
-        {!isLoading && leftIcon && (
-          <span className="mr-2 inline-flex items-center">{leftIcon}</span>
-        )}
+        // Apply theme variant-specific styles if available
+        themeVariantStyles[currentVariant as keyof typeof themeVariantStyles]?.[variant],
         
-        {children}
+        // Apply accessibility styles based on user preferences
+        themeVars?.highContrast && accessibilityStyles.highContrast,
+        themeVars?.reducedMotion && accessibilityStyles.reducedMotion,
+        themeVars?.fontSize && themeVars.fontSize > 1.1 && accessibilityStyles.largeText,
         
-        {!isLoading && rightIcon && (
-          <span className="ml-2 inline-flex items-center">{rightIcon}</span>
-        )}
-      </button>
-    );
-  }
-);
-
-VariantAwareButton.displayName = 'VariantAwareButton';
+        // Apply custom class names
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </Button>
+  );
+}
