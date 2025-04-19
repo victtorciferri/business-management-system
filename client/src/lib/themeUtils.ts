@@ -1,291 +1,183 @@
 /**
- * Theme Utilities - 2025 Edition
+ * Theme Utils - 2025 Edition
  * 
- * Utility functions for manipulating and applying themes.
+ * Utility functions for working with themes and design tokens.
  */
-
-import { ThemeEntity } from "@shared/schema";
-import { DesignTokens } from "@shared/designTokens";
 
 /**
- * Generate CSS variables from design tokens
- * @param tokens Design tokens
+ * Generates CSS variables from a theme tokens object
+ * @param tokens Theme tokens object
  * @returns CSS variables string
  */
-export function generateCssVariables(tokens: DesignTokens): string {
+export function generateCSSVariables(tokens: any): string {
   if (!tokens) return '';
   
-  let cssVars = '';
+  let cssVars: string[] = [];
   
-  // Colors
+  // Process color tokens
   if (tokens.colors) {
-    Object.entries(tokens.colors).forEach(([key, value]) => {
-      if (typeof value === 'string') {
-        cssVars += `--color-${key}: ${value};\n`;
-      } else if (typeof value === 'object') {
-        Object.entries(value).forEach(([shade, color]) => {
-          cssVars += `--color-${key}-${shade}: ${color};\n`;
+    Object.entries(tokens.colors).forEach(([colorName, colorValue]) => {
+      if (typeof colorValue === 'string') {
+        // Handle flat color value
+        cssVars.push(`--color-${colorName}: ${colorValue};`);
+      } else if (typeof colorValue === 'object' && colorValue !== null) {
+        // Handle object with color variants
+        Object.entries(colorValue).forEach(([variant, color]) => {
+          cssVars.push(`--color-${colorName}-${variant}: ${color};`);
         });
+        
+        // Add base as the default if it exists
+        if (colorValue.base) {
+          cssVars.push(`--color-${colorName}: ${colorValue.base};`);
+        }
       }
     });
   }
   
-  // Typography
+  // Process typography tokens
   if (tokens.typography) {
     // Font families
     if (tokens.typography.fontFamilies) {
-      Object.entries(tokens.typography.fontFamilies).forEach(([key, value]) => {
-        cssVars += `--font-family-${key}: ${value};\n`;
+      Object.entries(tokens.typography.fontFamilies).forEach(([name, value]) => {
+        cssVars.push(`--font-family-${name}: ${value};`);
       });
     }
     
     // Font sizes
     if (tokens.typography.fontSizes) {
-      Object.entries(tokens.typography.fontSizes).forEach(([key, value]) => {
-        cssVars += `--font-size-${key}: ${value};\n`;
+      Object.entries(tokens.typography.fontSizes).forEach(([name, value]) => {
+        cssVars.push(`--font-size-${name}: ${value};`);
       });
     }
     
     // Font weights
     if (tokens.typography.fontWeights) {
-      Object.entries(tokens.typography.fontWeights).forEach(([key, value]) => {
-        cssVars += `--font-weight-${key}: ${value};\n`;
+      Object.entries(tokens.typography.fontWeights).forEach(([name, value]) => {
+        cssVars.push(`--font-weight-${name}: ${value};`);
       });
     }
     
     // Line heights
     if (tokens.typography.lineHeights) {
-      Object.entries(tokens.typography.lineHeights).forEach(([key, value]) => {
-        cssVars += `--line-height-${key}: ${value};\n`;
-      });
-    }
-    
-    // Letter spacing
-    if (tokens.typography.letterSpacing) {
-      Object.entries(tokens.typography.letterSpacing).forEach(([key, value]) => {
-        cssVars += `--letter-spacing-${key}: ${value};\n`;
+      Object.entries(tokens.typography.lineHeights).forEach(([name, value]) => {
+        cssVars.push(`--line-height-${name}: ${value};`);
       });
     }
   }
   
-  // Spacing
+  // Process spacing tokens
   if (tokens.spacing) {
-    Object.entries(tokens.spacing).forEach(([key, value]) => {
-      cssVars += `--spacing-${key}: ${value};\n`;
-    });
-  }
-  
-  // Borders
-  if (tokens.borders) {
-    // Border widths
-    if (tokens.borders.borderWidths) {
-      Object.entries(tokens.borders.borderWidths).forEach(([key, value]) => {
-        cssVars += `--border-width-${key}: ${value};\n`;
+    if (typeof tokens.spacing === 'object') {
+      Object.entries(tokens.spacing).forEach(([name, value]) => {
+        cssVars.push(`--spacing-${name}: ${value};`);
       });
-    }
-    
-    // Border radii
-    if (tokens.borders.borderRadii) {
-      Object.entries(tokens.borders.borderRadii).forEach(([key, value]) => {
-        cssVars += `--border-radius-${key}: ${value};\n`;
+    } else if (typeof tokens.spacing === 'number') {
+      // Base spacing value
+      cssVars.push(`--spacing-base: ${tokens.spacing}px;`);
+      
+      // Generate derived spacing values
+      const spacingScales = [0.25, 0.5, 0.75, 1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24];
+      spacingScales.forEach(scale => {
+        const value = scale * tokens.spacing;
+        const name = scale.toString().replace('.', '-');
+        cssVars.push(`--spacing-${name}: ${value}px;`);
       });
     }
   }
   
-  // Add shadcn/ui compatibility variables
-  cssVars += generateShadcnCompatVars(tokens);
+  // Process border radius tokens
+  if (tokens.borderRadius) {
+    if (typeof tokens.borderRadius === 'object') {
+      Object.entries(tokens.borderRadius).forEach(([name, value]) => {
+        cssVars.push(`--radius-${name}: ${value};`);
+      });
+    } else if (typeof tokens.borderRadius === 'number') {
+      // Base radius value
+      cssVars.push(`--radius-base: ${tokens.borderRadius}px;`);
+      
+      // Generate derived radius values
+      const radiusScales = {
+        sm: 0.5,
+        md: 1,
+        lg: 1.5,
+        xl: 2,
+        '2xl': 3,
+        '3xl': 5,
+        full: 9999
+      };
+      
+      Object.entries(radiusScales).forEach(([name, scale]) => {
+        let value: string;
+        if (name === 'full') {
+          value = '9999px';
+        } else {
+          value = `${scale * tokens.borderRadius}px`;
+        }
+        cssVars.push(`--radius-${name}: ${value};`);
+      });
+    }
+  }
   
-  return cssVars;
-}
-
-/**
- * Generate shadcn/ui compatibility variables
- * Maps our design tokens to the variables expected by shadcn/ui
- */
-function generateShadcnCompatVars(tokens: DesignTokens): string {
-  if (!tokens || !tokens.colors) return '';
-  
-  const { colors } = tokens;
-  let cssVars = '';
-  
-  // shadcn/ui uses these specific variable names
-  const mappings: Record<string, string> = {
-    'background': typeof colors.background === 'string' ? colors.background : (colors.background?.base || '#ffffff'),
-    'foreground': typeof colors.foreground === 'string' ? colors.foreground : (colors.foreground?.base || '#000000'),
-    'primary': typeof colors.primary === 'string' ? colors.primary : (colors.primary?.base || '#0070f3'),
-    'primary-foreground': typeof colors.primary === 'string' ? '#ffffff' : (colors.primary?.foreground || '#ffffff'),
-    'secondary': typeof colors.secondary === 'string' ? colors.secondary : (colors.secondary?.base || '#f5f5f5'),
-    'secondary-foreground': typeof colors.secondary === 'string' ? '#000000' : (colors.secondary?.foreground || '#000000'),
-    'accent': typeof colors.accent === 'string' ? colors.accent : (colors.accent?.base || '#f5f5f5'),
-    'accent-foreground': typeof colors.accent === 'string' ? '#000000' : (colors.accent?.foreground || '#000000'),
-    'muted': typeof colors.muted === 'string' ? colors.muted : (colors.muted?.base || '#f5f5f5'),
-    'muted-foreground': typeof colors.muted === 'string' ? '#6b7280' : (colors.muted?.foreground || '#6b7280'),
-    'card': typeof colors.card === 'string' ? colors.card : (colors.card?.base || '#ffffff'),
-    'card-foreground': typeof colors.card === 'string' ? '#000000' : (colors.card?.foreground || '#000000'),
-    'popover': typeof colors.popover === 'string' ? colors.popover : (colors.popover?.base || '#ffffff'),
-    'popover-foreground': typeof colors.popover === 'string' ? '#000000' : (colors.popover?.foreground || '#000000'),
-    'border': typeof colors.border === 'string' ? colors.border : (colors.border?.base || '#e5e7eb'),
-    'input': typeof colors.input === 'string' ? colors.input : (colors.input?.base || '#e5e7eb'),
-    'ring': typeof colors.ring === 'string' ? colors.ring : (colors.ring?.base || '#0070f3'),
-    'destructive': typeof colors.destructive === 'string' ? colors.destructive : (colors.destructive?.base || '#ff0000'),
-    'destructive-foreground': typeof colors.destructive === 'string' ? '#ffffff' : (colors.destructive?.foreground || '#ffffff'),
-  };
-  
-  Object.entries(mappings).forEach(([key, value]) => {
-    cssVars += `--${key}: ${value};\n`;
+  // Handle any other token categories
+  const processedCategories = ['colors', 'typography', 'spacing', 'borderRadius'];
+  Object.entries(tokens).forEach(([category, values]) => {
+    if (!processedCategories.includes(category) && typeof values === 'object') {
+      Object.entries(values as object).forEach(([name, value]) => {
+        if (typeof value === 'string' || typeof value === 'number') {
+          cssVars.push(`--${category}-${name}: ${value};`);
+        }
+      });
+    }
   });
   
-  return cssVars;
+  return cssVars.join('\n');
 }
 
 /**
- * Apply a theme to the document
- * @param theme Theme to apply
- * @param businessSlug Business slug
+ * Converts a theme to CSS variables
+ * @param theme Theme object
+ * @returns CSS string
  */
-export function applyTheme(theme: ThemeEntity, businessIdentifier: string): void {
-  if (!theme || !theme.tokens) {
-    console.warn('Attempted to apply theme with no tokens:', theme);
-    return;
-  }
+export function themeToCSS(theme: any): string {
+  if (!theme) return '';
   
-  const themeClass = `theme-${businessIdentifier}`;
-  const cssVars = generateCssVariables(theme.tokens);
+  // Extract tokens from the theme
+  const tokens = theme.tokens || theme;
   
-  // Add or update the style element for this theme
-  let styleEl = document.getElementById(`theme-style-${businessIdentifier}`);
-  if (!styleEl) {
-    styleEl = document.createElement('style');
-    styleEl.id = `theme-style-${businessIdentifier}`;
-    document.head.appendChild(styleEl);
-  }
+  // Generate CSS variables
+  const cssVariables = generateCSSVariables(tokens);
   
-  // Apply the CSS variables to the theme class
-  styleEl.textContent = `.${themeClass} {\n${cssVars}}\n`;
-  
-  // Set theme metadata
-  document.documentElement.setAttribute(`data-theme-${businessIdentifier}`, theme.name);
-  
-  console.log(`Applied theme "${theme.name}" to .${themeClass}`);
+  // Create a CSS block with the variables
+  return `:root {\n${cssVariables}\n}`;
 }
 
 /**
- * Helper function to lighten a color
- * @param color Hex color
- * @param amount Amount to lighten (0-100)
- * @returns Lightened hex color
+ * Get a CSS variable value
+ * @param name Variable name
+ * @param fallback Fallback value
+ * @returns CSS var() function string
  */
-export function lightenColor(color: string, amount: number): string {
-  return adjustColorLightness(color, amount);
+export function cssVar(name: string, fallback?: string): string {
+  return fallback 
+    ? `var(--${name}, ${fallback})` 
+    : `var(--${name})`;
 }
 
 /**
- * Helper function to darken a color
- * @param color Hex color
- * @param amount Amount to darken (0-100)
- * @returns Darkened hex color
+ * Generates a theme class with scoped CSS variables
+ * @param theme Theme object
+ * @param className Class name for scoping
+ * @returns CSS string
  */
-export function darkenColor(color: string, amount: number): string {
-  return adjustColorLightness(color, -amount);
-}
-
-/**
- * Adjust the lightness of a color
- * @param hexColor Hex color
- * @param percent Percent to adjust lightness (-100 to 100)
- * @returns Adjusted hex color
- */
-export function adjustColorLightness(hexColor: string, percent: number): string {
-  // Remove the hash
-  let hex = hexColor.replace('#', '');
+export function generateThemeClass(theme: any, className: string): string {
+  if (!theme || !className) return '';
   
-  // Convert to RGB
-  let r = parseInt(hex.substring(0, 2), 16);
-  let g = parseInt(hex.substring(2, 4), 16);
-  let b = parseInt(hex.substring(4, 6), 16);
+  // Extract tokens from the theme
+  const tokens = theme.tokens || theme;
   
-  // Convert to HSL
-  r /= 255;
-  g /= 255;
-  b /= 255;
+  // Generate CSS variables
+  const cssVariables = generateCSSVariables(tokens);
   
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  let h = 0;
-  let s = 0;
-  let l = (max + min) / 2;
-  
-  if (max !== min) {
-    const d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    
-    switch (max) {
-      case r:
-        h = (g - b) / d + (g < b ? 6 : 0);
-        break;
-      case g:
-        h = (b - r) / d + 2;
-        break;
-      case b:
-        h = (r - g) / d + 4;
-        break;
-    }
-    
-    h /= 6;
-  }
-  
-  // Adjust lightness
-  l = Math.max(0, Math.min(1, l + percent / 100));
-  
-  // Convert back to RGB
-  let c = (1 - Math.abs(2 * l - 1)) * s;
-  let x = c * (1 - Math.abs((h * 6) % 2 - 1));
-  let m = l - c / 2;
-  
-  let r1, g1, b1;
-  
-  if (h < 1/6) {
-    [r1, g1, b1] = [c, x, 0];
-  } else if (h < 2/6) {
-    [r1, g1, b1] = [x, c, 0];
-  } else if (h < 3/6) {
-    [r1, g1, b1] = [0, c, x];
-  } else if (h < 4/6) {
-    [r1, g1, b1] = [0, x, c];
-  } else if (h < 5/6) {
-    [r1, g1, b1] = [x, 0, c];
-  } else {
-    [r1, g1, b1] = [c, 0, x];
-  }
-  
-  r = Math.round((r1 + m) * 255);
-  g = Math.round((g1 + m) * 255);
-  b = Math.round((b1 + m) * 255);
-  
-  // Convert to hex
-  const toHex = (c: number) => {
-    const hex = c.toString(16);
-    return hex.length === 1 ? '0' + hex : hex;
-  };
-  
-  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
-}
-
-/**
- * Convert a hex color to RGBA
- * @param hex Hex color
- * @param alpha Alpha value (0-1)
- * @returns RGBA color string
- */
-export function hexToRgba(hex: string, alpha: number): string {
-  // Remove the hash
-  const cleanHex = hex.replace('#', '');
-  
-  // Convert to RGB
-  const r = parseInt(cleanHex.substring(0, 2), 16);
-  const g = parseInt(cleanHex.substring(2, 4), 16);
-  const b = parseInt(cleanHex.substring(4, 6), 16);
-  
-  // Return RGBA
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  // Create a CSS block with the variables scoped to the class
+  return `.${className} {\n${cssVariables}\n}`;
 }

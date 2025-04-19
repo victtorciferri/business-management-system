@@ -82,6 +82,59 @@ router.get('/themes/:themeId', async (req, res) => {
   }
 });
 
+// Get the active theme
+router.get('/themes/active', async (req, res) => {
+  // This is a fallback endpoint that returns a default theme
+  return res.json({
+    id: 0,
+    name: 'Global Default',
+    description: 'Default platform theme',
+    businessId: 0, 
+    isActive: true,
+    isDefault: true,
+    tokens: {
+      colors: {
+        primary: {
+          base: '#0070f3',
+          foreground: '#ffffff',
+        },
+        secondary: {
+          base: '#f5f5f5',
+          foreground: '#000000',
+        },
+        background: {
+          base: '#ffffff',
+          foreground: '#000000',
+        },
+        muted: {
+          base: '#f5f5f5',
+          foreground: '#6b7280',
+        },
+      },
+      typography: {
+        fontFamilies: {
+          base: 'system-ui, sans-serif',
+          heading: 'system-ui, sans-serif',
+          mono: 'monospace',
+        },
+        fontSizes: {
+          xs: '0.75rem',
+          sm: '0.875rem',
+          base: '1rem',
+          lg: '1.125rem',
+          xl: '1.25rem',
+          '2xl': '1.5rem',
+          '3xl': '1.875rem',
+          '4xl': '2.25rem',
+          '5xl': '3rem',
+        },
+      },
+    },
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+});
+
 // Get the active theme for a business
 router.get('/themes/active/business/:businessId', async (req, res) => {
   try {

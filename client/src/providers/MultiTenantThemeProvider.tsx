@@ -1,127 +1,160 @@
 /**
- * Multi-Tenant Theme Provider - 2025 Edition
+ * MultiTenantThemeProvider - 2025 Edition
  * 
- * This provider is responsible for managing business-specific themes.
- * It handles:
- * 1. Loading themes specific to a business
- * 2. Providing theme selection and customization
- * 3. Applying business-specific themes with CSS isolation
- * 4. Creating and managing theme-specific CSS variables
+ * This provider is responsible for loading and applying business-specific themes.
+ * It offers theme context to child components with access to the active theme,
+ * available themes, and theme switching functions.
  */
 
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { ThemeEntity } from "@shared/schema";
-import { getBusinessThemes, getActiveTheme } from "@/lib/themeApi";
-import { applyTheme } from "@/lib/themeUtils";
-import { useGlobalTheme } from "./GlobalThemeProvider";
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { ThemeEntity } from '@shared/schema';
+import { getActiveTheme, getBusinessThemes } from '@/lib/themeApi';
+import { generateCSSVariables } from '@/lib/themeUtils';
 
-// Interface for the business theme context
-interface BusinessThemeContextType {
+// Business theme context type
+export interface BusinessThemeContextType {
   themes: ThemeEntity[];
   activeTheme: ThemeEntity | null;
   isLoading: boolean;
-  themeClass: string;
-  setActiveTheme: (themeId: number) => void;
+  error: Error | null;
+  activeThemeId: number | null;
+  themeClasses: string;
+  theme: any; // Theme token object for components to consume
+  setActiveThemeId: (id: number) => void;
 }
 
-// Default context values
-const defaultBusinessThemeContext: BusinessThemeContextType = {
+// Create the context with default values
+const BusinessThemeContext = createContext<BusinessThemeContextType>({
   themes: [],
   activeTheme: null,
   isLoading: true,
-  themeClass: "",
-  setActiveTheme: () => {},
-};
+  error: null,
+  activeThemeId: null,
+  themeClasses: '',
+  theme: {},
+  setActiveThemeId: () => {},
+});
 
-// Create the context
-const BusinessThemeContext = createContext<BusinessThemeContextType>(defaultBusinessThemeContext);
-
-// Hook to use business theme in components
-export const useBusinessTheme = () => useContext(BusinessThemeContext);
-
-// Props for the MultiTenantThemeProvider
+// Provider props
 interface MultiTenantThemeProviderProps {
   children: React.ReactNode;
   businessId?: number;
   businessSlug?: string;
 }
 
+// Hook for consuming the business theme context
+export const useBusinessTheme = () => useContext(BusinessThemeContext);
+
 export function MultiTenantThemeProvider({
   children,
   businessId,
   businessSlug,
 }: MultiTenantThemeProviderProps) {
+  const [themes, setThemes] = useState<ThemeEntity[]>([]);
+  const [activeTheme, setActiveTheme] = useState<ThemeEntity | null>(null);
   const [activeThemeId, setActiveThemeId] = useState<number | null>(null);
-  const globalTheme = useGlobalTheme();
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [styleElement, setStyleElement] = useState<HTMLStyleElement | null>(null);
   
-  // Generate a unique theme class for CSS isolation
-  const businessIdentifier = businessSlug 
-    ? businessSlug 
-    : businessId 
-      ? `business-${businessId}` 
-      : 'default';
+  // Create a CSS class for the theme that includes the business identifier
+  // This ensures CSS variable scoping for multi-tenant scenarios
+  const businessIdentifier = businessId || businessSlug || 'global';
   const themeClass = `theme-${businessIdentifier}`;
   
-  // Fetch all themes for this business
-  const { 
-    data: themes = [], 
-    isLoading: isLoadingThemes,
-  } = useQuery({
-    queryKey: ['/api/themes', businessId || businessSlug],
-    queryFn: () => businessId 
-      ? getBusinessThemes(businessId) 
-      : (businessSlug ? getBusinessThemes(undefined, businessSlug) : Promise.resolve([])),
-    enabled: !!businessId || !!businessSlug,
-  });
+  // Create CSS variables for the current theme
+  const cssVariables = activeTheme 
+    ? generateCSSVariables(activeTheme.tokens) 
+    : '';
   
-  // Fetch the active theme
-  const {
-    data: initialActiveTheme,
-    isLoading: isLoadingActiveTheme,
-  } = useQuery({
-    queryKey: ['/api/themes/active', businessId || businessSlug],
-    queryFn: () => businessId 
-      ? getActiveTheme(businessId)
-      : (businessSlug ? getActiveTheme(undefined, businessSlug) : Promise.resolve(null)),
-    enabled: !!businessId || !!businessSlug,
-  });
-  
-  // Set the initial active theme when it loads
+  // Load all available themes for this business
   useEffect(() => {
-    if (initialActiveTheme && !activeThemeId) {
-      setActiveThemeId(initialActiveTheme.id);
-    }
-  }, [initialActiveTheme, activeThemeId]);
+    const loadThemes = async () => {
+      try {
+        setIsLoading(true);
+        const themes = await getBusinessThemes(businessId, businessSlug);
+        setThemes(themes);
+        setIsLoading(false);
+      } catch (err) {
+        console.error('Error loading themes:', err);
+        setError(err instanceof Error ? err : new Error('Failed to load themes'));
+        setIsLoading(false);
+      }
+    };
+    
+    loadThemes();
+  }, [businessId, businessSlug]);
   
-  // Find the current active theme
-  const activeTheme = themes.find((theme: ThemeEntity) => theme.id === activeThemeId) || initialActiveTheme || null;
-  
-  // Apply the active theme when it changes
+  // Load the active theme
   useEffect(() => {
-    if (activeTheme && (businessId || businessSlug)) {
-      applyTheme(activeTheme, businessIdentifier);
-    }
-  }, [activeTheme, businessId, businessSlug, businessIdentifier]);
+    const loadActiveTheme = async () => {
+      try {
+        const theme = await getActiveTheme(businessId, businessSlug);
+        setActiveTheme(theme);
+        if (theme) {
+          setActiveThemeId(theme.id);
+        }
+      } catch (err) {
+        console.error('Error fetching active theme:', err);
+      }
+    };
+    
+    loadActiveTheme();
+  }, [businessId, businessSlug]);
   
-  // Function to set a new active theme
-  const handleSetActiveTheme = (themeId: number) => {
-    setActiveThemeId(themeId);
+  // When activeThemeId changes, update the active theme
+  useEffect(() => {
+    if (!activeThemeId || themes.length === 0) return;
+    
+    const theme = themes.find(t => t.id === activeThemeId);
+    if (theme) {
+      setActiveTheme(theme);
+    }
+  }, [activeThemeId, themes]);
+  
+  // Inject CSS variables into the document when the theme changes
+  useEffect(() => {
+    if (!cssVariables) return;
+    
+    // Create a style element if it doesn't exist
+    if (!styleElement) {
+      const style = document.createElement('style');
+      style.id = `theme-${businessIdentifier}-style`;
+      document.head.appendChild(style);
+      setStyleElement(style);
+    }
+    
+    // Update the style element with the new CSS variables
+    if (styleElement) {
+      styleElement.textContent = `
+        .${themeClass} {
+          ${cssVariables}
+        }
+      `;
+    }
+    
+    // Cleanup function to remove the style element
+    return () => {
+      if (styleElement) {
+        document.head.removeChild(styleElement);
+      }
+    };
+  }, [cssVariables, businessIdentifier, styleElement, themeClass]);
+  
+  // Create contextual theme values for components to consume
+  const themeContext: BusinessThemeContextType = {
+    themes,
+    activeTheme,
+    isLoading,
+    error,
+    activeThemeId,
+    themeClasses: themeClass,
+    theme: activeTheme?.tokens || {},
+    setActiveThemeId,
   };
   
-  // Check if we're still loading themes
-  const isLoading = isLoadingThemes || isLoadingActiveTheme;
-  
   return (
-    <BusinessThemeContext.Provider
-      value={{
-        themes,
-        activeTheme,
-        isLoading,
-        themeClass,
-        setActiveTheme: handleSetActiveTheme,
-      }}
-    >
+    <BusinessThemeContext.Provider value={themeContext}>
       <div className={themeClass}>
         {children}
       </div>
