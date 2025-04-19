@@ -1,23 +1,20 @@
 /**
  * useGlobalTheme Hook - 2025 Edition
- * 
- * A custom hook that provides access to the global theme context.
- * This hook makes it easy to access and update theme settings from any component.
+ *
+ * A hook for accessing the global theme context and its values
  */
 
 import { useContext } from 'react';
-import { GlobalThemeContext, GlobalThemeContextType, GlobalTokens } from '@/providers/GlobalThemeContext';
+import { GlobalThemeContext, GlobalTokens } from '@/providers/GlobalThemeContext';
 
 /**
  * Hook to access the global theme context
- * 
- * @returns GlobalThemeContextType - The global theme context
- * @throws Error if used outside of a GlobalThemeProvider
+ * @returns The global theme context values and methods
  */
-export function useGlobalTheme(): GlobalThemeContextType {
+export function useGlobalTheme() {
   const context = useContext(GlobalThemeContext);
   
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useGlobalTheme must be used within a GlobalThemeProvider');
   }
   
@@ -25,42 +22,64 @@ export function useGlobalTheme(): GlobalThemeContextType {
 }
 
 /**
- * Hook to access CSS variable references for theme tokens
- * 
- * @returns An object with CSS variable references for all theme tokens
+ * Hook to access only the theme tokens from the global theme context
+ * @returns The global theme tokens
  */
-export function useThemeVars() {
-  // Access the tokens from context
+export function useGlobalTokens(): GlobalTokens {
   const { globalTokens } = useGlobalTheme();
+  return globalTokens;
+}
+
+/**
+ * Hook to access and toggle dark mode
+ * @returns Object with darkMode boolean and toggle function
+ */
+export function useDarkMode() {
+  const { darkMode, setDarkMode } = useGlobalTheme();
   
-  // Build an object of CSS variable references
-  const buildVarRefs = <T extends Record<string, any>>(tokens: T, path: string = ''): Record<string, any> => {
-    const result: Record<string, any> = {};
-    
-    for (const [key, value] of Object.entries(tokens)) {
-      const currentPath = path ? `${path}-${key}` : key;
-      
-      if (typeof value === 'object' && value !== null) {
-        // Recursively process nested objects
-        result[key] = buildVarRefs(value as Record<string, any>, currentPath);
-      } else {
-        // Create a CSS variable reference
-        const varName = path 
-          ? `--${path.replace(/\./g, '-')}-${key}`
-          : `--${key}`;
-        result[key] = `var(${varName})`;
-      }
-    }
-    
-    return result;
-  };
+  // Toggle function for ease of use
+  const toggleDarkMode = () => setDarkMode(prev => !prev);
   
-  return {
-    color: buildVarRefs(globalTokens.colors),
-    typo: buildVarRefs(globalTokens.typography),
-    radius: buildVarRefs({ base: globalTokens.borderRadius }),
-    spacing: buildVarRefs({ base: globalTokens.spacing })
+  return { darkMode, setDarkMode, toggleDarkMode };
+}
+
+/**
+ * Hook to access and modify appearance preference (light, dark, system)
+ * @returns Object with appearance value and setAppearance function
+ */
+export function useAppearance() {
+  const { appearance, setAppearance, systemPreference } = useGlobalTheme();
+  
+  // Get the effective appearance (if set to system, returns the system preference)
+  const effectiveAppearance = appearance === 'system' && systemPreference 
+    ? systemPreference 
+    : appearance;
+  
+  return { 
+    appearance, 
+    setAppearance, 
+    systemPreference,
+    effectiveAppearance 
   };
 }
 
-export default useGlobalTheme;
+/**
+ * Hook to access and modify border radius
+ * @returns Object with radius value and setRadius function
+ */
+export function useBorderRadius() {
+  const { radius, setRadius } = useGlobalTheme();
+  
+  // Convenience functions for adjustment
+  const increaseRadius = (amount = 1) => setRadius(prev => prev + amount);
+  const decreaseRadius = (amount = 1) => setRadius(prev => Math.max(0, prev - amount));
+  const resetRadius = () => setRadius(8); // Reset to default radius
+  
+  return { 
+    radius, 
+    setRadius, 
+    increaseRadius, 
+    decreaseRadius,
+    resetRadius
+  };
+}

@@ -1,216 +1,198 @@
 /**
  * GlobalThemeProvider - 2025 Edition
  *
- * Provides global theme context with dark/light mode support
- * and system preference detection.
+ * Provider component that manages global theme state including:
+ * - Dark mode detection and toggles
+ * - System preference detection
+ * - Appearance preference management
+ * - Border radius customization
+ * - Global design tokens
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GlobalThemeContext, defaultGlobalTheme, GlobalTokens } from './GlobalThemeContext';
-import { themeToCSS } from '@/lib/themeUtils';
-import '../lib/colorModeTransition.css'; // Transitions for color mode changes
-
-// Theme for dark mode with accessible colors
-const darkModeTheme: GlobalTokens = {
-  colors: {
-    background: {
-      base: '#09090b',
-      foreground: '#fafafa',
-    },
-    card: {
-      base: '#1a1a1a',
-      foreground: '#fafafa',
-    },
-    popover: {
-      base: '#1a1a1a',
-      foreground: '#fafafa',
-    },
-    primary: {
-      base: '#0091ff',
-      foreground: '#ffffff',
-      hover: '#0081e5',
-    },
-    secondary: {
-      base: '#27272a',
-      foreground: '#fafafa',
-      hover: '#3f3f46',
-    },
-    muted: {
-      base: '#27272a',
-      foreground: '#a1a1aa',
-    },
-    accent: {
-      base: '#1e293b',
-      foreground: '#fafafa',
-    },
-    destructive: {
-      base: '#ef4444',
-      foreground: '#fafafa',
-      hover: '#dc2626',
-    },
-    success: {
-      base: '#22c55e',
-      foreground: '#fafafa',
-    },
-    warning: {
-      base: '#f59e0b',
-      foreground: '#fafafa',
-    },
-    info: {
-      base: '#0ea5e9',
-      foreground: '#fafafa',
-    },
-    border: '#27272a',
-    input: '#27272a',
-    ring: '#0091ff',
-  },
-  typography: {
-    ...defaultGlobalTheme.typography,
-  },
-  spacing: defaultGlobalTheme.spacing,
-  borderRadius: defaultGlobalTheme.borderRadius,
-};
+import { generateDarkTheme } from '@/lib/themeUtils';
+import '../lib/colorModeTransition.css';
 
 interface GlobalThemeProviderProps {
   children: React.ReactNode;
+  initialTheme?: GlobalTokens;
 }
 
-export const GlobalThemeProvider: React.FC<GlobalThemeProviderProps> = ({ children }) => {
+export default function GlobalThemeProvider({
+  children,
+  initialTheme = defaultGlobalTheme,
+}: GlobalThemeProviderProps) {
+  // Initialize dark mode based on system preference or saved value
+  const getSavedDarkMode = (): boolean => {
+    // Check for saved preference
+    const savedAppearance = localStorage.getItem('theme-appearance');
+
+    if (savedAppearance === 'dark') return true;
+    if (savedAppearance === 'light') return false;
+
+    // Check for system preference (default to system if not saved)
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  };
+
   // State for dark mode
-  const [darkMode, setDarkMode] = useState<boolean>(false);
-  
-  // State for system preference detection
-  const [systemPreference, setSystemPreference] = useState<'light' | 'dark' | null>(null);
-  
-  // User's appearance preference (system, light, or dark)
-  const [appearance, setAppearance] = useState<'light' | 'dark' | 'system'>(
-    () => (localStorage.getItem('appearance') as 'light' | 'dark' | 'system') || 'system'
-  );
-  
-  // Border radius preference
-  const [radius, setRadius] = useState<number>(
-    () => parseInt(localStorage.getItem('borderRadius') || '8', 10)
-  );
-  
-  // Refs for style elements
-  const lightStyleRef = useRef<HTMLStyleElement | null>(null);
-  const darkStyleRef = useRef<HTMLStyleElement | null>(null);
-  
-  // Generate CSS based on color mode theme
+  const [darkMode, setDarkMode] = useState(getSavedDarkMode);
+
+  // State for border radius
+  const [radius, setRadius] = useState<number>(() => {
+    const savedRadius = localStorage.getItem('theme-radius');
+    return savedRadius ? parseInt(savedRadius, 10) : 8;
+  });
+
+  // State for appearance preference (light, dark, system)
+  const [appearance, setAppearance] = useState<'light' | 'dark' | 'system'>(() => {
+    return (localStorage.getItem('theme-appearance') as 'light' | 'dark' | 'system') || 'system';
+  });
+
+  // State for system color scheme preference
+  const [systemPreference, setSystemPreference] = useState<'light' | 'dark' | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
+
+  // Generate a dark version of the theme
+  const darkTheme = generateDarkTheme(initialTheme);
+
+  // Theme tokens based on current mode
+  const globalTokens = darkMode ? darkTheme : initialTheme;
+
+  // Apply early dark mode before React hydration to prevent flash
   useEffect(() => {
-    // Create style elements if they don't exist
-    if (!lightStyleRef.current) {
-      lightStyleRef.current = document.createElement('style');
-      lightStyleRef.current.setAttribute('id', 'global-light-theme');
-      document.head.appendChild(lightStyleRef.current);
+    // Apply theme-loaded class to body for transition handling
+    document.body.classList.add('theme-loaded');
+
+    // Add script to document head
+    const script = document.createElement('script');
+    script.textContent = `
+      (function() {
+        try {
+          // Detect saved preference or system preference
+          const savedAppearance = localStorage.getItem('theme-appearance');
+          const isDark = savedAppearance === 'dark' || 
+            (savedAppearance !== 'light' && 
+             window.matchMedia('(prefers-color-scheme: dark)').matches);
+          
+          // Apply dark or light class immediately
+          if (isDark) {
+            document.documentElement.classList.add('dark');
+            console.log('Dark mode applied early in index.html for system preference');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        } catch (e) {
+          console.error('Error in early dark mode detection:', e);
+        }
+      })();
+    `;
+    script.id = 'theme-early-detection';
+    const existingScript = document.getElementById('theme-early-detection');
+    if (!existingScript) {
+      document.head.appendChild(script);
     }
-    
-    if (!darkStyleRef.current) {
-      darkStyleRef.current = document.createElement('style');
-      darkStyleRef.current.setAttribute('id', 'global-dark-theme');
-      document.head.appendChild(darkStyleRef.current);
-    }
-    
-    // Generate CSS for each theme
-    const lightThemeCSS = themeToCSS({
-      ...defaultGlobalTheme,
-      borderRadius: radius,
-    });
-    
-    const darkThemeCSS = themeToCSS({
-      ...darkModeTheme,
-      borderRadius: radius,
-    });
-    
-    // Apply CSS
-    if (lightStyleRef.current) {
-      lightStyleRef.current.textContent = lightThemeCSS;
-    }
-    
-    if (darkStyleRef.current) {
-      darkStyleRef.current.textContent = darkThemeCSS;
-    }
-    
+
     return () => {
-      // Cleanup function
-      if (lightStyleRef.current && document.head.contains(lightStyleRef.current)) {
-        document.head.removeChild(lightStyleRef.current);
-        lightStyleRef.current = null;
-      }
-      
-      if (darkStyleRef.current && document.head.contains(darkStyleRef.current)) {
-        document.head.removeChild(darkStyleRef.current);
-        darkStyleRef.current = null;
+      document.body.classList.remove('theme-loaded');
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
       }
     };
-  }, [radius]);
-  
-  // Detect system color scheme preference
+  }, []);
+
+  // Listen for system preference changes
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     
-    // Set initial value
-    setSystemPreference(mediaQuery.matches ? 'dark' : 'light');
-    
-    // Update when system preference changes
     const handleChange = (e: MediaQueryListEvent) => {
       setSystemPreference(e.matches ? 'dark' : 'light');
+      
+      // Update dark mode if appearance is set to 'system'
+      if (appearance === 'system') {
+        setDarkMode(e.matches);
+      }
     };
     
-    mediaQuery.addEventListener('change', handleChange);
-    
-    return () => {
-      mediaQuery.removeEventListener('change', handleChange);
-    };
-  }, []);
-  
-  // Apply dark mode based on appearance setting and system preference
-  useEffect(() => {
-    let shouldUseDarkMode = false;
-    
-    if (appearance === 'system') {
-      shouldUseDarkMode = systemPreference === 'dark';
+    // Add event listener (with appropriate method based on browser support)
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleChange);
     } else {
-      shouldUseDarkMode = appearance === 'dark';
+      // Fallback for older browsers
+      mediaQuery.addListener(handleChange);
     }
     
-    setDarkMode(shouldUseDarkMode);
-    localStorage.setItem('appearance', appearance);
+    // Set initial system preference
+    setSystemPreference(mediaQuery.matches ? 'dark' : 'light');
     
-    // Add/remove dark class on document for tailwind
-    if (shouldUseDarkMode) {
+    // Clean up
+    return () => {
+      if (mediaQuery.removeEventListener) {
+        mediaQuery.removeEventListener('change', handleChange);
+      } else {
+        // Fallback for older browsers
+        mediaQuery.removeListener(handleChange);
+      }
+    };
+  }, [appearance]);
+
+  // Sync dark mode with HTML classes
+  useEffect(() => {
+    if (darkMode) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
-  }, [appearance, systemPreference]);
-  
-  // Store border radius preference
+  }, [darkMode]);
+
+  // Sync appearance changes with localStorage and dark mode
   useEffect(() => {
-    localStorage.setItem('borderRadius', radius.toString());
+    // Save appearance preference
+    localStorage.setItem('theme-appearance', appearance);
+    
+    // Update dark mode based on appearance setting
+    if (appearance === 'dark') {
+      setDarkMode(true);
+    } else if (appearance === 'light') {
+      setDarkMode(false);
+    } else if (appearance === 'system') {
+      setDarkMode(systemPreference === 'dark');
+    }
+  }, [appearance, systemPreference]);
+
+  // Sync radius with localStorage
+  useEffect(() => {
+    localStorage.setItem('theme-radius', radius.toString());
+    
+    // Update CSS variable for radius
+    document.documentElement.style.setProperty('--radius', `${radius}px`);
   }, [radius]);
-  
-  // Get current theme based on mode
-  const currentTheme = darkMode ? darkModeTheme : defaultGlobalTheme;
-  
-  // Provide the context
+
+  // Create an updated setAppearance that works with React's setState
+  const handleSetAppearance = (value: React.SetStateAction<'light' | 'dark' | 'system'>) => {
+    if (typeof value === 'function') {
+      setAppearance(prev => value(prev));
+    } else {
+      setAppearance(value);
+    }
+  };
+
   return (
     <GlobalThemeContext.Provider
       value={{
         darkMode,
-        setDarkMode: (dark) => setAppearance(dark ? 'dark' : 'light'),
+        setDarkMode,
         systemPreference,
         appearance,
-        setAppearance,
+        setAppearance: handleSetAppearance,
         radius,
         setRadius,
-        globalTokens: {
-          ...currentTheme,
-          borderRadius: radius,
-        },
+        globalTokens,
       }}
     >
       {children}
     </GlobalThemeContext.Provider>
   );
-};
+}

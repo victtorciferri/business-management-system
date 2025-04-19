@@ -7,7 +7,7 @@
  */
 
 import React from 'react';
-import { GlobalThemeProvider } from './GlobalThemeProvider';
+import GlobalThemeProvider from './GlobalThemeProvider';
 import { MultiTenantThemeProvider } from './MultiTenantThemeProvider';
 
 interface ThemeProviderProps {

@@ -16,11 +16,11 @@ import {
 import { Button } from '@/components/ui/button';
 
 // Map our component sizes to shadcn button sizes
-const sizeMap = {
+const sizeMap: Record<string, "sm" | "default" | "lg" | "icon"> = {
   sm: 'sm',
   md: 'default',
   lg: 'lg'
-} as const;
+};
 
 interface ColorModeToggleProps {
   variant?: 'icon' | 'dropdown' | 'buttons' | 'switch';
@@ -83,7 +83,7 @@ export function ColorModeToggle({
       <div className={`flex gap-1 ${className}`}>
         <Button
           variant={appearance === 'light' ? 'default' : buttonVariant}
-          size={size}
+          size={sizeMap[size]}
           onClick={() => handleModeChange('light')}
           className="gap-2"
           aria-label="Light mode"
@@ -94,7 +94,7 @@ export function ColorModeToggle({
         
         <Button
           variant={appearance === 'dark' ? 'default' : buttonVariant}
-          size={size}
+          size={sizeMap[size]}
           onClick={() => handleModeChange('dark')}
           className="gap-2"
           aria-label="Dark mode"
@@ -105,7 +105,7 @@ export function ColorModeToggle({
         
         <Button
           variant={appearance === 'system' ? 'default' : buttonVariant}
-          size={size}
+          size={sizeMap[size]}
           onClick={() => handleModeChange('system')}
           className="gap-2"
           aria-label="System mode"
@@ -123,7 +123,7 @@ export function ColorModeToggle({
       <DropdownMenuTrigger asChild>
         <Button
           variant={buttonVariant}
-          size={size}
+          size={sizeMap[size]}
           className={`gap-2 transition-all ${className}`}
           aria-label="Change color mode"
         >

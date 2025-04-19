@@ -1,159 +1,259 @@
 /**
- * Theme Utils - 2025 Edition
+ * Theme Utilities - 2025 Edition
  * 
- * Utility functions for working with themes and design tokens.
+ * Utility functions for working with themes, including:
+ * - Converting theme objects to CSS variables
+ * - Generating CSS classes for theme tokens
+ * - Token manipulation and transformation
  */
 
 import { GlobalTokens } from '@/providers/GlobalThemeContext';
+import tinycolor from 'tinycolor2';
 
 /**
- * Generates CSS variables from a theme tokens object
- * @param tokens Theme tokens object
- * @returns CSS variables string
+ * Converts a theme tokens object to CSS variables
+ * @param tokens The theme tokens object
+ * @param scope Optional scope identifier for the CSS variables
+ * @returns CSS string with all variables
  */
-export function generateCSSVariables(tokens: GlobalTokens | Record<string, any>): string {
-  const lines: string[] = [];
+export function themeToCSS(tokens: GlobalTokens | any, scope?: string): string {
+  if (!tokens) return '';
   
-  // Process the object recursively
-  const processObject = (obj: Record<string, any>, path: string = '') => {
-    for (const [key, value] of Object.entries(obj)) {
-      const varName = path ? `--${path}-${key}` : `--${key}`;
+  // Initialize CSS variable string
+  let css = ':root {\n';
+  
+  // Process the tokens object recursively
+  const processTokens = (obj: any, prefix = '--') => {
+    for (const key in obj) {
+      const value = obj[key];
       
-      if (typeof value === 'object' && value !== null) {
-        // Recursively process nested objects
-        processObject(value, path ? `${path}-${key}` : key);
+      // For nested objects, recursively process with updated prefix
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        processTokens(value, `${prefix}${key}-`);
       } else {
-        // Add the CSS variable
-        lines.push(`  ${varName}: ${value};`);
+        // For primitive values, create CSS variable
+        css += `  ${prefix}${key}: ${value};\n`;
       }
     }
   };
   
-  processObject(tokens);
-  return lines.join('\n');
-}
-
-/**
- * Converts a theme to CSS variables
- * @param theme Theme object
- * @returns CSS string
- */
-export function themeToCSS(theme: GlobalTokens | Record<string, any> | null): string {
-  if (!theme) return '';
-  return `:root {\n${generateCSSVariables(theme)}\n}`;
-}
-
-/**
- * Get a CSS variable value
- * @param name Variable name
- * @param fallback Fallback value
- * @returns CSS var() function string
- */
-export function cssVar(name: string, fallback?: string): string {
-  if (fallback) {
-    return `var(--${name}, ${fallback})`;
+  // Process the tokens object
+  processTokens(tokens);
+  
+  // Close the CSS block
+  css += '}\n';
+  
+  // If a scope is provided, wrap the CSS variables in a scoped selector
+  if (scope) {
+    return css.replace(':root', `.theme-${scope}`);
   }
-  return `var(--${name})`;
+  
+  return css;
 }
 
 /**
- * Generates a theme class with scoped CSS variables
- * @param theme Theme object
- * @param className Class name for scoping
- * @returns CSS string
+ * Extracts color variables from a theme tokens object
+ * @param tokens The theme tokens object
+ * @returns Object containing only the color-related tokens
  */
-export function generateThemeClass(theme: GlobalTokens | Record<string, any> | null, className: string): string {
-  if (!theme) return '';
-  return `.${className} {\n${generateCSSVariables(theme)}\n}`;
-}
-
-/**
- * Determines if a color is light or dark
- * @param color Hex color
- * @returns Boolean (true if color is light)
- */
-export function isLightColor(color: string): boolean {
-  // Remove hash if present
-  color = color.replace(/^#/, '');
+export function extractColorTokens(tokens: GlobalTokens): Record<string, string> {
+  const colors: Record<string, string> = {};
   
-  // Parse hex color
-  const r = parseInt(color.substring(0, 2), 16);
-  const g = parseInt(color.substring(2, 4), 16);
-  const b = parseInt(color.substring(4, 6), 16);
-  
-  // Calculate brightness using luminance formula
-  // Perceived brightness = (0.299*R + 0.587*G + 0.114*B) / 255
-  const brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  
-  // Return true if the color is light (brightness > 0.5)
-  return brightness > 0.5;
-}
-
-/**
- * Calculates the contrast ratio between two colors
- * @param foreground Foreground hex color
- * @param background Background hex color
- * @returns Contrast ratio (1-21)
- */
-export function getContrastRatio(foreground: string, background: string): number {
-  // Helper to convert hex to RGB
-  const hexToRgb = (hex: string) => {
-    hex = hex.replace(/^#/, '');
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
-    return [r, g, b];
+  // Extract color tokens recursively
+  const extractColors = (obj: any, prefix = '') => {
+    for (const key in obj) {
+      const value = obj[key];
+      
+      // For nested objects, recursively process
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        extractColors(value, prefix ? `${prefix}-${key}` : key);
+      } else if (typeof value === 'string' && isColorValue(value)) {
+        // If it's a color value, add to the colors object
+        const tokenKey = prefix ? `${prefix}-${key}` : key;
+        colors[tokenKey] = value;
+      }
+    }
   };
   
-  // Helper to calculate luminance
-  const luminance = (rgb: number[]) => {
-    const a = rgb.map((v) => {
-      v /= 255;
-      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
-    });
-    return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
-  };
+  // Process the color tokens in the theme
+  extractColors(tokens.colors);
   
-  const rgbForeground = hexToRgb(foreground);
-  const rgbBackground = hexToRgb(background);
-  
-  const l1 = luminance(rgbForeground);
-  const l2 = luminance(rgbBackground);
-  
-  // Return contrast ratio
-  return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+  return colors;
 }
 
 /**
- * Check if a color passes accessibility contrast guidelines
- * @param foreground Foreground hex color
- * @param background Background hex color
- * @param level 'AA' or 'AAA'
- * @param type 'large' or 'normal'
- * @returns Boolean (true if passes)
+ * Checks if a value is a valid CSS color
+ * @param value The value to check
+ * @returns True if the value is a valid color
  */
-export function checkAccessibility(
-  foreground: string,
-  background: string,
-  level: 'AA' | 'AAA' = 'AA',
-  type: 'large' | 'normal' = 'normal'
-): boolean {
-  const ratio = getContrastRatio(foreground, background);
+function isColorValue(value: string): boolean {
+  // Use tinycolor to validate if the string is a color
+  const tc = tinycolor(value) as any;
+  return tc && tc.isValid && tc.isValid();
+}
+
+/**
+ * Generates CSS variable access syntax for a token
+ * @param path The token path (e.g., 'colors.primary.base')
+ * @returns CSS variable access syntax (e.g., 'var(--colors-primary-base)')
+ */
+export function tokenToVar(path: string): string {
+  // Convert the dot notation to kebab case for CSS variable
+  const varName = path.replace(/\./g, '-');
+  return `var(--${varName})`;
+}
+
+/**
+ * Alias for tokenToVar for backward compatibility
+ * @param path CSS variable path
+ * @returns CSS variable string
+ */
+export function cssVar(path: string): string {
+  return tokenToVar(path);
+}
+
+/**
+ * Generate a dark mode version of a theme
+ * @param theme The light theme tokens
+ * @returns Dark theme tokens
+ */
+export function generateDarkTheme(theme: GlobalTokens): GlobalTokens {
+  // Create a deep copy of the theme
+  const darkTheme = JSON.parse(JSON.stringify(theme)) as GlobalTokens;
   
-  // WCAG 2.0 contrast requirements
-  if (level === 'AA') {
-    return type === 'large' ? ratio >= 3 : ratio >= 4.5;
+  // Transform color values to dark mode equivalents
+  darkTheme.colors = {
+    ...darkTheme.colors,
+    
+    // Invert background and foreground colors
+    background: {
+      base: '#18181b',          // Zinc 900
+      foreground: '#f8fafc',    // Slate 50
+      subtle: '#27272a',        // Zinc 800
+      muted: '#3f3f46',         // Zinc 700
+      elevated: '#18181b',      // Zinc 900
+    },
+    
+    card: {
+      base: '#27272a',          // Zinc 800
+      foreground: '#f8fafc',    // Slate 50
+      hover: '#3f3f46',         // Zinc 700
+      elevated: '#3f3f46',      // Zinc 700
+    },
+    
+    popover: {
+      base: '#27272a',          // Zinc 800
+      foreground: '#f8fafc',    // Slate 50
+    },
+    
+    muted: {
+      base: '#3f3f46',          // Zinc 700
+      foreground: '#a1a1aa',    // Zinc 400
+    },
+    
+    // Borders are darker in dark mode
+    border: '#3f3f46',          // Zinc 700
+    input: '#3f3f46',           // Zinc 700
+  };
+  
+  return darkTheme;
+}
+
+/**
+ * Generate CSS variables for both light and dark themes
+ * with proper media queries for system preference
+ * @param lightTheme The light theme tokens
+ * @param darkTheme The dark theme tokens
+ * @returns CSS string with media queries for light and dark themes
+ */
+export function generateThemeWithColorSchemes(
+  lightTheme: GlobalTokens,
+  darkTheme: GlobalTokens
+): string {
+  // Generate CSS for light theme
+  const lightCSS = themeToCSS(lightTheme);
+  
+  // Generate CSS for dark theme, but with a media query
+  let darkCSS = themeToCSS(darkTheme);
+  darkCSS = darkCSS.replace(':root {', '@media (prefers-color-scheme: dark) {\n  :root {');
+  darkCSS = darkCSS.replace('}\n', '  }\n}\n');
+  
+  // Combine the light and dark themes
+  return lightCSS + '\n' + darkCSS;
+}
+
+/**
+ * Get the appropriate theme based on the current color mode
+ * @param lightTheme The light theme tokens
+ * @param darkTheme The dark theme tokens 
+ * @param isDarkMode Whether dark mode is active
+ * @returns The appropriate theme tokens
+ */
+export function getThemeForColorMode(
+  lightTheme: GlobalTokens,
+  darkTheme: GlobalTokens,
+  isDarkMode: boolean
+): GlobalTokens {
+  return isDarkMode ? darkTheme : lightTheme;
+}
+
+/**
+ * Check if a color is light or dark
+ * @param color The color to check (any valid CSS color string)
+ * @returns True if the color is dark
+ */
+export function isColorDark(color: string): boolean {
+  return tinycolor(color).isDark();
+}
+
+/**
+ * Ensure a color has sufficient contrast against a background
+ * @param color The foreground color
+ * @param backgroundColor The background color
+ * @param minContrastRatio The minimum contrast ratio (WCAG AA: 4.5:1, AAA: 7:1)
+ * @returns A modified color with sufficient contrast
+ */
+export function ensureContrast(
+  color: string,
+  backgroundColor: string,
+  minContrastRatio = 4.5
+): string {
+  const tColor = tinycolor(color);
+  const tBgColor = tinycolor(backgroundColor);
+  
+  // Calculate the contrast ratio
+  const contrast = tinycolor.readability(tColor, tBgColor);
+  
+  // If contrast is sufficient, return the original color
+  if (contrast >= minContrastRatio) {
+    return tColor.toHexString();
+  }
+  
+  // Modify the color to increase contrast
+  const isDark = tBgColor.isDark();
+  
+  // Adjust color in the right direction (lighten on dark backgrounds, darken on light)
+  let adjustedColor = tColor;
+  
+  if (isDark) {
+    // On dark backgrounds, lighten for better contrast
+    for (let i = 0; i < 10; i++) {
+      adjustedColor = adjustedColor.lighten(5);
+      const newContrast = tinycolor.readability(adjustedColor, tBgColor);
+      if (newContrast >= minContrastRatio) {
+        break;
+      }
+    }
   } else {
-    return type === 'large' ? ratio >= 4.5 : ratio >= 7;
+    // On light backgrounds, darken for better contrast
+    for (let i = 0; i < 10; i++) {
+      adjustedColor = adjustedColor.darken(5);
+      const newContrast = tinycolor.readability(adjustedColor, tBgColor);
+      if (newContrast >= minContrastRatio) {
+        break;
+      }
+    }
   }
+  
+  return adjustedColor.toHexString();
 }
-
-export default {
-  generateCSSVariables,
-  themeToCSS,
-  cssVar,
-  generateThemeClass,
-  isLightColor,
-  getContrastRatio,
-  checkAccessibility
-};

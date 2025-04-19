@@ -1,86 +1,85 @@
 /**
  * Color Mode Transition Styles - 2025 Edition
  * 
- * This file contains transition styles for theme changes,
- * ensuring smooth animations when switching between light and dark modes.
+ * These styles handle the smooth transition between light and dark modes
+ * by applying transitions to specific properties and preventing flash of
+ * unstyled content during initial page load.
  */
 
-/* Color transition states applied to root */
 :root {
-  --color-transition-duration: 0.15s;
-  --color-transition-timing: ease-in-out;
+  /* Basic colors that transition between modes */
+  --transition-properties: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform;
+  --transition-duration: 0.2s;
+  --transition-timing: ease-in-out;
 }
 
-/* Elements that should have color transitions */
-body,
-body *:not(script):not(style):not(svg):not(image):not(.no-transition) {
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, outline-color, box-shadow;
-  transition-duration: var(--color-transition-duration);
-  transition-timing-function: var(--color-transition-timing);
+/**
+ * State when theme hasn't loaded yet
+ * Don't apply transitions before the theme loads to prevent flashing
+ */
+html:not(.theme-loaded) * {
+  transition: none !important;
 }
 
-/* Enhanced transition effect for the emphasize-mode-transition class */
-.emphasize-mode-transition {
-  --color-transition-duration: 0.3s;
-  --color-transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  z-index: 50;
+/**
+ * Smooth transitions for color mode changes
+ * Only apply transitions to specific properties to avoid performance issues
+ */
+.theme-loaded * {
+  transition: var(--transition-properties) var(--transition-duration) var(--transition-timing);
 }
 
-.emphasize-mode-transition::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border-radius: inherit;
-  background-color: currentColor;
-  opacity: 0;
-  pointer-events: none;
-  animation: emphasize-transition 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+/**
+ * Special elements that should never have transitions
+ * This prevents unexpected animations or behavior
+ */
+.no-transitions,
+.no-transitions *,
+svg *,
+.notransition, 
+.notransition * {
+  transition: none !important;
 }
 
-@keyframes emphasize-transition {
-  0% {
-    opacity: 0;
-    transform: scale(0.98);
-  }
-  30% {
-    opacity: 0.1;
-    transform: scale(1.02);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1);
-  }
+/**
+ * Specific elements where transitions should be disabled
+ * - video controls
+ * - progress bars
+ * - animations that need to be instant
+ */
+video::-webkit-media-controls,
+video::-webkit-media-controls-panel,
+video::-webkit-media-controls-panel-container,
+video::-webkit-media-controls-play-button,
+video::-webkit-media-controls-volume-slider-container,
+video::-webkit-media-controls-volume-slider,
+video::-webkit-media-controls-mute-button,
+progress,
+.animate-instant,
+.animate-instant * {
+  transition: none !important;
 }
 
-/* Target specific high-impact elements for enhanced transitions */
-.card,
-.button,
-nav,
-header,
-footer,
-.dialog,
-.modal {
-  --color-transition-duration: 0.3s;
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, outline-color, box-shadow, opacity, transform;
+/**
+ * Theme preloading optimization
+ * Allows theme colors to be applied before DOM is fully loaded
+ */
+:root {
+  /* Implement system dark mode */
+  color-scheme: light dark;
 }
 
-/* Ensure layout doesn't shift during mode changes */
-html {
-  transition: background-color var(--color-transition-duration) var(--color-transition-timing);
-  min-height: 100%;
+/* Dark mode specific styles when applied via JS */
+html.dark {
+  color-scheme: dark;
 }
 
-/* Remove transitions for users who prefer reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  :root {
-    --color-transition-duration: 0s;
-  }
-  
-  .emphasize-mode-transition::after {
-    animation: none;
+/* Shared dark mode styles (applied by class or media query) */
+html.dark,
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    /* Base dark mode override (these are defaults that theme tokens will usually override) */
+    --color-background: #18181b; /* Zinc 900 */
+    --color-foreground: #f8fafc; /* Slate 50 */
   }
 }

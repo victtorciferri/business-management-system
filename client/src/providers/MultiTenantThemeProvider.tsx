@@ -9,7 +9,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { ThemeEntity } from '@shared/schema';
 import { getActiveTheme, getBusinessThemes } from '@/lib/themeApi';
-import { generateCSSVariables } from '@/lib/themeUtils';
+import { themeToCSS } from '@/lib/themeUtils';
 
 // Business theme context type
 export interface BusinessThemeContextType {
@@ -59,13 +59,21 @@ export function MultiTenantThemeProvider({
   
   // Create a CSS class for the theme that includes the business identifier
   // This ensures CSS variable scoping for multi-tenant scenarios
-  const businessIdentifier = businessId || businessSlug || 'global';
+  const businessIdentifier = businessId ? businessId.toString() : 
+                             businessSlug ? businessSlug : 
+                             'global';
   const themeClass = `theme-${businessIdentifier}`;
   
-  // Create CSS variables for the current theme
-  const cssVariables = activeTheme 
-    ? generateCSSVariables(activeTheme.tokens) 
-    : '';
+  // Extract theme tokens into CSS variables
+  const getCssVariables = () => {
+    if (!activeTheme || !activeTheme.tokens) return '';
+    
+    // Remove the :root selector wrapper and just get the CSS variable definitions
+    const fullCss = themeToCSS(activeTheme.tokens, businessIdentifier.toString());
+    return fullCss.replace(/^:root \{\n/, '').replace(/\n\}$/, '').trim();
+  };
+  
+  const cssVariables = activeTheme ? getCssVariables() : '';
   
   // Load all available themes for this business
   useEffect(() => {

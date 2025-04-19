@@ -50,6 +50,7 @@ import { ThemeProvider as LegacyThemeProvider } from "@/contexts/ThemeContext";
 
 // New 2025 theme providers
 import { ThemeProvider } from "@/providers/ThemeProvider";
+import { GlobalThemeProvider } from "@/providers/GlobalThemeProvider";
 import DarkModeInitializer from "@/components/shared/dark-mode-initializer";
 
 function AppContent() {
@@ -403,16 +404,19 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <BusinessContextProvider>
-          {/* New Theme Provider from 2025 Edition */}
-          <ThemeProvider>
-            {/* Legacy ThemeProvider for backward compatibility */}
-            <LegacyThemeProvider>
-              <AppContent />
-              <DarkModeInitializer />
-            </LegacyThemeProvider>
-          </ThemeProvider>
-        </BusinessContextProvider>
+        {/* Global Theme Provider from 2025 Edition - App-wide theming */}
+        <GlobalThemeProvider>
+          <BusinessContextProvider>
+            {/* Business-specific Theme Provider from 2025 Edition */}
+            <ThemeProvider>
+              {/* Legacy ThemeProvider for backward compatibility */}
+              <LegacyThemeProvider>
+                <AppContent />
+                <DarkModeInitializer />
+              </LegacyThemeProvider>
+            </ThemeProvider>
+          </BusinessContextProvider>
+        </GlobalThemeProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
