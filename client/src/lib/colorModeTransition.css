@@ -75,7 +75,13 @@ html.dark {
 }
 
 /* Shared dark mode styles (applied by class or media query) */
-html.dark,
+html.dark {
+  /* Base dark mode override (these are defaults that theme tokens will usually override) */
+  --color-background: #18181b; /* Zinc 900 */
+  --color-foreground: #f8fafc; /* Slate 50 */
+}
+
+/* System preference dark mode */
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
     /* Base dark mode override (these are defaults that theme tokens will usually override) */

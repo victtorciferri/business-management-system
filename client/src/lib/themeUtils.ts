@@ -203,7 +203,8 @@ export function getThemeForColorMode(
  * @returns True if the color is dark
  */
 export function isColorDark(color: string): boolean {
-  return tinycolor(color).isDark();
+  const tc = tinycolor(color) as any;
+  return tc.isDark();
 }
 
 /**
@@ -218,11 +219,11 @@ export function ensureContrast(
   backgroundColor: string,
   minContrastRatio = 4.5
 ): string {
-  const tColor = tinycolor(color);
-  const tBgColor = tinycolor(backgroundColor);
+  const tColor = tinycolor(color) as any;
+  const tBgColor = tinycolor(backgroundColor) as any;
   
   // Calculate the contrast ratio
-  const contrast = tinycolor.readability(tColor, tBgColor);
+  const contrast = tinycolor.readability(tColor.toString(), tBgColor.toString());
   
   // If contrast is sufficient, return the original color
   if (contrast >= minContrastRatio) {
@@ -239,7 +240,10 @@ export function ensureContrast(
     // On dark backgrounds, lighten for better contrast
     for (let i = 0; i < 10; i++) {
       adjustedColor = adjustedColor.lighten(5);
-      const newContrast = tinycolor.readability(adjustedColor, tBgColor);
+      const newContrast = tinycolor.readability(
+        adjustedColor.toString(), 
+        tBgColor.toString()
+      );
       if (newContrast >= minContrastRatio) {
         break;
       }
@@ -248,7 +252,10 @@ export function ensureContrast(
     // On light backgrounds, darken for better contrast
     for (let i = 0; i < 10; i++) {
       adjustedColor = adjustedColor.darken(5);
-      const newContrast = tinycolor.readability(adjustedColor, tBgColor);
+      const newContrast = tinycolor.readability(
+        adjustedColor.toString(), 
+        tBgColor.toString()
+      );
       if (newContrast >= minContrastRatio) {
         break;
       }

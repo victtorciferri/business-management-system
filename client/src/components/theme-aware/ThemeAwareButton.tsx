@@ -37,40 +37,41 @@ export function ThemeAwareButton({
     lg: 'h-12 px-6 text-lg',
   };
   
-  // Dynamic styles based on theme and variant
+  // Dynamic styles based on theme and variant - not used directly in this component
+  // But kept as a reference for how to create dynamic style templates
   const getVariantStyles = () => {
     switch (variant) {
       case 'primary':
         return `
-          background-color: ${cssVar('color-primary-base', '#0070f3')};
-          color: ${cssVar('color-primary-foreground', '#ffffff')};
+          background-color: ${cssVar('colors.primary.base')};
+          color: ${cssVar('colors.primary.foreground')};
           &:hover {
-            background-color: ${cssVar('color-primary-hover', '#0060df')};
+            background-color: ${cssVar('colors.primary.hover')};
           }
         `;
       case 'secondary':
         return `
-          background-color: ${cssVar('color-secondary-base', '#f1f5f9')};
-          color: ${cssVar('color-secondary-foreground', '#0f172a')};
+          background-color: ${cssVar('colors.secondary.base')};
+          color: ${cssVar('colors.secondary.foreground')};
           &:hover {
-            background-color: ${cssVar('color-secondary-hover', '#e2e8f0')};
+            background-color: ${cssVar('colors.secondary.hover')};
           }
         `;
       case 'outline':
         return `
           background-color: transparent;
-          color: ${cssVar('color-primary-base', '#0070f3')};
-          border: 1px solid ${cssVar('color-primary-base', '#0070f3')};
+          color: ${cssVar('colors.primary.base')};
+          border: 1px solid ${cssVar('colors.primary.base')};
           &:hover {
-            background-color: ${cssVar('color-primary-base', '#0070f3')}20;
+            background-color: ${cssVar('colors.primary.subtle')};
           }
         `;
       case 'ghost':
         return `
           background-color: transparent;
-          color: ${cssVar('color-primary-base', '#0070f3')};
+          color: ${cssVar('colors.primary.base')};
           &:hover {
-            background-color: ${cssVar('color-primary-base', '#0070f3')}10;
+            background-color: ${cssVar('colors.primary.subtle')};
           }
         `;
       default:
@@ -78,20 +79,20 @@ export function ThemeAwareButton({
     }
   };
   
-  // Create inline styles
+  // Create inline styles using the new theme token structure
   const inlineStyles = {
     backgroundColor: variant === 'primary' 
-      ? `var(--color-primary-base, #0070f3)` 
+      ? `var(--colors-primary-base, #2563eb)` 
       : variant === 'secondary'
-        ? `var(--color-secondary-base, #f1f5f9)`
+        ? `var(--colors-secondary-base, #4f46e5)`
         : 'transparent',
     color: variant === 'primary'
-      ? `var(--color-primary-foreground, #ffffff)`
+      ? `var(--colors-primary-foreground, #ffffff)`
       : variant === 'secondary'
-        ? `var(--color-secondary-foreground, #0f172a)`
-        : `var(--color-primary-base, #0070f3)`,
+        ? `var(--colors-secondary-foreground, #ffffff)`
+        : `var(--colors-primary-base, #2563eb)`,
     border: variant === 'outline'
-      ? `1px solid var(--color-primary-base, #0070f3)`
+      ? `1px solid var(--colors-primary-base, #2563eb)`
       : 'none',
   };
   
@@ -99,22 +100,22 @@ export function ThemeAwareButton({
   const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
     const target = e.currentTarget;
     if (variant === 'primary') {
-      target.style.backgroundColor = `var(--color-primary-hover, #0060df)`;
+      target.style.backgroundColor = `var(--colors-primary-hover, #1d4ed8)`;
     } else if (variant === 'secondary') {
-      target.style.backgroundColor = `var(--color-secondary-hover, #e2e8f0)`;
+      target.style.backgroundColor = `var(--colors-secondary-hover, #4338ca)`;
     } else if (variant === 'outline') {
-      target.style.backgroundColor = `var(--color-primary-base, #0070f3)20`;
+      target.style.backgroundColor = `var(--colors-primary-subtle, #dbeafe)`;
     } else if (variant === 'ghost') {
-      target.style.backgroundColor = `var(--color-primary-base, #0070f3)10`;
+      target.style.backgroundColor = `var(--colors-primary-subtle, #dbeafe)`;
     }
   };
   
   const handleMouseLeave = (e: React.MouseEvent<HTMLButtonElement>) => {
     const target = e.currentTarget;
     if (variant === 'primary') {
-      target.style.backgroundColor = `var(--color-primary-base, #0070f3)`;
+      target.style.backgroundColor = `var(--colors-primary-base, #2563eb)`;
     } else if (variant === 'secondary') {
-      target.style.backgroundColor = `var(--color-secondary-base, #f1f5f9)`;
+      target.style.backgroundColor = `var(--colors-secondary-base, #4f46e5)`;
     } else if (variant === 'outline' || variant === 'ghost') {
       target.style.backgroundColor = 'transparent';
     }

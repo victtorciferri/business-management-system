@@ -50,7 +50,7 @@ import { ThemeProvider as LegacyThemeProvider } from "@/contexts/ThemeContext";
 
 // New 2025 theme providers
 import { ThemeProvider } from "@/providers/ThemeProvider";
-import { GlobalThemeProvider } from "@/providers/GlobalThemeProvider";
+import GlobalThemeProvider from "@/providers/GlobalThemeProvider";
 import DarkModeInitializer from "@/components/shared/dark-mode-initializer";
 
 function AppContent() {
