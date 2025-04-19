@@ -130,7 +130,8 @@ function AppContent() {
   const isBusinessPortal = (!!businessData?.business || !!potentialBusinessSlug) && 
                           !location.startsWith('/auth') && 
                           !location.startsWith('/admin') &&
-                          !location.startsWith('/customer-portal');
+                          !location.startsWith('/customer-portal') &&
+                          !location.startsWith('/color-mode-demo');
   
   // Debug information to help troubleshoot
   console.log("App.tsx is rendering");

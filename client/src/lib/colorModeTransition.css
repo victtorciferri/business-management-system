@@ -1,59 +1,86 @@
 /**
- * Color Mode Transition Styles
- *
- * These styles provide smooth transitions when switching between 
- * light and dark color modes throughout the application.
+ * Color Mode Transition Styles - 2025 Edition
+ * 
+ * This file contains transition styles for theme changes,
+ * ensuring smooth animations when switching between light and dark modes.
  */
 
-/* Apply transitions to HTML element for global color changes */
-html {
-  /* Transition all color-related properties */
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 300ms;
-}
-
-/* Apply transitions to specific elements that might need color transitions */
-*,
-*::before,
-*::after {
-  /* Only transition color-related properties to avoid layout shifts */
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 300ms;
-}
-
-/* Disable transitions for elements where it might cause visual issues */
-.no-color-transitions,
-.no-color-transitions::before,
-.no-color-transitions::after {
-  transition-property: none;
-}
-
-/* Optimize performance by not transitioning certain properties */
-code, pre, iframe, video, canvas, img, svg {
-  transition-property: none;
-}
-
-/* Disable transitions on window resize or initial load to prevent visual flicker */
-.resize-animation-stopper * {
-  transition: none !important;
-  animation: none !important;
-}
-
-/* Custom class for emphasizing transitions on certain elements */
-.emphasize-mode-transition {
-  transition-duration: 500ms !important;
-}
-
-/* Utility class for immediate mode changes with no transition */
-.immediate-mode-change {
-  transition: none !important;
-}
-
-/* Dynamic variables updated by the theme system */
+/* Color transition states applied to root */
 :root {
-  /* These variables can be adjusted programmatically */
-  --color-mode-transition-duration: 300ms;
-  --color-mode-transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
+  --color-transition-duration: 0.15s;
+  --color-transition-timing: ease-in-out;
+}
+
+/* Elements that should have color transitions */
+body,
+body *:not(script):not(style):not(svg):not(image):not(.no-transition) {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, outline-color, box-shadow;
+  transition-duration: var(--color-transition-duration);
+  transition-timing-function: var(--color-transition-timing);
+}
+
+/* Enhanced transition effect for the emphasize-mode-transition class */
+.emphasize-mode-transition {
+  --color-transition-duration: 0.3s;
+  --color-transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 50;
+}
+
+.emphasize-mode-transition::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: inherit;
+  background-color: currentColor;
+  opacity: 0;
+  pointer-events: none;
+  animation: emphasize-transition 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes emphasize-transition {
+  0% {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  30% {
+    opacity: 0.1;
+    transform: scale(1.02);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+/* Target specific high-impact elements for enhanced transitions */
+.card,
+.button,
+nav,
+header,
+footer,
+.dialog,
+.modal {
+  --color-transition-duration: 0.3s;
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, outline-color, box-shadow, opacity, transform;
+}
+
+/* Ensure layout doesn't shift during mode changes */
+html {
+  transition: background-color var(--color-transition-duration) var(--color-transition-timing);
+  min-height: 100%;
+}
+
+/* Remove transitions for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --color-transition-duration: 0s;
+  }
+  
+  .emphasize-mode-transition::after {
+    animation: none;
+  }
 }

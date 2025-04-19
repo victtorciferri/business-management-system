@@ -1,122 +1,173 @@
 /**
  * ColorModeToggle Component - 2025 Edition
- * 
- * An animated toggle button that allows users to switch between light and dark mode.
- * This component uses custom animations and transitions for a smooth visual experience.
+ *
+ * A component for switching between light, dark, and system color modes
  */
 
-import React, { useEffect, useState } from 'react';
-import { useGlobalTheme } from '@/hooks/useGlobalTheme';
-import { Moon, Sun } from 'lucide-react';
+import React, { useContext } from 'react';
+import { GlobalThemeContext } from '@/providers/GlobalThemeContext';
+import { Sun, Moon, Monitor } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+
+// Map our component sizes to shadcn button sizes
+const sizeMap = {
+  sm: 'sm',
+  md: 'default',
+  lg: 'lg'
+} as const;
 
 interface ColorModeToggleProps {
-  className?: string;
+  variant?: 'icon' | 'dropdown' | 'buttons' | 'switch';
   size?: 'sm' | 'md' | 'lg';
-  variant?: 'icon' | 'pill' | 'button';
-  withText?: boolean;
+  className?: string;
 }
 
-export const ColorModeToggle: React.FC<ColorModeToggleProps> = ({
-  className = '',
+export function ColorModeToggle({
+  variant = 'dropdown',
   size = 'md',
-  variant = 'icon',
-  withText = false,
-}) => {
-  const { darkMode, setDarkMode, appearance, setAppearance, systemPreference } = useGlobalTheme();
-  const [isAnimating, setIsAnimating] = useState(false);
+  className = '',
+}: ColorModeToggleProps) {
+  const { appearance, setAppearance, darkMode, systemPreference } = useContext(GlobalThemeContext);
 
-  // Size configuration
-  const sizeConfig = {
-    sm: { iconSize: 16, height: 'h-7', padding: 'px-2' },
-    md: { iconSize: 20, height: 'h-9', padding: 'px-3' },
-    lg: { iconSize: 24, height: 'h-11', padding: 'px-4' },
+  // Icon sizes based on component size
+  const iconSizes = {
+    sm: 16,
+    md: 18,
+    lg: 22,
   };
 
-  // Toggle the mode
-  const toggleMode = () => {
-    setIsAnimating(true);
+  // Button variant based on component size
+  const buttonVariant = size === 'sm' ? 'ghost' : 'outline';
+
+  // Handle mode change
+  const handleModeChange = (mode: 'light' | 'dark' | 'system') => {
+    // Add a class to emphasize the transition
+    document.documentElement.classList.add('emphasize-mode-transition');
     
-    if (appearance === 'system') {
-      // If currently using system preference, switch to explicit mode
-      setAppearance(systemPreference === 'light' ? 'dark' : 'light');
-    } else {
-      // Toggle between light and dark
-      setAppearance(appearance === 'light' ? 'dark' : 'light');
-    }
+    // Change the mode
+    setAppearance(mode);
     
-    // Animation duration is 300ms
-    setTimeout(() => setIsAnimating(false), 300);
+    // Remove the emphasis class after the transition
+    setTimeout(() => {
+      document.documentElement.classList.remove('emphasize-mode-transition');
+    }, 400);
   };
 
-  // Classes based on props
-  const baseClasses = `
-    relative inline-flex items-center justify-center 
-    focus:outline-none focus:ring-2 focus:ring-primary-300 
-    transition-all cursor-pointer
-    ${sizeConfig[size].height}
-    ${isAnimating ? 'emphasize-mode-transition' : ''}
-  `;
+  // Different UI variants
+  if (variant === 'icon') {
+    return (
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => handleModeChange(darkMode ? 'light' : 'dark')}
+        className={`rounded-full transition-all ${className}`}
+        aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+      >
+        {darkMode ? (
+          <Sun size={iconSizes[size]} className="text-amber-400 transition-all" />
+        ) : (
+          <Moon size={iconSizes[size]} className="text-indigo-500 transition-all" />
+        )}
+      </Button>
+    );
+  }
 
-  // Variant specific classes
-  const variantClasses = {
-    icon: `rounded-full ${sizeConfig[size].height} aspect-square bg-transparent hover:bg-muted-base`,
-    pill: `rounded-full ${sizeConfig[size].padding} bg-muted-base text-muted-foreground`,
-    button: `rounded-md ${sizeConfig[size].padding} bg-primary-base text-primary-foreground hover:bg-primary-hover`
-  };
+  if (variant === 'buttons') {
+    return (
+      <div className={`flex gap-1 ${className}`}>
+        <Button
+          variant={appearance === 'light' ? 'default' : buttonVariant}
+          size={size}
+          onClick={() => handleModeChange('light')}
+          className="gap-2"
+          aria-label="Light mode"
+        >
+          <Sun size={iconSizes[size]} className={appearance === 'light' ? 'text-amber-200' : ''} />
+          {size !== 'sm' && <span>Light</span>}
+        </Button>
+        
+        <Button
+          variant={appearance === 'dark' ? 'default' : buttonVariant}
+          size={size}
+          onClick={() => handleModeChange('dark')}
+          className="gap-2"
+          aria-label="Dark mode"
+        >
+          <Moon size={iconSizes[size]} className={appearance === 'dark' ? 'text-blue-200' : ''} />
+          {size !== 'sm' && <span>Dark</span>}
+        </Button>
+        
+        <Button
+          variant={appearance === 'system' ? 'default' : buttonVariant}
+          size={size}
+          onClick={() => handleModeChange('system')}
+          className="gap-2"
+          aria-label="System mode"
+        >
+          <Monitor size={iconSizes[size]} />
+          {size !== 'sm' && <span>System</span>}
+        </Button>
+      </div>
+    );
+  }
 
-  // Icons with animations
-  const renderIcon = () => {
-    const iconProps = {
-      size: sizeConfig[size].iconSize,
-      className: `transition-transform ${isAnimating ? 'animate-spin-once' : ''}`
-    };
-
-    return darkMode ? <Moon {...iconProps} /> : <Sun {...iconProps} />;
-  };
-
-  // Full mode label (used when withText is true)
-  const modeLabel = () => {
-    if (appearance === 'system') {
-      return `System (${systemPreference || 'default'})`;
-    }
-    return appearance === 'light' ? 'Light' : 'Dark';
-  };
-
+  // Default dropdown variant
   return (
-    <button
-      type="button"
-      onClick={toggleMode}
-      className={`${baseClasses} ${variantClasses[variant]} ${className}`}
-      title={`Switch to ${darkMode ? 'light' : 'dark'} mode`}
-      aria-label={`Switch to ${darkMode ? 'light' : 'dark'} mode`}
-    >
-      {renderIcon()}
-      {withText && (
-        <span className={`ml-2 ${variant === 'icon' ? 'sr-only' : ''}`}>
-          {modeLabel()}
-        </span>
-      )}
-    </button>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant={buttonVariant}
+          size={size}
+          className={`gap-2 transition-all ${className}`}
+          aria-label="Change color mode"
+        >
+          {appearance === 'light' && (
+            <>
+              <Sun size={iconSizes[size]} className="text-amber-500 transition-all" />
+              {size !== 'sm' && <span>Light</span>}
+            </>
+          )}
+          
+          {appearance === 'dark' && (
+            <>
+              <Moon size={iconSizes[size]} className="text-indigo-400 transition-all" />
+              {size !== 'sm' && <span>Dark</span>}
+            </>
+          )}
+          
+          {appearance === 'system' && (
+            <>
+              <Monitor size={iconSizes[size]} className="transition-all" />
+              {size !== 'sm' && (
+                <span>System {systemPreference && `(${systemPreference})`}</span>
+              )}
+            </>
+          )}
+        </Button>
+      </DropdownMenuTrigger>
+      
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => handleModeChange('light')} className="gap-2">
+          <Sun size={iconSizes.md} className="text-amber-500" />
+          <span>Light</span>
+        </DropdownMenuItem>
+        
+        <DropdownMenuItem onClick={() => handleModeChange('dark')} className="gap-2">
+          <Moon size={iconSizes.md} className="text-indigo-400" />
+          <span>Dark</span>
+        </DropdownMenuItem>
+        
+        <DropdownMenuItem onClick={() => handleModeChange('system')} className="gap-2">
+          <Monitor size={iconSizes.md} />
+          <span>System {systemPreference && `(${systemPreference})`}</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
-};
-
-// Add CSS for animation
-const spinOnceKeyframes = `
-@keyframes spin-once {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
 }
-
-.animate-spin-once {
-  animation: spin-once 300ms ease-in-out;
-}
-`;
-
-// Inject the animation styles in the document
-if (typeof document !== 'undefined') {
-  const style = document.createElement('style');
-  style.textContent = spinOnceKeyframes;
-  document.head.appendChild(style);
-}
-
-export default ColorModeToggle;

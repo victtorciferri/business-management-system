@@ -224,7 +224,8 @@ export async function updateThemeForBusiness(
  */
 export async function getThemeForBusiness(
   businessId: number,
-  dbInstance?: PgDatabase<any>
+  dbInstance?: PgDatabase<any>,
+  storageInstance?: any
 ): Promise<any> {
   try {
     const dbToUse = dbInstance || db;
@@ -246,17 +247,21 @@ export async function getThemeForBusiness(
     }
     
     // If not found in themes table, try users table
-    const userResult = await dbToUse.select()
-      .from(users)
-      .where(eq(users.id, businessId))
-      .limit(1);
-    
-    if (userResult && userResult.length > 0) {
-      if (userResult[0].theme) {
-        return userResult[0].theme;
-      } else if (userResult[0].themeSettings) {
-        return convertLegacyThemeToTheme(userResult[0].themeSettings);
+    try {
+      const userResult = await dbToUse.select()
+        .from(users)
+        .where(eq(users.id, businessId))
+        .limit(1);
+      
+      if (userResult && userResult.length > 0) {
+        if (userResult[0].theme) {
+          return userResult[0].theme;
+        } else if (userResult[0].themeSettings) {
+          return convertLegacyThemeToTheme(userResult[0].themeSettings);
+        }
       }
+    } catch (userError) {
+      console.error('Error fetching from users table:', userError);
     }
     
     // Return default theme if nothing found

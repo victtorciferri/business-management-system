@@ -12,128 +12,25 @@ import { GlobalTokens } from '@/providers/GlobalThemeContext';
  * @returns CSS variables string
  */
 export function generateCSSVariables(tokens: GlobalTokens | Record<string, any>): string {
-  if (!tokens) return '';
+  const lines: string[] = [];
   
-  let cssVars: string[] = [];
-  
-  // Process color tokens
-  if (tokens.colors) {
-    Object.entries(tokens.colors).forEach(([colorName, colorValue]) => {
-      if (typeof colorValue === 'string') {
-        // Handle flat color value
-        cssVars.push(`--color-${colorName}: ${colorValue};`);
-      } else if (typeof colorValue === 'object' && colorValue !== null) {
-        // Handle object with color variants
-        Object.entries(colorValue as Record<string, string>).forEach(([variant, color]) => {
-          cssVars.push(`--color-${colorName}-${variant}: ${color};`);
-        });
-        
-        // Add base as the default if it exists
-        const colorObj = colorValue as Record<string, string>;
-        if (colorObj.base) {
-          cssVars.push(`--color-${colorName}: ${colorObj.base};`);
-        }
+  // Process the object recursively
+  const processObject = (obj: Record<string, any>, path: string = '') => {
+    for (const [key, value] of Object.entries(obj)) {
+      const varName = path ? `--${path}-${key}` : `--${key}`;
+      
+      if (typeof value === 'object' && value !== null) {
+        // Recursively process nested objects
+        processObject(value, path ? `${path}-${key}` : key);
+      } else {
+        // Add the CSS variable
+        lines.push(`  ${varName}: ${value};`);
       }
-    });
-  }
+    }
+  };
   
-  // Process typography tokens
-  if (tokens.typography) {
-    // Font families
-    if (tokens.typography.fontFamilies) {
-      Object.entries(tokens.typography.fontFamilies).forEach(([name, value]) => {
-        cssVars.push(`--font-family-${name}: ${value};`);
-      });
-    }
-    
-    // Font sizes
-    if (tokens.typography.fontSizes) {
-      Object.entries(tokens.typography.fontSizes).forEach(([name, value]) => {
-        cssVars.push(`--font-size-${name}: ${value};`);
-      });
-    }
-    
-    // Font weights
-    if (tokens.typography.fontWeights) {
-      Object.entries(tokens.typography.fontWeights).forEach(([name, value]) => {
-        cssVars.push(`--font-weight-${name}: ${value};`);
-      });
-    }
-    
-    // Line heights
-    if (tokens.typography.lineHeights) {
-      Object.entries(tokens.typography.lineHeights).forEach(([name, value]) => {
-        cssVars.push(`--line-height-${name}: ${value};`);
-      });
-    }
-  }
-  
-  // Process spacing tokens
-  if (tokens.spacing) {
-    if (typeof tokens.spacing === 'object') {
-      Object.entries(tokens.spacing).forEach(([name, value]) => {
-        cssVars.push(`--spacing-${name}: ${value};`);
-      });
-    } else if (typeof tokens.spacing === 'number') {
-      // Base spacing value
-      cssVars.push(`--spacing-base: ${tokens.spacing}px;`);
-      
-      // Generate derived spacing values
-      const spacingScales = [0.25, 0.5, 0.75, 1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24];
-      spacingScales.forEach(scale => {
-        const value = scale * tokens.spacing;
-        const name = scale.toString().replace('.', '-');
-        cssVars.push(`--spacing-${name}: ${value}px;`);
-      });
-    }
-  }
-  
-  // Process border radius tokens
-  if (tokens.borderRadius) {
-    if (typeof tokens.borderRadius === 'object') {
-      Object.entries(tokens.borderRadius).forEach(([name, value]) => {
-        cssVars.push(`--radius-${name}: ${value};`);
-      });
-    } else if (typeof tokens.borderRadius === 'number') {
-      // Base radius value
-      cssVars.push(`--radius-base: ${tokens.borderRadius}px;`);
-      
-      // Generate derived radius values
-      const radiusScales = {
-        sm: 0.5,
-        md: 1,
-        lg: 1.5,
-        xl: 2,
-        '2xl': 3,
-        '3xl': 5,
-        full: 9999
-      };
-      
-      Object.entries(radiusScales).forEach(([name, scale]) => {
-        let value: string;
-        if (name === 'full') {
-          value = '9999px';
-        } else {
-          value = `${scale * tokens.borderRadius}px`;
-        }
-        cssVars.push(`--radius-${name}: ${value};`);
-      });
-    }
-  }
-  
-  // Handle any other token categories
-  const processedCategories = ['colors', 'typography', 'spacing', 'borderRadius'];
-  Object.entries(tokens).forEach(([category, values]) => {
-    if (!processedCategories.includes(category) && typeof values === 'object') {
-      Object.entries(values as object).forEach(([name, value]) => {
-        if (typeof value === 'string' || typeof value === 'number') {
-          cssVars.push(`--${category}-${name}: ${value};`);
-        }
-      });
-    }
-  });
-  
-  return cssVars.join('\n');
+  processObject(tokens);
+  return lines.join('\n');
 }
 
 /**
@@ -143,15 +40,7 @@ export function generateCSSVariables(tokens: GlobalTokens | Record<string, any>)
  */
 export function themeToCSS(theme: GlobalTokens | Record<string, any> | null): string {
   if (!theme) return '';
-  
-  // Extract tokens from the theme
-  const tokens = 'tokens' in theme ? theme.tokens : theme;
-  
-  // Generate CSS variables
-  const cssVariables = generateCSSVariables(tokens);
-  
-  // Create a CSS block with the variables
-  return `:root {\n${cssVariables}\n}`;
+  return `:root {\n${generateCSSVariables(theme)}\n}`;
 }
 
 /**
@@ -161,9 +50,10 @@ export function themeToCSS(theme: GlobalTokens | Record<string, any> | null): st
  * @returns CSS var() function string
  */
 export function cssVar(name: string, fallback?: string): string {
-  return fallback 
-    ? `var(--${name}, ${fallback})` 
-    : `var(--${name})`;
+  if (fallback) {
+    return `var(--${name}, ${fallback})`;
+  }
+  return `var(--${name})`;
 }
 
 /**
@@ -173,14 +63,97 @@ export function cssVar(name: string, fallback?: string): string {
  * @returns CSS string
  */
 export function generateThemeClass(theme: GlobalTokens | Record<string, any> | null, className: string): string {
-  if (!theme || !className) return '';
-  
-  // Extract tokens from the theme
-  const tokens = 'tokens' in theme ? theme.tokens : theme;
-  
-  // Generate CSS variables
-  const cssVariables = generateCSSVariables(tokens);
-  
-  // Create a CSS block with the variables scoped to the class
-  return `.${className} {\n${cssVariables}\n}`;
+  if (!theme) return '';
+  return `.${className} {\n${generateCSSVariables(theme)}\n}`;
 }
+
+/**
+ * Determines if a color is light or dark
+ * @param color Hex color
+ * @returns Boolean (true if color is light)
+ */
+export function isLightColor(color: string): boolean {
+  // Remove hash if present
+  color = color.replace(/^#/, '');
+  
+  // Parse hex color
+  const r = parseInt(color.substring(0, 2), 16);
+  const g = parseInt(color.substring(2, 4), 16);
+  const b = parseInt(color.substring(4, 6), 16);
+  
+  // Calculate brightness using luminance formula
+  // Perceived brightness = (0.299*R + 0.587*G + 0.114*B) / 255
+  const brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  
+  // Return true if the color is light (brightness > 0.5)
+  return brightness > 0.5;
+}
+
+/**
+ * Calculates the contrast ratio between two colors
+ * @param foreground Foreground hex color
+ * @param background Background hex color
+ * @returns Contrast ratio (1-21)
+ */
+export function getContrastRatio(foreground: string, background: string): number {
+  // Helper to convert hex to RGB
+  const hexToRgb = (hex: string) => {
+    hex = hex.replace(/^#/, '');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    return [r, g, b];
+  };
+  
+  // Helper to calculate luminance
+  const luminance = (rgb: number[]) => {
+    const a = rgb.map((v) => {
+      v /= 255;
+      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    });
+    return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
+  };
+  
+  const rgbForeground = hexToRgb(foreground);
+  const rgbBackground = hexToRgb(background);
+  
+  const l1 = luminance(rgbForeground);
+  const l2 = luminance(rgbBackground);
+  
+  // Return contrast ratio
+  return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+}
+
+/**
+ * Check if a color passes accessibility contrast guidelines
+ * @param foreground Foreground hex color
+ * @param background Background hex color
+ * @param level 'AA' or 'AAA'
+ * @param type 'large' or 'normal'
+ * @returns Boolean (true if passes)
+ */
+export function checkAccessibility(
+  foreground: string,
+  background: string,
+  level: 'AA' | 'AAA' = 'AA',
+  type: 'large' | 'normal' = 'normal'
+): boolean {
+  const ratio = getContrastRatio(foreground, background);
+  
+  // WCAG 2.0 contrast requirements
+  if (level === 'AA') {
+    return type === 'large' ? ratio >= 3 : ratio >= 4.5;
+  } else {
+    return type === 'large' ? ratio >= 4.5 : ratio >= 7;
+  }
+}
+
+export default {
+  generateCSSVariables,
+  themeToCSS,
+  cssVar,
+  generateThemeClass,
+  isLightColor,
+  getContrastRatio,
+  checkAccessibility
+};
