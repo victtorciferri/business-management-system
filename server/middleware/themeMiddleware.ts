@@ -16,7 +16,7 @@ export const themeMiddleware = (req: Request, res: Response, next: NextFunction)
      */
     async getTheme(businessId: number): Promise<Theme | null> {
       try {
-        return await getThemeForBusiness(businessId, db, storage);
+        return await getThemeForBusiness(businessId, db);
       } catch (error) {
         console.error('Error getting theme in middleware:', error);
         return null;
