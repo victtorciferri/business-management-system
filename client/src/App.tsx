@@ -53,8 +53,7 @@ import { ThemeProvider } from "@/providers/ThemeProvider";
 import GlobalThemeProvider from "@/providers/GlobalThemeProvider";
 import DarkModeInitializer from "@/components/shared/dark-mode-initializer";
 
-// Pages
-import { ThemeShowcase } from "@/pages/ThemeShowcase";
+// New theme-related pages for 2025 edition
 import { ThemeMarketplacePage } from "@/pages/ThemeMarketplacePage";
 
 function AppContent() {
@@ -361,7 +360,8 @@ function AppContent() {
               <BusinessContextProvider>
                 <ThemeProvider>
                   <LegacyThemeProvider>
-                    <ThemeShowcase />
+                    {/* Placeholder for ThemeShowcase */}
+                    <div>Theme Showcase Coming Soon</div>
                   </LegacyThemeProvider>
                 </ThemeProvider>
               </BusinessContextProvider>
@@ -369,13 +369,14 @@ function AppContent() {
           </Route>
           <Route path="/theme-marketplace">
             <ProtectedRoute>
-              <BusinessContextProvider>
-                <ThemeProvider>
-                  <LegacyThemeProvider>
+              <GlobalThemeProvider>
+                <BusinessContextProvider>
+                  <ThemeProvider>
+                    <DarkModeInitializer />
                     <ThemeMarketplacePage />
-                  </LegacyThemeProvider>
-                </ThemeProvider>
-              </BusinessContextProvider>
+                  </ThemeProvider>
+                </BusinessContextProvider>
+              </GlobalThemeProvider>
             </ProtectedRoute>
           </Route>
           <Route path="/theme-editor">
