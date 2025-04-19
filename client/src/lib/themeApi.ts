@@ -1,121 +1,69 @@
 /**
- * Theme API Client - 2025 Edition
+ * Theme API - 2025 Edition
  * 
- * Provides client-side API utilities for interacting with the theme API endpoints.
+ * Client-side API functions for managing themes.
  */
 
-import { ThemeEntity } from "@shared/schema";
+import { ThemeEntity } from '@shared/schema';
 
 /**
- * Base API request function for theme API calls
- */
-async function apiRequest<T>({ 
-  endpoint, 
-  method = 'GET', 
-  body = undefined,
-  headers = {}
-}: {
-  endpoint: string;
-  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-  body?: any;
-  headers?: Record<string, string>;
-}): Promise<T> {
-  try {
-    const requestHeaders: HeadersInit = {
-      'Content-Type': 'application/json',
-      ...headers
-    };
-
-    const options: RequestInit = {
-      method,
-      headers: requestHeaders,
-      credentials: 'include'
-    };
-
-    if (body) {
-      options.body = JSON.stringify(body);
-    }
-
-    const response = await fetch(endpoint, options);
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `API request failed with status ${response.status}`);
-    }
-
-    // For DELETE responses with no content
-    if (response.status === 204) {
-      return {} as T;
-    }
-
-    return response.json();
-  } catch (error) {
-    console.error('API request error:', error);
-    throw error;
-  }
-}
-
-/**
- * Get all themes for a business
- * @param businessId The business ID (optional)
- * @param businessSlug The business slug (optional)
- * @returns Array of theme entities
+ * Fetch all themes for a business
+ * @param businessId Optional business ID
+ * @param businessSlug Optional business slug
+ * @returns Array of themes
  */
 export async function getBusinessThemes(
   businessId?: number,
   businessSlug?: string
 ): Promise<ThemeEntity[]> {
   try {
-    let endpoint = '/api/themes';
+    let url = '/api/themes';
     
     if (businessId) {
-      endpoint = `/api/themes/business/${businessId}`;
+      url += `/business/${businessId}`;
     } else if (businessSlug) {
-      endpoint = `/api/themes/business/slug/${businessSlug}`;
+      url += `/business-slug/${businessSlug}`;
     }
     
-    return await apiRequest<ThemeEntity[]>({ endpoint });
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch themes: ${response.status}`);
+    }
+    
+    return await response.json();
   } catch (error) {
-    console.error('Error fetching business themes:', error);
+    console.error('API request error:', error);
     return [];
   }
 }
 
 /**
- * Get a specific theme by ID
- * @param themeId The theme ID
- * @returns Theme entity or null if not found
- */
-export async function getThemeById(themeId: number): Promise<ThemeEntity | null> {
-  try {
-    const endpoint = `/api/themes/${themeId}`;
-    return await apiRequest<ThemeEntity>({ endpoint });
-  } catch (error) {
-    console.error('Error fetching theme:', error);
-    return null;
-  }
-}
-
-/**
  * Get the active theme for a business
- * @param businessId The business ID (optional)
- * @param businessSlug The business slug (optional)
- * @returns Active theme entity or null if none is active
+ * @param businessId Optional business ID
+ * @param businessSlug Optional business slug
+ * @returns Active theme or null
  */
 export async function getActiveTheme(
   businessId?: number,
   businessSlug?: string
 ): Promise<ThemeEntity | null> {
   try {
-    let endpoint = '/api/themes/active';
+    let url = '/api/themes/active';
     
     if (businessId) {
-      endpoint = `/api/themes/active/business/${businessId}`;
+      url += `?businessId=${businessId}`;
     } else if (businessSlug) {
-      endpoint = `/api/themes/active/business/slug/${businessSlug}`;
+      url += `?businessSlug=${businessSlug}`;
     }
     
-    return await apiRequest<ThemeEntity>({ endpoint });
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch active theme: ${response.status}`);
+    }
+    
+    return await response.json();
   } catch (error) {
     console.error('Error fetching active theme:', error);
     return null;
@@ -123,57 +71,93 @@ export async function getActiveTheme(
 }
 
 /**
- * Create a new theme
- * @param theme Theme data to create
- * @returns Created theme entity
+ * Get a specific theme by ID
+ * @param id Theme ID
+ * @returns Theme or null
  */
-export async function createTheme(theme: Partial<ThemeEntity>): Promise<ThemeEntity> {
+export async function getThemeById(id: number): Promise<ThemeEntity | null> {
   try {
-    const endpoint = '/api/themes';
-    return await apiRequest<ThemeEntity>({ 
-      endpoint, 
-      method: 'POST', 
-      body: theme 
+    const response = await fetch(`/api/themes/${id}`);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch theme: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching theme:', error);
+    return null;
+  }
+}
+
+/**
+ * Create a new theme
+ * @param theme Theme data
+ * @returns Created theme
+ */
+export async function createTheme(theme: Partial<ThemeEntity>): Promise<ThemeEntity | null> {
+  try {
+    const response = await fetch('/api/themes', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(theme),
     });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to create theme: ${response.status}`);
+    }
+    
+    return await response.json();
   } catch (error) {
     console.error('Error creating theme:', error);
-    throw error;
+    return null;
   }
 }
 
 /**
  * Update an existing theme
- * @param themeId Theme ID to update
- * @param theme Theme data to update
- * @returns Updated theme entity
+ * @param id Theme ID
+ * @param theme Updated theme data
+ * @returns Updated theme
  */
 export async function updateTheme(
-  themeId: number,
+  id: number,
   theme: Partial<ThemeEntity>
-): Promise<ThemeEntity> {
+): Promise<ThemeEntity | null> {
   try {
-    const endpoint = `/api/themes/${themeId}`;
-    return await apiRequest<ThemeEntity>({ 
-      endpoint, 
-      method: 'PATCH', 
-      body: theme 
+    const response = await fetch(`/api/themes/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(theme),
     });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to update theme: ${response.status}`);
+    }
+    
+    return await response.json();
   } catch (error) {
     console.error('Error updating theme:', error);
-    throw error;
+    return null;
   }
 }
 
 /**
  * Delete a theme
- * @param themeId Theme ID to delete
- * @returns Success status
+ * @param id Theme ID
+ * @returns Success indicator
  */
-export async function deleteTheme(themeId: number): Promise<boolean> {
+export async function deleteTheme(id: number): Promise<boolean> {
   try {
-    const endpoint = `/api/themes/${themeId}`;
-    await apiRequest<void>({ endpoint, method: 'DELETE' });
-    return true;
+    const response = await fetch(`/api/themes/${id}`, {
+      method: 'DELETE',
+    });
+    
+    return response.ok;
   } catch (error) {
     console.error('Error deleting theme:', error);
     return false;
@@ -181,46 +165,23 @@ export async function deleteTheme(themeId: number): Promise<boolean> {
 }
 
 /**
- * Activate a theme for a business
- * @param themeId Theme ID to activate
- * @param businessId Business ID (optional)
- * @returns Activated theme entity
+ * Activate a theme as the current active theme
+ * @param id Theme ID
+ * @returns Activated theme
  */
-export async function activateTheme(
-  themeId: number,
-  businessId?: number
-): Promise<ThemeEntity> {
+export async function activateTheme(id: number): Promise<ThemeEntity | null> {
   try {
-    let endpoint = `/api/themes/${themeId}/activate`;
+    const response = await fetch(`/api/themes/${id}/activate`, {
+      method: 'POST',
+    });
     
-    if (businessId) {
-      endpoint += `?businessId=${businessId}`;
+    if (!response.ok) {
+      throw new Error(`Failed to activate theme: ${response.status}`);
     }
     
-    return await apiRequest<ThemeEntity>({ 
-      endpoint, 
-      method: 'POST'
-    });
+    return await response.json();
   } catch (error) {
     console.error('Error activating theme:', error);
-    throw error;
-  }
-}
-
-/**
- * Set a theme as the default for a business
- * @param themeId Theme ID to set as default
- * @returns Default theme entity
- */
-export async function setDefaultTheme(themeId: number): Promise<ThemeEntity> {
-  try {
-    const endpoint = `/api/themes/${themeId}/default`;
-    return await apiRequest<ThemeEntity>({ 
-      endpoint, 
-      method: 'POST' 
-    });
-  } catch (error) {
-    console.error('Error setting default theme:', error);
-    throw error;
+    return null;
   }
 }

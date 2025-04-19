@@ -1,76 +1,134 @@
 /**
- * ThemeAwareButton Component - 2025 Edition
+ * ThemeAwareButton - 2025 Edition
  * 
- * A button component that uses design tokens from the current theme.
- * This demonstrates how components can consume theme tokens via CSS variables
- * rather than hardcoded values.
+ * This component demonstrates how to create theme-aware components
+ * that can consume theme tokens from the context.
  */
 
-import React, { ButtonHTMLAttributes } from "react";
-import { cn } from "@/lib/utils";
-import { useBusinessTheme } from "@/providers/MultiTenantThemeProvider";
+import React from 'react';
+import { useBusinessTheme } from '@/providers/MultiTenantThemeProvider';
+import { cssVar } from '@/lib/themeUtils';
 
-type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive' | 'link';
-type ButtonSize = 'default' | 'sm' | 'lg' | 'icon';
-
-interface ThemeAwareButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: ButtonVariant;
-  size?: ButtonSize;
-  asChild?: boolean;
-  icon?: React.ReactNode;
-  loading?: boolean;
+interface ThemeAwareButtonProps {
+  children: React.ReactNode;
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+  size?: 'sm' | 'md' | 'lg';
+  onClick?: () => void;
+  className?: string;
 }
 
-export const ThemeAwareButton = React.forwardRef<HTMLButtonElement, ThemeAwareButtonProps>(
-  ({ className, variant = "primary", size = "default", asChild = false, children, disabled, loading, icon, ...props }, ref) => {
-    const { theme } = useBusinessTheme();
-    
-    // Base styles that apply to all variants
-    const baseStyles = "inline-flex items-center justify-center whitespace-nowrap rounded-md font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
-    
-    // Variant-specific styles that use CSS variables for colors
-    const variantStyles = {
-      primary: "bg-[var(--color-primary)] text-[var(--color-primary-foreground)] hover:bg-[var(--color-primary-hover)]",
-      secondary: "bg-[var(--color-secondary)] text-[var(--color-secondary-foreground)] hover:bg-[var(--color-secondary-hover)]",
-      outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
-      ghost: "hover:bg-accent hover:text-accent-foreground",
-      destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-      link: "text-primary underline-offset-4 hover:underline"
-    };
-    
-    // Size-specific styles
-    const sizeStyles = {
-      default: "h-10 px-4 py-2",
-      sm: "h-9 rounded-md px-3",
-      lg: "h-11 rounded-md px-8",
-      icon: "h-10 w-10"
-    };
-    
-    return (
-      <button
-        ref={ref}
-        className={cn(
-          baseStyles,
-          variantStyles[variant],
-          sizeStyles[size],
-          loading && "opacity-70",
-          className
-        )}
-        disabled={disabled || loading}
-        {...props}
-      >
-        {loading && (
-          <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-        )}
-        
-        {icon && !loading && (
-          <span className="mr-2">{icon}</span>
-        )}
-        
-        {children}
-      </button>
-    );
-  }
-);
-
-ThemeAwareButton.displayName = "ThemeAwareButton";
+export function ThemeAwareButton({
+  children,
+  variant = 'primary',
+  size = 'md',
+  onClick,
+  className = '',
+}: ThemeAwareButtonProps) {
+  // Get theme tokens from context
+  const { theme } = useBusinessTheme();
+  
+  // Base styles
+  const baseStyles = 'rounded-md font-medium transition-colors inline-flex items-center justify-center';
+  
+  // Size styles
+  const sizeStyles = {
+    sm: 'h-8 px-3 text-sm',
+    md: 'h-10 px-4 text-base',
+    lg: 'h-12 px-6 text-lg',
+  };
+  
+  // Dynamic styles based on theme and variant
+  const getVariantStyles = () => {
+    switch (variant) {
+      case 'primary':
+        return `
+          background-color: ${cssVar('color-primary-base', '#0070f3')};
+          color: ${cssVar('color-primary-foreground', '#ffffff')};
+          &:hover {
+            background-color: ${cssVar('color-primary-hover', '#0060df')};
+          }
+        `;
+      case 'secondary':
+        return `
+          background-color: ${cssVar('color-secondary-base', '#f1f5f9')};
+          color: ${cssVar('color-secondary-foreground', '#0f172a')};
+          &:hover {
+            background-color: ${cssVar('color-secondary-hover', '#e2e8f0')};
+          }
+        `;
+      case 'outline':
+        return `
+          background-color: transparent;
+          color: ${cssVar('color-primary-base', '#0070f3')};
+          border: 1px solid ${cssVar('color-primary-base', '#0070f3')};
+          &:hover {
+            background-color: ${cssVar('color-primary-base', '#0070f3')}20;
+          }
+        `;
+      case 'ghost':
+        return `
+          background-color: transparent;
+          color: ${cssVar('color-primary-base', '#0070f3')};
+          &:hover {
+            background-color: ${cssVar('color-primary-base', '#0070f3')}10;
+          }
+        `;
+      default:
+        return '';
+    }
+  };
+  
+  // Create inline styles
+  const inlineStyles = {
+    backgroundColor: variant === 'primary' 
+      ? `var(--color-primary-base, #0070f3)` 
+      : variant === 'secondary'
+        ? `var(--color-secondary-base, #f1f5f9)`
+        : 'transparent',
+    color: variant === 'primary'
+      ? `var(--color-primary-foreground, #ffffff)`
+      : variant === 'secondary'
+        ? `var(--color-secondary-foreground, #0f172a)`
+        : `var(--color-primary-base, #0070f3)`,
+    border: variant === 'outline'
+      ? `1px solid var(--color-primary-base, #0070f3)`
+      : 'none',
+  };
+  
+  // Generate dynamic hover styles using JavaScript and CSS custom properties
+  const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const target = e.currentTarget;
+    if (variant === 'primary') {
+      target.style.backgroundColor = `var(--color-primary-hover, #0060df)`;
+    } else if (variant === 'secondary') {
+      target.style.backgroundColor = `var(--color-secondary-hover, #e2e8f0)`;
+    } else if (variant === 'outline') {
+      target.style.backgroundColor = `var(--color-primary-base, #0070f3)20`;
+    } else if (variant === 'ghost') {
+      target.style.backgroundColor = `var(--color-primary-base, #0070f3)10`;
+    }
+  };
+  
+  const handleMouseLeave = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const target = e.currentTarget;
+    if (variant === 'primary') {
+      target.style.backgroundColor = `var(--color-primary-base, #0070f3)`;
+    } else if (variant === 'secondary') {
+      target.style.backgroundColor = `var(--color-secondary-base, #f1f5f9)`;
+    } else if (variant === 'outline' || variant === 'ghost') {
+      target.style.backgroundColor = 'transparent';
+    }
+  };
+  
+  return (
+    <button
+      className={`${baseStyles} ${sizeStyles[size]} ${className}`}
+      style={inlineStyles}
+      onClick={onClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      {children}
+    </button>
+  );
+}

@@ -1,162 +1,140 @@
 /**
- * Theme Selector - 2025 Edition
+ * ThemeSelector - 2025 Edition
  * 
- * A component for selecting and switching between available themes for a business.
- * It displays a list of available themes, highlights the active theme, and allows
- * the user to activate a different theme.
+ * Component for selecting themes from available business themes.
+ * Displays a list of available themes and allows switching between them.
  */
 
-import React from "react";
-import { useBusinessTheme } from "@/providers/MultiTenantThemeProvider";
-import { activateTheme } from "@/lib/themeApi";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ThemeEntity } from "@shared/schema";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { toast } from "@/hooks/use-toast";
+import React from 'react';
+import { useBusinessTheme } from '@/providers/MultiTenantThemeProvider';
+import { ThemeEntity } from '@shared/schema';
+import { activateTheme } from '@/lib/themeApi';
 
 interface ThemeSelectorProps {
-  businessId?: number;
-  onThemeChange?: (theme: ThemeEntity) => void;
+  showPreview?: boolean;
+  onThemeSelect?: (theme: ThemeEntity) => void;
+  className?: string;
 }
 
-export function ThemeSelector({ businessId, onThemeChange }: ThemeSelectorProps) {
-  const { themes, activeTheme, isLoading } = useBusinessTheme();
-  const queryClient = useQueryClient();
+export function ThemeSelector({
+  showPreview = true,
+  onThemeSelect,
+  className = '',
+}: ThemeSelectorProps) {
+  const { 
+    themes, 
+    activeTheme, 
+    activeThemeId, 
+    setActiveThemeId, 
+    isLoading 
+  } = useBusinessTheme();
   
-  // Mutation to activate a theme
-  const activateThemeMutation = useMutation({
-    mutationFn: async (themeId: number) => {
-      return activateTheme(themeId, businessId);
-    },
-    onSuccess: (data) => {
-      // Update the query cache
-      const businessQueryKey = businessId 
-        ? ['/api/themes/active', businessId]
-        : ['/api/themes/active'];
-      
-      queryClient.setQueryData(businessQueryKey, data);
-      queryClient.invalidateQueries({ queryKey: businessQueryKey });
-      
-      toast({
-        title: "Theme activated",
-        description: `${data.name} is now active.`,
-      });
-      
-      if (onThemeChange) {
-        onThemeChange(data);
-      }
-    },
-    onError: (error) => {
-      console.error("Error activating theme:", error);
-      toast({
-        title: "Error",
-        description: "Failed to activate theme. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-  
-  // Handle theme selection
-  const handleSelectTheme = (themeId: number) => {
-    if (themeId === activeTheme?.id) return;
-    activateThemeMutation.mutate(themeId);
+  const handleThemeSelect = async (theme: ThemeEntity) => {
+    // Update the active theme in the UI immediately
+    setActiveThemeId(theme.id);
+    
+    // Notify parent component if callback provided
+    if (onThemeSelect) {
+      onThemeSelect(theme);
+    }
+    
+    try {
+      // Update the active theme in the database
+      await activateTheme(theme.id);
+    } catch (error) {
+      console.error('Failed to activate theme:', error);
+    }
   };
   
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-6">
-        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+      <div className="p-4 flex justify-center">
+        <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
       </div>
     );
   }
   
   if (!themes || themes.length === 0) {
     return (
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle>No Themes Available</CardTitle>
-          <CardDescription>
-            There are no themes available for this business. Create a new theme to get started.
-          </CardDescription>
-        </CardHeader>
-      </Card>
+      <div className="p-4 text-center text-muted-foreground">
+        No themes available. Create a theme first.
+      </div>
     );
   }
   
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {themes.map((theme) => {
-        const isActive = theme.id === activeTheme?.id;
-        
-        return (
-          <Card 
+    <div className={`space-y-4 ${className}`}>
+      <h3 className="text-lg font-medium">Select Theme</h3>
+      
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+        {themes.map((theme) => (
+          <ThemeCard
             key={theme.id}
-            className={`group transition-all hover:shadow-md cursor-pointer ${isActive ? 'ring-2 ring-primary' : ''}`}
-            onClick={() => handleSelectTheme(theme.id)}
-          >
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-start">
-                <CardTitle className="text-lg">{theme.name}</CardTitle>
-                {isActive && <Badge variant="default">Active</Badge>}
-                {theme.isDefault && <Badge variant="outline">Default</Badge>}
-              </div>
-              {theme.description && (
-                <CardDescription className="text-sm">
-                  {theme.description}
-                </CardDescription>
-              )}
-            </CardHeader>
-            
-            <CardContent>
-              {/* Theme preview */}
-              <div 
-                className="w-full h-20 rounded-md mb-2"
-                style={{
-                  background: theme.tokens?.colors?.primary?.base || 
-                    (typeof theme.tokens?.colors?.primary === 'string' ? theme.tokens.colors.primary : '#cccccc'),
-                }}
-              />
-              
-              <div className="flex gap-2 flex-wrap">
-                {theme.tokens?.colors && 
-                  Object.entries(theme.tokens.colors)
-                    .filter(([key]) => ['primary', 'secondary', 'accent'].includes(key))
-                    .map(([key, value]) => {
-                      const color = typeof value === 'string' ? value : value?.base;
-                      if (!color) return null;
-                      
-                      return (
-                        <div 
-                          key={key}
-                          className="w-6 h-6 rounded-full"
-                          style={{ backgroundColor: color }}
-                          title={`${key}: ${color}`}
-                        />
-                      );
-                    })
-                }
-              </div>
-            </CardContent>
-            
-            <CardFooter>
-              <div className="w-full flex justify-between items-center">
-                <div className="text-sm text-muted-foreground">
-                  Last updated: {theme.updatedAt ? new Date(theme.updatedAt).toLocaleDateString() : 'Unknown'}
-                </div>
-                <Button 
-                  variant={isActive ? "outline" : "default"}
-                  size="sm"
-                  disabled={isActive || activateThemeMutation.isPending}
-                >
-                  {isActive ? 'Current' : 'Activate'}
-                </Button>
-              </div>
-            </CardFooter>
-          </Card>
-        );
-      })}
+            theme={theme}
+            isActive={theme.id === activeThemeId}
+            onClick={() => handleThemeSelect(theme)}
+            showPreview={showPreview}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+interface ThemeCardProps {
+  theme: ThemeEntity;
+  isActive: boolean;
+  onClick: () => void;
+  showPreview: boolean;
+}
+
+function ThemeCard({ theme, isActive, onClick, showPreview }: ThemeCardProps) {
+  // Extract primary color from theme tokens for preview
+  const primaryColor = theme.tokens?.colors?.primary?.base || '#0070f3';
+  const secondaryColor = theme.tokens?.colors?.secondary?.base || '#f1f5f9';
+  const accentColor = theme.tokens?.colors?.accent?.base || '#f1f5f9';
+  const backgroundColor = theme.tokens?.colors?.background?.base || '#ffffff';
+  
+  return (
+    <div
+      className={`border rounded-lg overflow-hidden cursor-pointer transition-all hover:shadow-md ${
+        isActive ? 'ring-2 ring-primary' : ''
+      }`}
+      onClick={onClick}
+    >
+      {showPreview && (
+        <div className="relative" style={{ backgroundColor: backgroundColor, height: '120px' }}>
+          {/* Preview UI elements that showcase the theme colors */}
+          <div className="absolute top-3 left-3 right-3 flex gap-2">
+            <div className="w-16 h-8 rounded-md" style={{ backgroundColor: primaryColor }}></div>
+            <div className="w-16 h-8 rounded-md" style={{ backgroundColor: secondaryColor }}></div>
+            <div className="w-8 h-8 rounded-md" style={{ backgroundColor: accentColor }}></div>
+          </div>
+          
+          <div className="absolute bottom-3 left-3 right-3">
+            <div className="w-full h-6 rounded-md" style={{ backgroundColor: primaryColor, opacity: 0.2 }}></div>
+          </div>
+        </div>
+      )}
+      
+      <div className="p-3 border-t">
+        <div className="flex items-center justify-between">
+          <div>
+            <h4 className="font-medium truncate">{theme.name}</h4>
+            <p className="text-sm text-muted-foreground truncate">
+              {theme.description || 'No description'}
+            </p>
+          </div>
+          
+          {isActive && (
+            <div className="rounded-full bg-primary/10 text-primary p-1 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
