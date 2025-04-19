@@ -5,7 +5,32 @@
  */
 
 import { ThemeEntity } from "@shared/schema";
-import { apiRequest } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
+
+// Helper function to make API requests
+async function apiRequest<T>({ 
+  url, 
+  method, 
+  data 
+}: { 
+  url: string; 
+  method: string; 
+  data?: any 
+}): Promise<T> {
+  const response = await fetch(url, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: data ? JSON.stringify(data) : undefined,
+  });
+  
+  if (!response.ok) {
+    throw new Error(`API request failed: ${response.status}`);
+  }
+  
+  return response.json();
+}
 
 /**
  * Get all themes for a business
