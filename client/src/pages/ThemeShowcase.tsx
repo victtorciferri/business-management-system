@@ -9,6 +9,7 @@ import React from 'react';
 import { useGlobalTheme } from '@/hooks/useGlobalTheme';
 import { ThemeDemo } from '@/components/theme-aware/ThemeDemo';
 import { ThemeTokenPreview } from '@/components/theme-aware/ThemeTokenPreview';
+import { ComponentVariantsDemo } from '@/components/theme-aware/ComponentVariantsDemo';
 import { ColorModeToggle } from '@/components/theme-aware/ColorModeToggle';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
@@ -44,6 +45,7 @@ export function ThemeShowcase() {
         <TabsList className="w-full sm:w-auto mb-4">
           <TabsTrigger value="demo">Theme Demo</TabsTrigger>
           <TabsTrigger value="tokens">Token Preview</TabsTrigger>
+          <TabsTrigger value="variants">Component Variants</TabsTrigger>
           <TabsTrigger value="docs">Documentation</TabsTrigger>
         </TabsList>
         
@@ -53,6 +55,10 @@ export function ThemeShowcase() {
         
         <TabsContent value="tokens" className="mt-6 space-y-6">
           <ThemeTokenPreview />
+        </TabsContent>
+        
+        <TabsContent value="variants" className="mt-6 space-y-6">
+          <ComponentVariantsDemo />
         </TabsContent>
         
         <TabsContent value="docs" className="mt-6 space-y-6">
