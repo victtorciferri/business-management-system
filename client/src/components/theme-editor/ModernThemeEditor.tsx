@@ -176,48 +176,56 @@ export function ModernThemeEditor({ businessId, businessData, onPreviewToggle }:
     
     try {
       setIsSaving(true);
-      console.log("Saving theme:", currentTheme);
+      console.log("Starting theme save with:", currentTheme);
       
-      // Cleanly map the theme according to 2025 Edition schema
-      // This ensures consistent property naming regardless of source
-      const cleanTheme = {
+      // CRITICAL FIX: Ensure we save only the expected fields without any hybrid/dual properties
+      const themeToSave = {
+        // Essential theme properties
         name: currentTheme.name || "Custom Theme",
+        // Standard color properties - use correct naming that matches the DB schema
         primaryColor: currentTheme.primaryColor,
         secondaryColor: currentTheme.secondaryColor,
         accentColor: currentTheme.accentColor,
         backgroundColor: currentTheme.backgroundColor,
         textColor: currentTheme.textColor,
+        // Layout and typography
         fontFamily: currentTheme.fontFamily,
         borderRadius: currentTheme.borderRadius,
         spacing: currentTheme.spacing,
+        // Style variants
         buttonStyle: currentTheme.buttonStyle,
-        cardStyle: currentTheme.cardStyle,
+        cardStyle: currentTheme.cardStyle, 
         appearance: currentTheme.appearance,
         variant: currentTheme.variant,
+        // Optional extras
         customCSS: currentTheme.customCSS,
-        // If there are legacy fields from the preset, normalize them
+        // Include ID if it exists
         ...(currentTheme.id ? { id: currentTheme.id } : {}),
       };
       
-      console.log("Clean mapped theme for saving:", cleanTheme);
+      console.log("Clean theme to save:", themeToSave);
       
       // Use the appropriate save method depending on context
       let result;
       
       // If theme has an ID, it's an existing theme, so update it
-      if (cleanTheme.id) {
-        result = await themeManager.updateTheme(cleanTheme.id, cleanTheme);
+      if (themeToSave.id) {
+        console.log(`Updating existing theme ID ${themeToSave.id}`);
+        result = await themeManager.updateTheme(themeToSave.id, themeToSave);
       } else {
         // If no id exists, create a new theme
         const newTheme = {
-          ...cleanTheme,
-          businessId: businessId || undefined,
-          isActive: true
+          ...themeToSave,
+          businessId: businessId || undefined, 
+          isActive: true,
+          isDefault: false // New themes shouldn't override default unless explicitly set
         };
+        console.log("Creating new theme:", newTheme);
         result = await themeManager.createNewTheme(newTheme);
       }
       
       if (result) {
+        console.log("Theme saved successfully:", result);
         setOriginalTheme(result);
         setCurrentTheme(result);
         setHasUnsavedChanges(false);
@@ -225,6 +233,9 @@ export function ModernThemeEditor({ businessId, businessData, onPreviewToggle }:
           title: "Theme saved",
           description: "Your theme changes have been saved successfully."
         });
+      } else {
+        console.warn("Theme save returned no result");
+        throw new Error("Theme save returned no result");
       }
     } catch (error) {
       console.error('Error saving theme:', error);
@@ -364,22 +375,42 @@ export function ModernThemeEditor({ businessId, businessData, onPreviewToggle }:
                     <h3 className="text-base font-medium mb-4">Theme Presets</h3>
                     <ThemePresetSelector 
                       onSelectPreset={(preset) => {
-                        // Apply the preset theme
-                        setCurrentTheme((prev) => {
-                          if (!prev) return preset as ThemeData;
-                          return {
-                            ...prev,
-                            ...preset,
-                            // Make sure we preserve the ID and business ID
-                            id: prev.id,
-                            businessId: prev.businessId
-                          };
-                        });
+                        console.log("Applying preset theme:", preset);
+                        
+                        // CRITICAL FIX: Completely replace the current theme with the preset
+                        // Only preserve ID and businessId from the previous theme
+                        const id = currentTheme?.id;
+                        const businessId = currentTheme?.businessId;
+                        
+                        // Create a clean preset theme object
+                        const presetTheme = {
+                          // Start with a clean slate (no legacy properties)
+                          name: preset.name,
+                          primaryColor: preset.primaryColor,
+                          secondaryColor: preset.secondaryColor,
+                          accentColor: preset.accentColor,
+                          backgroundColor: preset.backgroundColor,
+                          textColor: preset.textColor,
+                          fontFamily: preset.fontFamily,
+                          borderRadius: preset.borderRadius,
+                          spacing: preset.spacing,
+                          buttonStyle: preset.buttonStyle,
+                          cardStyle: preset.cardStyle,
+                          appearance: preset.appearance,
+                          variant: preset.variant,
+                          customCSS: preset.customCSS,
+                          
+                          // Preserve existing ID and businessId if they exist
+                          ...(id ? { id } : {}),
+                          ...(businessId ? { businessId } : {})
+                        };
+                        
+                        // Replace the current theme entirely
+                        setCurrentTheme(presetTheme);
+                        console.log("New theme set to:", presetTheme);
                         
                         // Force enable save button
                         setHasUnsavedChanges(true);
-                        
-                        console.log("Preset selected, hasUnsavedChanges set to true");
                       }}
                     />
                   </div>
