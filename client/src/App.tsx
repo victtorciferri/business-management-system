@@ -48,7 +48,6 @@ import { BusinessContextProvider } from "@/contexts/BusinessContext";
 // Modern theme providers are used exclusively now
 
 // New 2025 theme providers
-import { ThemeProvider as LegacyThemeProvider } from "@/contexts/ThemeContext";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import GlobalThemeProvider from "@/providers/GlobalThemeProvider";
 import DarkModeInitializer from "@/components/shared/dark-mode-initializer";
@@ -327,9 +326,7 @@ function AppContent() {
             <ProtectedRoute>
               <BusinessContextProvider>
                 <ThemeProvider>
-                  <LegacyThemeProvider>
                     <ThemeSelectorDemo />
-                  </LegacyThemeProvider>
                 </ThemeProvider>
               </BusinessContextProvider>
             </ProtectedRoute>
@@ -338,9 +335,7 @@ function AppContent() {
             <ProtectedRoute>
               <BusinessContextProvider>
                 <ThemeProvider>
-                  <LegacyThemeProvider>
                     <ColorModeDemo />
-                  </LegacyThemeProvider>
                 </ThemeProvider>
               </BusinessContextProvider>
             </ProtectedRoute>
@@ -349,10 +344,8 @@ function AppContent() {
             <ProtectedRoute>
               <BusinessContextProvider>
                 <ThemeProvider>
-                  <LegacyThemeProvider>
                     {/* Placeholder for ThemeShowcase */}
                     <div>Theme Showcase Coming Soon</div>
-                  </LegacyThemeProvider>
                 </ThemeProvider>
               </BusinessContextProvider>
             </ProtectedRoute>
@@ -385,9 +378,7 @@ function AppContent() {
             <ProtectedRoute>
               <BusinessContextProvider>
                 <ThemeProvider>
-                  <LegacyThemeProvider>
                     <DashboardSettings />
-                  </LegacyThemeProvider>
                 </ThemeProvider>
               </BusinessContextProvider>
             </ProtectedRoute>
@@ -396,9 +387,7 @@ function AppContent() {
             <ProtectedRoute>
               <BusinessContextProvider>
                 <ThemeProvider>
-                  <LegacyThemeProvider>
                     <TemplateSettings />
-                  </LegacyThemeProvider>
                 </ThemeProvider>
               </BusinessContextProvider>
             </ProtectedRoute>
