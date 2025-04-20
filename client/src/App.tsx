@@ -288,7 +288,11 @@ function AppContent() {
           <Route path="/platform-admin/:slug">
             {params => (
               <ProtectedRoute requiredRole="admin">
-                <PlatformAdmin businessSlug={params.slug} />
+                <GlobalThemeProvider>
+                  <ThemeProvider>
+                    <PlatformAdmin businessSlug={params.slug} />
+                  </ThemeProvider>
+                </GlobalThemeProvider>
               </ProtectedRoute>
             )}
           </Route>
@@ -304,7 +308,12 @@ function AppContent() {
           <Route path="/admin-theme-editor/:businessId">
             {params => (
               <ProtectedRoute requiredRole="admin">
-                <AdminThemeEditor businessId={parseInt(params.businessId, 10)} />
+                <GlobalThemeProvider>
+                  <ThemeProvider>
+                    <DarkModeInitializer />
+                    <AdminThemeEditor businessId={parseInt(params.businessId, 10)} />
+                  </ThemeProvider>
+                </GlobalThemeProvider>
               </ProtectedRoute>
             )}
           </Route>
