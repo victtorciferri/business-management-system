@@ -215,6 +215,10 @@ export default function AdminDashboard() {
     setLocation(`/admin-theme-editor/${businessId}`);
   };
   
+  const navigateToModernThemeEditor = (businessId: number) => {
+    setLocation(`/theme-editor?businessId=${businessId}`);
+  };
+  
   // Helper function to handle navigation (replacing the navigate function)
   const navigate = (path: string) => {
     setLocation(path);
@@ -892,9 +896,18 @@ export default function AdminDashboard() {
                                 size="icon"
                                 className="bg-indigo-50 hover:bg-indigo-100 border-indigo-200"
                                 onClick={() => navigateToAdvancedThemeEditor(business.id)}
-                                title="Advanced theme editor"
+                                title="Legacy theme editor"
                               >
                                 <Settings className="h-4 w-4 text-indigo-600" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="bg-green-50 hover:bg-green-100 border-green-200"
+                                onClick={() => navigateToModernThemeEditor(business.id)}
+                                title="Modern Theme Editor 2025"
+                              >
+                                <Palette className="h-4 w-4 text-green-600" />
                               </Button>
                             </div>
                           </TableCell>

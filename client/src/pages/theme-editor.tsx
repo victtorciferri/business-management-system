@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useBusinessContext } from '@/contexts/BusinessContext';
 import { ThemeEditor } from '@/components/business/theme-customization/ThemeEditor';
 import { BusinessThemeEditor } from '@/components/business/theme-customization/BusinessThemeEditor';
@@ -6,12 +6,14 @@ import { Container, Section } from '@/components/ui/layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { ArrowLeft, AlertTriangle, Paintbrush, Eye } from 'lucide-react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ModernThemeEditor } from '@/components/theme-editor/ModernThemeEditor';
 import GlobalThemeProvider from '@/providers/GlobalThemeProvider';
+import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 
 // Define local Theme type for theme preview
 interface Theme {
@@ -26,9 +28,36 @@ interface Theme {
 }
 
 export default function ThemeEditorPage() {
-  const { business, isLoading } = useBusinessContext();
+  const { business, isLoading: businessContextLoading } = useBusinessContext();
+  const [location] = useLocation();
   const [isPreviewActive, setIsPreviewActive] = useState(false);
   const [previewTheme, setPreviewTheme] = useState<Theme | null>(null);
+  const [businessId, setBusinessId] = useState<number | null>(null);
+  
+  // Parse query parameters to get businessId
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const businessIdParam = params.get('businessId');
+    
+    if (businessIdParam && !isNaN(Number(businessIdParam))) {
+      setBusinessId(Number(businessIdParam));
+    }
+  }, [location]);
+  
+  // Fetch business data if businessId is provided (for admin)
+  const { data: adminBusinessData, isLoading: adminBusinessLoading } = useQuery({
+    queryKey: ['/api/admin/business', businessId],
+    queryFn: async () => {
+      if (!businessId) return null;
+      const response = await apiRequest('GET', `/api/admin/business/${businessId}`);
+      return response.json();
+    },
+    enabled: !!businessId
+  });
+  
+  // Determine which business to use based on context or admin panel
+  const currentBusiness = adminBusinessData || business;
+  const isLoading = businessContextLoading || adminBusinessLoading;
   
   // Handle theme preview
   const handlePreview = (themeConfig: any) => {
