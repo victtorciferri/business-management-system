@@ -208,7 +208,8 @@ export default function AdminDashboard() {
   
   // Single function to navigate to the modern theme editor
   const navigateToThemeEditor = (businessId: number) => {
-    setLocation(`/admin-theme-editor/${businessId}`);
+    // Use the modern theme editor route - this is the truly modern one with full functionality
+    setLocation(`/theme-editor?businessId=${businessId}`);
   };
   
   // Keep handleThemeSettings for backward compatibility, but redirect to modern editor
