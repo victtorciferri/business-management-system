@@ -23,8 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { ThemeEditor } from "@/components/business/theme-customization/ThemeEditor";
-import { BusinessThemeEditor } from "@/components/business/theme-customization/BusinessThemeEditor";
+import { ModernThemeEditor } from "@/components/theme-editor/ModernThemeEditor";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ArrowLeft, Eye, Save, Shield, AlertTriangle, Paintbrush } from "lucide-react";
@@ -272,74 +271,40 @@ export default function AdminThemeEditor({ businessId: propBusinessId }: AdminTh
       </div>
       
       <div className="flex flex-col gap-8">
-        <Tabs defaultValue="new">
-          <TabsList className="mb-4">
-            <TabsTrigger value="new">Business Theme</TabsTrigger>
-            <TabsTrigger value="legacy">Advanced Theme Editor</TabsTrigger>
-          </TabsList>
-          
-          <Card className="mb-4 border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800">
-            <CardContent className="py-4">
-              <Alert className="bg-transparent border-0 p-0">
-                <div className="flex items-start">
-                  <AlertTriangle className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <AlertTitle className="text-blue-700 dark:text-blue-300 mb-1">About Theme Editors</AlertTitle>
-                    <AlertDescription className="text-blue-700 dark:text-blue-300 text-sm">
-                      <p className="mb-2"><strong>Business Theme</strong>: The new simplified theme editor that uses direct color values. This is recommended for most businesses.</p>
-                      <p><strong>Advanced Theme Editor</strong>: The legacy theme editor with more detailed customization options.</p>
-                    </AlertDescription>
-                  </div>
+        <Card className="mb-4 border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800">
+          <CardContent className="py-4">
+            <Alert className="bg-transparent border-0 p-0">
+              <div className="flex items-start">
+                <Paintbrush className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <AlertTitle className="text-blue-700 dark:text-blue-300 mb-1">Modern Theme System</AlertTitle>
+                  <AlertDescription className="text-blue-700 dark:text-blue-300 text-sm">
+                    <p>This sophisticated theme editor provides comprehensive design tokens and component variants for complete customization of {business.name}'s portal.</p>
+                  </AlertDescription>
                 </div>
-              </Alert>
-            </CardContent>
-          </Card>
+              </div>
+            </Alert>
+          </CardContent>
+        </Card>
           
-          <TabsContent value="new">
-            <div className="mb-4">
-              <Card>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center gap-2">
-                    <Paintbrush className="h-5 w-5 text-primary" />
-                    <CardTitle>Business Theme Settings</CardTitle>
-                  </div>
-                  <CardDescription className="mt-1.5">
-                    Color customization for {business.name}'s theme
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {/* Admin implementation that saves to the admin API endpoint */}
-                  <BusinessThemeEditor 
-                    initialTheme={businessTheme}
-                    businessId={businessId}
-                    isAdminMode={true}
-                    onSaveTheme={handleSaveBusinessTheme}
-                    onSave={() => handleSaveComplete()}
-                  />
-                </CardContent>
-              </Card>
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <Paintbrush className="h-5 w-5 text-primary" />
+              <CardTitle>Theme Settings</CardTitle>
             </div>
-          </TabsContent>
-          
-          <TabsContent value="legacy">
-            <ThemeEditor 
-              onPreview={handlePreview}
-              onSave={handleSaveComplete}
-              initialConfig={{
-                primaryColor: businessConfig.primaryColor,
-                secondaryColor: businessConfig.secondaryColor,
-                accentColor: businessConfig.accentColor,
-                industryType: businessConfig.industryType,
-                // Set the business context manually for the theme editor
-                business: business ? {
-                  id: business.id,
-                  name: business.name,
-                  slug: business.slug
-                } : undefined
-              }}
+            <CardDescription className="mt-1.5">
+              Complete theme customization for {business.name}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ModernThemeEditor 
+              businessId={businessId}
+              businessData={business}
+              onPreviewToggle={setPreviewActive}
             />
-          </TabsContent>
-        </Tabs>
+          </CardContent>
+        </Card>
         
         {previewActive && (
           <Card>

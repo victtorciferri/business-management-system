@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useBusinessContext } from '@/contexts/BusinessContext';
-import { ThemeEditor } from '@/components/business/theme-customization/ThemeEditor';
-import { BusinessThemeEditor } from '@/components/business/theme-customization/BusinessThemeEditor';
 import { Container, Section } from '@/components/ui/layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -9,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Link, useLocation } from 'wouter';
 import { ArrowLeft, AlertTriangle, Paintbrush, Eye } from 'lucide-react';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ModernThemeEditor } from '@/components/theme-editor/ModernThemeEditor';
 import GlobalThemeProvider from '@/providers/GlobalThemeProvider';
 import { useQuery } from '@tanstack/react-query';
@@ -172,55 +169,25 @@ export default function ThemeEditorPage() {
           </div>
           
           <div className="mt-4">
-            <Tabs defaultValue="modern">
-              <TabsList className="mb-4">
-                <TabsTrigger value="modern">Modern Theme System</TabsTrigger>
-                <TabsTrigger value="legacy">Legacy Theme Editors</TabsTrigger>
-              </TabsList>
-              
-              <Card className="mb-4 border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800">
-                <CardContent className="py-3">
-                  <Alert className="bg-transparent border-0 p-0">
-                    <AlertTriangle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                    <AlertTitle className="text-blue-700 dark:text-blue-300">About Theme Editors</AlertTitle>
-                    <AlertDescription className="text-blue-700 dark:text-blue-300 text-sm">
-                      <p className="mb-2"><strong>Modern Theme System (2025)</strong>: The new sophisticated theme editor with comprehensive design tokens and component variants.</p>
-                      <p><strong>Legacy Theme Editors</strong>: Earlier versions of the theme editor for backward compatibility.</p>
-                    </AlertDescription>
-                  </Alert>
-                </CardContent>
-              </Card>
-              
-              <TabsContent value="modern">
-                <GlobalThemeProvider>
-                  <ModernThemeEditor 
-                    onPreviewToggle={setIsPreviewActive}
-                    businessId={businessId}
-                    businessData={currentBusiness}
-                  />
-                </GlobalThemeProvider>
-              </TabsContent>
-              
-              <TabsContent value="legacy">
-                <Tabs defaultValue="simple">
-                  <TabsList className="mb-4">
-                    <TabsTrigger value="simple">Business Theme</TabsTrigger>
-                    <TabsTrigger value="advanced">Advanced Theme Editor</TabsTrigger>
-                  </TabsList>
-                
-                  <TabsContent value="advanced">
-                    <ThemeEditor 
-                      onPreview={handlePreview}
-                      onSave={handleSave}
-                    />
-                  </TabsContent>
-                  
-                  <TabsContent value="simple">
-                    <BusinessThemeEditor />
-                  </TabsContent>
-                </Tabs>
-              </TabsContent>
-            </Tabs>
+            <Card className="mb-4 border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800">
+              <CardContent className="py-3">
+                <Alert className="bg-transparent border-0 p-0">
+                  <AlertTriangle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <AlertTitle className="text-blue-700 dark:text-blue-300">Modern Theme System</AlertTitle>
+                  <AlertDescription className="text-blue-700 dark:text-blue-300 text-sm">
+                    <p>This sophisticated theme editor provides comprehensive design tokens and component variants for complete customization of your business portal.</p>
+                  </AlertDescription>
+                </Alert>
+              </CardContent>
+            </Card>
+            
+            <GlobalThemeProvider>
+              <ModernThemeEditor 
+                onPreviewToggle={setIsPreviewActive}
+                businessId={businessId}
+                businessData={currentBusiness}
+              />
+            </GlobalThemeProvider>
           </div>
           
           <Section>
