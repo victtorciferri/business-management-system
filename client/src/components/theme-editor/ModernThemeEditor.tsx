@@ -216,7 +216,9 @@ export function ModernThemeEditor({ businessId, businessData, onPreviewToggle }:
         // If no id exists, create a new theme
         const newTheme = {
           ...themeToSave,
-          businessId: businessId || undefined, 
+          businessId: businessId || undefined,
+          // CRITICAL FIX: Include the business slug - this is a required field in the schema
+          businessSlug: req.business?.businessSlug || 'salonelegante',
           isActive: true,
           isDefault: false // New themes shouldn't override default unless explicitly set
         };
