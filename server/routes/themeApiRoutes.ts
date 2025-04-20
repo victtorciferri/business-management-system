@@ -481,6 +481,12 @@ router.post('/themes', async (req, res) => {
 // Update a theme
 router.patch('/themes/:themeId', async (req, res) => {
   try {
+    // Check if user is authenticated
+    if (!req.isAuthenticated || !req.isAuthenticated()) {
+      console.error('Theme update - not authenticated');
+      return res.status(401).json({ message: 'Please login first' });
+    }
+    
     const themeId = parseInt(req.params.themeId, 10);
     if (isNaN(themeId)) {
       return res.status(400).json({ message: 'Invalid theme ID' });
@@ -501,11 +507,18 @@ router.patch('/themes/:themeId', async (req, res) => {
       return res.status(404).json({ message: 'Theme not found' });
     }
     
+    // Verify user owns this theme
+    if (req.user && req.user.id !== existingTheme.businessId) {
+      console.error(`Theme update - user ${req.user.id} does not own theme ${themeId} belonging to business ${existingTheme.businessId}`);
+      return res.status(403).json({ message: 'You do not have permission to update this theme' });
+    }
+    
     console.log(`Updating theme ID ${themeId} with fields:`, {
       ...Object.keys(req.body).length > 0 ? { fieldCount: Object.keys(req.body).length } : {},
       hasName: !!name,
       hasTokens: !!tokens,
-      hasLegacyProps: !!(primaryColor || secondaryColor || accentColor)
+      hasLegacyProps: !!(primaryColor || secondaryColor || accentColor),
+      user: req.user ? { id: req.user.id, username: req.user.username } : 'Not authenticated'
     });
     
     // Update theme properties, preferring new values but preserving existing ones
@@ -516,8 +529,9 @@ router.patch('/themes/:themeId', async (req, res) => {
         description: description !== undefined ? description : existingTheme.description,
         tokens: tokens || existingTheme.tokens,
         
-        // CRITICAL: Always preserve businessSlug
+        // CRITICAL: Always preserve businessSlug and businessId
         businessSlug: existingTheme.businessSlug, 
+        businessId: existingTheme.businessId,
         
         // Legacy fields - update if provided
         primaryColor: primaryColor !== undefined ? primaryColor : existingTheme.primaryColor,
@@ -539,6 +553,13 @@ router.patch('/themes/:themeId', async (req, res) => {
       .where(eq(themes.id, themeId))
       .returning();
     
+    console.log('Theme updated successfully:', {
+      id: updatedTheme.id,
+      name: updatedTheme.name,
+      businessId: updatedTheme.businessId,
+      businessSlug: updatedTheme.businessSlug
+    });
+    
     return res.json(updatedTheme);
   } catch (error) {
     console.error('Error updating theme:', error);
@@ -552,6 +573,12 @@ router.patch('/themes/:themeId', async (req, res) => {
 // Delete a theme
 router.delete('/themes/:themeId', async (req, res) => {
   try {
+    // Check if user is authenticated
+    if (!req.isAuthenticated || !req.isAuthenticated()) {
+      console.error('Theme deletion - not authenticated');
+      return res.status(401).json({ message: 'Please login first' });
+    }
+    
     const themeId = parseInt(req.params.themeId, 10);
     if (isNaN(themeId)) {
       return res.status(400).json({ message: 'Invalid theme ID' });
@@ -563,6 +590,12 @@ router.delete('/themes/:themeId', async (req, res) => {
       return res.status(404).json({ message: 'Theme not found' });
     }
     
+    // Verify user owns this theme
+    if (req.user && req.user.id !== existingTheme.businessId) {
+      console.error(`Theme deletion - user ${req.user.id} does not own theme ${themeId} belonging to business ${existingTheme.businessId}`);
+      return res.status(403).json({ message: 'You do not have permission to delete this theme' });
+    }
+    
     // Check if it's the active or default theme
     if (existingTheme.isActive || existingTheme.isDefault) {
       return res.status(400).json({ 
@@ -570,7 +603,16 @@ router.delete('/themes/:themeId', async (req, res) => {
       });
     }
     
+    console.log(`Deleting theme ID ${themeId}`, {
+      themeName: existingTheme.name,
+      businessId: existingTheme.businessId, 
+      businessSlug: existingTheme.businessSlug,
+      user: req.user ? { id: req.user.id, username: req.user.username } : 'Not authenticated'
+    });
+    
     await db.delete(themes).where(eq(themes.id, themeId));
+    
+    console.log(`Theme ID ${themeId} deleted successfully`);
     
     return res.status(204).send();
   } catch (error) {
@@ -582,6 +624,12 @@ router.delete('/themes/:themeId', async (req, res) => {
 // Activate a theme
 router.post('/themes/:themeId/activate', async (req, res) => {
   try {
+    // Check if user is authenticated
+    if (!req.isAuthenticated || !req.isAuthenticated()) {
+      console.error('Theme activation - not authenticated');
+      return res.status(401).json({ message: 'Please login first' });
+    }
+    
     const themeId = parseInt(req.params.themeId, 10);
     if (isNaN(themeId)) {
       return res.status(400).json({ message: 'Invalid theme ID' });
@@ -593,9 +641,20 @@ router.post('/themes/:themeId/activate', async (req, res) => {
       return res.status(404).json({ message: 'Theme not found' });
     }
     
+    // Verify user owns this theme
+    if (req.user && req.user.id !== themeToActivate.businessId) {
+      console.error(`Theme activation - user ${req.user.id} does not own theme ${themeId} belonging to business ${themeToActivate.businessId}`);
+      return res.status(403).json({ message: 'You do not have permission to activate this theme' });
+    }
+    
     const businessId = req.query.businessId 
       ? parseInt(req.query.businessId as string, 10) 
       : themeToActivate.businessId;
+    
+    console.log(`Activating theme ID ${themeId} for business ID ${businessId}`, {
+      themeName: themeToActivate.name,
+      user: req.user ? { id: req.user.id, username: req.user.username } : 'Not authenticated'
+    });
     
     // First, deactivate the currently active theme for this business
     await db.update(themes)
@@ -614,6 +673,13 @@ router.post('/themes/:themeId/activate', async (req, res) => {
       .where(eq(themes.id, themeId))
       .returning();
     
+    console.log('Theme activated successfully:', {
+      id: activatedTheme.id,
+      name: activatedTheme.name,
+      businessId: activatedTheme.businessId,
+      businessSlug: activatedTheme.businessSlug
+    });
+    
     return res.json(activatedTheme);
   } catch (error) {
     console.error('Error activating theme:', error);
@@ -624,6 +690,12 @@ router.post('/themes/:themeId/activate', async (req, res) => {
 // Set a theme as default
 router.post('/themes/:themeId/default', async (req, res) => {
   try {
+    // Check if user is authenticated
+    if (!req.isAuthenticated || !req.isAuthenticated()) {
+      console.error('Theme default setting - not authenticated');
+      return res.status(401).json({ message: 'Please login first' });
+    }
+    
     const themeId = parseInt(req.params.themeId, 10);
     if (isNaN(themeId)) {
       return res.status(400).json({ message: 'Invalid theme ID' });
@@ -634,6 +706,17 @@ router.post('/themes/:themeId/default', async (req, res) => {
     if (!themeToSetDefault) {
       return res.status(404).json({ message: 'Theme not found' });
     }
+    
+    // Verify user owns this theme
+    if (req.user && req.user.id !== themeToSetDefault.businessId) {
+      console.error(`Theme default setting - user ${req.user.id} does not own theme ${themeId} belonging to business ${themeToSetDefault.businessId}`);
+      return res.status(403).json({ message: 'You do not have permission to set this theme as default' });
+    }
+    
+    console.log(`Setting theme ID ${themeId} as default for business ID ${themeToSetDefault.businessId}`, {
+      themeName: themeToSetDefault.name,
+      user: req.user ? { id: req.user.id, username: req.user.username } : 'Not authenticated'
+    });
     
     // First, unset any existing default themes for this business
     await db.update(themes)
@@ -651,6 +734,13 @@ router.post('/themes/:themeId/default', async (req, res) => {
       })
       .where(eq(themes.id, themeId))
       .returning();
+    
+    console.log('Theme set as default successfully:', {
+      id: defaultTheme.id,
+      name: defaultTheme.name,
+      businessId: defaultTheme.businessId,
+      businessSlug: defaultTheme.businessSlug
+    });
     
     return res.json(defaultTheme);
   } catch (error) {
