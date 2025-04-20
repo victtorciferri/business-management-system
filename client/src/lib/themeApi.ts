@@ -280,11 +280,11 @@ export async function getMarketplaceThemes(
     const queryString = params.toString();
     if (queryString) url += `?${queryString}`;
     
-    const response = await apiRequest<ThemeEntity[]>({
+    const response = await apiRequest({
       url,
       method: 'GET',
     });
-    return response?.data || [];
+    return response || [];
   } catch (error) {
     console.error('Failed to fetch marketplace themes:', error);
     return [];

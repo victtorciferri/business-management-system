@@ -25,11 +25,11 @@ interface ThemeProviderProps {
   businessSlug?: string;
 }
 
-export const ThemeProvider: React.FC<ThemeProviderProps> = ({
+export const ThemeProvider = ({
   children,
   businessId,
   businessSlug
-}) => {
+}: ThemeProviderProps): JSX.Element => {
   // State for the active theme
   const [theme, setThemeState] = useState<Partial<ThemeEntity>>({});
   const [themes, setThemes] = useState<ThemeEntity[]>([]);
@@ -100,7 +100,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
   };
   
   // Apply a theme by ID
-  const applyThemeById = async (themeId: number) => {
+  const applyThemeById = async (themeId: number): Promise<void> => {
     const themeToApply = themes.find(t => t.id === themeId);
     if (themeToApply) {
       setTheme(themeToApply);

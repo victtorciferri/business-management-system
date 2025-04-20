@@ -19,7 +19,7 @@ export function ThemeProvider({
   initialTheme,
   businessId,
   businessSlug
-}: ThemeProviderProps) {
+}: ThemeProviderProps): JSX.Element {
   // Dark mode state
   const { isDarkMode, toggleDarkMode } = useDarkMode();
   
@@ -131,7 +131,7 @@ export function ThemeProvider({
   };
   
   // Activate a theme
-  const activateThemeById = async (themeId: number): Promise<ThemeEntity | null> => {
+  const activateThemeById = async (themeId: number): Promise<void> => {
     try {
       const activatedTheme = await activateTheme(themeId);
       
@@ -147,11 +147,8 @@ export function ThemeProvider({
           }))
         );
       }
-      
-      return activatedTheme;
     } catch (error) {
       console.error('Error activating theme:', error);
-      return null;
     }
   };
   
