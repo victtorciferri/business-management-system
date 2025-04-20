@@ -2,9 +2,9 @@ import { Link, useLocation } from "wouter";
 import { User } from "@shared/schema";
 import { Menu, Bell, LogOut, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useGlobalTheme } from "@/providers/GlobalThemeProvider";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,7 +21,13 @@ export default function Layout({ children, currentUser }: LayoutProps) {
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { logout } = useAuth();
-  const { isDarkMode, toggleDarkMode } = useTheme();
+  const { resolvedColorMode, setColorMode } = useGlobalTheme();
+  const isDarkMode = resolvedColorMode === 'dark';
+  
+  // Function to toggle dark mode
+  const toggleDarkMode = () => {
+    setColorMode(isDarkMode ? 'light' : 'dark');
+  };
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);

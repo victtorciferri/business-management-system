@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ThemeContext } from '@/contexts/ThemeContext';
 import { ThemeEntity } from '@shared/schema';
-import { useDarkMode } from '@/hooks/use-theme-variables';
+import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useGlobalTheme } from './GlobalThemeProvider';
 import { getAllThemes, updateTheme, activateTheme, deleteTheme as deleteThemeApi, createTheme } from '@/lib/themeApi';
 
 interface ThemeProviderProps {
@@ -20,8 +21,14 @@ export function ThemeProvider({
   businessId,
   businessSlug
 }: ThemeProviderProps): JSX.Element {
-  // Dark mode state
-  const { isDarkMode, toggleDarkMode } = useDarkMode();
+  // Get global theme context with dark mode state
+  const { resolvedColorMode, setColorMode } = useGlobalTheme();
+  const isDarkMode = resolvedColorMode === 'dark';
+  
+  // Function to toggle dark mode
+  const toggleDarkMode = () => {
+    setColorMode(isDarkMode ? 'light' : 'dark');
+  };
   
   // Theme state
   const [theme, setTheme] = useState<Partial<ThemeEntity>>(

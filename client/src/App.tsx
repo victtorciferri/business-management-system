@@ -414,11 +414,13 @@ function App() {
         {/* Global Theme Provider from 2025 Edition - App-wide theming */}
         <GlobalThemeProvider>
           <BusinessContextProvider>
-            {/* Business-specific Theme Provider from 2025 Edition */}
-            <ThemeProvider>
-                <AppContent />
-                <DarkModeInitializer />
-            </ThemeProvider>
+            {/* 
+              Important: Don't wrap AppContent in a ThemeProvider here.
+              AppContent manages its own theme providers based on routes.
+              Having a ThemeProvider here creates an unfortunate circular dependency.
+            */}
+            <AppContent />
+            <DarkModeInitializer />
           </BusinessContextProvider>
         </GlobalThemeProvider>
       </AuthProvider>
