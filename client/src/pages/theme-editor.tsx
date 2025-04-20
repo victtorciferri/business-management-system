@@ -59,6 +59,11 @@ export default function ThemeEditorPage() {
   const currentBusiness = adminBusinessData || business;
   const isLoading = businessContextLoading || adminBusinessLoading;
   
+  // Debug information
+  console.log("ThemeEditorPage: Using business ID:", businessId);
+  console.log("ThemeEditorPage: Admin business data:", adminBusinessData);
+  console.log("ThemeEditorPage: Context business data:", business);
+  
   // Handle theme preview
   const handlePreview = (themeConfig: any) => {
     setPreviewTheme(themeConfig as Theme);

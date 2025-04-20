@@ -21,6 +21,7 @@ export const RESERVED_PATHS = [
   'register',
   'logout',
   'profile',
+  'theme-editor', // Added theme-editor to reserved paths
 ];
 
 /**
