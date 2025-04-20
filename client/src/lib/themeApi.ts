@@ -149,6 +149,29 @@ export async function createTheme(theme: Partial<ThemeEntity>): Promise<ThemeEnt
   try {
     console.log('Client - Creating theme with data:', JSON.stringify(theme, null, 2));
     
+    // First try our debug endpoint to diagnose any issues
+    console.log('Client - Using debug endpoint first to validate theme data');
+    try {
+      const debugResponse = await apiRequest({
+        url: '/api/debug/add-theme-fields',
+        method: 'POST',
+        data: { theme },
+      });
+      
+      console.log('Client - Debug endpoint response:', debugResponse ? JSON.stringify(debugResponse, null, 2) : 'No response data');
+      
+      if (debugResponse?.success) {
+        console.log('Client - Debug endpoint successfully created theme, returning it');
+        return debugResponse.theme;
+      } else {
+        console.warn('Client - Debug endpoint failed to create theme, falling back to regular endpoint');
+      }
+    } catch (debugError) {
+      console.warn('Client - Debug endpoint error:', debugError);
+      console.warn('Client - Falling back to regular endpoint...');
+    }
+    
+    // If debug endpoint failed, try regular endpoint
     const response = await apiRequest({
       url: '/api/themes',
       method: 'POST',
