@@ -218,7 +218,12 @@ export function ModernThemeEditor({ businessId, businessData, onPreviewToggle }:
           ...themeToSave,
           businessId: businessId || undefined,
           // CRITICAL FIX: Include the business slug - this is a required field in the schema
-          businessSlug: req.business?.businessSlug || 'salonelegante',
+          // Get business slug from the businessData passed to this component
+          businessSlug: businessData?.business?.businessSlug || 
+                        (typeof window !== 'undefined' && 
+                         // @ts-ignore - BUSINESS_DATA is injected by server middleware
+                         window.BUSINESS_DATA?.business?.businessSlug) || 
+                        'salonelegante',
           isActive: true,
           isDefault: false // New themes shouldn't override default unless explicitly set
         };
@@ -401,6 +406,13 @@ export function ModernThemeEditor({ businessId, businessData, onPreviewToggle }:
                           appearance: preset.appearance,
                           variant: preset.variant,
                           customCSS: preset.customCSS,
+                          
+                          // CRITICAL FIX: Include businessSlug - required field
+                          businessSlug: businessData?.business?.businessSlug || 
+                                      (typeof window !== 'undefined' && 
+                                      // @ts-ignore - BUSINESS_DATA is injected by server middleware
+                                      window.BUSINESS_DATA?.business?.businessSlug) || 
+                                      'salonelegante',
                           
                           // Preserve existing ID and businessId if they exist
                           ...(id ? { id } : {}),
