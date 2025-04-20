@@ -6,7 +6,7 @@
 
 import { Router } from 'express';
 import { storage } from '../storage';
-import { themes } from '@shared/schema';
+import { themes, users } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
 import { db } from '../db';
 
@@ -311,14 +311,18 @@ router.get('/themes/active/business/slug/:businessSlug', async (req, res) => {
     }
     
     const [activeTheme] = await db.select().from(themes)
-      .where(eq(themes.businessId, business.id))
-      .where(eq(themes.isActive, true));
+      .where(and(
+        eq(themes.businessId, business.id),
+        eq(themes.isActive, true)
+      ));
     
     if (!activeTheme) {
       // If no active theme, try to get the default theme
       const [defaultTheme] = await db.select().from(themes)
-        .where(eq(themes.businessId, business.id))
-        .where(eq(themes.isDefault, true));
+        .where(and(
+          eq(themes.businessId, business.id),
+          eq(themes.isDefault, true)
+        ));
       
       if (!defaultTheme) {
         return res.status(404).json({ message: 'No active or default theme found' });
@@ -337,19 +341,54 @@ router.get('/themes/active/business/slug/:businessSlug', async (req, res) => {
 // Create a new theme
 router.post('/themes', async (req, res) => {
   try {
-    const { name, description, businessId, tokens } = req.body;
+    const { name, description, businessId, businessSlug, tokens, ...otherProps } = req.body;
     
     if (!name || !businessId) {
-      return res.status(400).json({ message: 'Missing required fields' });
+      return res.status(400).json({ message: 'Missing required fields: name or businessId' });
     }
+    
+    // If businessSlug is not provided, try to get it from the database
+    let slug = businessSlug;
+    if (!slug) {
+      console.log("No businessSlug provided, trying to get it from user record");
+      const [business] = await db.select({
+        businessSlug: users.businessSlug
+      }).from(users).where(eq(users.id, businessId));
+      
+      if (business?.businessSlug) {
+        slug = business.businessSlug;
+        console.log(`Found businessSlug: ${slug} for businessId: ${businessId}`);
+      } else {
+        return res.status(400).json({ message: 'Could not determine businessSlug - this field is required' });
+      }
+    }
+    
+    console.log("Creating theme with values:", { 
+      name, businessId, businessSlug: slug, 
+      otherPropsCount: Object.keys(otherProps).length 
+    });
     
     const newTheme = await db.insert(themes).values({
       name,
       description,
       businessId,
+      businessSlug: slug,
       tokens,
-      isActive: false,
-      isDefault: false,
+      isActive: req.body.isActive || false,
+      isDefault: req.body.isDefault || false,
+      // Include legacy fields for backward compatibility
+      primaryColor: req.body.primaryColor,
+      secondaryColor: req.body.secondaryColor,
+      accentColor: req.body.accentColor,
+      textColor: req.body.textColor,
+      backgroundColor: req.body.backgroundColor,
+      fontFamily: req.body.fontFamily,
+      borderRadius: req.body.borderRadius,
+      spacing: req.body.spacing,
+      buttonStyle: req.body.buttonStyle,
+      cardStyle: req.body.cardStyle,
+      appearance: req.body.appearance,
+      variant: req.body.variant,
       createdAt: new Date(),
       updatedAt: new Date(),
     }).returning();
@@ -357,7 +396,10 @@ router.post('/themes', async (req, res) => {
     return res.status(201).json(newTheme[0]);
   } catch (error) {
     console.error('Error creating theme:', error);
-    return res.status(500).json({ message: 'Failed to create theme' });
+    return res.status(500).json({ 
+      message: 'Failed to create theme',
+      error: error.message || 'Unknown error'
+    });
   }
 });
 
@@ -369,7 +411,14 @@ router.patch('/themes/:themeId', async (req, res) => {
       return res.status(400).json({ message: 'Invalid theme ID' });
     }
     
-    const { name, description, tokens } = req.body;
+    // Extract fields from request body
+    const { 
+      name, description, tokens, 
+      primaryColor, secondaryColor, accentColor, 
+      textColor, backgroundColor, fontFamily,
+      borderRadius, spacing, buttonStyle, cardStyle,
+      appearance, variant, customCSS
+    } = req.body;
     
     const [existingTheme] = await db.select().from(themes).where(eq(themes.id, themeId));
     
@@ -377,11 +426,39 @@ router.patch('/themes/:themeId', async (req, res) => {
       return res.status(404).json({ message: 'Theme not found' });
     }
     
+    console.log(`Updating theme ID ${themeId} with fields:`, {
+      ...Object.keys(req.body).length > 0 ? { fieldCount: Object.keys(req.body).length } : {},
+      hasName: !!name,
+      hasTokens: !!tokens,
+      hasLegacyProps: !!(primaryColor || secondaryColor || accentColor)
+    });
+    
+    // Update theme properties, preferring new values but preserving existing ones
     const [updatedTheme] = await db.update(themes)
       .set({
+        // Core properties
         name: name || existingTheme.name,
         description: description !== undefined ? description : existingTheme.description,
         tokens: tokens || existingTheme.tokens,
+        
+        // CRITICAL: Always preserve businessSlug
+        businessSlug: existingTheme.businessSlug, 
+        
+        // Legacy fields - update if provided
+        primaryColor: primaryColor !== undefined ? primaryColor : existingTheme.primaryColor,
+        secondaryColor: secondaryColor !== undefined ? secondaryColor : existingTheme.secondaryColor,
+        accentColor: accentColor !== undefined ? accentColor : existingTheme.accentColor,
+        textColor: textColor !== undefined ? textColor : existingTheme.textColor,
+        backgroundColor: backgroundColor !== undefined ? backgroundColor : existingTheme.backgroundColor,
+        fontFamily: fontFamily !== undefined ? fontFamily : existingTheme.fontFamily,
+        borderRadius: borderRadius !== undefined ? borderRadius : existingTheme.borderRadius,
+        spacing: spacing !== undefined ? spacing : existingTheme.spacing,
+        buttonStyle: buttonStyle !== undefined ? buttonStyle : existingTheme.buttonStyle,
+        cardStyle: cardStyle !== undefined ? cardStyle : existingTheme.cardStyle,
+        appearance: appearance !== undefined ? appearance : existingTheme.appearance,
+        variant: variant !== undefined ? variant : existingTheme.variant,
+        
+        // Update timestamp
         updatedAt: new Date(),
       })
       .where(eq(themes.id, themeId))
@@ -390,7 +467,10 @@ router.patch('/themes/:themeId', async (req, res) => {
     return res.json(updatedTheme);
   } catch (error) {
     console.error('Error updating theme:', error);
-    return res.status(500).json({ message: 'Failed to update theme' });
+    return res.status(500).json({ 
+      message: 'Failed to update theme',
+      error: error.message || 'Unknown error'
+    });
   }
 });
 
@@ -445,8 +525,10 @@ router.post('/themes/:themeId/activate', async (req, res) => {
     // First, deactivate the currently active theme for this business
     await db.update(themes)
       .set({ isActive: false })
-      .where(eq(themes.businessId, businessId))
-      .where(eq(themes.isActive, true));
+      .where(and(
+        eq(themes.businessId, businessId),
+        eq(themes.isActive, true)
+      ));
     
     // Then, activate the requested theme
     const [activatedTheme] = await db.update(themes)
@@ -481,8 +563,10 @@ router.post('/themes/:themeId/default', async (req, res) => {
     // First, unset any existing default themes for this business
     await db.update(themes)
       .set({ isDefault: false })
-      .where(eq(themes.businessId, themeToSetDefault.businessId))
-      .where(eq(themes.isDefault, true));
+      .where(and(
+        eq(themes.businessId, themeToSetDefault.businessId),
+        eq(themes.isDefault, true)
+      ));
     
     // Then, set this theme as default
     const [defaultTheme] = await db.update(themes)
