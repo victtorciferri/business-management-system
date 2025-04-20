@@ -54,8 +54,6 @@ import DarkModeInitializer from "@/components/shared/dark-mode-initializer";
 
 // New theme-related pages for 2025 edition
 import { ThemeMarketplacePage } from "@/pages/ThemeMarketplacePage";
-import DebugAuthPage from "@/pages/debug-auth";
-import DebugLoginPage from "@/pages/debug-login";
 
 function AppContent() {
   const { user: currentUser, isLoading: authLoading } = useAuth();
@@ -65,12 +63,7 @@ function AppContent() {
   const [isLoading, setIsLoading] = useState(true);
   
   // Get current location
-  const [location] = useLocation();
-  
-  // Define debug auth paths vs. regular auth paths
-  const isDebugAuthPath = ['/auth-debug', '/debug-login', '/debug/login'].includes(location);
-  const isRegularAuthPath = location === '/auth';
-  const isAnyAuthPath = isDebugAuthPath || isRegularAuthPath;
+  const [location, setLocation] = useLocation();
   
   // Check if the URL looks like a business portal URL (e.g., /salonelegante)
   const businessPortalRegex = /^\/([a-zA-Z0-9_-]+)(?:\/.*)?$/;
@@ -82,48 +75,18 @@ function AppContent() {
     'products', 'services', 'dashboard', 'appointments', 'customers',
     'staff-management', 'staff-profile', 'staff', 'staff-schedule',
     'new-appointment', 'customer-portal', 'error-testing', 'payment',
-    'theme-editor', 'theme-showcase', 'theme-marketplace', 'platform-admin',
-    'debug'
+    'theme-editor', 'theme-showcase', 'theme-marketplace', 'platform-admin'
   ];
   
   const potentialBusinessSlug = match && 
     !reservedPaths.includes(match[1]) ? match[1] : null;
   
-  // IMPORTANT: Always define ALL useEffects in the same order for every render
-  // This ensures React hooks consistency
-  
-  // Effect 1: General app initialization and path handling
+  // Handle customer portal routes - retain as separate routes
   useEffect(() => {
-    // Debug information to help troubleshoot
-    console.log("App.tsx is rendering");
-    console.log("Location:", location);
-    console.log("Is auth path:", isAnyAuthPath);
-    
-    if (isAnyAuthPath) {
-      console.log('Auth page route detected, bypassing business logic checks');
-      setIsLoading(false);
-    }
-    
-    // Rest of the initialization logic will run for non-auth paths
-  }, [isAnyAuthPath, location, isDebugAuthPath, isRegularAuthPath]);
-  
-  // Effect 2: Customer portal routes handling - always defined to maintain hook order
-  useEffect(() => {
-    // Only log this for non-auth paths to reduce noise
-    if (!isAnyAuthPath) {
-      console.log("Customer portal route detected:", location);
-    }
-  }, [location, isAnyAuthPath]);
-  
-  // Special case for auth pages - render them directly
-  if (isAnyAuthPath) {
-    return (
-      <div className="min-h-screen">
-        {isRegularAuthPath && <AuthPage />}
-        {isDebugAuthPath && <DebugLoginPage />}
-      </div>
-    );
-  }
+    // Don't automatically redirect customer portal routes
+    // This allows us to have a dedicated customer portal distinct from business portals
+    console.log("Customer portal route detected:", location);
+  }, [location]);
   
   useEffect(() => {
     // First check if we have business data from window
@@ -173,14 +136,13 @@ function AppContent() {
                           !location.startsWith('/customer-portal') &&
                           !location.startsWith('/color-mode-demo');
   
-  // Additional debug information to help troubleshoot
-  // Debug logs for business portal
-  if (!isAnyAuthPath) {
-    console.log("isBusinessPortal:", isBusinessPortal);
-    console.log("businessData:", businessData);
-    console.log("window.BUSINESS_DATA:", typeof window !== "undefined" ? (window as any).BUSINESS_DATA : "Not available");
-    console.log("currentUser:", currentUser);
-  }
+  // Debug information to help troubleshoot
+  console.log("App.tsx is rendering");
+  console.log("Location:", location);
+  console.log("isBusinessPortal:", isBusinessPortal);
+  console.log("businessData:", businessData);
+  console.log("window.BUSINESS_DATA:", typeof window !== "undefined" ? (window as any).BUSINESS_DATA : "Not available");
+  console.log("currentUser:", currentUser);
   
   // If we're still loading or auth is loading, show a simple loading state
   if (isLoading || authLoading) {
@@ -231,7 +193,6 @@ function AppContent() {
             </ProtectedRoute>
           </Route>
           <Route path="/auth" component={AuthPage} />
-          <Route path="/auth-debug" component={DebugLoginPage} />
           <Route path="/new-appointment">
             <Redirect to="/customer-portal/new-appointment" />
           </Route>
@@ -404,18 +365,6 @@ function AppContent() {
                 </ThemeProvider>
               </BusinessContextProvider>
             </ProtectedRoute>
-          </Route>
-          
-          {/* Debug Routes - For development only */}
-          <Route path="/debug/auth">
-            <GlobalThemeProvider>
-              <DebugAuthPage />
-            </GlobalThemeProvider>
-          </Route>
-          <Route path="/debug/login">
-            <GlobalThemeProvider>
-              <DebugLoginPage />
-            </GlobalThemeProvider>
           </Route>
           <Route path="/theme-showcase">
             <ProtectedRoute>

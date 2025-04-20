@@ -6,9 +6,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User } from "@shared/schema";
-import { pool } from "./db";
 import createMemoryStore from "memorystore";
-import connectPgSimple from "connect-pg-simple";
 
 declare global {
   namespace Express {
@@ -65,21 +63,17 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
-  // Initialize PostgreSQL session store for persistent sessions
-  const PgStore = connectPgSimple(session);
+  const MemoryStore = createMemoryStore(session);
   
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || "appointease-secret-key",
-    resave: false, 
+    resave: false,
     saveUninitialized: false,
-    store: new PgStore({
-      pool: pool,
-      tableName: 'session',
-      createTableIfMissing: true,  // Create the session table if it doesn't exist
-      pruneSessionInterval: 24 * 60 * 60 // 24 hours
+    store: new MemoryStore({
+      checkPeriod: 86400000, // prune expired entries every 24h
     }),
     cookie: {
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days - longer for better user experience
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
       httpOnly: true,
       secure: process.env.NODE_ENV === "production"
     }
@@ -92,78 +86,35 @@ export function setupAuth(app: Express) {
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
-        console.log(`Authentication attempt for username: ${username}`);
         const user = await storage.getUserByUsername(username);
-        
-        if (!user) {
-          console.log(`Authentication failed: User '${username}' not found`);
-          return done(null, false, { message: 'Invalid username or password' });
+        if (!user || !(await comparePasswords(password, user.password))) {
+          return done(null, false);
+        } else {
+          return done(null, user);
         }
-        
-        const passwordValid = await comparePasswords(password, user.password);
-        if (!passwordValid) {
-          console.log(`Authentication failed: Invalid password for '${username}'`);
-          return done(null, false, { message: 'Invalid username or password' });
-        }
-        
-        console.log(`Authentication successful for user: ${username}`);
-        return done(null, user);
       } catch (error) {
-        console.error(`Authentication error for '${username}':`, error);
         return done(error);
       }
     }),
   );
 
   passport.serializeUser((user, done) => {
-    console.log(`Serializing user: ${user.username} (ID: ${user.id})`);
     done(null, user.id);
   });
   
   passport.deserializeUser(async (id: number, done) => {
     try {
-      console.log(`Deserializing user with ID: ${id}`);
       const user = await storage.getUser(id);
-      
-      if (!user) {
-        console.error(`Deserialization failed: User with ID ${id} not found`);
-        return done(null, false);
-      }
-      
-      console.log(`Successfully deserialized user: ${user.username}`);
       done(null, user);
     } catch (error) {
-      console.error(`Error deserializing user with ID ${id}:`, error);
       done(error);
     }
   });
 
-  app.post("/api/login", (req, res, next) => {
-    console.log("Login request received for:", req.body.username);
-    
-    passport.authenticate("local", (err, user, info) => {
-      if (err) {
-        console.error("Login error:", err);
-        return next(err);
-      }
-      
-      if (!user) {
-        console.log("Login failed:", info?.message || "Invalid credentials");
-        return res.status(401).json({ message: info?.message || "Invalid credentials" });
-      }
-      
-      req.login(user, (loginErr) => {
-        if (loginErr) {
-          console.error("Login session error:", loginErr);
-          return next(loginErr);
-        }
-        
-        console.log(`User ${user.username} successfully logged in`);
-        // We omit the password field from the user object for security
-        const { password, ...safeUser } = user as User;
-        res.status(200).json(safeUser);
-      });
-    })(req, res, next);
+  app.post("/api/login", passport.authenticate("local"), (req, res) => {
+    // We omit the password field from the user object for security
+    const { password, ...safeUser } = req.user as User;
+    res.status(200).json(safeUser);
   });
 
   app.post("/api/register", async (req, res, next) => {
@@ -194,41 +145,16 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/logout", (req, res, next) => {
-    console.log(`Logout request received, user authenticated: ${req.isAuthenticated()}`);
-    
-    if (req.isAuthenticated()) {
-      const username = (req.user as User).username;
-      const userId = (req.user as User).id;
-      console.log(`Logging out user: ${username} (ID: ${userId})`);
-    } else {
-      console.log("Logout called but no user is authenticated");
-    }
-    
     req.logout((err) => {
-      if (err) {
-        console.error("Error during logout:", err);
-        return next(err);
-      }
-      
-      console.log("User successfully logged out");
+      if (err) return next(err);
       res.sendStatus(200);
     });
   });
 
   app.get("/api/user", (req, res) => {
-    console.log(`API user request - isAuthenticated: ${req.isAuthenticated()}`);
-    
     if (!req.isAuthenticated()) {
-      console.log("User is not authenticated");
       return res.status(401).json({ message: "Not authenticated" });
     }
-    
-    // Log session details for debugging
-    console.log(`Session ID: ${req.sessionID}`);
-    console.log(`User in session:`, req.user ? 
-      `${(req.user as User).username} (ID: ${(req.user as User).id})` : 
-      "No user in session");
-    
     // We omit the password field from the user object for security
     const { password, ...safeUser } = req.user as User;
     res.json(safeUser);

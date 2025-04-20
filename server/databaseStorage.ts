@@ -136,36 +136,45 @@ export class DatabaseStorage implements IStorage {
 
   async getServicesByUserId(userId: number): Promise<Service[]> {
     try {
-      // Simplify the query to only use userId and avoid business_slug column
-      // This is more resilient if the database schema doesn't match exactly
-      console.log(`Fetching services for user ID ${userId}`);
-      const result = await db.select().from(services).where(eq(services.userId, userId));
-      return result;
-    } catch (error) {
-      // If there's an error with the schema, try a direct SQL query
-      console.error(`Error fetching services for user ID ${userId}:`, error);
-      try {
-        console.log(`Trying direct SQL query for services with user ID ${userId}`);
-        const result = await db.execute(sql`
-          SELECT * FROM services WHERE user_id = ${userId}
-        `);
-        
-        return result.rows.map(row => ({
-          id: row.id,
-          userId: row.user_id,
-          businessSlug: row.business_slug || '',
-          name: row.name,
-          description: row.description,
-          duration: row.duration,
-          price: row.price,
-          color: row.color,
-          active: row.active !== false
-        }));
-      } catch (sqlError) {
-        console.error(`Direct SQL query for services also failed:`, sqlError);
-        // Return empty array instead of throwing, to prevent cascading errors
-        return []; 
+      // First, get the business details to obtain the businessSlug
+      const [business] = await db.select().from(users).where(eq(users.id, userId));
+      
+      if (!business) {
+        console.error(`No business found with user ID ${userId} for services lookup`);
+        return [];
       }
+      
+      // Check if the services table has the business_slug column using introspection
+      const checkResult = await pool.query(`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'services' AND column_name = 'business_slug'
+      `);
+      
+      // If the business_slug column doesn't exist, use the old query approach
+      if (checkResult.rows.length === 0) {
+        console.log(`business_slug column not found in services table, using userId filter only`);
+        return db.select().from(services).where(eq(services.userId, userId));
+      }
+      
+      // Use the businessSlug in the query if the column exists in the schema
+      const businessSlug = business.businessSlug;
+      
+      if (!businessSlug) {
+        console.warn(`Business with ID ${userId} has no slug, falling back to user ID filtering`);
+        return db.select().from(services).where(eq(services.userId, userId));
+      }
+      
+      // Query services with both userId and businessSlug for better indexing
+      return db.select().from(services)
+               .where(and(
+                 eq(services.userId, userId),
+                 eq(services.businessSlug, businessSlug)
+               ));
+    } catch (error) {
+      console.error(`Error fetching services for user ID ${userId}:`, error);
+      // Return empty array instead of throwing, to prevent cascading errors
+      return []; 
     }
   }
 

@@ -9,14 +9,12 @@ import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { User } from "@shared/schema";
-import { queryClient } from "@/lib/queryClient";
 
 export default function AuthPage() {
   const [activeTab, setActiveTab] = useState("login");
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  const { user } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
+  const { login, register, isLoading, user } = useAuth();
   
   // Redirect if user is already logged in
   useEffect(() => {
@@ -57,45 +55,16 @@ export default function AuthPage() {
     e.preventDefault();
     
     try {
-      setIsLoading(true);
-      // Direct approach for login
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(loginForm),
-      });
+      // Use the login function from useAuth
+      const userData = await login(loginForm.username, loginForm.password);
       
-      if (!response.ok) {
-        throw new Error(`Login failed with status ${response.status}`);
-      }
-      
-      const userData = await response.json();
-      console.log('Login successful:', userData);
-      
-      // Manually update the query client
-      queryClient.setQueryData(["/api/user"], userData);
-      
-      toast({
-        title: "Login successful",
-        description: `Welcome back, ${userData.username}!`,
-      });
-      
-      // Redirect based on role
-      if (userData.role === "admin") {
-        setLocation("/admin");
-      } else {
-        setLocation("/");
-      }
+      // Redirect will be handled by the useEffect watching the user state
     } catch (error) {
-      console.error('Login error:', error);
       toast({
         title: "Login failed",
         description: error instanceof Error ? error.message : "An unexpected error occurred",
         variant: "destructive",
       });
-      setIsLoading(false);
     }
   };
 
@@ -103,45 +72,16 @@ export default function AuthPage() {
     e.preventDefault();
     
     try {
-      setIsLoading(true);
-      // Direct approach for registration
-      const response = await fetch('/api/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(registerForm),
-      });
+      // Use the register function from useAuth
+      const userData = await register(registerForm);
       
-      if (!response.ok) {
-        throw new Error(`Registration failed with status ${response.status}`);
-      }
-      
-      const userData = await response.json();
-      console.log('Registration successful:', userData);
-      
-      // Manually update the query client
-      queryClient.setQueryData(["/api/user"], userData);
-      
-      toast({
-        title: "Registration successful",
-        description: `Welcome, ${userData.username}! Your account has been created.`,
-      });
-      
-      // Redirect based on role
-      if (userData.role === "admin") {
-        setLocation("/admin");
-      } else {
-        setLocation("/");
-      }
+      // Redirect will be handled by the useEffect watching the user state
     } catch (error) {
-      console.error('Registration error:', error);
       toast({
         title: "Registration failed",
         description: error instanceof Error ? error.message : "An unexpected error occurred",
         variant: "destructive",
       });
-      setIsLoading(false);
     }
   };
 

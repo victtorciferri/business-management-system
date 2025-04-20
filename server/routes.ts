@@ -9,7 +9,6 @@ import themeRoutes from './routes/themeRoutes';
 import themeApiRoutes from './routes/themeApiRoutes';
 import themeTestRoutes from './routes/theme-test';
 import themeMarketplaceRoutes from './routes/theme-marketplace';
-import debugRoutes from './routes/debugRoutes';
 import { convertLegacyThemeToTheme, convertThemeToLegacyTheme, updateThemeForBusiness, getThemeForBusiness } from './utils/themeUtils';
 import { 
   insertUserSchema, 
@@ -229,9 +228,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register the theme marketplace routes
   app.use('/api/themes', themeMarketplaceRoutes);
   
-  // Register debug routes (for development only)
-  app.use('/api/debug', debugRoutes);
-  
   // Make the theme API available by using the router directly
   app.use(themeApiRoutes);
 
@@ -276,29 +272,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get services for this business while we have the chance
       try {
-        // Use direct SQL query to avoid business_slug column issue
-        let services = [];
-        try {
-          // Direct SQL query using only user_id for filtering (avoid business_slug column)
-          const result = await db.execute(sql`
-            SELECT * FROM services WHERE user_id = ${req.business.id} ORDER BY id
-          `);
-          
-          services = result.rows.map(row => ({
-            id: row.id,
-            userId: row.user_id,
-            name: row.name,
-            description: row.description,
-            duration: row.duration,
-            price: row.price,
-            color: row.color,
-            active: row.active
-          }));
-        } catch (sqlError) {
-          console.error('Error fetching services with direct SQL:', sqlError);
-          services = []; // Default to empty array if query fails
-        }
-        
+        const services = await storage.getServicesByUserId(req.business.id);
         const activeServices = services.filter(service => service.active || true);
         
         // Determine subpath for business portal routes
