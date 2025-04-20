@@ -522,10 +522,10 @@ export default function AdminDashboard() {
                 }}
               >
                 <Palette className="h-4 w-4" />
-                Open Advanced Theme Editor
+                Open Modern Theme Editor
               </Button>
               <p className="text-xs text-muted-foreground mt-2 text-center">
-                The advanced editor provides more theme customization options including fonts, component styles, and layout settings.
+                The modern theme editor provides comprehensive customization options including fonts, colors, component styles, and layout settings.
               </p>
             </div>
           </div>
@@ -894,18 +894,9 @@ export default function AdminDashboard() {
                               <Button
                                 variant="outline"
                                 size="icon"
-                                className="bg-indigo-50 hover:bg-indigo-100 border-indigo-200"
-                                onClick={() => navigateToAdvancedThemeEditor(business.id)}
-                                title="Legacy theme editor"
-                              >
-                                <Settings className="h-4 w-4 text-indigo-600" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="icon"
                                 className="bg-green-50 hover:bg-green-100 border-green-200"
-                                onClick={() => navigateToModernThemeEditor(business.id)}
-                                title="Modern Theme Editor 2025"
+                                onClick={() => setLocation(`/admin-theme-editor/${business.id}`)}
+                                title="Theme Editor"
                               >
                                 <Palette className="h-4 w-4 text-green-600" />
                               </Button>
