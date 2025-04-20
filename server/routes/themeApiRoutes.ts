@@ -368,32 +368,46 @@ router.post('/themes', async (req, res) => {
       otherPropsCount: Object.keys(otherProps).length 
     });
     
-    const newTheme = await db.insert(themes).values({
-      name,
-      description,
-      businessId,
-      businessSlug: slug,
-      tokens,
-      isActive: req.body.isActive || false,
-      isDefault: req.body.isDefault || false,
-      // Include legacy fields for backward compatibility
-      primaryColor: req.body.primaryColor,
-      secondaryColor: req.body.secondaryColor,
-      accentColor: req.body.accentColor,
-      textColor: req.body.textColor,
-      backgroundColor: req.body.backgroundColor,
-      fontFamily: req.body.fontFamily,
-      borderRadius: req.body.borderRadius,
-      spacing: req.body.spacing,
-      buttonStyle: req.body.buttonStyle,
-      cardStyle: req.body.cardStyle,
-      appearance: req.body.appearance,
-      variant: req.body.variant,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }).returning();
-    
-    return res.status(201).json(newTheme[0]);
+    try {
+      const newTheme = await db.insert(themes).values({
+        name,
+        description,
+        businessId,
+        businessSlug: slug,
+        tokens,
+        isActive: req.body.isActive || false,
+        isDefault: req.body.isDefault || false,
+        // Include legacy fields for backward compatibility
+        primaryColor: req.body.primaryColor,
+        secondaryColor: req.body.secondaryColor,
+        accentColor: req.body.accentColor,
+        textColor: req.body.textColor,
+        backgroundColor: req.body.backgroundColor,
+        fontFamily: req.body.fontFamily,
+        borderRadius: req.body.borderRadius,
+        spacing: req.body.spacing,
+        buttonStyle: req.body.buttonStyle,
+        cardStyle: req.body.cardStyle,
+        appearance: req.body.appearance,
+        variant: req.body.variant,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }).returning();
+      
+      console.log('Successfully created theme:', newTheme[0]);
+      
+      if (!newTheme || newTheme.length === 0) {
+        throw new Error('Failed to create theme - no result returned from database');
+      }
+      
+      return res.status(201).json(newTheme[0]);
+    } catch (insertError) {
+      console.error('Error during theme insert operation:', insertError);
+      return res.status(500).json({ 
+        message: 'Database error creating theme',
+        error: insertError.message || 'Unknown database error'
+      });
+    }
   } catch (error) {
     console.error('Error creating theme:', error);
     return res.status(500).json({ 

@@ -6,7 +6,7 @@
 
 import { ThemeEntity } from '@shared/schema';
 
-// Generic API request function
+// Generic API request function with enhanced error handling and logging
 async function apiRequest(options: {
   url: string;
   method: 'GET' | 'POST' | 'PATCH' | 'DELETE' | 'PUT';
@@ -15,6 +15,8 @@ async function apiRequest(options: {
   const { url, method, data } = options;
   
   try {
+    console.log(`API Request: ${method} ${url}`, data ? { dataSize: JSON.stringify(data).length } : 'No data');
+    
     const response = await fetch(url, {
       method,
       headers: {
@@ -24,16 +26,43 @@ async function apiRequest(options: {
       credentials: 'include',
     });
     
+    // Log response status
+    console.log(`API Response status: ${response.status} ${response.statusText} for ${method} ${url}`);
+    
     if (!response.ok) {
-      throw new Error(`API request failed: ${response.statusText}`);
+      // Try to get error details from response if available
+      let errorDetails = null;
+      try {
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          errorDetails = await response.json();
+        }
+      } catch (parseError) {
+        console.warn('Failed to parse error response as JSON:', parseError);
+      }
+      
+      throw new Error(
+        `API request failed: ${response.status} ${response.statusText}${
+          errorDetails ? ` - ${JSON.stringify(errorDetails)}` : ''
+        }`
+      );
+    }
+    
+    // Check for empty response (204 No Content)
+    if (response.status === 204) {
+      return true; // Return true for successful empty responses
     }
     
     // Check if response is JSON
     const contentType = response.headers.get('content-type');
     if (contentType && contentType.includes('application/json')) {
-      return await response.json();
+      const jsonData = await response.json();
+      console.log(`API Response data for ${method} ${url}:`, 
+        jsonData ? { dataAvailable: true, keys: Object.keys(jsonData) } : 'Empty JSON');
+      return jsonData;
     }
     
+    console.log(`API Response for ${method} ${url} is not JSON`);
     return null; // For non-JSON responses
   } catch (error) {
     console.error('API request error:', error);
@@ -118,14 +147,24 @@ export async function getActiveTheme(
  */
 export async function createTheme(theme: Partial<ThemeEntity>): Promise<ThemeEntity | null> {
   try {
+    console.log('Client - Creating theme with data:', JSON.stringify(theme, null, 2));
+    
     const response = await apiRequest({
       url: '/api/themes',
       method: 'POST',
       data: theme,
     });
-    return response || null;
+    
+    console.log('Client - API Response from theme creation:', response);
+    
+    if (!response) {
+      console.error('Client - Theme creation API returned empty response');
+      throw new Error('Empty response from server when creating theme');
+    }
+    
+    return response;
   } catch (error) {
-    console.error('Failed to create theme:', error);
+    console.error('Client - Failed to create theme:', error);
     return null;
   }
 }
