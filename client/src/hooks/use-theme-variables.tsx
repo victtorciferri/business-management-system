@@ -1,116 +1,140 @@
-import { useState, useEffect, useContext } from 'react';
+import { useContext, useMemo } from 'react';
 import { ThemeContext } from '@/contexts/ThemeContext';
-import { Theme } from '@shared/designTokens';
+import { ThemeEntity } from '@shared/schema';
 import { useLocalStorage } from './use-local-storage';
-import { useMediaQuery } from './use-media-query';
 
 /**
- * Theme variables used throughout the application
+ * Hook to access the current theme variables
+ * This provides the theme variables for use in components
  */
-export interface ThemeVars {
-  primaryColor: string;
-  secondaryColor: string;
-  accentColor: string;
-  backgroundColor: string;
-  textColor: string;
-  fontFamily: string;
-  borderRadius: number;
-  variant: 'professional' | 'vibrant' | 'elegant' | 'minimal';
-  fontSize: number;
-  highContrast: boolean;
-  reducedMotion: boolean;
+export function useThemeVars() {
+  const context = useContext(ThemeContext);
+  
+  if (!context) {
+    throw new Error('useThemeVars must be used within a ThemeProvider');
+  }
+  
+  const { theme } = context;
+  
+  // Memoize to prevent unnecessary recalculations
+  return useMemo(() => {
+    if (!theme) return null;
+    
+    // Convert theme properties to a usable object
+    return {
+      // Primary
+      primary: theme.primaryColor || '#4f46e5',
+      primaryColor: theme.primaryColor || '#4f46e5',
+      primaryLight: shiftColor(theme.primaryColor || '#4f46e5', 0.2),
+      primaryDark: shiftColor(theme.primaryColor || '#4f46e5', -0.2),
+      
+      // Secondary
+      secondary: theme.secondaryColor || '#06b6d4',
+      secondaryColor: theme.secondaryColor || '#06b6d4',
+      secondaryLight: shiftColor(theme.secondaryColor || '#06b6d4', 0.2),
+      secondaryDark: shiftColor(theme.secondaryColor || '#06b6d4', -0.2),
+      
+      // Background
+      background: theme.backgroundColor || '#ffffff',
+      backgroundColor: theme.backgroundColor || '#ffffff',
+      backgroundLight: shiftColor(theme.backgroundColor || '#ffffff', 0.05),
+      backgroundDark: shiftColor(theme.backgroundColor || '#ffffff', -0.05),
+      
+      // Text
+      text: theme.textColor || '#111827',
+      textColor: theme.textColor || '#111827',
+      textLight: shiftColor(theme.textColor || '#111827', 0.3),
+      textDark: shiftColor(theme.textColor || '#111827', -0.3),
+      
+      // Accent
+      accent: theme.accentColor || '#8b5cf6',
+      accentColor: theme.accentColor || '#8b5cf6',
+      accentLight: shiftColor(theme.accentColor || '#8b5cf6', 0.2),
+      accentDark: shiftColor(theme.accentColor || '#8b5cf6', -0.2),
+      
+      // Other theme properties
+      fontFamily: theme.fontFamily || 'Inter, system-ui, sans-serif',
+      borderRadius: theme.borderRadius || 8,
+      variant: theme.variant || 'professional',
+      appearance: theme.appearance || 'light',
+      
+      // Design tokens (if available)
+      tokens: theme.tokens || null,
+      
+      // Accessibility features
+      fontSize: theme.fontSize || 'md',
+      highContrast: theme.highContrast || false,
+      reducedMotion: theme.reducedMotion || false,
+    };
+  }, [theme]);
 }
 
 /**
- * Hook to access the current dark mode state and toggle it
+ * Hook to access and toggle dark mode
  */
 export function useDarkMode() {
-  const prefersDarkScheme = useMediaQuery('(prefers-color-scheme: dark)');
-  const [colorMode, setColorMode] = useLocalStorage('color-mode', 'system');
-  const [isDarkMode, setIsDarkMode] = useState(
-    colorMode === 'system' ? prefersDarkScheme : colorMode === 'dark'
-  );
-
-  useEffect(() => {
-    // Set dark mode based on preference and system
-    const newIsDarkMode = colorMode === 'system' ? prefersDarkScheme : colorMode === 'dark';
-    setIsDarkMode(newIsDarkMode);
+  const [isDarkMode, setIsDarkMode] = useLocalStorage('darkMode', false);
+  const [prefersDarkMode, setPrefersDarkMode] = useLocalStorage('prefersDarkMode', 'system');
+  
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
     
-    // Apply dark mode class to document
-    if (newIsDarkMode) {
+    // Apply to document
+    if (!isDarkMode) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
-  }, [colorMode, prefersDarkScheme]);
-
-  const toggleDarkMode = () => {
-    if (isDarkMode) {
-      setColorMode('light');
+  };
+  
+  const setDarkModePreference = (preference: 'light' | 'dark' | 'system') => {
+    setPrefersDarkMode(preference);
+    
+    if (preference === 'dark') {
+      setIsDarkMode(true);
+      document.documentElement.classList.add('dark');
+    } else if (preference === 'light') {
+      setIsDarkMode(false);
+      document.documentElement.classList.remove('dark');
     } else {
-      setColorMode('dark');
+      // System preference - check user's system preference
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setIsDarkMode(prefersDark);
+      if (prefersDark) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
     }
   };
-
-  const setDarkMode = (isDark: boolean) => {
-    setColorMode(isDark ? 'dark' : 'light');
+  
+  return {
+    isDarkMode,
+    toggleDarkMode,
+    preference: prefersDarkMode,
+    setPreference: setDarkModePreference
   };
-
-  return { isDarkMode, toggleDarkMode, setDarkMode, colorMode, setColorMode };
 }
 
 /**
- * Hook to access theme variables
+ * Helper function to shift a color's luminance
  */
-export function useThemeVars(): ThemeVars | null {
-  const themeContext = useContext(ThemeContext);
-  
-  // Return default theme variables if no context is available
-  if (!themeContext) {
-    return {
-      primaryColor: '#4f46e5',
-      secondaryColor: '#9333EA',
-      accentColor: '#f59e0b',
-      backgroundColor: '#ffffff',
-      textColor: '#111827',
-      fontFamily: 'Inter, system-ui, sans-serif',
-      borderRadius: 8,
-      variant: 'professional',
-      fontSize: 1,
-      highContrast: false,
-      reducedMotion: false
-    };
+function shiftColor(color: string, amount: number): string {
+  try {
+    // Parse hex to rgb
+    const r = parseInt(color.substring(1, 3), 16);
+    const g = parseInt(color.substring(3, 5), 16);
+    const b = parseInt(color.substring(5, 7), 16);
+    
+    // Shift values
+    const newR = Math.max(0, Math.min(255, r + Math.round(r * amount)));
+    const newG = Math.max(0, Math.min(255, g + Math.round(g * amount)));
+    const newB = Math.max(0, Math.min(255, b + Math.round(b * amount)));
+    
+    // Convert back to hex
+    return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
+  } catch (e) {
+    console.error('Failed to shift color:', e);
+    return color;
   }
-  
-  const {
-    theme,
-  } = themeContext;
-  
-  // Constructed theme variables from the theme context
-  return {
-    primaryColor: theme.primaryColor || '#4f46e5',
-    secondaryColor: theme.secondaryColor || '#9333EA',
-    accentColor: theme.accentColor || '#f59e0b',
-    backgroundColor: theme.backgroundColor || '#ffffff',
-    textColor: theme.textColor || '#111827',
-    fontFamily: theme.fontFamily || 'Inter, system-ui, sans-serif',
-    borderRadius: theme.borderRadius || 8,
-    variant: (theme.variant as any) || 'professional',
-    fontSize: theme.fontSize || 1,
-    highContrast: theme.highContrast || false,
-    reducedMotion: theme.reducedMotion || false
-  };
-}
-
-/**
- * Hook for accessing media query helpers
- */
-export function useMediaQueries() {
-  const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
-  const prefersHighContrast = useMediaQuery('(prefers-contrast: more)');
-  
-  return {
-    prefersReducedMotion,
-    prefersHighContrast
-  };
 }

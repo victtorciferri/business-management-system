@@ -1,16 +1,361 @@
 /**
  * Token Utilities - 2025 Edition
  * 
- * Utility functions for working with design tokens
+ * Utilities for working with the design token system
  */
 
-import { DesignTokens, ColorTokens, TypographyTokens, SpacingTokens, BorderTokens, ShadowTokens } from './designTokens';
+import { Theme, DesignTokens, ThemeMetadata } from './designTokens';
+import { ThemeEntity } from './schema';
 
 /**
- * Converts a hex color to RGB values
+ * Interface for CSS Variables
+ */
+export interface CSSVariables {
+  [key: string]: string;
+}
+
+/**
+ * Converts ThemeEntity to CSS Variables
  * 
- * @param hex The hex color string (#RRGGBB)
- * @returns An object with r, g, b values
+ * @param theme The theme entity to convert
+ * @returns Object containing CSS variables
+ */
+export function themeToCssVariables(theme: Partial<ThemeEntity>): Record<string, string> {
+  const variables: Record<string, string> = {};
+  
+  // Set legacy variables for backward compatibility
+  if (theme.primaryColor) variables['--primary-color'] = theme.primaryColor;
+  if (theme.secondaryColor) variables['--secondary-color'] = theme.secondaryColor;
+  if (theme.accentColor) variables['--accent-color'] = theme.accentColor;
+  if (theme.backgroundColor) variables['--background-color'] = theme.backgroundColor;
+  if (theme.textColor) variables['--text-color'] = theme.textColor;
+  if (theme.fontFamily) variables['--font-family'] = theme.fontFamily;
+  if (theme.borderRadius) variables['--border-radius'] = `${theme.borderRadius}px`;
+  
+  // Set design token variables if available
+  if (theme.tokens) {
+    const tokens = theme.tokens as DesignTokens;
+    
+    // Colors
+    if (tokens.colors) {
+      for (const [colorName, colorValue] of Object.entries(tokens.colors)) {
+        if (typeof colorValue === 'string') {
+          variables[`--color-${colorName}`] = colorValue;
+        } else if (typeof colorValue === 'object') {
+          for (const [shade, shadeValue] of Object.entries(colorValue)) {
+            if (shade === 'DEFAULT') {
+              variables[`--color-${colorName}`] = shadeValue;
+            } else {
+              variables[`--color-${colorName}-${shade}`] = shadeValue;
+            }
+          }
+        }
+      }
+    }
+    
+    // Typography
+    if (tokens.typography) {
+      for (const [typeName, typeValue] of Object.entries(tokens.typography)) {
+        if (typeof typeValue === 'string' || typeof typeValue === 'number') {
+          variables[`--typography-${typeName}`] = String(typeValue);
+        } else if (typeof typeValue === 'object') {
+          for (const [variant, variantValue] of Object.entries(typeValue)) {
+            if (variant === 'DEFAULT') {
+              variables[`--typography-${typeName}`] = String(variantValue);
+            } else {
+              variables[`--typography-${typeName}-${variant}`] = String(variantValue);
+            }
+          }
+        }
+      }
+    }
+    
+    // Spacing
+    if (tokens.spacing) {
+      for (const [spaceName, spaceValue] of Object.entries(tokens.spacing)) {
+        if (spaceName === 'DEFAULT') {
+          variables['--spacing'] = spaceValue;
+        } else {
+          variables[`--spacing-${spaceName}`] = spaceValue;
+        }
+      }
+    }
+    
+    // Borders
+    if (tokens.borders) {
+      for (const [borderName, borderValue] of Object.entries(tokens.borders)) {
+        if (typeof borderValue === 'string') {
+          variables[`--border-${borderName}`] = borderValue;
+        } else if (typeof borderValue === 'object') {
+          for (const [variant, variantValue] of Object.entries(borderValue)) {
+            if (variant === 'DEFAULT') {
+              variables[`--border-${borderName}`] = String(variantValue);
+            } else {
+              variables[`--border-${borderName}-${variant}`] = String(variantValue);
+            }
+          }
+        }
+      }
+    }
+    
+    // Shadows
+    if (tokens.shadows) {
+      for (const [shadowName, shadowValue] of Object.entries(tokens.shadows)) {
+        if (shadowName === 'DEFAULT') {
+          variables['--shadow'] = shadowValue;
+        } else {
+          variables[`--shadow-${shadowName}`] = shadowValue;
+        }
+      }
+    }
+    
+    // Effects
+    if (tokens.effects) {
+      for (const [effectName, effectValue] of Object.entries(tokens.effects)) {
+        if (typeof effectValue === 'string') {
+          variables[`--effect-${effectName}`] = effectValue;
+        } else if (typeof effectValue === 'object') {
+          for (const [variant, variantValue] of Object.entries(effectValue)) {
+            if (variant === 'DEFAULT') {
+              variables[`--effect-${effectName}`] = String(variantValue);
+            } else {
+              variables[`--effect-${effectName}-${variant}`] = String(variantValue);
+            }
+          }
+        }
+      }
+    }
+    
+    // Component tokens
+    if (tokens.components) {
+      for (const [componentName, componentValue] of Object.entries(tokens.components)) {
+        if (typeof componentValue === 'object') {
+          for (const [propName, propValue] of Object.entries(componentValue)) {
+            if (typeof propValue === 'string' || typeof propValue === 'number') {
+              variables[`--component-${componentName}-${propName}`] = String(propValue);
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  return variables;
+}
+
+/**
+ * Applies theme settings to the document
+ * 
+ * @param theme The theme entity to apply
+ * @param targetElement The element to apply the theme to (defaults to document.documentElement)
+ */
+export function applyThemeSettings(theme: Partial<ThemeEntity>, targetElement: HTMLElement = document.documentElement): void {
+  const variables = themeToCssVariables(theme);
+  
+  // Apply CSS variables
+  for (const [key, value] of Object.entries(variables)) {
+    targetElement.style.setProperty(key, value);
+  }
+  
+  // Apply theme variant class
+  if (theme.variant) {
+    const variantClasses = ['theme-professional', 'theme-vibrant', 'theme-elegant', 'theme-minimal'];
+    variantClasses.forEach(cls => targetElement.classList.remove(cls));
+    targetElement.classList.add(`theme-${theme.variant}`);
+  }
+  
+  // Apply theme mode (light/dark)
+  if (theme.appearance) {
+    if (theme.appearance === 'dark') {
+      targetElement.classList.add('dark');
+    } else if (theme.appearance === 'light') {
+      targetElement.classList.remove('dark');
+    }
+    // 'system' is handled by the useDarkMode hook
+  }
+}
+
+/**
+ * Creates a complete theme object from a partial theme entity
+ * Useful for creating new themes with all required fields
+ */
+export function createCompleteTheme(partialTheme: Partial<ThemeEntity>): Theme {
+  // Default metadata
+  const metadata: ThemeMetadata = {
+    id: partialTheme.id?.toString() || `theme_${Date.now().toString(36)}`,
+    name: partialTheme.name || 'New Theme',
+    description: partialTheme.description || '',
+    variant: (partialTheme.variant as any) || 'professional',
+    primaryColor: partialTheme.primaryColor || '#4f46e5',
+    baseColor: partialTheme.primaryColor || '#4f46e5',
+    secondaryColor: partialTheme.secondaryColor || '#06b6d4',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    version: '1.0.0',
+    isDefault: partialTheme.isDefault || false
+  };
+  
+  // Generate tokens from theme properties if not provided
+  const tokens: DesignTokens = partialTheme.tokens || {
+    colors: {
+      primary: {
+        DEFAULT: partialTheme.primaryColor || '#4f46e5',
+        light: shiftColor(partialTheme.primaryColor || '#4f46e5', 0.2),
+        dark: shiftColor(partialTheme.primaryColor || '#4f46e5', -0.2),
+        foreground: getContrastColor(partialTheme.primaryColor || '#4f46e5')
+      },
+      secondary: {
+        DEFAULT: partialTheme.secondaryColor || '#06b6d4',
+        light: shiftColor(partialTheme.secondaryColor || '#06b6d4', 0.2),
+        dark: shiftColor(partialTheme.secondaryColor || '#06b6d4', -0.2),
+        foreground: getContrastColor(partialTheme.secondaryColor || '#06b6d4')
+      },
+      background: {
+        DEFAULT: partialTheme.backgroundColor || '#ffffff',
+        surface: shiftColor(partialTheme.backgroundColor || '#ffffff', 0.05),
+        elevated: shiftColor(partialTheme.backgroundColor || '#ffffff', 0.1)
+      },
+      foreground: {
+        DEFAULT: partialTheme.textColor || '#111827',
+        muted: shiftColor(partialTheme.textColor || '#111827', 0.3)
+      }
+    },
+    typography: {
+      fontFamily: {
+        body: partialTheme.fontFamily || 'Inter, system-ui, sans-serif',
+        heading: partialTheme.fontFamily || 'Inter, system-ui, sans-serif',
+        sans: 'Inter, system-ui, sans-serif',
+        serif: 'Georgia, serif',
+        mono: 'Menlo, monospace'
+      },
+      fontSize: {
+        base: '16px',
+        xs: '0.75rem',
+        sm: '0.875rem',
+        md: '1rem',
+        lg: '1.125rem',
+        xl: '1.25rem',
+        '2xl': '1.5rem',
+        '3xl': '1.875rem',
+        '4xl': '2.25rem'
+      }
+    },
+    spacing: {
+      DEFAULT: '16px',
+      xs: '0.25rem',
+      sm: '0.5rem',
+      md: '1rem',
+      lg: '1.5rem',
+      xl: '2rem'
+    },
+    borders: {
+      radius: {
+        DEFAULT: `${partialTheme.borderRadius || 8}px`,
+        sm: `${Math.max(2, (partialTheme.borderRadius || 8) / 2)}px`,
+        lg: `${(partialTheme.borderRadius || 8) * 1.5}px`,
+        full: '9999px'
+      }
+    },
+    shadows: {
+      DEFAULT: '0 1px 3px rgba(0, 0, 0, 0.1)',
+      sm: '0 1px 2px rgba(0, 0, 0, 0.05)',
+      md: '0 4px 6px rgba(0, 0, 0, 0.1)',
+      lg: '0 10px 15px rgba(0, 0, 0, 0.1)',
+      xl: '0 20px 25px rgba(0, 0, 0, 0.1)'
+    },
+    effects: {
+      transition: {
+        DEFAULT: '150ms ease',
+        fast: '100ms ease',
+        slow: '300ms ease'
+      }
+    },
+    components: {}
+  };
+  
+  return {
+    metadata,
+    tokens
+  };
+}
+
+/**
+ * Helper to shift a color's luminance by a percentage
+ * Positive amount brightens, negative amount darkens
+ */
+export function shiftColor(color: string, amount: number): string {
+  // Simple implementation - in real application, use a color library
+  try {
+    // Parse hex to rgb
+    let r = parseInt(color.substring(1, 3), 16);
+    let g = parseInt(color.substring(3, 5), 16);
+    let b = parseInt(color.substring(5, 7), 16);
+    
+    // Shift values
+    r = Math.max(0, Math.min(255, r + Math.round(r * amount)));
+    g = Math.max(0, Math.min(255, g + Math.round(g * amount)));
+    b = Math.max(0, Math.min(255, b + Math.round(b * amount)));
+    
+    // Convert back to hex
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+  } catch (e) {
+    console.error('Failed to shift color:', e);
+    return color;
+  }
+}
+
+/**
+ * Helper to get contrasting text color (black or white) for a background
+ */
+export function getContrastColor(backgroundColor: string): string {
+  try {
+    // Parse hex to rgb
+    const r = parseInt(backgroundColor.substring(1, 3), 16);
+    const g = parseInt(backgroundColor.substring(3, 5), 16);
+    const b = parseInt(backgroundColor.substring(5, 7), 16);
+    
+    // Calculate luminance - simplified formula
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    
+    // Return black for bright backgrounds, white for dark backgrounds
+    return luminance > 0.5 ? '#000000' : '#ffffff';
+  } catch (e) {
+    console.error('Failed to calculate contrast color:', e);
+    return '#ffffff';
+  }
+}
+
+/**
+ * Helper to check if a color is dark
+ */
+export function isColorDark(color: string): boolean {
+  try {
+    // Parse hex to rgb
+    const r = parseInt(color.substring(1, 3), 16);
+    const g = parseInt(color.substring(3, 5), 16);
+    const b = parseInt(color.substring(5, 7), 16);
+    
+    // Calculate luminance - simplified formula
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    
+    // Return true if color is dark (luminance < 0.5)
+    return luminance < 0.5;
+  } catch (e) {
+    console.error('Failed to determine if color is dark:', e);
+    return false;
+  }
+}
+
+/**
+ * Adjusts color lightness by percentage
+ * Positive amount makes lighter, negative makes darker
+ */
+export function adjustColorLightness(color: string, amount: number): string {
+  return shiftColor(color, amount / 100);
+}
+
+/**
+ * Convert hex color to RGB object
  */
 export function hexToRgb(hex: string): { r: number, g: number, b: number } | null {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -22,186 +367,149 @@ export function hexToRgb(hex: string): { r: number, g: number, b: number } | nul
 }
 
 /**
- * Converts RGB values to a hex color string
- * 
- * @param r Red value (0-255)
- * @param g Green value (0-255)
- * @param b Blue value (0-255)
- * @returns A hex color string (#RRGGBB)
+ * Convert RGB values to hex color
  */
 export function rgbToHex(r: number, g: number, b: number): string {
-  return "#" + [r, g, b]
-    .map(x => Math.round(x).toString(16).padStart(2, '0'))
-    .join('');
+  const clamp = (value: number) => Math.max(0, Math.min(255, Math.round(value)));
+  return `#${clamp(r).toString(16).padStart(2, '0')}${clamp(g).toString(16).padStart(2, '0')}${clamp(b).toString(16).padStart(2, '0')}`;
 }
 
 /**
- * Determines if a given color is "dark" (needs white text) or "light" (needs dark text)
- * 
- * @param hex The hex color string
- * @returns true if the color is dark
+ * Convert RGB values to an rgba string
  */
-export function isColorDark(hex: string): boolean {
-  const rgb = hexToRgb(hex);
-  if (!rgb) return false;
-  
-  // Calculate perceived brightness using the luminance formula
-  const brightness = (rgb.r * 299 + rgb.g * 587 + rgb.b * 114) / 1000;
-  return brightness < 128; // If less than 128, color is considered dark
+export function rgbaToString(r: number, g: number, b: number, a: number): string {
+  return `rgba(${r}, ${g}, ${b}, ${a})`;
 }
 
 /**
- * Adjusts the brightness of a color
- * 
- * @param hex The hex color string
- * @param amount Amount to adjust (-100 to 100, negative for darker)
- * @returns A new hex color string
+ * Calculate the luminance of a color (for WCAG contrast calculations)
+ * Returns a value between 0 (black) and 1 (white)
  */
-export function adjustColorBrightness(hex: string, amount: number): string {
-  const rgb = hexToRgb(hex);
-  if (!rgb) return hex;
-  
-  // Adjust each RGB component
-  const r = Math.max(0, Math.min(255, rgb.r + amount));
-  const g = Math.max(0, Math.min(255, rgb.g + amount));
-  const b = Math.max(0, Math.min(255, rgb.b + amount));
-  
-  return rgbToHex(r, g, b);
-}
+export function calculateLuminance(color: string): number {
+  const rgb = hexToRgb(color);
+  if (!rgb) return 0;
 
-/**
- * Adjusts the lightness of a color using HSL conversions
- * 
- * @param hex The hex color string
- * @param percent Percentage to adjust (can be negative for darker, positive for lighter)
- * @returns A new hex color string
- */
-export function adjustColorLightness(hex: string, percent: number): string {
-  const rgb = hexToRgb(hex);
-  if (!rgb) return hex;
-  
-  // Convert RGB to HSL
-  const r = rgb.r / 255;
-  const g = rgb.g / 255;
-  const b = rgb.b / 255;
-  
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  
-  let h = 0, s = 0, l = (max + min) / 2;
-  
-  if (max !== min) {
-    const d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    
-    if (max === r) h = (g - b) / d + (g < b ? 6 : 0);
-    else if (max === g) h = (b - r) / d + 2;
-    else h = (r - g) / d + 4;
-    
-    h /= 6;
-  }
-  
-  // Adjust lightness
-  l = Math.max(0, Math.min(1, l * (1 + percent / 100)));
-  
-  // Convert back to RGB
-  let r1 = 0, g1 = 0, b1 = 0;
-  
-  if (s === 0) {
-    r1 = g1 = b1 = l;
-  } else {
-    const hue2rgb = (p: number, q: number, t: number) => {
-      if (t < 0) t += 1;
-      if (t > 1) t -= 1;
-      if (t < 1/6) return p + (q - p) * 6 * t;
-      if (t < 1/2) return q;
-      if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
-      return p;
-    };
-    
-    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-    const p = 2 * l - q;
-    
-    r1 = hue2rgb(p, q, h + 1/3);
-    g1 = hue2rgb(p, q, h);
-    b1 = hue2rgb(p, q, h - 1/3);
-  }
-  
-  return rgbToHex(r1 * 255, g1 * 255, b1 * 255);
-}
-
-/**
- * Generates a complete set of CSS variables from design tokens
- * This transforms our token structure into flat CSS variable name/value pairs
- * 
- * @param tokens The design tokens object
- * @returns A flat object with CSS variable names (including '--') as keys and values
- */
-export function generateThemeVariables(tokens: DesignTokens): Record<string, string> {
-  const variables: Record<string, string> = {};
-  
-  // Helper function to recursively process token objects
-  const processTokens = (obj: any, prefix: string = '') => {
-    if (!obj || typeof obj !== 'object') return;
-    
-    Object.entries(obj).forEach(([key, value]) => {
-      const varName = prefix ? `--${prefix}-${key}` : `--${key}`;
-      
-      if (value && typeof value === 'object') {
-        // Recurse for nested objects
-        processTokens(value, prefix ? `${prefix}-${key}` : key);
-        
-        // Add the object's DEFAULT value if it exists
-        if ('DEFAULT' in value && typeof value.DEFAULT === 'string') {
-          variables[varName] = value.DEFAULT;
-        }
-      } else if (typeof value === 'string' || typeof value === 'number') {
-        // Add leaf node values directly
-        variables[varName] = String(value);
-      }
-    });
+  // Convert RGB to linear values
+  const linearize = (value: number) => {
+    const normalized = value / 255;
+    return normalized <= 0.03928
+      ? normalized / 12.92
+      : Math.pow((normalized + 0.055) / 1.055, 2.4);
   };
+
+  // Calculate luminance using WCAG formula
+  const r = linearize(rgb.r);
+  const g = linearize(rgb.g);
+  const b = linearize(rgb.b);
   
-  // Process each token category
-  processTokens(tokens.colors, 'colors');
-  processTokens(tokens.typography, 'typography');
-  processTokens(tokens.spacing, 'spacing');
-  processTokens(tokens.borders, 'borders');
-  processTokens(tokens.shadows, 'shadows');
-  processTokens(tokens.effects, 'effects');
-  processTokens(tokens.components, 'components');
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+/**
+ * Convert tokens to CSS variables with the proper naming convention
+ * 
+ * @param tokens DesignTokens object
+ * @returns Object mapping CSS variable names to values
+ */
+export function tokensToCSSVariables(tokens: DesignTokens): CSSVariables {
+  const variables: CSSVariables = {};
+  
+  // Process colors
+  if (tokens.colors) {
+    processTokenSection(tokens.colors, 'colors', variables);
+  }
+  
+  // Process typography
+  if (tokens.typography) {
+    processTokenSection(tokens.typography, 'typography', variables);
+  }
+  
+  // Process spacing
+  if (tokens.spacing) {
+    processTokenSection(tokens.spacing, 'spacing', variables);
+  }
+  
+  // Process borders
+  if (tokens.borders) {
+    processTokenSection(tokens.borders, 'borders', variables);
+  }
+  
+  // Process shadows
+  if (tokens.shadows) {
+    processTokenSection(tokens.shadows, 'shadows', variables);
+  }
+  
+  // Process effects
+  if (tokens.effects) {
+    processTokenSection(tokens.effects, 'effects', variables);
+  }
+  
+  // Process component tokens
+  if (tokens.components) {
+    // Components have a special structure
+    Object.entries(tokens.components).forEach(([componentName, componentTokens]) => {
+      Object.entries(componentTokens).forEach(([tokenName, tokenValue]) => {
+        if (typeof tokenValue === 'string' || typeof tokenValue === 'number') {
+          variables[`--components-${componentName}-${tokenName}`] = String(tokenValue);
+        } else if (tokenValue && typeof tokenValue === 'object') {
+          // Handle nested component tokens
+          Object.entries(tokenValue as Record<string, string>).forEach(([subKey, subValue]) => {
+            variables[`--components-${componentName}-${tokenName}-${subKey}`] = String(subValue);
+          });
+        }
+      });
+    });
+  }
   
   return variables;
 }
 
 /**
- * Convert design tokens to CSS variables
- * This is an alias for generateThemeVariables, kept for backward compatibility
- * 
- * @param tokens The design tokens object
- * @returns A flat object with CSS variable names (including '--') as keys and values
+ * Process a section of the token object and add to variables
  */
-export function tokensToCSSVariables(tokens: DesignTokens): Record<string, string> {
-  return generateThemeVariables(tokens);
+function processTokenSection(
+  section: Record<string, any>,
+  prefix: string,
+  variables: CSSVariables
+): void {
+  Object.entries(section).forEach(([key, value]) => {
+    if (typeof value === 'string' || typeof value === 'number') {
+      // Handle simple values
+      variables[`--${prefix}-${key}`] = String(value);
+    } else if (value && typeof value === 'object') {
+      // Handle nested objects
+      Object.entries(value).forEach(([subKey, subValue]) => {
+        if (subKey === 'DEFAULT') {
+          variables[`--${prefix}-${key}`] = String(subValue);
+        } else {
+          variables[`--${prefix}-${key}-${subKey}`] = String(subValue);
+        }
+      });
+    }
+  });
 }
 
 /**
- * Generates CSS variable declarations from a variables object
+ * Generate CSS from a variables object
  * 
- * @param variables Object of CSS variables
- * @param selector CSS selector to scope the variables to
+ * @param variables CSS variable key-value pairs
+ * @param selector CSS selector to scope variables to
  * @returns CSS string with variable declarations
  */
 export function generateCSSFromVariables(
-  variables: Record<string, string>,
+  variables: CSSVariables,
   selector: string = ':root'
 ): string {
+  // Start the CSS block
   let css = `${selector} {\n`;
   
-  Object.entries(variables).forEach(([name, value]) => {
-    css += `  ${name}: ${value};\n`;
+  // Add each variable
+  Object.entries(variables).forEach(([key, value]) => {
+    css += `  ${key}: ${value};\n`;
   });
   
+  // Close the CSS block
   css += '}\n';
+  
   return css;
 }

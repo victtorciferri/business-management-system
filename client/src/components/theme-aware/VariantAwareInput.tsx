@@ -1,109 +1,106 @@
-/**
- * VariantAwareInput Component - 2025 Edition
- *
- * A flexible input component that adapts to theme changes and supports
- * multiple variants and sizes using the component variant system.
- */
-
-import React, { forwardRef } from 'react';
-import { 
-  createInputVariants, 
-  createVariantStyles 
-} from '@/lib/componentVariants';
+import React from 'react';
+import { Input, InputProps } from '@/components/ui/input';
+import { useThemeVars } from '@/hooks/use-theme-variables';
 import { cn } from '@/lib/utils';
+import { InputVariant, InputSize } from '@/lib/componentVariants';
 
-// Define the available input variants and sizes for TypeScript
-export type InputVariant = 'default' | 'filled' | 'outline' | 'underlined';
-export type InputSize = 'sm' | 'md' | 'lg';
-
-// Input props interface
-// Create a base interface for input props without size
-type BaseInputAttributes = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'>;
-
-// Define our component props, extending the base interface
-export interface VariantAwareInputProps extends BaseInputAttributes {
+export interface VariantAwareInputProps extends Omit<InputProps, 'size'> {
   variant?: InputVariant;
   size?: InputSize;
-  leftAddon?: React.ReactNode;
-  rightAddon?: React.ReactNode;
-  error?: boolean;
-  errorMessage?: string;
-  fullWidth?: boolean;
 }
 
-// Load input variants once on component initialization
-const inputVariants = createInputVariants();
-
-// Input component with forwardRef for ref passing
-export const VariantAwareInput = forwardRef<HTMLInputElement, VariantAwareInputProps>(
-  (
-    {
-      variant = 'default',
-      size = 'md',
-      leftAddon,
-      rightAddon,
-      error = false,
-      errorMessage,
-      fullWidth = false,
-      className,
-      ...props
+/**
+ * An input component that adapts to the current theme variant and settings
+ */
+export function VariantAwareInput({
+  variant = 'default',
+  size = 'md',
+  className,
+  ...props
+}: VariantAwareInputProps) {
+  const themeVars = useThemeVars();
+  
+  // Variant-specific styles
+  const variantStyles = {
+    default: 'border border-input bg-background',
+    filled: 'border border-input bg-secondary/10',
+    outlined: 'border-2 border-input bg-transparent',
+    simple: 'border-b border-input bg-transparent px-1 rounded-none',
+    underlined: 'border-b-2 border-input bg-transparent px-1 rounded-none'
+  };
+  
+  // Size-specific styles
+  const sizeStyles = {
+    sm: 'h-8 text-xs px-2',
+    md: 'h-10 text-sm px-3',
+    lg: 'h-12 text-base px-4'
+  };
+  
+  // Theme variant-specific styles
+  const themeVariantStyles = {
+    professional: {
+      default: 'rounded-md',
+      filled: 'rounded-md',
+      outlined: 'rounded-md',
+      simple: '',
+      underlined: ''
     },
-    ref
-  ) => {
-    // Get variant styles
-    const variantStyles = createVariantStyles(
-      inputVariants, 
-      { variant, size, className }
-    );
-    
-    const inputStyles: React.CSSProperties = {
-      ...(variantStyles.style || {}),
-      ...(error ? { borderColor: 'var(--colors-error-base)' } : {}),
-    };
-    
-    const inputElement = (
-      <div className={cn(
-        'relative',
-        fullWidth && 'w-full',
-      )}>
-        {leftAddon && (
-          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-muted-foreground">
-            {leftAddon}
-          </div>
-        )}
+    vibrant: {
+      default: 'rounded-lg border-2',
+      filled: 'rounded-lg shadow-inner',
+      outlined: 'rounded-lg border-2 border-primary/30',
+      simple: 'border-b border-primary/30',
+      underlined: 'border-b-2 border-primary/50'
+    },
+    elegant: {
+      default: 'rounded-sm font-serif',
+      filled: 'rounded-sm font-serif',
+      outlined: 'rounded-sm font-serif',
+      simple: 'font-serif',
+      underlined: 'font-serif'
+    },
+    minimal: {
+      default: 'rounded-none',
+      filled: 'rounded-none',
+      outlined: 'rounded-none',
+      simple: '',
+      underlined: ''
+    }
+  };
+  
+  // Focus state styles
+  const focusStyles = {
+    professional: 'focus:ring-2 focus:ring-primary focus:border-primary',
+    vibrant: 'focus:ring-2 focus:ring-primary/50 focus:border-primary',
+    elegant: 'focus:border-primary focus:ring-0',
+    minimal: 'focus:border-primary focus:ring-0'
+  };
+  
+  const currentThemeVariant = themeVars?.variant || 'professional';
+  
+  return (
+    <Input
+      className={cn(
+        // Variant-specific styles
+        variantStyles[variant],
         
-        <input
-          ref={ref}
-          className={cn(
-            variantStyles.className,
-            leftAddon && 'pl-10',
-            rightAddon && 'pr-10',
-            error && 'border-error focus:border-error',
-            fullWidth && 'w-full',
-            className
-          )}
-          style={inputStyles}
-          {...props}
-        />
+        // Size-specific styles
+        sizeStyles[size],
         
-        {rightAddon && (
-          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-muted-foreground">
-            {rightAddon}
-          </div>
-        )}
-      </div>
-    );
-    
-    return (
-      <div className={cn("flex flex-col", fullWidth && "w-full")}>
-        {inputElement}
+        // Theme variant-specific styles
+        themeVariantStyles[currentThemeVariant as keyof typeof themeVariantStyles]?.[variant],
         
-        {error && errorMessage && (
-          <p className="mt-1 text-xs text-error">{errorMessage}</p>
-        )}
-      </div>
-    );
-  }
-);
-
-VariantAwareInput.displayName = 'VariantAwareInput';
+        // Focus state based on theme variant
+        focusStyles[currentThemeVariant as keyof typeof focusStyles],
+        
+        // Accessibility adjustments
+        themeVars?.highContrast && 'border-[1.5px]',
+        themeVars?.reducedMotion && 'transition-none',
+        
+        // Custom classnames
+        className
+      )}
+      {...props}
+    />
+  );
+}

@@ -1,149 +1,81 @@
-/**
- * VariantAwareCard Component - 2025 Edition
- *
- * A flexible card component that adapts to theme changes and supports
- * multiple variants and sizes using the component variant system.
- */
-
-import React, { forwardRef } from 'react';
-import { 
-  createCardVariants, 
-  createVariantStyles 
-} from '@/lib/componentVariants';
+import React from 'react';
+import { Card, CardProps } from '@/components/ui/card';
+import { useThemeVars } from '@/hooks/use-theme-variables';
 import { cn } from '@/lib/utils';
 
-// Define the available card variants and sizes for TypeScript
-export type CardVariant = 'default' | 'primary' | 'secondary' | 'outline' | 'flat';
-export type CardSize = 'sm' | 'md' | 'lg';
+export type CardVariant = 'default' | 'elevated' | 'outlined' | 'filled';
 
-// Card props interface
-export interface VariantAwareCardProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface VariantAwareCardProps extends Omit<CardProps, 'variant'> {
   variant?: CardVariant;
-  size?: CardSize;
-  withHover?: boolean;
-  withBorder?: boolean;
-  withShadow?: boolean;
-  headerContent?: React.ReactNode;
-  footerContent?: React.ReactNode;
 }
 
-// Load card variants once on component initialization
-const cardVariants = createCardVariants();
-
-// Card component with forwardRef for ref passing
-export const VariantAwareCard = forwardRef<HTMLDivElement, VariantAwareCardProps>(
-  (
-    {
-      variant = 'default',
-      size = 'md',
-      withHover = false,
-      withBorder = true,
-      withShadow = true,
-      headerContent,
-      footerContent,
-      className,
-      children,
-      ...props
+/**
+ * A card component that adapts to the current theme variant and settings
+ */
+export function VariantAwareCard({
+  children,
+  variant = 'default',
+  className,
+  ...props
+}: VariantAwareCardProps) {
+  const themeVars = useThemeVars();
+  
+  // Apply variant-specific styles
+  const variantStyles = {
+    default: '',
+    elevated: 'shadow-lg',
+    outlined: 'border-2 shadow-none bg-transparent',
+    filled: 'bg-secondary/10 border-none'
+  };
+  
+  // Apply theme variant-specific styles
+  const themeVariantStyles = {
+    professional: {
+      default: 'shadow-sm',
+      elevated: 'shadow-md',
+      outlined: 'border-2 shadow-none',
+      filled: 'bg-secondary/10 border-none'
     },
-    ref
-  ) => {
-    // Get variant styles
-    const variantStyles = createVariantStyles(
-      cardVariants, 
-      { variant, size, className }
-    );
-    
-    return (
-      <div
-        ref={ref}
-        className={cn(
-          variantStyles.className,
-          withHover && 'hover:shadow-md transition-shadow duration-200',
-          !withBorder && 'border-0',
-          !withShadow && 'shadow-none',
-          className
-        )}
-        style={variantStyles.style}
-        {...props}
-      >
-        {headerContent && (
-          <div className="mb-4">
-            {headerContent}
-          </div>
-        )}
+    vibrant: {
+      default: 'shadow-md border-b-2 border-primary/30',
+      elevated: 'shadow-xl border-b-4 border-primary/30',
+      outlined: 'border-2 shadow-none border-primary/50',
+      filled: 'bg-secondary/20 border-none shadow-inner'
+    },
+    elegant: {
+      default: 'shadow-md',
+      elevated: 'shadow-xl',
+      outlined: 'border-[1px] shadow-none',
+      filled: 'bg-secondary/5 border-none'
+    },
+    minimal: {
+      default: 'shadow-none border-0',
+      elevated: 'shadow-sm',
+      outlined: 'border-[1px] shadow-none',
+      filled: 'bg-secondary/5 border-none'
+    }
+  };
+  
+  const currentThemeVariant = themeVars?.variant || 'professional';
+  
+  return (
+    <Card
+      className={cn(
+        // Apply general variant styles
+        variantStyles[variant],
         
-        <div>
-          {children}
-        </div>
+        // Apply theme-specific variant styles
+        themeVariantStyles[currentThemeVariant as keyof typeof themeVariantStyles]?.[variant],
         
-        {footerContent && (
-          <div className="mt-4 pt-3 border-t">
-            {footerContent}
-          </div>
-        )}
-      </div>
-    );
-  }
-);
-
-// Card header component
-export const VariantAwareCardHeader = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
-    <div
-      ref={ref}
-      className={cn('mb-4', className)}
+        // Apply accessibility styles if needed
+        themeVars?.highContrast && 'border-[1.5px]',
+        
+        // Apply custom class names
+        className
+      )}
       {...props}
-    />
-  )
-);
-
-// Card title component
-export const VariantAwareCardTitle = forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTMLHeadingElement>>(
-  ({ className, ...props }, ref) => (
-    <h3
-      ref={ref}
-      className={cn('text-lg font-semibold', className)}
-      {...props}
-    />
-  )
-);
-
-// Card description component
-export const VariantAwareCardDescription = forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(
-  ({ className, ...props }, ref) => (
-    <p
-      ref={ref}
-      className={cn('text-sm text-muted-foreground', className)}
-      {...props}
-    />
-  )
-);
-
-// Card content component
-export const VariantAwareCardContent = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
-    <div
-      ref={ref}
-      className={cn('', className)}
-      {...props}
-    />
-  )
-);
-
-// Card footer component
-export const VariantAwareCardFooter = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
-    <div
-      ref={ref}
-      className={cn('mt-4 pt-3 border-t', className)}
-      {...props}
-    />
-  )
-);
-
-VariantAwareCard.displayName = 'VariantAwareCard';
-VariantAwareCardHeader.displayName = 'VariantAwareCardHeader';
-VariantAwareCardTitle.displayName = 'VariantAwareCardTitle';
-VariantAwareCardDescription.displayName = 'VariantAwareCardDescription';
-VariantAwareCardContent.displayName = 'VariantAwareCardContent';
-VariantAwareCardFooter.displayName = 'VariantAwareCardFooter';
+    >
+      {children}
+    </Card>
+  );
+}

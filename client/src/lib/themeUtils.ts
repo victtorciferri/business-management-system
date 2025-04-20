@@ -1,266 +1,201 @@
 /**
- * Theme Utilities - 2025 Edition
+ * Theme Utils - 2025 Edition
  * 
- * Utility functions for working with themes, including:
- * - Converting theme objects to CSS variables
- * - Generating CSS classes for theme tokens
- * - Token manipulation and transformation
+ * Client-side utilities for applying themes to the DOM
  */
 
-import { GlobalTokens } from '@/providers/GlobalThemeContext';
-import tinycolor from 'tinycolor2';
+import { ThemeEntity } from '@shared/schema';
+import { DesignTokens, Theme, ColorTokens, TypographyTokens, SpacingTokens, BorderTokens, ShadowTokens, EffectTokens, ComponentTokens } from '@shared/designTokens';
+import { themeToCssVariables, createCompleteTheme } from '@shared/tokenUtils';
 
 /**
- * Converts a theme tokens object to CSS variables
- * @param tokens The theme tokens object
- * @param scope Optional scope identifier for the CSS variables
- * @returns CSS string with all variables
+ * Apply a theme to the document
+ * 
+ * @param theme Theme to apply
+ * @param targetElement Element to apply the theme to (defaults to document.documentElement)
  */
-export function themeToCSS(tokens: GlobalTokens | any, scope?: string): string {
-  if (!tokens) return '';
+export function applyTheme(
+  theme: Partial<ThemeEntity>, 
+  targetElement: HTMLElement = document.documentElement
+): void {
+  // Apply CSS variables
+  const variables = themeToCssVariables(theme);
   
-  // Initialize CSS variable string
-  let css = ':root {\n';
+  // Apply all variables to the target element
+  Object.entries(variables).forEach(([name, value]) => {
+    targetElement.style.setProperty(name, value);
+  });
   
-  // Process the tokens object recursively
-  const processTokens = (obj: any, prefix = '--') => {
-    for (const key in obj) {
-      const value = obj[key];
-      
-      // For nested objects, recursively process with updated prefix
-      if (value && typeof value === 'object' && !Array.isArray(value)) {
-        processTokens(value, `${prefix}${key}-`);
-      } else {
-        // For primitive values, create CSS variable
-        css += `  ${prefix}${key}: ${value};\n`;
-      }
-    }
-  };
+  // Apply theme classes
+  if (theme.variant) {
+    const variants = ['professional', 'vibrant', 'elegant', 'minimal', 'muted'];
+    variants.forEach(v => targetElement.classList.remove(`theme-${v}`));
+    targetElement.classList.add(`theme-${theme.variant}`);
+  }
   
-  // Process the tokens object
-  processTokens(tokens);
+  // Apply light/dark mode
+  if (theme.appearance === 'dark') {
+    targetElement.classList.add('dark');
+    targetElement.classList.remove('light');
+  } else if (theme.appearance === 'light') {
+    targetElement.classList.add('light');
+    targetElement.classList.remove('dark');
+  }
   
-  // Close the CSS block
+  // Apply data attributes for variant-aware components
+  if (theme.variant) {
+    targetElement.setAttribute('data-theme-variant', theme.variant);
+  }
+  
+  // Apply business-specific theme class if we have a business id or slug
+  if (theme.businessId || theme.businessSlug) {
+    const identifier = theme.businessSlug || `business-${theme.businessId}`;
+    targetElement.setAttribute('data-business', identifier);
+  }
+  
+  // Set color mode preference
+  if (theme.appearance) {
+    localStorage.setItem('theme-mode', theme.appearance);
+  }
+  
+  // Dispatch an event so other components can react to the theme change
+  window.dispatchEvent(new CustomEvent('theme-changed', { 
+    detail: { theme }
+  }));
+}
+
+/**
+ * Generate a style element for a theme
+ * 
+ * @param theme Theme or partial theme entity
+ * @param options Options for style element generation
+ * @returns HTMLStyleElement with theme CSS variables
+ */
+export function generateThemeStyleElement(
+  theme: Partial<ThemeEntity>,
+  options: {
+    id?: string;
+    scope?: string;
+    media?: string;
+  } = {}
+): HTMLStyleElement {
+  const { id = `theme-${theme.id || 'custom'}`, scope = ':root', media } = options;
+  
+  // Convert theme properties to CSS variables
+  const variables = themeToCssVariables(theme);
+  
+  // Create style element
+  const style = document.createElement('style');
+  style.id = id;
+  if (media) style.media = media;
+  
+  // Generate CSS
+  let css = `${scope} {\n`;
+  Object.entries(variables).forEach(([name, value]) => {
+    css += `  ${name}: ${value};\n`;
+  });
   css += '}\n';
   
-  // If a scope is provided, wrap the CSS variables in a scoped selector
-  if (scope) {
-    return css.replace(':root', `.theme-${scope}`);
+  // Add dark mode specific overrides if needed
+  if (theme.appearance === 'dark' || (theme.tokens && theme.tokens.darkMode)) {
+    css += '\n@media (prefers-color-scheme: dark) {\n';
+    css += `  ${scope} {\n`;
+    // Add dark mode specific variables
+    css += '    /* Dark mode overrides would go here */\n';
+    css += '  }\n';
+    css += '}\n';
   }
   
-  return css;
+  style.textContent = css;
+  return style;
 }
 
 /**
- * Extracts color variables from a theme tokens object
- * @param tokens The theme tokens object
- * @returns Object containing only the color-related tokens
+ * Convert token overrides to a complete theme
  */
-export function extractColorTokens(tokens: GlobalTokens): Record<string, string> {
-  const colors: Record<string, string> = {};
-  
-  // Extract color tokens recursively
-  const extractColors = (obj: any, prefix = '') => {
-    for (const key in obj) {
-      const value = obj[key];
-      
-      // For nested objects, recursively process
-      if (value && typeof value === 'object' && !Array.isArray(value)) {
-        extractColors(value, prefix ? `${prefix}-${key}` : key);
-      } else if (typeof value === 'string' && isColorValue(value)) {
-        // If it's a color value, add to the colors object
-        const tokenKey = prefix ? `${prefix}-${key}` : key;
-        colors[tokenKey] = value;
-      }
-    }
+export function createTheme(
+  overrides: {
+    colors?: Partial<ColorTokens>;
+    typography?: Partial<TypographyTokens>;
+    spacing?: Partial<SpacingTokens>;
+    borders?: Partial<BorderTokens>;
+    shadows?: Partial<ShadowTokens>;
+    effects?: Partial<EffectTokens>;
+    components?: Partial<ComponentTokens>;
+  } = {}
+): Theme {
+  // Create a base theme
+  const baseTheme: Partial<ThemeEntity> = {
+    name: 'Custom Theme',
+    primaryColor: overrides.colors?.primary || '#4f46e5',
+    secondaryColor: overrides.colors?.secondary || '#06b6d4',
+    backgroundColor: overrides.colors?.background || '#ffffff',
+    textColor: overrides.colors?.foreground || '#111827',
+    fontFamily: overrides.typography?.fontFamily || 'Inter, system-ui, sans-serif',
+    variant: 'professional',
+    appearance: 'light',
+    borderRadius: 8
   };
   
-  // Process the color tokens in the theme
-  extractColors(tokens.colors);
-  
-  return colors;
+  return createCompleteTheme(baseTheme);
 }
 
 /**
- * Checks if a value is a valid CSS color
- * @param value The value to check
- * @returns True if the value is a valid color
+ * Get the current theme from localStorage
  */
-function isColorValue(value: string): boolean {
-  // Use tinycolor to validate if the string is a color
-  const tc = tinycolor(value) as any;
-  return tc && tc.isValid && tc.isValid();
-}
-
-/**
- * Generates CSS variable access syntax for a token
- * @param path The token path (e.g., 'colors.primary.base')
- * @returns CSS variable access syntax (e.g., 'var(--colors-primary-base)')
- */
-export function tokenToVar(path: string): string {
-  // Convert the dot notation to kebab case for CSS variable
-  const varName = path.replace(/\./g, '-');
-  return `var(--${varName})`;
-}
-
-/**
- * Alias for tokenToVar for backward compatibility
- * @param path CSS variable path
- * @returns CSS variable string
- */
-export function cssVar(path: string): string {
-  return tokenToVar(path);
-}
-
-/**
- * Generate a dark mode version of a theme
- * @param theme The light theme tokens
- * @returns Dark theme tokens
- */
-export function generateDarkTheme(theme: GlobalTokens): GlobalTokens {
-  // Create a deep copy of the theme
-  const darkTheme = JSON.parse(JSON.stringify(theme)) as GlobalTokens;
-  
-  // Transform color values to dark mode equivalents
-  darkTheme.colors = {
-    ...darkTheme.colors,
-    
-    // Invert background and foreground colors
-    background: {
-      base: '#18181b',          // Zinc 900
-      foreground: '#f8fafc',    // Slate 50
-      subtle: '#27272a',        // Zinc 800
-      muted: '#3f3f46',         // Zinc 700
-      elevated: '#18181b',      // Zinc 900
-    },
-    
-    card: {
-      base: '#27272a',          // Zinc 800
-      foreground: '#f8fafc',    // Slate 50
-      hover: '#3f3f46',         // Zinc 700
-      elevated: '#3f3f46',      // Zinc 700
-    },
-    
-    popover: {
-      base: '#27272a',          // Zinc 800
-      foreground: '#f8fafc',    // Slate 50
-    },
-    
-    muted: {
-      base: '#3f3f46',          // Zinc 700
-      foreground: '#a1a1aa',    // Zinc 400
-    },
-    
-    // Borders are darker in dark mode
-    border: '#3f3f46',          // Zinc 700
-    input: '#3f3f46',           // Zinc 700
-  };
-  
-  return darkTheme;
-}
-
-/**
- * Generate CSS variables for both light and dark themes
- * with proper media queries for system preference
- * @param lightTheme The light theme tokens
- * @param darkTheme The dark theme tokens
- * @returns CSS string with media queries for light and dark themes
- */
-export function generateThemeWithColorSchemes(
-  lightTheme: GlobalTokens,
-  darkTheme: GlobalTokens
-): string {
-  // Generate CSS for light theme
-  const lightCSS = themeToCSS(lightTheme);
-  
-  // Generate CSS for dark theme, but with a media query
-  let darkCSS = themeToCSS(darkTheme);
-  darkCSS = darkCSS.replace(':root {', '@media (prefers-color-scheme: dark) {\n  :root {');
-  darkCSS = darkCSS.replace('}\n', '  }\n}\n');
-  
-  // Combine the light and dark themes
-  return lightCSS + '\n' + darkCSS;
-}
-
-/**
- * Get the appropriate theme based on the current color mode
- * @param lightTheme The light theme tokens
- * @param darkTheme The dark theme tokens 
- * @param isDarkMode Whether dark mode is active
- * @returns The appropriate theme tokens
- */
-export function getThemeForColorMode(
-  lightTheme: GlobalTokens,
-  darkTheme: GlobalTokens,
-  isDarkMode: boolean
-): GlobalTokens {
-  return isDarkMode ? darkTheme : lightTheme;
-}
-
-/**
- * Check if a color is light or dark
- * @param color The color to check (any valid CSS color string)
- * @returns True if the color is dark
- */
-export function isColorDark(color: string): boolean {
-  const tc = tinycolor(color) as any;
-  return tc.isDark();
-}
-
-/**
- * Ensure a color has sufficient contrast against a background
- * @param color The foreground color
- * @param backgroundColor The background color
- * @param minContrastRatio The minimum contrast ratio (WCAG AA: 4.5:1, AAA: 7:1)
- * @returns A modified color with sufficient contrast
- */
-export function ensureContrast(
-  color: string,
-  backgroundColor: string,
-  minContrastRatio = 4.5
-): string {
-  const tColor = tinycolor(color) as any;
-  const tBgColor = tinycolor(backgroundColor) as any;
-  
-  // Calculate the contrast ratio
-  const contrast = tinycolor.readability(tColor.toString(), tBgColor.toString());
-  
-  // If contrast is sufficient, return the original color
-  if (contrast >= minContrastRatio) {
-    return tColor.toHexString();
+export function getCurrentTheme(): Partial<ThemeEntity> | null {
+  try {
+    const theme = localStorage.getItem('current-theme');
+    return theme ? JSON.parse(theme) : null;
+  } catch (error) {
+    console.error('Failed to parse theme from localStorage:', error);
+    return null;
   }
-  
-  // Modify the color to increase contrast
-  const isDark = tBgColor.isDark();
-  
-  // Adjust color in the right direction (lighten on dark backgrounds, darken on light)
-  let adjustedColor = tColor;
-  
-  if (isDark) {
-    // On dark backgrounds, lighten for better contrast
-    for (let i = 0; i < 10; i++) {
-      adjustedColor = adjustedColor.lighten(5);
-      const newContrast = tinycolor.readability(
-        adjustedColor.toString(), 
-        tBgColor.toString()
-      );
-      if (newContrast >= minContrastRatio) {
-        break;
-      }
-    }
-  } else {
-    // On light backgrounds, darken for better contrast
-    for (let i = 0; i < 10; i++) {
-      adjustedColor = adjustedColor.darken(5);
-      const newContrast = tinycolor.readability(
-        adjustedColor.toString(), 
-        tBgColor.toString()
-      );
-      if (newContrast >= minContrastRatio) {
-        break;
-      }
-    }
+}
+
+/**
+ * Save theme to localStorage
+ */
+export function saveThemeToLocalStorage(theme: Partial<ThemeEntity>): void {
+  try {
+    localStorage.setItem('current-theme', JSON.stringify(theme));
+  } catch (error) {
+    console.error('Failed to save theme to localStorage:', error);
   }
+}
+
+/**
+ * Check if we should use dark mode (based on system preference)
+ */
+export function shouldUseDarkMode(): boolean {
+  // Check localStorage preference first
+  const storedPreference = localStorage.getItem('theme-mode');
   
-  return adjustedColor.toHexString();
+  if (storedPreference === 'dark') return true;
+  if (storedPreference === 'light') return false;
+  
+  // Otherwise use system preference
+  return window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
+/**
+ * Inspect a theme for errors or issues
+ */
+export function validateTheme(theme: Partial<ThemeEntity>): string[] {
+  const errors: string[] = [];
+  
+  // Check required properties
+  if (!theme.name) errors.push('Theme name is required');
+  if (!theme.primaryColor) errors.push('Primary color is required');
+  
+  // Check color formats
+  const colorProperties = ['primaryColor', 'secondaryColor', 'backgroundColor', 'textColor', 'accentColor'];
+  colorProperties.forEach(prop => {
+    const color = theme[prop as keyof ThemeEntity] as string | undefined;
+    if (color && !color.match(/^#[0-9A-Fa-f]{6}$/)) {
+      errors.push(`Invalid ${prop} format. Must be a valid hex color (e.g. #FF0000)`);
+    }
+  });
+  
+  return errors;
 }

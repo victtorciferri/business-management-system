@@ -1,296 +1,207 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { Theme, defaultTheme, mergeWithDefaults } from '@shared/config';
-import { useToast } from '@/hooks/use-toast';
+import React, { createContext, useState, useEffect, ReactNode, useContext } from 'react';
+import { ThemeEntity } from '@shared/schema';
+import { useLocalStorage } from '@/hooks/use-local-storage';
+import { getAllThemes, getActiveTheme, createTheme, updateTheme, activateTheme, deleteTheme } from '@/lib/themeApi';
+import { applyTheme } from '@/lib/themeUtils';
 
 interface ThemeContextType {
-  theme: Theme;
-  updateTheme: (updates: Partial<Theme>) => void;
-  saveTheme: () => Promise<{success: boolean, error?: string}>;
-  resetTheme: () => void;
-  hasUnsavedChanges: boolean;
-  isSaving: boolean;
-  isPreviewMode: boolean;
-  setPreviewMode: (mode: boolean) => void;
-  setTheme: (theme: Theme) => void;
-  
-  // Theme utility functions
-  getPrimaryColor: () => string;
-  getTextColor: () => string;
-  getBackgroundColor: () => string;
-  getButtonClass: () => string;
+  theme: Partial<ThemeEntity>;
+  setTheme: (theme: Partial<ThemeEntity>) => void;
   isDarkMode: boolean;
   toggleDarkMode: () => void;
-  
-  // Admin-specific functions
-  saveThemeForBusiness?: (businessId: number, theme: Theme) => Promise<{success: boolean, error?: string}>;
+  themes: ThemeEntity[];
+  loadingThemes: boolean;
+  applyTheme: (themeId: number) => Promise<void>;
+  saveTheme: (theme: Partial<ThemeEntity>) => Promise<ThemeEntity | null>;
+  deleteTheme: (themeId: number) => Promise<boolean>;
+  createNewTheme: (theme: Partial<ThemeEntity>) => Promise<ThemeEntity | null>;
 }
 
-export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+export const ThemeContext = createContext<ThemeContextType | null>(null);
 
 interface ThemeProviderProps {
-  initialTheme?: Partial<Theme>;
-  children: React.ReactNode;
+  children: ReactNode;
+  businessId?: number;
+  businessSlug?: string;
 }
 
-export const ThemeProvider: React.FC<ThemeProviderProps> = ({ 
-  initialTheme, 
-  children 
+export const ThemeProvider: React.FC<ThemeProviderProps> = ({
+  children,
+  businessId,
+  businessSlug
 }) => {
-  const { toast } = useToast();
+  // State for the active theme
+  const [theme, setThemeState] = useState<Partial<ThemeEntity>>({});
+  const [themes, setThemes] = useState<ThemeEntity[]>([]);
+  const [loadingThemes, setLoadingThemes] = useState(true);
   
-  // Convert partial theme to full theme with defaults
-  const fullInitialTheme = initialTheme 
-    ? mergeWithDefaults(initialTheme) 
-    : defaultTheme;
+  // Dark mode state
+  const [isDarkMode, setIsDarkMode] = useLocalStorage('darkMode', false);
   
-  const [theme, setTheme] = useState<Theme>(fullInitialTheme);
-  const [originalTheme, setOriginalTheme] = useState<Theme>(fullInitialTheme);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isPreviewMode, setIsPreviewMode] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
-  
-  // Detect system preference for dark mode on initial load
+  // Fetch themes on mount
   useEffect(() => {
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const storedMode = localStorage.getItem('theme-mode');
-    const shouldUseDarkMode = storedMode === 'dark' || (storedMode !== 'light' && prefersDark);
-    
-    // Update state
-    setIsDarkMode(shouldUseDarkMode);
-    
-    // Also ensure HTML class is applied
-    if (shouldUseDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    
-    console.log('ThemeContext: Initial dark mode set to', shouldUseDarkMode ? 'dark' : 'light');
-  }, []);
-  
-  // Update theme when initialTheme changes
-  useEffect(() => {
-    if (initialTheme) {
-      const newTheme = mergeWithDefaults(initialTheme);
-      setTheme(newTheme);
-      setOriginalTheme(newTheme);
-    }
-  }, [initialTheme]);
-  
-  // Update theme with partial changes
-  const updateTheme = useCallback((updates: Partial<Theme>) => {
-    setTheme(prevTheme => ({ ...prevTheme, ...updates }));
-  }, []);
-  
-  // Reset theme to original state
-  const resetTheme = useCallback(() => {
-    setTheme(originalTheme);
-    toast({
-      title: "Theme reset",
-      description: "Your changes have been discarded and the theme has been reset.",
-    });
-  }, [originalTheme, toast]);
-  
-  // Save theme changes
-  const saveTheme = useCallback(async () => {
-    try {
-      setIsSaving(true);
-      
-      // Make API call to save the theme - try authenticated route first
-      let response = await fetch('/api/business/theme', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ theme }),
-        credentials: 'include' // This ensures cookies/session is sent with the request
-      });
-      
-      // If authenticated route fails, try public API for the current business
-      if (response.status === 401) {
-        console.log('Authentication failed when saving theme, trying public endpoint');
+    const fetchThemes = async () => {
+      setLoadingThemes(true);
+      try {
+        let fetchedThemes: ThemeEntity[] = [];
         
-        // Try to get business ID from window.BUSINESS_DATA
-        let businessId;
-        if (window.BUSINESS_DATA && window.BUSINESS_DATA.id) {
-          businessId = window.BUSINESS_DATA.id;
+        // Fetch business themes if id/slug provided, otherwise fetch all themes
+        if (businessId || businessSlug) {
+          const businessThemesPromise = businessId
+            ? getAllThemes() // Replace with proper business themes API call when available
+            : getAllThemes(); // Replace with proper business themes API call when available
+          fetchedThemes = await businessThemesPromise;
         } else {
-          // If no business ID is found, we can't proceed
-          console.error('No business ID found in window.BUSINESS_DATA');
-          throw new Error('Unable to save theme: No business ID found');
+          fetchedThemes = await getAllThemes();
         }
         
-        // Try public endpoint as fallback
-        response = await fetch(`/api/public/theme/${businessId}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ theme })
-        });
+        setThemes(fetchedThemes);
+        
+        // Get active theme
+        const active = await getActiveTheme(businessId, businessSlug);
+        if (active) {
+          setThemeState(active);
+          
+          // Apply to document
+          applyTheme(active);
+        } else if (fetchedThemes.length > 0) {
+          // Use first theme if no active theme
+          setThemeState(fetchedThemes[0]);
+          applyTheme(fetchedThemes[0]);
+        }
+      } catch (error) {
+        console.error('Failed to load themes:', error);
+      } finally {
+        setLoadingThemes(false);
       }
-      
-      // Get the response text regardless of the status
-      const responseText = await response.text();
-      let responseData;
-      
-      try {
-        // Try to parse as JSON if possible
-        responseData = JSON.parse(responseText);
-      } catch (e) {
-        // If it's not valid JSON, use the text as is
-        responseData = { message: responseText };
-      }
-      
-      if (!response.ok) {
-        console.error(`Server error (${response.status}) when saving theme:`, responseData);
-        throw new Error(responseData.message || 'Failed to save theme');
-      }
-      
-      // Update the original theme to match the current theme
-      setOriginalTheme(theme);
-      
-      toast({
-        title: "Theme saved",
-        description: "Your theme has been saved successfully.",
-      });
-      
-      return { success: true };
-    } catch (error: any) {
-      console.error('Error saving theme:', error);
-      toast({
-        title: "Error saving theme",
-        description: error.message || "There was a problem saving your theme. Please try again.",
-        variant: "destructive",
-      });
-      return { success: false, error: error.message };
-    } finally {
-      setIsSaving(false);
-    }
-  }, [theme, toast]);
+    };
+    
+    fetchThemes();
+  }, [businessId, businessSlug]);
   
-  // Track if there are unsaved changes
-  const hasUnsavedChanges = JSON.stringify(theme) !== JSON.stringify(originalTheme);
-
+  // Update the theme
+  const setTheme = (newTheme: Partial<ThemeEntity>) => {
+    setThemeState(newTheme);
+    applyTheme(newTheme);
+  };
+  
   // Toggle dark mode
-  const toggleDarkMode = useCallback(() => {
-    setIsDarkMode(prev => {
-      const newMode = !prev;
-      localStorage.setItem('theme-mode', newMode ? 'dark' : 'light');
-      
-      // Apply dark mode class to document
-      if (newMode) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-      
-      return newMode;
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
+    
+    // Apply dark mode class to document
+    document.documentElement.classList.toggle('dark', !isDarkMode);
+    
+    // Update theme
+    setTheme({
+      ...theme,
+      appearance: !isDarkMode ? 'dark' : 'light'
     });
-  }, []);
-
-  // Theme utility functions
-  const getPrimaryColor = useCallback(() => {
-    return `text-${theme.primaryColor}-600`;
-  }, [theme.primaryColor]);
-
-  const getTextColor = useCallback(() => {
-    return 'text-gray-800';
-  }, []);
-
-  const getBackgroundColor = useCallback(() => {
-    return `bg-${theme.backgroundColor || 'white'}`;
-  }, [theme.backgroundColor]);
-
-  const getButtonClass = useCallback(() => {
-    return `bg-${theme.primaryColor}-600 hover:bg-${theme.primaryColor}-700 text-white`;
-  }, [theme.primaryColor]);
+  };
   
-  // Admin-specific function to save a theme for a specific business
-  const saveThemeForBusiness = useCallback(async (businessId: number, themeToSave: Theme): Promise<{success: boolean, error?: string}> => {
-    try {
-      setIsSaving(true);
+  // Apply a theme by ID
+  const applyThemeById = async (themeId: number) => {
+    const themeToApply = themes.find(t => t.id === themeId);
+    if (themeToApply) {
+      setTheme(themeToApply);
       
-      // First try the admin route with authentication
-      let response = await fetch(`/api/admin/business/${businessId}/theme`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ theme: themeToSave }),
-        credentials: 'include'
-      });
-      
-      // If admin route fails with 401, try the public endpoint
-      if (response.status === 401) {
-        console.log('Admin route authentication failed, trying public endpoint');
-        response = await fetch(`/api/public/theme/${businessId}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ theme: themeToSave })
-        });
+      // Activate on server if in a business context
+      if (businessId) {
+        try {
+          await activateTheme(themeId);
+        } catch (error) {
+          console.error('Failed to activate theme on server:', error);
+        }
       }
-      
-      // Get the response text regardless of the status
-      const responseText = await response.text();
-      let responseData;
-      
-      try {
-        // Try to parse as JSON if possible
-        responseData = JSON.parse(responseText);
-      } catch (e) {
-        // If it's not valid JSON, use the text as is
-        responseData = { message: responseText };
-      }
-      
-      if (!response.ok) {
-        console.error(`Server error (${response.status}) when saving theme for business ${businessId}:`, responseData);
-        return {
-          success: false,
-          error: responseData.message || `Failed to save theme for business ${businessId}`
-        };
-      }
-      
-      toast({
-        title: "Theme saved",
-        description: `Business theme has been saved successfully.`,
-      });
-      
-      return { success: true };
-    } catch (error: any) {
-      console.error('Error saving theme for business:', error);
-      return {
-        success: false,
-        error: error.message || "There was a problem saving the theme."
-      };
-    } finally {
-      setIsSaving(false);
     }
-  }, [toast]);
+  };
+  
+  // Save theme changes
+  const saveTheme = async (updatedTheme: Partial<ThemeEntity>): Promise<ThemeEntity | null> => {
+    if (!updatedTheme.id) {
+      return null;
+    }
+    
+    try {
+      const saved = await updateTheme(updatedTheme.id, updatedTheme);
+      
+      if (saved) {
+        // Update themes list
+        setThemes(prevThemes => prevThemes.map(t => 
+          t.id === saved.id ? { ...t, ...saved } : t
+        ));
+        
+        // Update current theme if it's the active one
+        if (theme.id === saved.id) {
+          setTheme(saved);
+        }
+        
+        return saved;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Failed to save theme:', error);
+      return null;
+    }
+  };
+  
+  // Delete a theme
+  const removeTheme = async (themeId: number): Promise<boolean> => {
+    try {
+      const success = await deleteTheme(themeId);
+      
+      if (success) {
+        // Remove from themes list
+        setThemes(prevThemes => prevThemes.filter(t => t.id !== themeId));
+        
+        // If active theme was deleted, switch to first available theme
+        if (theme.id === themeId && themes.length > 1) {
+          const newActiveTheme = themes.find(t => t.id !== themeId);
+          if (newActiveTheme) {
+            setTheme(newActiveTheme);
+          }
+        }
+        
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Failed to delete theme:', error);
+      return false;
+    }
+  };
+  
+  // Create a new theme
+  const createNewTheme = async (newTheme: Partial<ThemeEntity>): Promise<ThemeEntity | null> => {
+    try {
+      const created = await createTheme(newTheme);
+      
+      if (created) {
+        // Add to themes list
+        setThemes(prevThemes => [...prevThemes, created]);
+        return created;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Failed to create theme:', error);
+      return null;
+    }
+  };
   
   const value = {
     theme,
-    updateTheme,
-    saveTheme,
-    resetTheme,
-    hasUnsavedChanges,
-    isSaving,
-    isPreviewMode,
-    setPreviewMode: setIsPreviewMode,
     setTheme,
-    
-    // Theme utility functions
-    getPrimaryColor,
-    getTextColor,
-    getBackgroundColor,
-    getButtonClass,
     isDarkMode,
     toggleDarkMode,
-    
-    // Admin functions
-    saveThemeForBusiness
+    themes,
+    loadingThemes,
+    applyTheme: applyThemeById,
+    saveTheme,
+    deleteTheme: removeTheme,
+    createNewTheme
   };
   
   return (
@@ -300,10 +211,17 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
   );
 };
 
-export const useTheme = (): ThemeContextType => {
+/**
+ * Hook to use the theme context
+ * 
+ * @returns Theme context
+ */
+export function useTheme(): ThemeContextType {
   const context = useContext(ThemeContext);
+  
   if (!context) {
     throw new Error('useTheme must be used within a ThemeProvider');
   }
+  
   return context;
-};
+}
