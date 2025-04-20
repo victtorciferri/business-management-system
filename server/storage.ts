@@ -12,7 +12,7 @@ import {
   CustomerAccessToken, InsertCustomerAccessToken,
   ThemeEntity, InsertThemeEntity
 } from "@shared/schema";
-import { DatabaseStorage } from "./databaseStorage";
+import { BusinessSlugAdapter } from "./businessSlugAdapter";
 
 export interface IStorage {
   // User methods
@@ -116,5 +116,5 @@ export interface IStorage {
   getCustomerByEmailAndBusinessId(email: string, businessId: number): Promise<Customer | undefined>;
 }
 
-// Create a database storage instance
-export const storage = new DatabaseStorage();
+// Use our adapter to handle the business_slug mismatch
+export const storage = new BusinessSlugAdapter();

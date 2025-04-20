@@ -171,7 +171,8 @@ export const insertCustomerSchema = createInsertSchema(customers)
 export const appointments = pgTable("appointments", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  businessSlug: text("business_slug").notNull(), // Add business slug for direct business scoping
+  // Make businessSlug optional in the schema to match the database state
+  businessSlug: text("business_slug"),
   customerId: integer("customer_id").notNull().references(() => customers.id, { onDelete: 'cascade' }),
   serviceId: integer("service_id").notNull().references(() => services.id, { onDelete: 'cascade' }),
   staffId: integer("staff_id").references(() => users.id), // Staff member assigned to this appointment
@@ -185,19 +186,25 @@ export const appointments = pgTable("appointments", {
 }, (table) => {
   return {
     userIdIdx: index("appointments_user_id_idx").on(table.userId),
-    businessSlugIdx: index("appointments_business_slug_idx").on(table.businessSlug), // Add index for business slug
     dateIdx: index("appointments_date_idx").on(table.date),
     customerIdIdx: index("appointments_customer_id_idx").on(table.customerId),
-    // Compound indexes for business-specific date range queries
+    // Keep only the index that doesn't depend on businessSlug
     userDateIdx: index("appointments_user_date_idx").on(table.userId, table.date),
-    businessDateIdx: index("appointments_business_date_idx").on(table.businessSlug, table.date), // Optimized business date lookup
   };
 });
 
+// Create a schema that doesn't require businessSlug
 export const insertAppointmentSchema = createInsertSchema(appointments)
+  .omit({ businessSlug: true })
+  .extend({
+    // Make businessSlug optional in the insert schema
+    businessSlug: z.string().optional(),
+    // Accept string for date (ISO format) instead of requiring a Date object
+    date: z.string().or(z.date()),
+  })
   .pick({
     userId: true,
-    businessSlug: true, // Add business slug to insert schema
+    businessSlug: true,
     customerId: true,
     serviceId: true,
     staffId: true,
@@ -207,10 +214,6 @@ export const insertAppointmentSchema = createInsertSchema(appointments)
     notes: true,
     reminderSent: true,
     paymentStatus: true,
-  })
-  .extend({
-    // Accept string for date (ISO format) instead of requiring a Date object
-    date: z.string().or(z.date()),
   });
 
 // Payment schema
