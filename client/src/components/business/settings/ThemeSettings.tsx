@@ -1,5 +1,6 @@
 import React from 'react';
-import { ThemeEditor } from '../theme-customization/ThemeEditor';
+import { ModernThemeEditor } from '@/components/theme-editor/ModernThemeEditor';
+import GlobalThemeProvider from '@/providers/GlobalThemeProvider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -27,7 +28,9 @@ export function ThemeSettings() {
         </TabsList>
         
         <TabsContent value="theme-editor" className="mt-6">
-          <ThemeEditor />
+          <GlobalThemeProvider>
+            <ModernThemeEditor />
+          </GlobalThemeProvider>
         </TabsContent>
         
         <TabsContent value="template-settings" className="mt-6">

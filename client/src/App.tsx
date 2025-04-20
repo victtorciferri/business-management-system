@@ -45,10 +45,10 @@ import { User } from "@shared/schema";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { BusinessContextProvider } from "@/contexts/BusinessContext";
 
-// Legacy theme provider (for backward compatibility)
-import { ThemeProvider as LegacyThemeProvider } from "@/contexts/ThemeContext";
+// Modern theme providers are used exclusively now
 
 // New 2025 theme providers
+import { ThemeProvider as LegacyThemeProvider } from "@/contexts/ThemeContext";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import GlobalThemeProvider from "@/providers/GlobalThemeProvider";
 import DarkModeInitializer from "@/components/shared/dark-mode-initializer";
@@ -160,7 +160,6 @@ function AppContent() {
         <BusinessContextProvider>
           {/* Use the new theme provider with business context for business portals */}
           <ThemeProvider>
-            <LegacyThemeProvider>
               <Switch>
                 {/* For business subpages like /:slug/services */}
                 <Route path="/:slug/:subPath*">
@@ -183,7 +182,6 @@ function AppContent() {
                 </Route>
                 <Route component={NotFound} />
               </Switch>
-            </LegacyThemeProvider>
           </ThemeProvider>
         </BusinessContextProvider>
       </div>
@@ -203,36 +201,28 @@ function AppContent() {
           <Route path="/customer-portal">
             <BusinessContextProvider>
               <ThemeProvider>
-                <LegacyThemeProvider>
                   <CustomerPortal />
-                </LegacyThemeProvider>
               </ThemeProvider>
             </BusinessContextProvider>
           </Route>
           <Route path="/customer-portal/new-appointment">
             <BusinessContextProvider>
               <ThemeProvider>
-                <LegacyThemeProvider>
                   <NewAppointment />
-                </LegacyThemeProvider>
               </ThemeProvider>
             </BusinessContextProvider>
           </Route>
           <Route path="/customer-portal/my-appointments">
             <BusinessContextProvider>
               <ThemeProvider>
-                <LegacyThemeProvider>
                   <MyAppointments />
-                </LegacyThemeProvider>
               </ThemeProvider>
             </BusinessContextProvider>
           </Route>
           <Route path="/customer-portal/services">
             <BusinessContextProvider>
               <ThemeProvider>
-                <LegacyThemeProvider>
                   <CustomerServices />
-                </LegacyThemeProvider>
               </ThemeProvider>
             </BusinessContextProvider>
           </Route>
@@ -437,11 +427,8 @@ function App() {
           <BusinessContextProvider>
             {/* Business-specific Theme Provider from 2025 Edition */}
             <ThemeProvider>
-              {/* Legacy ThemeProvider for backward compatibility */}
-              <LegacyThemeProvider>
                 <AppContent />
                 <DarkModeInitializer />
-              </LegacyThemeProvider>
             </ThemeProvider>
           </BusinessContextProvider>
         </GlobalThemeProvider>
