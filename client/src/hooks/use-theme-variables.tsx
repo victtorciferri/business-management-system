@@ -1,7 +1,7 @@
 import { useContext, useMemo } from 'react';
 import { ThemeContext } from '@/contexts/ThemeContext';
 import { ThemeEntity } from '@shared/schema';
-import { useLocalStorage } from './use-local-storage';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 /**
  * Hook to access the current theme variables

@@ -142,12 +142,12 @@ export async function updateTheme(
   theme: Partial<ThemeEntity>
 ): Promise<ThemeEntity | null> {
   try {
-    const response = await apiRequest<ThemeEntity>({
+    const response = await apiRequest({
       url: `/api/themes/${id}`,
       method: 'PATCH',
       data: theme,
     });
-    return response?.data || null;
+    return response || null;
   } catch (error) {
     console.error(`Failed to update theme with ID ${id}:`, error);
     return null;
@@ -181,11 +181,11 @@ export async function deleteTheme(id: number): Promise<boolean> {
  */
 export async function activateTheme(id: number): Promise<ThemeEntity | null> {
   try {
-    const response = await apiRequest<ThemeEntity>({
+    const response = await apiRequest({
       url: `/api/themes/${id}/activate`,
       method: 'POST',
     });
-    return response?.data || null;
+    return response || null;
   } catch (error) {
     console.error(`Failed to activate theme with ID ${id}:`, error);
     return null;
@@ -204,12 +204,12 @@ export async function duplicateTheme(
   name?: string
 ): Promise<ThemeEntity | null> {
   try {
-    const response = await apiRequest<ThemeEntity>({
+    const response = await apiRequest({
       url: `/api/themes/${id}/duplicate`,
       method: 'POST',
       data: name ? { name } : undefined,
     });
-    return response?.data || null;
+    return response || null;
   } catch (error) {
     console.error(`Failed to duplicate theme with ID ${id}:`, error);
     return null;
@@ -247,11 +247,11 @@ export async function applyThemeToBusinessAccount(
  */
 export async function getThemeCSS(id: number): Promise<string | null> {
   try {
-    const response = await apiRequest<{ css: string }>({
+    const response = await apiRequest({
       url: `/api/themes/${id}/css`,
       method: 'GET',
     });
-    return response?.data?.css || null;
+    return response?.css || null;
   } catch (error) {
     console.error(`Failed to get CSS for theme with ID ${id}:`, error);
     return null;
