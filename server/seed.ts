@@ -1,6 +1,7 @@
 import { db } from "./db";
 import { users, services, customers, appointments } from "@shared/schema";
 import { sql } from "drizzle-orm";
+import { seedThemes } from "./seed-themes";
 
 // This function is used to seed the database with initial data
 export async function seedDatabase() {
@@ -233,6 +234,9 @@ export async function seedDatabase() {
         ...pastAppointments
       ]);
     }
+    
+    // Seed themes
+    await seedThemes();
     
     console.log("Database seeding completed successfully!");
   } catch (error) {
