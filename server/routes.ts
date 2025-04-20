@@ -9,6 +9,7 @@ import themeRoutes from './routes/themeRoutes';
 import themeApiRoutes from './routes/themeApiRoutes';
 import themeTestRoutes from './routes/theme-test';
 import themeMarketplaceRoutes from './routes/theme-marketplace';
+import debugRoutes from './routes/debugRoutes';
 import { convertLegacyThemeToTheme, convertThemeToLegacyTheme, updateThemeForBusiness, getThemeForBusiness } from './utils/themeUtils';
 import { 
   insertUserSchema, 
@@ -227,6 +228,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register the theme marketplace routes
   app.use('/api/themes', themeMarketplaceRoutes);
+  
+  // Register debug routes (for development only)
+  app.use('/api/debug', debugRoutes);
   
   // Make the theme API available by using the router directly
   app.use(themeApiRoutes);
