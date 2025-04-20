@@ -33,7 +33,10 @@ export function getPool(): Pool {
 
 // Create a Drizzle ORM instance with our schema
 export const pool = getPool();
-export const db = drizzle(pool, { schema });
+export const db = drizzle(pool, { 
+  schema,
+  logger: true // Enable query logging for debugging
+});
 
 // Cache management utility
 export function closePool(): Promise<void> {

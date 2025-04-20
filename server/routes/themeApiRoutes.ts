@@ -343,6 +343,15 @@ router.post('/themes', async (req, res) => {
   try {
     const { name, description, businessId, businessSlug, tokens, ...otherProps } = req.body;
     
+    console.log('Theme creation request:', JSON.stringify({
+      name, 
+      description: description ? 'provided' : 'missing',
+      businessId, 
+      businessSlug, 
+      hasTokens: !!tokens,
+      otherPropsCount: Object.keys(otherProps).length
+    }, null, 2));
+    
     if (!name || !businessId) {
       return res.status(400).json({ message: 'Missing required fields: name or businessId' });
     }
@@ -359,52 +368,68 @@ router.post('/themes', async (req, res) => {
         slug = business.businessSlug;
         console.log(`Found businessSlug: ${slug} for businessId: ${businessId}`);
       } else {
+        console.error(`Could not find businessSlug for businessId: ${businessId}`);
         return res.status(400).json({ message: 'Could not determine businessSlug - this field is required' });
       }
     }
     
     console.log("Creating theme with values:", { 
       name, businessId, businessSlug: slug, 
+      hasTokens: !!tokens,
       otherPropsCount: Object.keys(otherProps).length 
     });
     
+    // Prepare theme data with default values for required fields
+    const themeData = {
+      name,
+      description: description || null,
+      businessId,
+      businessSlug: slug,
+      tokens: tokens || null,
+      isActive: req.body.isActive === true,
+      isDefault: req.body.isDefault === true,
+      // Include legacy fields with null fallbacks (required for database schema)
+      primaryColor: req.body.primaryColor || '#4f46e5',
+      secondaryColor: req.body.secondaryColor || '#06b6d4',
+      accentColor: req.body.accentColor || '#f59e0b',
+      textColor: req.body.textColor || '#111827',
+      backgroundColor: req.body.backgroundColor || '#ffffff',
+      fontFamily: req.body.fontFamily || 'Inter, sans-serif',
+      borderRadius: req.body.borderRadius || 8,
+      spacing: req.body.spacing || 16,
+      buttonStyle: req.body.buttonStyle || 'default',
+      cardStyle: req.body.cardStyle || 'default',
+      appearance: req.body.appearance || 'system',
+      variant: req.body.variant || 'professional',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    
     try {
-      const newTheme = await db.insert(themes).values({
-        name,
-        description,
-        businessId,
-        businessSlug: slug,
-        tokens,
-        isActive: req.body.isActive || false,
-        isDefault: req.body.isDefault || false,
-        // Include legacy fields for backward compatibility
-        primaryColor: req.body.primaryColor,
-        secondaryColor: req.body.secondaryColor,
-        accentColor: req.body.accentColor,
-        textColor: req.body.textColor,
-        backgroundColor: req.body.backgroundColor,
-        fontFamily: req.body.fontFamily,
-        borderRadius: req.body.borderRadius,
-        spacing: req.body.spacing,
-        buttonStyle: req.body.buttonStyle,
-        cardStyle: req.body.cardStyle,
-        appearance: req.body.appearance,
-        variant: req.body.variant,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }).returning();
+      console.log('Inserting theme with data:', JSON.stringify(themeData, null, 2));
       
-      console.log('Successfully created theme:', JSON.stringify(newTheme, null, 2));
+      const newTheme = await db.insert(themes)
+        .values(themeData)
+        .returning();
+      
+      console.log('Database INSERT response:', JSON.stringify(newTheme, null, 2));
       
       if (!newTheme || newTheme.length === 0) {
         console.error('No theme returned from database insert operation');
         throw new Error('Failed to create theme - no result returned from database');
       }
       
-      // Fix: Ensure we have a valid response object
+      // Extract the theme response and ensure it's a valid object
       const themeResponse = newTheme[0];
+      
+      if (!themeResponse || typeof themeResponse !== 'object') {
+        console.error('Invalid theme object returned from database:', themeResponse);
+        throw new Error('Invalid theme object returned from database');
+      }
+      
       console.log('Theme response being sent to client:', JSON.stringify(themeResponse, null, 2));
       
+      // Use status 201 (Created) for successful creation
       return res.status(201).json(themeResponse);
     } catch (insertError) {
       console.error('Error during theme insert operation:', insertError);
