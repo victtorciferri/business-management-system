@@ -72,32 +72,6 @@ function AppContent() {
   const isRegularAuthPath = location === '/auth';
   const isAnyAuthPath = isDebugAuthPath || isRegularAuthPath;
   
-  // Use the same useEffect for ALL paths to maintain consistent hook order
-  useEffect(() => {
-    // Debug information to help troubleshoot
-    console.log("App.tsx is rendering");
-    console.log("Location:", location);
-    console.log("Is auth path:", isAnyAuthPath);
-    
-    if (isAnyAuthPath) {
-      console.log('Auth page route detected, bypassing business logic checks');
-      setIsLoading(false);
-      return; // Exit early for auth paths
-    }
-    
-    // Rest of the initialization logic will run for non-auth paths
-  }, [isAnyAuthPath, location, isDebugAuthPath, isRegularAuthPath]);
-  
-  // Special case for auth pages - render them directly
-  if (isAnyAuthPath) {
-    return (
-      <div className="min-h-screen">
-        {isRegularAuthPath && <AuthPage />}
-        {isDebugAuthPath && <DebugLoginPage />}
-      </div>
-    );
-  }
-
   // Check if the URL looks like a business portal URL (e.g., /salonelegante)
   const businessPortalRegex = /^\/([a-zA-Z0-9_-]+)(?:\/.*)?$/;
   const match = location.match(businessPortalRegex);
@@ -115,12 +89,41 @@ function AppContent() {
   const potentialBusinessSlug = match && 
     !reservedPaths.includes(match[1]) ? match[1] : null;
   
-  // Handle customer portal routes - retain as separate routes
+  // IMPORTANT: Always define ALL useEffects in the same order for every render
+  // This ensures React hooks consistency
+  
+  // Effect 1: General app initialization and path handling
   useEffect(() => {
-    // Don't automatically redirect customer portal routes
-    // This allows us to have a dedicated customer portal distinct from business portals
-    console.log("Customer portal route detected:", location);
-  }, [location]);
+    // Debug information to help troubleshoot
+    console.log("App.tsx is rendering");
+    console.log("Location:", location);
+    console.log("Is auth path:", isAnyAuthPath);
+    
+    if (isAnyAuthPath) {
+      console.log('Auth page route detected, bypassing business logic checks');
+      setIsLoading(false);
+    }
+    
+    // Rest of the initialization logic will run for non-auth paths
+  }, [isAnyAuthPath, location, isDebugAuthPath, isRegularAuthPath]);
+  
+  // Effect 2: Customer portal routes handling - always defined to maintain hook order
+  useEffect(() => {
+    // Only log this for non-auth paths to reduce noise
+    if (!isAnyAuthPath) {
+      console.log("Customer portal route detected:", location);
+    }
+  }, [location, isAnyAuthPath]);
+  
+  // Special case for auth pages - render them directly
+  if (isAnyAuthPath) {
+    return (
+      <div className="min-h-screen">
+        {isRegularAuthPath && <AuthPage />}
+        {isDebugAuthPath && <DebugLoginPage />}
+      </div>
+    );
+  }
   
   useEffect(() => {
     // First check if we have business data from window
