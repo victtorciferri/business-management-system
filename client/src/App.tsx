@@ -55,6 +55,7 @@ import DarkModeInitializer from "@/components/shared/dark-mode-initializer";
 // New theme-related pages for 2025 edition
 import { ThemeMarketplacePage } from "@/pages/ThemeMarketplacePage";
 import DebugAuthPage from "@/pages/debug-auth";
+import DebugLoginPage from "@/pages/debug-login";
 
 function AppContent() {
   const { user: currentUser, isLoading: authLoading } = useAuth();
@@ -64,8 +65,39 @@ function AppContent() {
   const [isLoading, setIsLoading] = useState(true);
   
   // Get current location
-  const [location, setLocation] = useLocation();
+  const [location] = useLocation();
   
+  // Define auth-related paths that should bypass business logic
+  const AUTH_PATHS = ['/auth', '/auth-debug', '/debug-login', '/debug/login'];
+  const isAuthPath = AUTH_PATHS.includes(location);
+  
+  // Initialize states and handle special paths
+  useEffect(() => {
+    // Debug information to help troubleshoot
+    console.log("App.tsx is rendering");
+    console.log("Location:", location);
+    console.log("Is auth path:", isAuthPath);
+    
+    if (isAuthPath) {
+      console.log('Auth page route detected, bypassing business logic checks');
+      setIsLoading(false);
+      return; // Exit early for auth paths
+    }
+    
+    // Rest of the initialization logic will run for non-auth paths
+    // This maintains the hook execution order
+  }, [isAuthPath, location]);
+  
+  // Special case for auth pages - render them directly
+  if (isAuthPath) {
+    return (
+      <div className="min-h-screen">
+        {location === '/auth' && <AuthPage />}
+        {(location === '/auth-debug' || location === '/debug/login' || location === '/debug-login') && <DebugLoginPage />}
+      </div>
+    );
+  }
+
   // Check if the URL looks like a business portal URL (e.g., /salonelegante)
   const businessPortalRegex = /^\/([a-zA-Z0-9_-]+)(?:\/.*)?$/;
   const match = location.match(businessPortalRegex);
@@ -138,13 +170,14 @@ function AppContent() {
                           !location.startsWith('/customer-portal') &&
                           !location.startsWith('/color-mode-demo');
   
-  // Debug information to help troubleshoot
-  console.log("App.tsx is rendering");
-  console.log("Location:", location);
-  console.log("isBusinessPortal:", isBusinessPortal);
-  console.log("businessData:", businessData);
-  console.log("window.BUSINESS_DATA:", typeof window !== "undefined" ? (window as any).BUSINESS_DATA : "Not available");
-  console.log("currentUser:", currentUser);
+  // Additional debug information to help troubleshoot
+  // Debug logs for business portal
+  if (!isAuthPath) {
+    console.log("isBusinessPortal:", isBusinessPortal);
+    console.log("businessData:", businessData);
+    console.log("window.BUSINESS_DATA:", typeof window !== "undefined" ? (window as any).BUSINESS_DATA : "Not available");
+    console.log("currentUser:", currentUser);
+  }
   
   // If we're still loading or auth is loading, show a simple loading state
   if (isLoading || authLoading) {
@@ -195,6 +228,7 @@ function AppContent() {
             </ProtectedRoute>
           </Route>
           <Route path="/auth" component={AuthPage} />
+          <Route path="/auth-debug" component={DebugLoginPage} />
           <Route path="/new-appointment">
             <Redirect to="/customer-portal/new-appointment" />
           </Route>
@@ -373,6 +407,11 @@ function AppContent() {
           <Route path="/debug/auth">
             <GlobalThemeProvider>
               <DebugAuthPage />
+            </GlobalThemeProvider>
+          </Route>
+          <Route path="/debug/login">
+            <GlobalThemeProvider>
+              <DebugLoginPage />
             </GlobalThemeProvider>
           </Route>
           <Route path="/theme-showcase">
