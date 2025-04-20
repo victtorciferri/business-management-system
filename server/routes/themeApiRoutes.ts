@@ -394,13 +394,18 @@ router.post('/themes', async (req, res) => {
         updatedAt: new Date(),
       }).returning();
       
-      console.log('Successfully created theme:', newTheme[0]);
+      console.log('Successfully created theme:', JSON.stringify(newTheme, null, 2));
       
       if (!newTheme || newTheme.length === 0) {
+        console.error('No theme returned from database insert operation');
         throw new Error('Failed to create theme - no result returned from database');
       }
       
-      return res.status(201).json(newTheme[0]);
+      // Fix: Ensure we have a valid response object
+      const themeResponse = newTheme[0];
+      console.log('Theme response being sent to client:', JSON.stringify(themeResponse, null, 2));
+      
+      return res.status(201).json(themeResponse);
     } catch (insertError) {
       console.error('Error during theme insert operation:', insertError);
       return res.status(500).json({ 

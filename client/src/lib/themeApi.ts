@@ -155,11 +155,17 @@ export async function createTheme(theme: Partial<ThemeEntity>): Promise<ThemeEnt
       data: theme,
     });
     
-    console.log('Client - API Response from theme creation:', response);
+    console.log('Client - API Response from theme creation:', response ? JSON.stringify(response, null, 2) : 'No response data');
     
     if (!response) {
       console.error('Client - Theme creation API returned empty response');
       throw new Error('Empty response from server when creating theme');
+    }
+    
+    // Validate that we have a proper theme entity with at least an ID
+    if (!response.id) {
+      console.error('Client - Theme creation returned invalid data (missing ID):', response);
+      throw new Error('Invalid theme data returned from server (missing ID)');
     }
     
     return response;
