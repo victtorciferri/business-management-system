@@ -69,7 +69,37 @@ export const ThemePresetSelector: React.FC<ThemePresetSelectorProps> = ({
   // Handle preset selection
   const handleSelectPreset = (preset: ThemePreset) => {
     setSelectedPreset(preset.id);
-    onSelectPreset(preset.theme);
+    
+    // Create a mapped theme object with standardized field names that match the DB schema
+    const mappedTheme = {
+      // Standard theme name and properties
+      name: preset.theme.name,
+      // Map colors with both standard and legacy naming for compatibility
+      primaryColor: preset.theme.primaryColor,
+      primary: preset.theme.primaryColor,
+      secondaryColor: preset.theme.secondaryColor, 
+      secondary: preset.theme.secondaryColor,
+      accentColor: preset.theme.accentColor,
+      accent: preset.theme.accentColor,
+      backgroundColor: preset.theme.backgroundColor,
+      background: preset.theme.backgroundColor,
+      textColor: preset.theme.textColor,
+      text: preset.theme.textColor,
+      // Typography and layout
+      fontFamily: preset.theme.fontFamily,
+      borderRadius: preset.theme.borderRadius,
+      spacing: preset.theme.spacing,
+      // Theme variants
+      buttonStyle: preset.theme.buttonStyle,
+      cardStyle: preset.theme.cardStyle,
+      appearance: preset.theme.appearance,
+      variant: preset.theme.variant,
+      // Add any custom CSS if present
+      customCSS: preset.theme.customCSS,
+    };
+    
+    console.log("Mapped theme for preset:", mappedTheme);
+    onSelectPreset(mappedTheme);
   };
 
   // Format category name for display
