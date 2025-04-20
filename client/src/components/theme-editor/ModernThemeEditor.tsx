@@ -176,17 +176,41 @@ export function ModernThemeEditor({ businessId, businessData, onPreviewToggle }:
     
     try {
       setIsSaving(true);
+      console.log("Saving theme:", currentTheme);
+      
+      // Cleanly map the theme according to 2025 Edition schema
+      // This ensures consistent property naming regardless of source
+      const cleanTheme = {
+        name: currentTheme.name || "Custom Theme",
+        primaryColor: currentTheme.primaryColor,
+        secondaryColor: currentTheme.secondaryColor,
+        accentColor: currentTheme.accentColor,
+        backgroundColor: currentTheme.backgroundColor,
+        textColor: currentTheme.textColor,
+        fontFamily: currentTheme.fontFamily,
+        borderRadius: currentTheme.borderRadius,
+        spacing: currentTheme.spacing,
+        buttonStyle: currentTheme.buttonStyle,
+        cardStyle: currentTheme.cardStyle,
+        appearance: currentTheme.appearance,
+        variant: currentTheme.variant,
+        customCSS: currentTheme.customCSS,
+        // If there are legacy fields from the preset, normalize them
+        ...(currentTheme.id ? { id: currentTheme.id } : {}),
+      };
+      
+      console.log("Clean mapped theme for saving:", cleanTheme);
       
       // Use the appropriate save method depending on context
       let result;
       
       // If theme has an ID, it's an existing theme, so update it
-      if (currentTheme.id) {
-        result = await themeManager.updateTheme(currentTheme.id, currentTheme);
+      if (cleanTheme.id) {
+        result = await themeManager.updateTheme(cleanTheme.id, cleanTheme);
       } else {
         // If no id exists, create a new theme
         const newTheme = {
-          ...currentTheme,
+          ...cleanTheme,
           businessId: businessId || undefined,
           isActive: true
         };
