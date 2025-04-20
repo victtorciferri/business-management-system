@@ -253,6 +253,20 @@ export function ModernThemeEditor({ businessId, businessData, onPreviewToggle }:
             {isSaving ? 'Saving...' : 'Save Changes'}
           </Button>
           
+          <Button 
+            variant="destructive" 
+            size="sm"
+            disabled={isSaving}
+            onClick={() => {
+              // Override the hasUnsavedChanges check for cases where the button is stuck
+              setHasUnsavedChanges(true);
+              setTimeout(() => saveTheme(), 100);
+            }}
+          >
+            <Save className="mr-2 h-4 w-4" />
+            Force Save
+          </Button>
+          
           <Button
             variant="outline"
             size="sm"
@@ -326,9 +340,22 @@ export function ModernThemeEditor({ businessId, businessData, onPreviewToggle }:
                     <h3 className="text-base font-medium mb-4">Theme Presets</h3>
                     <ThemePresetSelector 
                       onSelectPreset={(preset) => {
-                        updateTheme(preset);
-                        // Explicitly set hasUnsavedChanges to true when preset is selected
+                        // Apply the preset theme
+                        setCurrentTheme((prev) => {
+                          if (!prev) return preset as ThemeData;
+                          return {
+                            ...prev,
+                            ...preset,
+                            // Make sure we preserve the ID and business ID
+                            id: prev.id,
+                            businessId: prev.businessId
+                          };
+                        });
+                        
+                        // Force enable save button
                         setHasUnsavedChanges(true);
+                        
+                        console.log("Preset selected, hasUnsavedChanges set to true");
                       }}
                     />
                   </div>
