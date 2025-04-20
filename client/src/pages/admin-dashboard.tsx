@@ -206,17 +206,14 @@ export default function AdminDashboard() {
     setEditBusinessDialog(true);
   };
   
-  const handleThemeSettings = (businessId: number) => {
-    setSelectedBusinessId(businessId);
-    setThemeSettingsDialog(true);
-  };
-  
-  const navigateToAdvancedThemeEditor = (businessId: number) => {
+  // Single function to navigate to the modern theme editor
+  const navigateToThemeEditor = (businessId: number) => {
     setLocation(`/admin-theme-editor/${businessId}`);
   };
   
-  const navigateToModernThemeEditor = (businessId: number) => {
-    setLocation(`/theme-editor?businessId=${businessId}`);
+  // Keep handleThemeSettings for backward compatibility, but redirect to modern editor
+  const handleThemeSettings = (businessId: number) => {
+    navigateToThemeEditor(businessId);
   };
   
   // Helper function to handle navigation (replacing the navigate function)
@@ -517,7 +514,7 @@ export default function AdminDashboard() {
                 onClick={() => {
                   setThemeSettingsDialog(false);
                   if (selectedBusinessId) {
-                    setLocation(`/admin-theme-editor/${selectedBusinessId}`);
+                    navigateToThemeEditor(selectedBusinessId);
                   }
                 }}
               >
@@ -885,17 +882,8 @@ export default function AdminDashboard() {
                               <Button
                                 variant="outline"
                                 size="icon"
-                                className="bg-purple-50 hover:bg-purple-100 border-purple-200"
-                                onClick={() => handleThemeSettings(business.id)}
-                                title="Basic theme settings"
-                              >
-                                <Palette className="h-4 w-4 text-purple-600" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="icon"
                                 className="bg-green-50 hover:bg-green-100 border-green-200"
-                                onClick={() => setLocation(`/admin-theme-editor/${business.id}`)}
+                                onClick={() => navigateToThemeEditor(business.id)}
                                 title="Theme Editor"
                               >
                                 <Palette className="h-4 w-4 text-green-600" />
