@@ -87,14 +87,35 @@ export function ModernThemeEditor({ businessId, businessData, onPreviewToggle }:
   
   // Initialize current theme from the active theme in the context
   useEffect(() => {
-    if (businessThemeContext.activeTheme) {
-      setCurrentTheme(businessThemeContext.activeTheme);
-      setOriginalTheme(businessThemeContext.activeTheme);
-    } else if (themeManager.activeTheme) {
-      setCurrentTheme(themeManager.activeTheme);
-      setOriginalTheme(themeManager.activeTheme);
-    }
-  }, [businessThemeContext.activeTheme, themeManager.activeTheme]);
+    const fetchActiveTheme = async () => {
+      try {
+        // Try to get active theme from business context first
+        if (businessThemeContext.currentTheme) {
+          setCurrentTheme(businessThemeContext.currentTheme);
+          setOriginalTheme(businessThemeContext.currentTheme);
+          return;
+        }
+        
+        // If no active theme in business context, try to get from theme manager
+        if (themeManager.currentTheme) {
+          setCurrentTheme(themeManager.currentTheme);
+          setOriginalTheme(themeManager.currentTheme);
+          return;
+        }
+        
+        // If still no theme, try to fetch active theme
+        const activeTheme = await themeManager.getActiveTheme(businessId);
+        if (activeTheme) {
+          setCurrentTheme(activeTheme);
+          setOriginalTheme(activeTheme);
+        }
+      } catch (error) {
+        console.error('Error fetching active theme:', error);
+      }
+    };
+    
+    fetchActiveTheme();
+  }, [businessThemeContext.currentTheme, themeManager.currentTheme, themeManager, businessId]);
   
   // Check for changes
   useEffect(() => {
@@ -147,20 +168,22 @@ export function ModernThemeEditor({ businessId, businessData, onPreviewToggle }:
       // Use the appropriate save method depending on context
       let result;
       
-      if (businessThemeContext.activeTheme && businessThemeContext.updateTheme) {
-        result = await businessThemeContext.updateTheme(businessThemeContext.activeTheme.id, currentTheme);
-      } else if (themeManager.activeTheme) {
-        result = await themeManager.updateTheme(themeManager.activeTheme.id, currentTheme);
+      // If theme has an ID, it's an existing theme, so update it
+      if (currentTheme.id) {
+        result = await themeManager.updateTheme(currentTheme.id, currentTheme);
       } else {
-        // If no active theme exists, create a new one
-        result = await themeManager.createTheme({
+        // If no id exists, create a new theme
+        const newTheme = {
           ...currentTheme,
+          businessId: businessId || undefined,
           isActive: true
-        });
+        };
+        result = await themeManager.createNewTheme(newTheme);
       }
       
       if (result) {
-        setOriginalTheme(currentTheme);
+        setOriginalTheme(result);
+        setCurrentTheme(result);
         setHasUnsavedChanges(false);
         toast({
           title: "Theme saved",
@@ -177,7 +200,7 @@ export function ModernThemeEditor({ businessId, businessData, onPreviewToggle }:
     } finally {
       setIsSaving(false);
     }
-  }, [businessThemeContext, themeManager, currentTheme, toast]);
+  }, [themeManager, currentTheme, businessId, toast]);
   
   // If there's no theme data yet, show a loading state
   if (!currentTheme) {
@@ -302,26 +325,27 @@ export function ModernThemeEditor({ businessId, businessData, onPreviewToggle }:
                     <h3 className="text-base font-medium mb-4">Color Mode</h3>
                     <div className="flex flex-wrap gap-3">
                       <Button 
-                        variant={!isDarkMode ? "default" : "outline"} 
+                        variant={preference === 'light' ? "default" : "outline"} 
                         size="sm" 
-                        onClick={() => setDarkMode(false)}
+                        onClick={() => setPreference('light')}
                         className="flex items-center gap-2"
                       >
                         <Sun className="h-4 w-4" />
                         Light
                       </Button>
                       <Button 
-                        variant={isDarkMode ? "default" : "outline"} 
+                        variant={preference === 'dark' ? "default" : "outline"} 
                         size="sm" 
-                        onClick={() => setDarkMode(true)}
+                        onClick={() => setPreference('dark')}
                         className="flex items-center gap-2"
                       >
                         <Moon className="h-4 w-4" />
                         Dark
                       </Button>
                       <Button 
-                        variant="outline" 
+                        variant={preference === 'system' ? "default" : "outline"} 
                         size="sm"
+                        onClick={() => setPreference('system')}
                         className="flex items-center gap-2"
                       >
                         <Monitor className="h-4 w-4" />
