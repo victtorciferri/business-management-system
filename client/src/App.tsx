@@ -257,18 +257,31 @@ function AppContent() {
           </Route>
           <Route path="/admin">
             <ProtectedRoute requiredRole="admin">
-              <AdminDashboard />
+              <GlobalThemeProvider>
+                <ThemeProvider>
+                  <DarkModeInitializer />
+                  <AdminDashboard />
+                </ThemeProvider>
+              </GlobalThemeProvider>
             </ProtectedRoute>
           </Route>
           <Route path="/platform-admin/create">
             <ProtectedRoute requiredRole="admin">
-              <PlatformAdmin isCreateMode={true} />
+              <GlobalThemeProvider>
+                <ThemeProvider>
+                  <PlatformAdmin isCreateMode={true} />
+                </ThemeProvider>
+              </GlobalThemeProvider>
             </ProtectedRoute>
           </Route>
           <Route path="/platform-admin/edit/:id">
             {params => (
               <ProtectedRoute requiredRole="admin">
-                <PlatformAdmin editBusinessId={Number(params.id)} />
+                <GlobalThemeProvider>
+                  <ThemeProvider>
+                    <PlatformAdmin editBusinessId={Number(params.id)} />
+                  </ThemeProvider>
+                </GlobalThemeProvider>
               </ProtectedRoute>
             )}
           </Route>
@@ -281,7 +294,11 @@ function AppContent() {
           </Route>
           <Route path="/platform-admin">
             <ProtectedRoute requiredRole="admin">
-              <PlatformAdmin />
+              <GlobalThemeProvider>
+                <ThemeProvider>
+                  <PlatformAdmin />
+                </ThemeProvider>
+              </GlobalThemeProvider>
             </ProtectedRoute>
           </Route>
           <Route path="/admin-theme-editor/:businessId">
