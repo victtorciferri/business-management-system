@@ -120,7 +120,19 @@ export function ModernThemeEditor({ businessId, businessData, onPreviewToggle }:
   // Check for changes
   useEffect(() => {
     if (currentTheme && originalTheme) {
-      const hasChanges = JSON.stringify(currentTheme) !== JSON.stringify(originalTheme);
+      // Compare essential theme properties instead of full JSON to avoid comparison issues with preset data
+      const hasChanges = 
+        currentTheme.primary !== originalTheme.primary ||
+        currentTheme.secondary !== originalTheme.secondary ||
+        currentTheme.accent !== originalTheme.accent ||
+        currentTheme.background !== originalTheme.background ||
+        currentTheme.text !== originalTheme.text ||
+        currentTheme.fontFamily !== originalTheme.fontFamily ||
+        currentTheme.variant !== originalTheme.variant ||
+        currentTheme.borderRadius !== originalTheme.borderRadius ||
+        currentTheme.highContrast !== originalTheme.highContrast ||
+        currentTheme.reducedMotion !== originalTheme.reducedMotion;
+        
       setHasUnsavedChanges(hasChanges);
     }
   }, [currentTheme, originalTheme]);
@@ -315,6 +327,8 @@ export function ModernThemeEditor({ businessId, businessData, onPreviewToggle }:
                     <ThemePresetSelector 
                       onSelectPreset={(preset) => {
                         updateTheme(preset);
+                        // Explicitly set hasUnsavedChanges to true when preset is selected
+                        setHasUnsavedChanges(true);
                       }}
                     />
                   </div>
