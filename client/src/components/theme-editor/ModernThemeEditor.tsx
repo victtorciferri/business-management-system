@@ -62,13 +62,14 @@ interface ThemeData {
 }
 
 interface ModernThemeEditorProps {
-  businessId?: number;
+  businessId?: number | null;
+  businessData?: any;
   onPreviewToggle?: (isPreviewActive: boolean) => void;
 }
 
-export function ModernThemeEditor({ businessId, onPreviewToggle }: ModernThemeEditorProps) {
+export function ModernThemeEditor({ businessId, businessData, onPreviewToggle }: ModernThemeEditorProps) {
   const { toast } = useToast();
-  const { isDarkMode, toggleDarkMode, setDarkMode } = useDarkMode();
+  const { isDarkMode, toggleDarkMode, preference, setPreference } = useDarkMode();
   
   // Get business theme data from the context
   const businessThemeContext = useBusinessTheme();

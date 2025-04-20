@@ -190,6 +190,8 @@ export default function ThemeEditorPage() {
                 <GlobalThemeProvider>
                   <ModernThemeEditor 
                     onPreviewToggle={setIsPreviewActive}
+                    businessId={businessId}
+                    businessData={currentBusiness}
                   />
                 </GlobalThemeProvider>
               </TabsContent>
