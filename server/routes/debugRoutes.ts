@@ -20,8 +20,31 @@ const router = Router();
  * - User data if authenticated
  */
 router.get('/auth-status', (req: Request, res: Response) => {
-  // Check if the user is authenticated via session
-  const authenticated = req.session && req.session.user ? true : false;
+  // Check multiple ways of authentication to help debugging
+  const sessionHasUser = req.session && req.session.user ? true : false;
+  const isAuthenticatedFunction = req.isAuthenticated ? req.isAuthenticated() : false;
+  const requestHasUser = !!req.user;
+  
+  // Log extensive debug info
+  console.log('Debug auth-status - authentication checks:', {
+    sessionHasUser,
+    isAuthenticatedFunction,
+    requestHasUser,
+    sessionID: req.sessionID || 'No session ID',
+    sessionIsNew: req.session?.isNew || 'Session not available',
+    cookieExists: !!req.session?.cookie,
+    reqUserData: req.user ? {
+      id: req.user.id,
+      username: req.user.username,
+      businessSlug: req.user.businessSlug
+    } : 'No user in request object',
+    sessionUserData: req.session?.user ? {
+      id: req.session.user.id,
+      username: req.session.user.username,
+      businessSlug: req.session.user.businessSlug
+    } : 'No user in session'
+  });
+  
   const sessionInfo = {
     id: req.sessionID,
     cookie: req.session?.cookie || null,
@@ -30,7 +53,7 @@ router.get('/auth-status', (req: Request, res: Response) => {
   };
 
   // Only return non-sensitive user data
-  const user = authenticated ? {
+  const user = sessionHasUser ? {
     id: req.session?.user?.id,
     username: req.session?.user?.username,
     email: req.session?.user?.email,
@@ -54,7 +77,12 @@ router.get('/auth-status', (req: Request, res: Response) => {
 
   // Return full debug info
   return res.json({
-    authenticated,
+    authenticated: isAuthenticatedFunction || sessionHasUser,
+    authMethods: {
+      isAuthenticatedFunction,
+      sessionHasUser,
+      requestHasUser
+    },
     sessionInfo,
     user,
     business: req.business || null,
@@ -76,12 +104,26 @@ router.get('/auth-status', (req: Request, res: Response) => {
  */
 router.post('/theme-test', async (req: Request, res: Response) => {
   try {
-    // Check if the user is authenticated
-    if (!req.session || !req.session.user) {
+    // Check if the user is authenticated using both methods
+    const isAuthenticatedFunction = req.isAuthenticated ? req.isAuthenticated() : false;
+    const hasSessionUser = !!(req.session && req.session.user);
+    
+    console.log('Debug theme-test - authentication check:', {
+      isAuthenticatedFunction,
+      hasSessionUser,
+      hasRequestUser: !!req.user
+    });
+    
+    if (!isAuthenticatedFunction && !hasSessionUser) {
       return res.status(401).json({
         success: false,
         authenticated: false,
-        message: 'Not authenticated'
+        message: 'Please login first',
+        authMethods: {
+          isAuthenticatedFunction,
+          hasSessionUser,
+          hasRequestUser: !!req.user
+        }
       });
     }
     
@@ -233,20 +275,61 @@ router.get('/session-store-test', (req: Request, res: Response) => {
  */
 router.post('/add-theme-fields', async (req: Request, res: Response) => {
   try {
+    // Check authentication
+    if (!req.isAuthenticated || !req.isAuthenticated()) {
+      console.error('Debug add-theme-fields - not authenticated');
+      return res.status(401).json({
+        success: false,
+        message: 'Please login first'
+      });
+    }
+    
     // Get the theme data from the request body
     const themeData = req.body?.theme || {};
     
     console.log('Debug add-theme-fields - received:', JSON.stringify(themeData, null, 2));
+    console.log('Debug add-theme-fields - session user:', req.user ? JSON.stringify({
+      id: req.user.id,
+      username: req.user.username,
+      businessSlug: req.user.businessSlug
+    }, null, 2) : 'No user in session');
     
     // Ensure required fields are present
-    if (!themeData.businessId && req.session?.user?.id) {
-      themeData.businessId = req.session.user.id;
+    if (!themeData.businessId) {
+      // Get from user in session
+      if (req.user?.id) {
+        themeData.businessId = req.user.id;
+        console.log(`Debug add-theme-fields - set businessId from session user: ${themeData.businessId}`);
+      } else {
+        console.error('Debug add-theme-fields - no businessId provided and no user in session');
+        return res.status(400).json({
+          success: false,
+          message: 'Business ID is required'
+        });
+      }
     }
     
-    if (!themeData.businessSlug && req.session?.user?.businessSlug) {
-      themeData.businessSlug = req.session.user.businessSlug;
-    } else if (!themeData.businessSlug) {
-      themeData.businessSlug = 'salonelegante'; // Default fallback
+    if (!themeData.businessSlug) {
+      // Get from user in session
+      if (req.user?.businessSlug) {
+        themeData.businessSlug = req.user.businessSlug;
+        console.log(`Debug add-theme-fields - set businessSlug from session user: ${themeData.businessSlug}`);
+      } else {
+        // Try to get from database
+        console.log(`Debug add-theme-fields - looking up businessSlug for ID: ${themeData.businessId}`);
+        const [business] = await db.select({
+          businessSlug: users.businessSlug
+        }).from(users).where(eq(users.id, themeData.businessId));
+        
+        if (business?.businessSlug) {
+          themeData.businessSlug = business.businessSlug;
+          console.log(`Debug add-theme-fields - found businessSlug in database: ${themeData.businessSlug}`);
+        } else {
+          // Use fallback as last resort
+          themeData.businessSlug = 'salonelegante';
+          console.log(`Debug add-theme-fields - using fallback businessSlug: ${themeData.businessSlug}`);
+        }
+      }
     }
     
     if (!themeData.name) {

@@ -341,6 +341,12 @@ router.get('/themes/active/business/slug/:businessSlug', async (req, res) => {
 // Create a new theme
 router.post('/themes', async (req, res) => {
   try {
+    // Check if user is authenticated
+    if (!req.isAuthenticated || !req.isAuthenticated()) {
+      console.error('Theme creation - not authenticated');
+      return res.status(401).json({ message: 'Please login first' });
+    }
+    
     const { name, description, businessId, businessSlug, tokens, ...otherProps } = req.body;
     
     console.log('Theme creation request:', JSON.stringify({
@@ -349,32 +355,57 @@ router.post('/themes', async (req, res) => {
       businessId, 
       businessSlug, 
       hasTokens: !!tokens,
-      otherPropsCount: Object.keys(otherProps).length
+      otherPropsCount: Object.keys(otherProps).length,
+      authenticatedUser: req.user ? {
+        id: req.user.id,
+        username: req.user.username,
+        businessSlug: req.user.businessSlug
+      } : 'Not authenticated'
     }, null, 2));
     
-    if (!name || !businessId) {
-      return res.status(400).json({ message: 'Missing required fields: name or businessId' });
+    // Extract user information from session
+    let userId = businessId;
+    if (!userId && req.user?.id) {
+      userId = req.user.id;
+      console.log(`Using user ID from session: ${userId}`);
     }
     
-    // If businessSlug is not provided, try to get it from the database
+    if (!userId) {
+      return res.status(400).json({ message: 'Missing required field: businessId' });
+    }
+    
+    if (!name) {
+      return res.status(400).json({ message: 'Missing required field: name' });
+    }
+    
+    // If businessSlug is not provided, try to get it from the session or database
     let slug = businessSlug;
+    if (!slug && req.user?.businessSlug) {
+      // First try to get from user in session
+      slug = req.user.businessSlug;
+      console.log(`Using businessSlug from session: ${slug}`);
+    }
+    
     if (!slug) {
-      console.log("No businessSlug provided, trying to get it from user record");
+      // Then try to get from database using businessId/userId
+      console.log(`No businessSlug provided, trying to get it from user record for ID: ${userId}`);
       const [business] = await db.select({
         businessSlug: users.businessSlug
-      }).from(users).where(eq(users.id, businessId));
+      }).from(users).where(eq(users.id, userId));
       
       if (business?.businessSlug) {
         slug = business.businessSlug;
-        console.log(`Found businessSlug: ${slug} for businessId: ${businessId}`);
+        console.log(`Found businessSlug in database: ${slug} for businessId: ${userId}`);
       } else {
-        console.error(`Could not find businessSlug for businessId: ${businessId}`);
+        console.error(`Could not find businessSlug for businessId: ${userId}`);
         return res.status(400).json({ message: 'Could not determine businessSlug - this field is required' });
       }
     }
     
     console.log("Creating theme with values:", { 
-      name, businessId, businessSlug: slug, 
+      name, 
+      businessId: userId, 
+      businessSlug: slug, 
       hasTokens: !!tokens,
       otherPropsCount: Object.keys(otherProps).length 
     });
@@ -383,7 +414,7 @@ router.post('/themes', async (req, res) => {
     const themeData = {
       name,
       description: description || null,
-      businessId,
+      businessId: userId,
       businessSlug: slug,
       tokens: tokens || null,
       isActive: req.body.isActive === true,
