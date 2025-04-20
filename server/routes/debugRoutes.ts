@@ -1,82 +1,206 @@
+import { Router, Request, Response } from 'express';
+import { storage } from '../storage';
+import { db } from '../db';
+import { themes } from '@shared/schema';
+
 /**
  * Debug Routes
  * 
  * These routes are intended for debugging purposes only
  * They should be disabled in production
  */
-
-import { Router } from 'express';
-
 const router = Router();
 
-// Debug authentication status
-router.get('/auth-status', (req, res) => {
-  console.log('Debug auth status request');
-  console.log('Session ID:', req.sessionID);
-  console.log('Is authenticated:', req.isAuthenticated());
-  console.log('Session:', req.session);
-  
+/**
+ * GET /api/debug/auth-status
+ * 
+ * Returns the current authentication status including:
+ * - Whether the user is authenticated
+ * - Session information
+ * - User data if authenticated
+ */
+router.get('/auth-status', (req: Request, res: Response) => {
+  // Check if the user is authenticated via session
+  const authenticated = req.session && req.session.user ? true : false;
+  const sessionInfo = {
+    id: req.sessionID,
+    cookie: req.session?.cookie || null,
+    isNew: req.session?.isNew || false,
+    requiresRenewal: false
+  };
+
+  // Only return non-sensitive user data
+  const user = authenticated ? {
+    id: req.session?.user?.id,
+    username: req.session?.user?.username,
+    email: req.session?.user?.email,
+    businessName: req.session?.user?.businessName,
+    businessSlug: req.session?.user?.businessSlug,
+    role: req.session?.user?.role,
+    subscription: req.session?.user?.subscription,
+  } : null;
+
+  // Debug database connection status
+  let databaseStatus = 'unknown';
+  try {
+    if (db) {
+      databaseStatus = 'connected';
+    } else {
+      databaseStatus = 'not connected';
+    }
+  } catch (error) {
+    databaseStatus = `error: ${error.message}`;
+  }
+
+  // Return full debug info
   return res.json({
-    authenticated: req.isAuthenticated(),
-    sessionID: req.sessionID,
-    sessionExists: !!req.session,
-    user: req.user ? {
-      id: req.user.id,
-      username: req.user.username,
-      email: req.user.email,
-      businessName: req.user.businessName,
-      businessSlug: req.user.businessSlug,
-      role: req.user.role
-    } : null
+    authenticated,
+    sessionInfo,
+    user,
+    business: req.business || null,
+    databaseStatus,
+    timestamp: new Date().toISOString(),
+    environment: {
+      nodeEnv: process.env.NODE_ENV,
+      sessionStoreType: 'PostgreSQL',
+      sessionSecret: process.env.SESSION_SECRET ? 'set' : 'not set'
+    }
   });
 });
 
-// Test login helper
-router.post('/login-test', (req, res) => {
-  const { username, password } = req.body;
-  
-  if (!username || !password) {
-    return res.status(400).json({ 
-      message: 'Username and password are required',
-      success: false
+/**
+ * POST /api/debug/theme-test
+ * 
+ * Tests theme creation and storage
+ * Requires authentication
+ */
+router.post('/theme-test', async (req: Request, res: Response) => {
+  try {
+    // Check if the user is authenticated
+    if (!req.session || !req.session.user) {
+      return res.status(401).json({
+        success: false,
+        authenticated: false,
+        message: 'Not authenticated'
+      });
+    }
+    
+    // Get request data
+    const { name, businessId, businessSlug } = req.body;
+    
+    if (!name || !businessSlug) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields',
+        requiredFields: ['name', 'businessSlug'],
+        provided: req.body
+      });
+    }
+    
+    // Create a debug theme
+    const debugTheme = {
+      name: name || 'Debug Test Theme',
+      businessId: businessId || req.session.user.id,
+      businessSlug: businessSlug || req.session.user.businessSlug || 'salonelegante',
+      primaryColor: '#3b82f6',
+      secondaryColor: '#10b981',
+      accentColor: '#f59e0b',
+      backgroundColor: '#ffffff',
+      textColor: '#1f2937',
+      fontFamily: 'Inter, sans-serif',
+      description: 'Debug test theme',
+      borderRadius: 8,
+      isDefault: false
+    };
+    
+    // Try direct database insert to verify connection
+    const dbResult = await db.insert(themes).values(debugTheme).returning();
+    
+    return res.json({
+      success: true,
+      debug: true,
+      theme: dbResult[0] || null,
+      message: 'Debug theme created successfully',
+      user: {
+        id: req.session.user.id,
+        businessSlug: req.session.user.businessSlug
+      }
+    });
+  } catch (error) {
+    console.error('Debug theme test failed:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to create debug theme',
+      error: error.message,
+      stack: process.env.NODE_ENV !== 'production' ? error.stack : undefined
     });
   }
-  
-  console.log(`Debug login attempt for username: ${username}`);
-  
-  // This is just for testing - the actual authentication should happen via passport
-  return res.json({
-    message: 'This is a debug endpoint. Use the real /api/login endpoint with passport for actual authentication.',
-    success: false,
-    requestReceived: true,
-    username: username
-  });
 });
 
-// Debug theme creation
-router.post('/theme-test', (req, res) => {
-  const { name, businessId, businessSlug } = req.body;
+/**
+ * GET /api/debug/db-info
+ * 
+ * Returns information about the database connection
+ * and schema
+ */
+router.get('/db-info', async (req: Request, res: Response) => {
+  try {
+    // Get table information from the database
+    const tablesQuery = `
+      SELECT 
+        table_name,
+        table_schema
+      FROM 
+        information_schema.tables
+      WHERE 
+        table_schema = 'public'
+      ORDER BY 
+        table_name
+    `;
+    
+    const tablesResult = await db.execute(tablesQuery);
+    
+    // Return database information
+    return res.json({
+      success: true,
+      database: {
+        connected: true,
+        url: process.env.DATABASE_URL ? 'SET (value hidden)' : 'NOT SET',
+        tables: tablesResult
+      }
+    });
+  } catch (error) {
+    console.error('Database info request failed:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to get database information',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/debug/session-store-test
+ * 
+ * Tests the session store functionality
+ */
+router.get('/session-store-test', (req: Request, res: Response) => {
+  // Create a debug counter in the session
+  if (!req.session.debugCounter) {
+    req.session.debugCounter = 1;
+  } else {
+    req.session.debugCounter += 1;
+  }
   
-  console.log('Theme debug request received', {
-    name,
-    businessId,
-    businessSlug,
-    isAuthenticated: req.isAuthenticated(),
-    user: req.user ? { id: req.user.id, username: req.user.username } : null
-  });
-  
-  // For testing only - simulates a successful theme creation
-  return res.status(200).json({
-    debug: true,
+  return res.json({
     success: true,
-    themeCreated: {
-      id: 999,
-      name: name || 'Debug Theme',
-      businessId: businessId || (req.user ? req.user.id : 1),
-      businessSlug: businessSlug || (req.user ? req.user.businessSlug : 'debugslug'),
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }
+    sessionInfo: {
+      id: req.sessionID,
+      isNew: req.session.isNew,
+      debugCounter: req.session.debugCounter,
+      cookie: req.session.cookie
+    },
+    message: `Session counter incremented to ${req.session.debugCounter}`
   });
 });
 
