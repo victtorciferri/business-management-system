@@ -110,22 +110,44 @@ router.post('/theme-test', async (req: Request, res: Response) => {
       fontFamily: 'Inter, sans-serif',
       description: 'Debug test theme',
       borderRadius: 8,
-      isDefault: false
+      isDefault: false,
+      createdAt: new Date(),
+      updatedAt: new Date()
     };
     
-    // Try direct database insert to verify connection
-    const dbResult = await db.insert(themes).values(debugTheme).returning();
+    // Log the actual data being inserted
+    console.log('Debug theme creation - inserting theme data:', JSON.stringify(debugTheme, null, 2));
     
-    return res.json({
-      success: true,
-      debug: true,
-      theme: dbResult[0] || null,
-      message: 'Debug theme created successfully',
-      user: {
-        id: req.session.user.id,
-        businessSlug: req.session.user.businessSlug
-      }
-    });
+    // Try direct database insert to verify connection
+    try {
+      const dbResult = await db.insert(themes).values(debugTheme).returning();
+      console.log('Debug theme creation - success:', dbResult);
+      return res.json({
+        success: true,
+        debug: true,
+        theme: dbResult[0] || null,
+        message: 'Debug theme created successfully',
+        user: {
+          id: req.session.user.id,
+          businessSlug: req.session.user.businessSlug
+        }
+      });
+    } catch (dbError) {
+      console.error('Debug theme creation - database error:', dbError);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to create debug theme - database error',
+        error: dbError.message,
+        hint: dbError.hint || null,
+        detail: dbError.detail || null,
+        schema: dbError.schema || null,
+        table: dbError.table || null,
+        column: dbError.column || null,
+        constraint: dbError.constraint || null,
+        code: dbError.code || null,
+        stack: process.env.NODE_ENV !== 'production' ? dbError.stack : undefined
+      });
+    }
   } catch (error) {
     console.error('Debug theme test failed:', error);
     return res.status(500).json({
@@ -202,6 +224,78 @@ router.get('/session-store-test', (req: Request, res: Response) => {
     },
     message: `Session counter incremented to ${req.session.debugCounter}`
   });
+});
+
+/**
+ * POST /api/debug/add-theme-fields
+ * 
+ * Ensures that createdAt and updatedAt are added to theme objects before saving
+ */
+router.post('/add-theme-fields', async (req: Request, res: Response) => {
+  try {
+    // Get the theme data from the request body
+    const themeData = req.body?.theme || {};
+    
+    console.log('Debug add-theme-fields - received:', JSON.stringify(themeData, null, 2));
+    
+    // Ensure required fields are present
+    if (!themeData.businessId && req.session?.user?.id) {
+      themeData.businessId = req.session.user.id;
+    }
+    
+    if (!themeData.businessSlug && req.session?.user?.businessSlug) {
+      themeData.businessSlug = req.session.user.businessSlug;
+    } else if (!themeData.businessSlug) {
+      themeData.businessSlug = 'salonelegante'; // Default fallback
+    }
+    
+    if (!themeData.name) {
+      themeData.name = 'Generated Theme';
+    }
+    
+    // Always add timestamps
+    themeData.createdAt = new Date();
+    themeData.updatedAt = new Date();
+    
+    // Log the prepared theme data
+    console.log('Debug add-theme-fields - prepared:', JSON.stringify(themeData, null, 2));
+    
+    // Try direct database insert to verify connection
+    try {
+      const dbResult = await db.insert(themes).values(themeData).returning();
+      
+      console.log('Debug add-theme-fields - success:', dbResult);
+      return res.json({
+        success: true,
+        debug: true,
+        theme: dbResult[0] || null,
+        message: 'Theme created successfully with debug fields added',
+      });
+    } catch (dbError) {
+      console.error('Debug add-theme-fields - database error:', dbError);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to create theme - database error',
+        error: dbError.message,
+        hint: dbError.hint || null,
+        detail: dbError.detail || null,
+        schema: dbError.schema || null,
+        table: dbError.table || null,
+        column: dbError.column || null,
+        constraint: dbError.constraint || null,
+        code: dbError.code || null,
+        stack: process.env.NODE_ENV !== 'production' ? dbError.stack : undefined
+      });
+    }
+  } catch (error) {
+    console.error('Debug add-theme-fields failed:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to process theme data',
+      error: error.message,
+      stack: process.env.NODE_ENV !== 'production' ? error.stack : undefined
+    });
+  }
 });
 
 export default router;
