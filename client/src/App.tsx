@@ -198,32 +198,68 @@ function AppContent() {
           </Route>
           {/* Customer Portal Routes - Wrapped with BusinessContextProvider and Theme Providers */}
           <Route path="/customer-portal">
-            <BusinessContextProvider>
-              <ThemeProvider>
-                  <CustomerPortal />
-              </ThemeProvider>
-            </BusinessContextProvider>
+            {() => {
+              // Get businessId from URL params for context initialization
+              const searchParams = new URLSearchParams(window.location.search);
+              const businessId = searchParams.get('businessId');
+              const businessIdNum = businessId ? parseInt(businessId, 10) : undefined;
+              
+              return (
+                <BusinessContextProvider initialBusiness={null}>
+                  <ThemeProvider businessId={businessIdNum}>
+                    <CustomerPortal />
+                  </ThemeProvider>
+                </BusinessContextProvider>
+              );
+            }}
           </Route>
           <Route path="/customer-portal/new-appointment">
-            <BusinessContextProvider>
-              <ThemeProvider>
-                  <NewAppointment />
-              </ThemeProvider>
-            </BusinessContextProvider>
+            {() => {
+              // Get businessId from URL params for context initialization
+              const searchParams = new URLSearchParams(window.location.search);
+              const businessId = searchParams.get('businessId');
+              const businessIdNum = businessId ? parseInt(businessId, 10) : undefined;
+              
+              return (
+                <BusinessContextProvider initialBusiness={null}>
+                  <ThemeProvider businessId={businessIdNum}>
+                    <NewAppointment />
+                  </ThemeProvider>
+                </BusinessContextProvider>
+              );
+            }}
           </Route>
           <Route path="/customer-portal/my-appointments">
-            <BusinessContextProvider>
-              <ThemeProvider>
-                  <MyAppointments />
-              </ThemeProvider>
-            </BusinessContextProvider>
+            {() => {
+              // Get businessId from URL params for context initialization
+              const searchParams = new URLSearchParams(window.location.search);
+              const businessId = searchParams.get('businessId');
+              const businessIdNum = businessId ? parseInt(businessId, 10) : undefined;
+              
+              return (
+                <BusinessContextProvider initialBusiness={null}>
+                  <ThemeProvider businessId={businessIdNum}>
+                    <MyAppointments />
+                  </ThemeProvider>
+                </BusinessContextProvider>
+              );
+            }}
           </Route>
           <Route path="/customer-portal/services">
-            <BusinessContextProvider>
-              <ThemeProvider>
-                  <CustomerServices />
-              </ThemeProvider>
-            </BusinessContextProvider>
+            {() => {
+              // Get businessId from URL params for context initialization
+              const searchParams = new URLSearchParams(window.location.search);
+              const businessId = searchParams.get('businessId');
+              const businessIdNum = businessId ? parseInt(businessId, 10) : undefined;
+              
+              return (
+                <BusinessContextProvider initialBusiness={null}>
+                  <ThemeProvider businessId={businessIdNum}>
+                    <CustomerServices />
+                  </ThemeProvider>
+                </BusinessContextProvider>
+              );
+            }}
           </Route>
           <Route path="/appointments">
             <ProtectedRoute>
@@ -420,10 +456,70 @@ function AppContent() {
           </Route>
           
           {/* Payment related routes */}
-          <Route path="/payment/success" component={PaymentSuccess} />
-          <Route path="/payment/failure" component={PaymentFailure} />
-          <Route path="/payment/pending" component={PaymentPending} />
-          <Route path="/payment/mock" component={MockPayment} />
+          <Route path="/payment/success">
+            {() => {
+              // Get businessId from URL params for context initialization
+              const searchParams = new URLSearchParams(window.location.search);
+              const businessId = searchParams.get('businessId');
+              const businessIdNum = businessId ? parseInt(businessId, 10) : undefined;
+              
+              return (
+                <BusinessContextProvider initialBusiness={null}>
+                  <ThemeProvider businessId={businessIdNum}>
+                    <PaymentSuccess />
+                  </ThemeProvider>
+                </BusinessContextProvider>
+              );
+            }}
+          </Route>
+          <Route path="/payment/failure">
+            {() => {
+              // Get businessId from URL params for context initialization
+              const searchParams = new URLSearchParams(window.location.search);
+              const businessId = searchParams.get('businessId');
+              const businessIdNum = businessId ? parseInt(businessId, 10) : undefined;
+              
+              return (
+                <BusinessContextProvider initialBusiness={null}>
+                  <ThemeProvider businessId={businessIdNum}>
+                    <PaymentFailure />
+                  </ThemeProvider>
+                </BusinessContextProvider>
+              );
+            }}
+          </Route>
+          <Route path="/payment/pending">
+            {() => {
+              // Get businessId from URL params for context initialization
+              const searchParams = new URLSearchParams(window.location.search);
+              const businessId = searchParams.get('businessId');
+              const businessIdNum = businessId ? parseInt(businessId, 10) : undefined;
+              
+              return (
+                <BusinessContextProvider initialBusiness={null}>
+                  <ThemeProvider businessId={businessIdNum}>
+                    <PaymentPending />
+                  </ThemeProvider>
+                </BusinessContextProvider>
+              );
+            }}
+          </Route>
+          <Route path="/payment/mock">
+            {() => {
+              // Get businessId from URL params for context initialization
+              const searchParams = new URLSearchParams(window.location.search);
+              const businessId = searchParams.get('businessId');
+              const businessIdNum = businessId ? parseInt(businessId, 10) : undefined;
+              
+              return (
+                <BusinessContextProvider initialBusiness={null}>
+                  <ThemeProvider businessId={businessIdNum}>
+                    <MockPayment />
+                  </ThemeProvider>
+                </BusinessContextProvider>
+              );
+            }}
+          </Route>
           
           <Route path="/error-testing" component={ErrorTestingPage} />
           <Route component={NotFound} />

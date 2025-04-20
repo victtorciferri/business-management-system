@@ -291,17 +291,42 @@ export const BusinessProvider: React.FC<{
 
   // Effect to load business data when slug or URL params change
   useEffect(() => {
+    // Determine which business identifier to use
+    let businessIdentifier = null;
+    
     if (extractedSlug) {
-      fetchBusinessData(extractedSlug);
+      // First priority: Use slug from the URL path
+      businessIdentifier = extractedSlug;
+      console.log(`BusinessContext: Loading business from URL path: ${businessIdentifier}`);
     } else if (urlParamBusiness) {
-      // If no slug in URL path but we have a business ID/slug in URL params (customer portal)
-      console.log(`BusinessContext: Loading business from URL parameter: ${urlParamBusiness}`);
-      fetchBusinessData(urlParamBusiness);
+      // Second priority: Use businessId or businessSlug from URL parameters
+      businessIdentifier = urlParamBusiness;
+      console.log(`BusinessContext: Loading business from URL parameter: ${businessIdentifier}`);
+    } else if (initialBusiness) {
+      // Third priority: Use the initial business if provided
+      console.log('BusinessContext: Using initial business data');
+      setBusiness(initialBusiness);
+      return; // Skip API call if we already have the data
     } else {
-      // Check if current user is logged in and has a business
-      // This would be implemented in a real application
+      // Try to get business ID from current URL search params
+      const params = new URLSearchParams(window.location.search);
+      const bizId = params.get('businessId');
+      
+      if (bizId) {
+        businessIdentifier = bizId;
+        console.log(`BusinessContext: Loading business from search parameter businessId: ${businessIdentifier}`);
+      } else {
+        // No business identifier found
+        console.log('BusinessContext: No business identifier found');
+        return;
+      }
     }
-  }, [extractedSlug, urlParamBusiness]);
+    
+    // Fetch business data if we have an identifier
+    if (businessIdentifier) {
+      fetchBusinessData(businessIdentifier);
+    }
+  }, [extractedSlug, urlParamBusiness, initialBusiness]);
 
   return (
     <BusinessContext.Provider

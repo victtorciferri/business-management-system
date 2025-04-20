@@ -44,8 +44,13 @@ export default function BaseHeader({
   queryParams = {}
 }: BaseHeaderProps) {
   const [_, navigate] = useLocation();
-  const { theme, getPrimaryColor, getTextColor, getButtonClass, isDarkMode, toggleDarkMode } = useTheme();
+  const { theme, isDarkMode, toggleDarkMode } = useTheme();
   const { config } = useBusinessContext();
+  
+  // Helper functions for theme color management
+  const getPrimaryColor = () => 'text-blue-600';
+  const getTextColor = () => isDarkMode ? 'text-foreground' : 'text-gray-800';
+  const getButtonClass = () => isDarkMode ? 'bg-primary' : 'bg-blue-600';
 
   // Helper function to build URL with query parameters
   const buildUrl = (path: string) => {
