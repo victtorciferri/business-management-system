@@ -54,6 +54,7 @@ import DarkModeInitializer from "@/components/shared/dark-mode-initializer";
 
 // New theme-related pages for 2025 edition
 import { ThemeMarketplacePage } from "@/pages/ThemeMarketplacePage";
+import DebugAuthPage from "@/pages/debug-auth";
 
 function AppContent() {
   const { user: currentUser, isLoading: authLoading } = useAuth();
@@ -75,7 +76,8 @@ function AppContent() {
     'products', 'services', 'dashboard', 'appointments', 'customers',
     'staff-management', 'staff-profile', 'staff', 'staff-schedule',
     'new-appointment', 'customer-portal', 'error-testing', 'payment',
-    'theme-editor', 'theme-showcase', 'theme-marketplace', 'platform-admin'
+    'theme-editor', 'theme-showcase', 'theme-marketplace', 'platform-admin',
+    'debug'
   ];
   
   const potentialBusinessSlug = match && 
@@ -365,6 +367,13 @@ function AppContent() {
                 </ThemeProvider>
               </BusinessContextProvider>
             </ProtectedRoute>
+          </Route>
+          
+          {/* Debug Routes - For development only */}
+          <Route path="/debug/auth">
+            <GlobalThemeProvider>
+              <DebugAuthPage />
+            </GlobalThemeProvider>
           </Route>
           <Route path="/theme-showcase">
             <ProtectedRoute>
