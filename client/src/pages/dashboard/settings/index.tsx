@@ -111,11 +111,23 @@ export default function SettingsPage() {
           <TabsContent value="appearance" className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <SettingCard
-                title="Theme Editor"
-                description="Customize colors, fonts, and styles"
+                title="Modern Theme Editor (2025)"
+                description="Use the new sophisticated design token system"
                 icon={<Palette className="h-5 w-5" />}
                 href="/theme-editor"
                 featured
+              />
+              <SettingCard
+                title="Theme Marketplace"
+                description="Explore and install pre-designed professional themes"
+                icon={<Palette className="h-5 w-5" />}
+                href="/theme-marketplace"
+              />
+              <SettingCard
+                title="Legacy Theme Editor"
+                description="Use the older theme customization tools"
+                icon={<Palette className="h-5 w-5" />}
+                href="/admin-theme-editor/1"
               />
               <SettingCard
                 title="Templates"

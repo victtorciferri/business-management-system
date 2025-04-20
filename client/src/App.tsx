@@ -382,11 +382,12 @@ function AppContent() {
           <Route path="/theme-editor">
             <ProtectedRoute>
               <BusinessContextProvider>
-                <ThemeProvider>
-                  <LegacyThemeProvider>
+                <GlobalThemeProvider>
+                  <ThemeProvider>
+                    <DarkModeInitializer />
                     <ThemeEditor />
-                  </LegacyThemeProvider>
-                </ThemeProvider>
+                  </ThemeProvider>
+                </GlobalThemeProvider>
               </BusinessContextProvider>
             </ProtectedRoute>
           </Route>
