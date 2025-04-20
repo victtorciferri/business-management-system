@@ -67,33 +67,33 @@ function AppContent() {
   // Get current location
   const [location] = useLocation();
   
-  // Define auth-related paths that should bypass business logic
-  const AUTH_PATHS = ['/auth', '/auth-debug', '/debug-login', '/debug/login'];
-  const isAuthPath = AUTH_PATHS.includes(location);
+  // Define debug auth paths vs. regular auth paths
+  const isDebugAuthPath = ['/auth-debug', '/debug-login', '/debug/login'].includes(location);
+  const isRegularAuthPath = location === '/auth';
+  const isAnyAuthPath = isDebugAuthPath || isRegularAuthPath;
   
-  // Initialize states and handle special paths
+  // Use the same useEffect for ALL paths to maintain consistent hook order
   useEffect(() => {
     // Debug information to help troubleshoot
     console.log("App.tsx is rendering");
     console.log("Location:", location);
-    console.log("Is auth path:", isAuthPath);
+    console.log("Is auth path:", isAnyAuthPath);
     
-    if (isAuthPath) {
+    if (isAnyAuthPath) {
       console.log('Auth page route detected, bypassing business logic checks');
       setIsLoading(false);
       return; // Exit early for auth paths
     }
     
     // Rest of the initialization logic will run for non-auth paths
-    // This maintains the hook execution order
-  }, [isAuthPath, location]);
+  }, [isAnyAuthPath, location, isDebugAuthPath, isRegularAuthPath]);
   
   // Special case for auth pages - render them directly
-  if (isAuthPath) {
+  if (isAnyAuthPath) {
     return (
       <div className="min-h-screen">
-        {location === '/auth' && <AuthPage />}
-        {(location === '/auth-debug' || location === '/debug/login' || location === '/debug-login') && <DebugLoginPage />}
+        {isRegularAuthPath && <AuthPage />}
+        {isDebugAuthPath && <DebugLoginPage />}
       </div>
     );
   }
@@ -172,7 +172,7 @@ function AppContent() {
   
   // Additional debug information to help troubleshoot
   // Debug logs for business portal
-  if (!isAuthPath) {
+  if (!isAnyAuthPath) {
     console.log("isBusinessPortal:", isBusinessPortal);
     console.log("businessData:", businessData);
     console.log("window.BUSINESS_DATA:", typeof window !== "undefined" ? (window as any).BUSINESS_DATA : "Not available");
