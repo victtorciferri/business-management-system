@@ -641,15 +641,28 @@ export class DatabaseStorage implements IStorage {
 
   async getCustomerByEmailAndBusinessId(email: string, businessId: number): Promise<Customer | undefined> {
     try {
-      const [customer] = await db
-        .select()
-        .from(customers)
-        .where(and(
-          eq(customers.email, email),
-          eq(customers.userId, businessId)
-        ));
+      // Use raw SQL to avoid potential column name issues
+      const { rows } = await pool.query(
+        'SELECT * FROM customers WHERE email = $1 AND user_id = $2',
+        [email, businessId]
+      );
       
-      return customer || undefined;
+      if (rows.length === 0) {
+        return undefined;
+      }
+      
+      // Map the raw SQL result to our customer type
+      return {
+        id: rows[0].id,
+        userId: rows[0].user_id,
+        firstName: rows[0].first_name,
+        lastName: rows[0].last_name,
+        email: rows[0].email,
+        phone: rows[0].phone || null,
+        notes: rows[0].notes || null,
+        createdAt: rows[0].created_at,
+        businessSlug: rows[0].business_slug || ''
+      };
     } catch (error) {
       console.error("Error fetching customer by email and business ID:", error);
       return undefined;
