@@ -97,7 +97,8 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export const services = pgTable("services", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  businessSlug: text("business_slug").notNull(), // Add business slug for direct business scoping
+  // Make businessSlug optional in the schema to match the database state
+  businessSlug: text("business_slug"),
   name: text("name").notNull(),
   description: text("description"),
   duration: integer("duration").notNull(), // in minutes
@@ -107,26 +108,34 @@ export const services = pgTable("services", {
 }, (table) => {
   return {
     userIdIdx: index("services_user_id_idx").on(table.userId),
-    businessSlugIdx: index("services_business_slug_idx").on(table.businessSlug), // Add index for business slug
+    // Remove indexes that depend on businessSlug
   };
 });
 
-export const insertServiceSchema = createInsertSchema(services).pick({
-  userId: true,
-  businessSlug: true, // Add business slug to insert schema
-  name: true,
-  description: true,
-  duration: true,
-  price: true,
-  color: true,
-  active: true,
-});
+// Create a schema that doesn't require businessSlug
+export const insertServiceSchema = createInsertSchema(services)
+  .omit({ businessSlug: true })
+  .extend({
+    // Make businessSlug optional in the insert schema
+    businessSlug: z.string().optional(),
+  })
+  .pick({
+    userId: true,
+    businessSlug: true,
+    name: true,
+    description: true,
+    duration: true,
+    price: true,
+    color: true,
+    active: true,
+  });
 
 // Customer schema
 export const customers = pgTable("customers", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  businessSlug: text("business_slug").notNull(), // Add business slug for direct business scoping
+  // Make businessSlug optional in the schema to match the database state
+  businessSlug: text("business_slug"),
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   email: text("email").notNull(),
@@ -136,18 +145,23 @@ export const customers = pgTable("customers", {
 }, (table) => {
   return {
     userIdIdx: index("customers_user_id_idx").on(table.userId),
-    businessSlugIdx: index("customers_business_slug_idx").on(table.businessSlug), // Add index for business slug
-    // Compound index for business-specific customer lookups
-    businessEmailIdx: index("customers_business_email_idx").on(table.businessSlug, table.email), // Updated compound index
+    // Remove indexes that depend on businessSlug
     userEmailIdx: index("customers_user_id_email_idx").on(table.userId, table.email),
   };
 });
 
-export const insertCustomerSchema = createInsertSchema(customers).pick({
-  userId: true,
-  businessSlug: true, // Add business slug to insert schema
-  firstName: true,
-  lastName: true,
+// Create a schema that doesn't require businessSlug
+export const insertCustomerSchema = createInsertSchema(customers)
+  .omit({ businessSlug: true })
+  .extend({
+    // Make businessSlug optional in the insert schema
+    businessSlug: z.string().optional(),
+  })
+  .pick({
+    userId: true,
+    businessSlug: true,
+    firstName: true,
+    lastName: true,
   email: true,
   phone: true,
   notes: true,

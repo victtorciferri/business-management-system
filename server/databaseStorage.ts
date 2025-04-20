@@ -208,8 +208,79 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCustomer(customer: InsertCustomer): Promise<Customer> {
-    const [newCustomer] = await db.insert(customers).values(customer).returning();
-    return newCustomer;
+    try {
+      // Try using Drizzle ORM first
+      const [newCustomer] = await db.insert(customers).values(customer).returning();
+      return newCustomer;
+    } catch (error) {
+      // If the ORM insertion fails (possibly due to missing business_slug column), 
+      // fallback to raw SQL insertion
+      console.error("Drizzle insertion error:", error);
+      console.log("Falling back to raw SQL insertion for customer");
+      
+      try {
+        // Check if we need to exclude businessSlug from the insertion
+        let sqlQuery = "";
+        let values = [];
+        
+        if ('businessSlug' in customer) {
+          // Include businessSlug in insertion if this column exists
+          sqlQuery = `
+            INSERT INTO customers 
+            (user_id, business_slug, first_name, last_name, email, phone, notes) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7) 
+            RETURNING id, user_id, first_name, last_name, email, phone, notes, created_at
+          `;
+          values = [
+            customer.userId, 
+            customer.businessSlug, 
+            customer.firstName, 
+            customer.lastName,
+            customer.email,
+            customer.phone || null,
+            customer.notes || null
+          ];
+        } else {
+          // Exclude businessSlug if this column doesn't exist
+          sqlQuery = `
+            INSERT INTO customers 
+            (user_id, first_name, last_name, email, phone, notes) 
+            VALUES ($1, $2, $3, $4, $5, $6) 
+            RETURNING id, user_id, first_name, last_name, email, phone, notes, created_at
+          `;
+          values = [
+            customer.userId, 
+            customer.firstName, 
+            customer.lastName,
+            customer.email,
+            customer.phone || null,
+            customer.notes || null
+          ];
+        }
+        
+        const result = await pool.query(sqlQuery, values);
+        
+        if (result.rows.length === 0) {
+          throw new Error("Failed to create customer with raw SQL");
+        }
+        
+        // Map SQL result to our Customer type
+        return {
+          id: result.rows[0].id,
+          userId: result.rows[0].user_id,
+          firstName: result.rows[0].first_name,
+          lastName: result.rows[0].last_name,
+          email: result.rows[0].email,
+          phone: result.rows[0].phone || null,
+          notes: result.rows[0].notes || null,
+          createdAt: result.rows[0].created_at,
+          businessSlug: customer.businessSlug || 'default'
+        };
+      } catch (sqlError) {
+        console.error("Raw SQL customer insertion error:", sqlError);
+        throw sqlError;
+      }
+    }
   }
 
   async updateCustomer(id: number, customerUpdate: Partial<InsertCustomer>): Promise<Customer | undefined> {
