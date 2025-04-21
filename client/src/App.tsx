@@ -59,7 +59,7 @@ import { ThemeMarketplacePage } from "@/pages/ThemeMarketplacePage";
 import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext';
 
 function AppContent() {
-  // Import the useLanguage hook
+  // Use the language context that's passed down from the parent App component
   const { language } = useLanguage();
   const { user: currentUser, isLoading: authLoading } = useAuth();
 
@@ -554,18 +554,18 @@ function AppContent() {
 
 function App() {
   return (
-    <LanguageProvider>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <GlobalThemeProvider>
-            <BusinessContextProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <GlobalThemeProvider>
+          <BusinessContextProvider>
+            <LanguageProvider>
               <AppContent />
               <DarkModeInitializer />
-            </BusinessContextProvider>
-          </GlobalThemeProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </LanguageProvider>
+            </LanguageProvider>
+          </BusinessContextProvider>
+        </GlobalThemeProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 
