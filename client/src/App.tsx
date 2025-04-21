@@ -164,30 +164,28 @@ function AppContent() {
         <BusinessContextProvider>
           {/* Use the new theme provider with business context for business portals */}
           <ThemeProvider>
-            <LanguageProvider>
-              <Switch>
-                {/* For business subpages like /:slug/services */}
-                <Route path="/:slug/:subPath*">
-                  {(params: { slug: string, 'subPath*'?: string }) => (
-                    <BusinessPortal 
-                      slug={params.slug} 
-                      subPath={params['subPath*'] || ''} 
-                      initialData={businessData}
-                    />
-                  )}
-                </Route>
-                {/* For main business page /:slug */}
-                <Route path="/:slug">
-                  {(params: { slug: string }) => (
-                    <BusinessPortal 
-                      slug={params.slug}
-                      initialData={businessData}
-                    />
-                  )}
-                </Route>
-                <Route component={NotFound} />
-              </Switch>
-            </LanguageProvider>
+            <Switch>
+              {/* For business subpages like /:slug/services */}
+              <Route path="/:slug/:subPath*">
+                {(params: { slug: string, 'subPath*'?: string }) => (
+                  <BusinessPortal 
+                    slug={params.slug} 
+                    subPath={params['subPath*'] || ''} 
+                    initialData={businessData}
+                  />
+                )}
+              </Route>
+              {/* For main business page /:slug */}
+              <Route path="/:slug">
+                {(params: { slug: string }) => (
+                  <BusinessPortal 
+                    slug={params.slug}
+                    initialData={businessData}
+                  />
+                )}
+              </Route>
+              <Route component={NotFound} />
+            </Switch>
           </ThemeProvider>
         </BusinessContextProvider>
       </div>
@@ -214,9 +212,7 @@ function AppContent() {
               return (
                 <BusinessContextProvider initialBusiness={null}>
                   <ThemeProvider businessId={businessIdNum}>
-                    <LanguageProvider>
-                      <CustomerPortal />
-                    </LanguageProvider>
+                    <CustomerPortal />
                   </ThemeProvider>
                 </BusinessContextProvider>
               );
@@ -232,9 +228,7 @@ function AppContent() {
               return (
                 <BusinessContextProvider initialBusiness={null}>
                   <ThemeProvider businessId={businessIdNum}>
-                    <LanguageProvider>
-                      <NewAppointment />
-                    </LanguageProvider>
+                    <NewAppointment />
                   </ThemeProvider>
                 </BusinessContextProvider>
               );
@@ -250,9 +244,7 @@ function AppContent() {
               return (
                 <BusinessContextProvider initialBusiness={null}>
                   <ThemeProvider businessId={businessIdNum}>
-                    <LanguageProvider>
-                      <MyAppointments />
-                    </LanguageProvider>
+                    <MyAppointments />
                   </ThemeProvider>
                 </BusinessContextProvider>
               );
@@ -268,9 +260,7 @@ function AppContent() {
               return (
                 <BusinessContextProvider initialBusiness={null}>
                   <ThemeProvider businessId={businessIdNum}>
-                    <LanguageProvider>
-                      <CustomerServices />
-                    </LanguageProvider>
+                    <CustomerServices />
                   </ThemeProvider>
                 </BusinessContextProvider>
               );
@@ -481,9 +471,7 @@ function AppContent() {
               return (
                 <BusinessContextProvider initialBusiness={null}>
                   <ThemeProvider businessId={businessIdNum}>
-                    <LanguageProvider>
-                      <PaymentSuccess />
-                    </LanguageProvider>
+                    <PaymentSuccess />
                   </ThemeProvider>
                 </BusinessContextProvider>
               );
@@ -499,9 +487,7 @@ function AppContent() {
               return (
                 <BusinessContextProvider initialBusiness={null}>
                   <ThemeProvider businessId={businessIdNum}>
-                    <LanguageProvider>
-                      <PaymentFailure />
-                    </LanguageProvider>
+                    <PaymentFailure />
                   </ThemeProvider>
                 </BusinessContextProvider>
               );
@@ -517,9 +503,7 @@ function AppContent() {
               return (
                 <BusinessContextProvider initialBusiness={null}>
                   <ThemeProvider businessId={businessIdNum}>
-                    <LanguageProvider>
-                      <PaymentPending />
-                    </LanguageProvider>
+                    <PaymentPending />
                   </ThemeProvider>
                 </BusinessContextProvider>
               );
@@ -535,9 +519,7 @@ function AppContent() {
               return (
                 <BusinessContextProvider initialBusiness={null}>
                   <ThemeProvider businessId={businessIdNum}>
-                    <LanguageProvider>
-                      <MockPayment />
-                    </LanguageProvider>
+                    <MockPayment />
                   </ThemeProvider>
                 </BusinessContextProvider>
               );
@@ -557,12 +539,16 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <GlobalThemeProvider>
-          <BusinessContextProvider>
-            <LanguageProvider>
+          {/* 
+            Place LanguageProvider before BusinessContextProvider to ensure 
+            it's available throughout the entire application and prevent nested providers
+          */}
+          <LanguageProvider>
+            <BusinessContextProvider>
               <AppContent />
               <DarkModeInitializer />
-            </LanguageProvider>
-          </BusinessContextProvider>
+            </BusinessContextProvider>
+          </LanguageProvider>
         </GlobalThemeProvider>
       </AuthProvider>
     </QueryClientProvider>
