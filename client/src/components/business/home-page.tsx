@@ -132,8 +132,8 @@ export default function HomePage({ business, services, slug }: HomePageProps) {
       <section className="bg-gray-50 py-16">
         <div className="max-w-5xl mx-auto px-4">
           <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold mb-4">Why Choose Us</h2>
-            <p className="text-muted-foreground">Experience the difference at {business.businessName}</p>
+            <h2 className="text-3xl font-bold mb-4">{t('whyChooseUs.title')}</h2>
+            <p className="text-muted-foreground">{t('whyChooseUs.subtitle')} {business.businessName}</p>
           </div>
           
           <div className="grid gap-6 md:grid-cols-3">
@@ -142,11 +142,11 @@ export default function HomePage({ business, services, slug }: HomePageProps) {
                 <div className="w-12 h-12 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-3">
                   <BadgeCheck className="h-6 w-6 text-primary" />
                 </div>
-                <CardTitle>Professional Staff</CardTitle>
+                <CardTitle>{t('whyChooseUs.professional_staff')}</CardTitle>
               </CardHeader>
               <CardContent className="text-center">
                 <p className="text-muted-foreground">
-                  Our team of certified professionals is dedicated to providing the highest quality services.
+                  {t('whyChooseUs.professional_desc')}
                 </p>
               </CardContent>
             </Card>
@@ -156,11 +156,11 @@ export default function HomePage({ business, services, slug }: HomePageProps) {
                 <div className="w-12 h-12 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-3">
                   <Star className="h-6 w-6 text-primary" />
                 </div>
-                <CardTitle>Premium Products</CardTitle>
+                <CardTitle>{t('whyChooseUs.premium_products')}</CardTitle>
               </CardHeader>
               <CardContent className="text-center">
                 <p className="text-muted-foreground">
-                  We use only the highest quality products to ensure the best results for our clients.
+                  {t('whyChooseUs.premium_desc')}
                 </p>
               </CardContent>
             </Card>
@@ -170,11 +170,11 @@ export default function HomePage({ business, services, slug }: HomePageProps) {
                 <div className="w-12 h-12 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-3">
                   <Heart className="h-6 w-6 text-primary" />
                 </div>
-                <CardTitle>Customer Satisfaction</CardTitle>
+                <CardTitle>{t('whyChooseUs.customer_satisfaction')}</CardTitle>
               </CardHeader>
               <CardContent className="text-center">
                 <p className="text-muted-foreground">
-                  Your satisfaction is our priority. We strive to exceed your expectations with every visit.
+                  {t('whyChooseUs.customer_desc')}
                 </p>
               </CardContent>
             </Card>
@@ -214,7 +214,7 @@ export default function HomePage({ business, services, slug }: HomePageProps) {
       {/* CTA */}
       <section className="bg-primary text-white py-16">
         <div className="max-w-3xl mx-auto text-center px-4">
-          <h2 className="text-3xl font-bold mb-6">Ready to Experience Our Services?</h2>
+          <h2 className="text-3xl font-bold mb-6">{t('homepage.ready_experience')}</h2>
           <p className="text-lg opacity-90 mb-8">
             {t('homepage.book_discover')} {business.businessName}.
           </p>

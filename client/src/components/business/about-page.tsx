@@ -1,5 +1,6 @@
 import { User } from "@shared/schema";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface AboutPageProps {
   business: Omit<User, "password">;
@@ -7,48 +8,45 @@ interface AboutPageProps {
 }
 
 export default function AboutPage({ business, slug }: AboutPageProps) {
+  const { t } = useLanguage();
+  
   return (
     <div className="container mx-auto py-10">
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">About {business.businessName}</h1>
+        <h1 className="text-3xl font-bold mb-6">{t('about.title')} {business.businessName || ''}</h1>
         
         <div className="space-y-8">
           <Card>
             <CardHeader>
-              <CardTitle>Our Story</CardTitle>
-              <CardDescription>Learn more about how we started</CardDescription>
+              <CardTitle>{t('about.our_story')}</CardTitle>
+              <CardDescription>{t('about.story_subtitle')}</CardDescription>
             </CardHeader>
             <CardContent>
               <p className="mb-4">
-                {business.businessName} was founded with a passion for providing exceptional beauty and wellness services to our community. 
-                Since our establishment, we have been dedicated to delivering outstanding customer experiences that leave our clients feeling 
-                refreshed, confident, and satisfied.
+                {business.businessName} {t('about.story_part1')}
               </p>
               <p>
-                Our team of skilled professionals is committed to staying at the forefront of the latest trends and techniques in beauty and wellness, 
-                ensuring that every client receives the highest quality service tailored to their unique needs and preferences.
+                {t('about.story_part2')}
               </p>
             </CardContent>
           </Card>
           
           <Card>
             <CardHeader>
-              <CardTitle>Our Mission</CardTitle>
-              <CardDescription>What drives us every day</CardDescription>
+              <CardTitle>{t('about.our_mission')}</CardTitle>
+              <CardDescription>{t('about.mission_subtitle')}</CardDescription>
             </CardHeader>
             <CardContent>
               <p>
-                At {business.businessName}, our mission is to enhance the natural beauty and well-being of our clients through personalized, 
-                professional services delivered in a welcoming and relaxing environment. We believe that everyone deserves to feel their best, 
-                and we are dedicated to helping our clients achieve that feeling with every visit.
+                {t('about.mission_text').replace('{businessName}', business.businessName || '')}
               </p>
             </CardContent>
           </Card>
           
           <Card>
             <CardHeader>
-              <CardTitle>Meet Our Team</CardTitle>
-              <CardDescription>The faces behind {business.businessName}</CardDescription>
+              <CardTitle>{t('about.meet_team')}</CardTitle>
+              <CardDescription>{t('about.team_subtitle')} {business.businessName}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid gap-6 md:grid-cols-2">
@@ -73,35 +71,35 @@ export default function AboutPage({ business, slug }: AboutPageProps) {
           
           <Card>
             <CardHeader>
-              <CardTitle>Visit Us</CardTitle>
-              <CardDescription>Our location and hours</CardDescription>
+              <CardTitle>{t('about.visit_us')}</CardTitle>
+              <CardDescription>{t('about.visit_subtitle')}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid gap-6 md:grid-cols-2">
                 <div>
-                  <h3 className="font-medium mb-2">Address</h3>
+                  <h3 className="font-medium mb-2">{t('about.address')}</h3>
                   <p className="text-muted-foreground mb-1">123 Main Street</p>
                   <p className="text-muted-foreground mb-1">Midtown, New York</p>
                   <p className="text-muted-foreground">USA</p>
                 </div>
                 
                 <div>
-                  <h3 className="font-medium mb-2">Hours of Operation</h3>
+                  <h3 className="font-medium mb-2">{t('about.hours')}</h3>
                   <div className="grid grid-cols-2 gap-x-4">
-                    <p className="text-muted-foreground">Monday - Friday</p>
+                    <p className="text-muted-foreground">{t('about.monday_friday')}</p>
                     <p>9:00 AM - 7:00 PM</p>
-                    <p className="text-muted-foreground">Saturday</p>
+                    <p className="text-muted-foreground">{t('about.saturday')}</p>
                     <p>10:00 AM - 6:00 PM</p>
-                    <p className="text-muted-foreground">Sunday</p>
+                    <p className="text-muted-foreground">{t('about.sunday')}</p>
                     <p>Closed</p>
                   </div>
                 </div>
               </div>
               
               <div className="mt-6">
-                <h3 className="font-medium mb-2">Contact</h3>
-                <p className="text-muted-foreground mb-1">Phone: {business.phone || "(555) 123-4567"}</p>
-                <p className="text-muted-foreground">Email: contact@{business.businessSlug}.com</p>
+                <h3 className="font-medium mb-2">{t('about.contact')}</h3>
+                <p className="text-muted-foreground mb-1">{t('about.phone')} {business.phone || "(555) 123-4567"}</p>
+                <p className="text-muted-foreground">{t('about.email')} contact@{business.businessSlug}.com</p>
               </div>
             </CardContent>
           </Card>

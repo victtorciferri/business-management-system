@@ -90,12 +90,10 @@ export default function BaseHeader({
     );
   };
 
-  // Get portal label based on business locale
+  // Get portal label based on language context
   const getPortalLabel = () => {
     if (portalType === 'customer') {
-      if (config.locale === 'es') return 'Portal de Clientes';
-      if (config.locale === 'pt') return 'Portal do Cliente';
-      return 'Customer Portal';
+      return t('common.customer_portal');
     }
     return '';
   };

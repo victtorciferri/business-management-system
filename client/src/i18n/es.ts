@@ -84,7 +84,10 @@ export default {
   },
   testimonials: {
     title: 'Lo Que Dicen Nuestros Clientes',
-    subtitle: 'Lea testimonios de nuestros clientes satisfechos'
+    subtitle: 'Lea testimonios de nuestros clientes satisfechos',
+    comment1: '¡Servicio increíble! El personal fue profesional y me encantó mi nuevo look.',
+    comment2: 'Siempre una gran experiencia. Llevo más de un año viniendo aquí y siempre estoy satisfecho.',
+    comment3: 'Muy satisfecha con los resultados. Definitivamente volveré.'
   },
   about: {
     title: 'Acerca de',
