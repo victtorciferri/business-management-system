@@ -496,11 +496,14 @@ export class BusinessSlugAdapter implements IStorage {
   }
 
   async getCustomerByEmailAndBusinessId(email: string, businessId: number): Promise<Customer | undefined> {
-    const customer = await this.storage.getCustomerByEmailAndBusinessId(email, businessId);
-    if (customer) {
-      return this.addBusinessSlugToObject(customer, businessId);
+    try {
+      const customer = await this.storage.getCustomerByEmailAndBusinessId(email, businessId);
+      // Simply return the customer without adding businessSlug
+      return customer;
+    } catch (error) {
+      console.error("Error in adapter getCustomerByEmailAndBusinessId:", error);
+      return undefined;
     }
-    return undefined;
   }
 
   // Theme methods
