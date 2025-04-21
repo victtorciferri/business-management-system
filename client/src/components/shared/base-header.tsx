@@ -160,7 +160,7 @@ export default function BaseHeader({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={toggleDarkMode}>
-                  {isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                  {isDarkMode ? t('common.switchToLightMode') : t('common.switchToDarkMode')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

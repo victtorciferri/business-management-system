@@ -12,6 +12,7 @@ import {
 import { useLocation } from "wouter";
 import { useBusinessContext } from "@/contexts/BusinessContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useEffect } from "react";
 
 interface CustomerPortalLayoutProps {
@@ -30,6 +31,7 @@ export default function CustomerPortalLayout({
   const [location] = useLocation();
   const { business: contextBusiness, config } = useBusinessContext();
   const { theme } = useTheme();
+  const { t } = useLanguage();
   
   // Use business from context if available, otherwise fallback to props
   const business = contextBusiness || propsBusiness;
@@ -39,40 +41,40 @@ export default function CustomerPortalLayout({
   if (accessToken) queryParams.token = accessToken;
   if (businessId) queryParams.businessId = businessId;
   
-  // Define customer portal navigation items - using translations based on business locale if needed
+  // Define customer portal navigation items - using the translation system
   const navigationItems: NavigationItem[] = [
     { 
-      label: config.locale === 'es' ? 'Inicio' : 'Home', 
+      label: t('common.home'), 
       icon: <HomeIcon className="h-4 w-4 mr-2" />,
       path: "/customer-portal",
       isActive: location === "/customer-portal" 
     },
     { 
-      label: config.locale === 'es' ? 'Servicios' : 'Services', 
+      label: t('common.services'), 
       icon: <ShoppingBagIcon className="h-4 w-4 mr-2" />,
       path: "/customer-portal/services",
       isActive: location === "/customer-portal/services"
     },
     { 
-      label: config.locale === 'es' ? 'Tienda' : 'Store', 
+      label: t('common.store'), 
       icon: <LayoutDashboard className="h-4 w-4 mr-2" />,
       path: "/customer-portal/store",
       isActive: location === "/customer-portal/store"
     },
     { 
-      label: config.locale === 'es' ? 'Reservar' : 'Book', 
+      label: t('common.book'), 
       icon: <CalendarIcon className="h-4 w-4 mr-2" />,
       path: "/customer-portal/new-appointment",
       isActive: location === "/customer-portal/new-appointment"
     },
     { 
-      label: config.locale === 'es' ? 'Mis Citas' : 'My Appointments', 
+      label: t('common.appointments'), 
       icon: <ClipboardListIcon className="h-4 w-4 mr-2" />,
       path: "/customer-portal/my-appointments",
       isActive: location === "/customer-portal/my-appointments"
     },
     { 
-      label: config.locale === 'es' ? 'Acerca de' : 'About', 
+      label: t('common.about'), 
       icon: <InfoIcon className="h-4 w-4 mr-2" />,
       path: "/customer-portal/about",
       isActive: location === "/customer-portal/about"

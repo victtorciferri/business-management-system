@@ -4,6 +4,7 @@ import { useContext, useEffect } from "react";
 import BaseLayout from "@/components/shared/base-layout";
 import { NavigationItem } from "@/components/shared/base-header";
 import { ThemeContext } from "@/contexts/ThemeContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { applyTheme } from "@/utils/applyTheme";
 import { 
   HomeIcon, 
@@ -23,41 +24,42 @@ interface BusinessLayoutProps {
 export default function BusinessLayout({ children, business, slug }: BusinessLayoutProps) {
   const [location] = useLocation();
   const { theme, updateTheme } = useContext(ThemeContext);
+  const { t } = useLanguage();
   
   // Define business portal navigation items
   const navigationItems: NavigationItem[] = [
     {
-      label: "Home",
+      label: t('common.home'),
       path: `/${slug}`,
       icon: <HomeIcon className="h-4 w-4 mr-2" />,
       isActive: location === `/${slug}` || location.startsWith(`/${slug}/home`)
     },
     {
-      label: "Services",
+      label: t('common.services'),
       path: `/${slug}/services`,
       icon: <ShoppingBagIcon className="h-4 w-4 mr-2" />,
       isActive: location.startsWith(`/${slug}/services`)
     },
     {
-      label: "Store",
+      label: t('common.store'),
       path: `/${slug}/store`,
       icon: <LayoutDashboard className="h-4 w-4 mr-2" />,
       isActive: location.startsWith(`/${slug}/store`)
     },
     {
-      label: "Book",
+      label: t('common.book'),
       path: `/${slug}/book`,
       icon: <CalendarIcon className="h-4 w-4 mr-2" />,
       isActive: location.startsWith(`/${slug}/book`)
     },
     {
-      label: "My Appointments",
+      label: t('common.appointments'),
       path: `/${slug}/my-appointments`,
       icon: <ClipboardListIcon className="h-4 w-4 mr-2" />,
       isActive: location.startsWith(`/${slug}/my-appointments`)
     },
     {
-      label: "About",
+      label: t('common.about'),
       path: `/${slug}/about`,
       icon: <InfoIcon className="h-4 w-4 mr-2" />,
       isActive: location.startsWith(`/${slug}/about`)
