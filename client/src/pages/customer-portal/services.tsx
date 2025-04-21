@@ -7,12 +7,14 @@ import { ArrowLeftIcon, Clock, DollarSign } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import CustomerPortalLayout from "@/components/customer-portal/layout";
 import { useBusinessContext } from "@/contexts/BusinessContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function CustomerServices() {
   const [location, navigate] = useLocation();
   const params = new URLSearchParams(window.location.search);
   const accessToken = params.get("token");
   const businessId = params.get("businessId");
+  const { t } = useLanguage();
   
   // Get services and business data from context
   const { business, services: contextServices, loading } = useBusinessContext();
@@ -42,7 +44,7 @@ export default function CustomerServices() {
           <ArrowLeftIcon className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Our Services</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('common.services')}</h1>
           <p className="text-muted-foreground">Browse our available services and choose the one that's right for you</p>
         </div>
       </div>

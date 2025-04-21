@@ -23,6 +23,31 @@ export default {
   services: {
     duration: 'Duración',
     price: 'Precio',
-    book_now: 'Reservar Ahora'
+    book_now: 'Reservar Ahora',
+    professional_service: 'Servicio profesional',
+    minutes: 'minutos'
+  },
+  homepage: {
+    welcome: 'Bienvenido a',
+    experience: 'Experimente servicios excepcionales de belleza y bienestar adaptados a sus necesidades.',
+    book_today: 'Reserve su cita hoy para una experiencia rejuvenecedora.',
+    book_appointment: 'Reservar Cita',
+    view_services: 'Ver Servicios',
+    testimonials: 'Lo Que Dicen Nuestros Clientes',
+    testimonials_desc: 'Lea testimonios de nuestros clientes satisfechos',
+    book_discover: 'Reserve su cita hoy y descubra por qué a nuestros clientes les encanta',
+    visit_us: 'Visítenos',
+    find_location: 'Encuéntrenos en nuestra conveniente ubicación'
+  },
+  admin: {
+    manage_services: 'Administre sus ofertas de servicios',
+    add_service: 'Añadir Servicio',
+    search_services: 'Buscar servicios...',
+    loading_services: 'Cargando servicios...',
+    delete_confirm: '¿Está seguro?',
+    delete_warning: 'Esto eliminará permanentemente este servicio. Esta acción no se puede deshacer.',
+    cancel: 'Cancelar',
+    delete: 'Eliminar',
+    active: 'Activo'
   }
 };
