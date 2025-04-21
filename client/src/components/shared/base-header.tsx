@@ -5,6 +5,7 @@ import { ReactNode } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useBusinessContext } from "@/contexts/BusinessContext";
 import { Moon, Sun } from "lucide-react";
+import { LanguageSelector } from "@/components/ui/language-selector";
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -136,6 +137,11 @@ export default function BaseHeader({
                 {item.label}
               </Button>
             ))}
+            
+            {/* Language selector */}
+            <div className="ml-2">
+              <LanguageSelector />
+            </div>
             
             {/* Dark mode toggle for all sites */}
             <DropdownMenu>
