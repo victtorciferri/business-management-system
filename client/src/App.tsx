@@ -546,18 +546,18 @@ function AppContent() {
 
 function App() {
   return (
-    <LanguageProvider>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <LanguageProvider>
           <GlobalThemeProvider>
             <BusinessContextProvider>
               <AppContent />
               <DarkModeInitializer />
             </BusinessContextProvider>
           </GlobalThemeProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </LanguageProvider>
+        </LanguageProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 
