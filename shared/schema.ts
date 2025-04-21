@@ -132,8 +132,7 @@ export const insertServiceSchema = createInsertSchema(services)
 export const customers = pgTable("customers", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  // Make businessSlug optional in the schema to match the database state
-  businessSlug: text("business_slug"),
+  // Remove businessSlug column since it doesn't exist in the database
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   email: text("email").notNull(),
@@ -143,7 +142,6 @@ export const customers = pgTable("customers", {
 }, (table) => {
   return {
     userIdIdx: index("customers_user_id_idx").on(table.userId),
-    // Remove indexes that depend on businessSlug
     userEmailIdx: index("customers_user_id_email_idx").on(table.userId, table.email),
   };
 });

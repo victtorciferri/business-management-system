@@ -446,11 +446,19 @@ export class BusinessSlugAdapter implements IStorage {
   }
 
   async getCustomerByAccessToken(token: string): Promise<Customer | undefined> {
-    const customer = await this.storage.getCustomerByAccessToken(token);
-    if (customer) {
-      return this.addBusinessSlugToObject(customer, customer.userId);
+    try {
+      const customer = await this.storage.getCustomerByAccessToken(token);
+      if (customer) {
+        // Just return the customer directly without trying to add business_slug
+        // This is because we're now sure that the business_slug field doesn't
+        // exist in the database and we should avoid trying to add it
+        return customer;
+      }
+      return undefined;
+    } catch (error) {
+      console.error("Error in adapter getCustomerByAccessToken:", error);
+      return undefined;
     }
-    return undefined;
   }
 
   async deleteCustomerAccessToken(token: string): Promise<boolean> {
