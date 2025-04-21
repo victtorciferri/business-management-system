@@ -1,5 +1,6 @@
 
 export default {
+  // Common text used throughout the application
   common: {
     home: 'Inicio',
     services: 'Servicios',
@@ -18,7 +19,39 @@ export default {
     business_portal: 'Portal del Negocio',
     language: 'Idioma',
     english: 'Inglés',
-    spanish: 'Español'
+    spanish: 'Español',
+    save: 'Guardar',
+    cancel: 'Cancelar',
+    delete: 'Eliminar',
+    edit: 'Editar',
+    add: 'Añadir',
+    submit: 'Enviar',
+    yes: 'Sí',
+    no: 'No',
+    search: 'Buscar',
+    filter: 'Filtrar',
+    next: 'Siguiente',
+    previous: 'Anterior',
+    confirm: 'Confirmar',
+    back: 'Atrás',
+    done: 'Hecho',
+    welcome: 'Bienvenido/a',
+    error: 'Error',
+    success: 'Éxito',
+    warning: 'Advertencia',
+    info: 'Información'
+  },
+  
+  // Form-related translations
+  forms: {
+    required: 'Obligatorio',
+    invalid_email: 'Dirección de correo electrónico inválida',
+    password_mismatch: 'Las contraseñas no coinciden',
+    min_length: 'Debe tener al menos {length} caracteres',
+    max_length: 'No puede exceder los {length} caracteres',
+    enter_email: 'Introduce tu correo electrónico',
+    enter_password: 'Introduce tu contraseña',
+    enter_name: 'Introduce tu nombre'
   },
   payment: {
     successful: 'Pago Exitoso',
