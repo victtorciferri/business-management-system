@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button";
 import { CheckCircle, ArrowLeftIcon, Calendar } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface AppointmentDetails {
   id: number;
@@ -17,6 +18,7 @@ interface AppointmentDetails {
 export default function PaymentSuccess() {
   const [_, setLocation] = useLocation();
   const [appointment, setAppointment] = useState<AppointmentDetails | null>(null);
+  const { t } = useLanguage();
   
   // Get the appointment ID from the URL
   const searchParams = new URLSearchParams(window.location.search);
@@ -127,9 +129,9 @@ export default function PaymentSuccess() {
               <CheckCircle className="h-10 w-10 text-green-600" />
             </div>
           </div>
-          <CardTitle className="text-center text-green-800">Payment Successful</CardTitle>
+          <CardTitle className="text-center text-green-800">{t('payment.successful')}</CardTitle>
           <CardDescription className="text-center text-green-700">
-            Your appointment has been confirmed
+            {t('payment.confirmed')}
           </CardDescription>
         </CardHeader>
         
