@@ -24,19 +24,16 @@ export default function HomePage({ business, services, slug }: HomePageProps) {
     {
       name: "Carolina Herrera",
       comment: t('testimonials.comment1'),
-      commentEs: "¡Servicio increíble! El personal fue profesional y me encantó mi nuevo look.",
       rating: 5
     },
     {
       name: "Juan Mendez",
       comment: t('testimonials.comment2'),
-      commentEs: "Siempre una gran experiencia. Llevo más de un año viniendo aquí y siempre estoy satisfecho.",
       rating: 5
     },
     {
       name: "Andrea Fuentes",
       comment: t('testimonials.comment3'),
-      commentEs: "Muy satisfecha con los resultados. Definitivamente volveré.",
       rating: 4
     }
   ];

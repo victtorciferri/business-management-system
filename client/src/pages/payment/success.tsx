@@ -18,7 +18,7 @@ interface AppointmentDetails {
 export default function PaymentSuccess() {
   const [_, setLocation] = useLocation();
   const [appointment, setAppointment] = useState<AppointmentDetails | null>(null);
-  const { t } = useLanguage();
+  const { t, formatDate } = useLanguage();
   
   // Get the appointment ID from the URL
   const searchParams = new URLSearchParams(window.location.search);
