@@ -77,14 +77,14 @@ export default function CustomerServices() {
               <div className="h-2 bg-gradient-to-r" style={{ backgroundColor: service.color }}></div>
               <CardHeader>
                 <CardTitle>{service.name}</CardTitle>
-                <CardDescription>Professional service</CardDescription>
+                <CardDescription>{t('services.professional_service')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="mb-4 text-sm">{service.description}</p>
                 <div className="flex justify-between text-sm">
                   <div className="flex items-center gap-1">
                     <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span>{service.duration} mins</span>
+                    <span>{service.duration} {t('services.minutes')}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -101,7 +101,7 @@ export default function CustomerServices() {
                       : `/customer-portal/book?serviceId=${service.id}`
                   )}
                 >
-                  Book Now
+                  {t('services.book_now')}
                 </Button>
               </CardFooter>
             </Card>
