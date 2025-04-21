@@ -40,7 +40,7 @@ import MyAppointments from "@/pages/customer-portal/my-appointments";
 import CustomerServices from "@/pages/customer-portal/services";
 import ErrorTestingPage from "@/pages/error-testing";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import { useState, useEffect } from "react";
+import { useState, useEffect, createContext, useContext } from "react";
 import { User } from "@shared/schema";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { BusinessContextProvider } from "@/contexts/BusinessContext";
@@ -55,20 +55,35 @@ import DarkModeInitializer from "@/components/shared/dark-mode-initializer";
 // New theme-related pages for 2025 edition
 import { ThemeMarketplacePage } from "@/pages/ThemeMarketplacePage";
 
+const LanguageContext = createContext<{ language: string; setLanguage: (language: string) => void }>({
+  language: 'en',
+  setLanguage: () => {}
+});
+
+const LanguageProvider = ({ children }: { children: React.ReactNode }) => {
+  const [language, setLanguage] = useState('en');
+  return (
+    <LanguageContext.Provider value={{ language, setLanguage }}>
+      {children}
+    </LanguageContext.Provider>
+  );
+};
+
 function AppContent() {
+  const { language } = useContext(LanguageContext);
   const { user: currentUser, isLoading: authLoading } = useAuth();
-  
+
   // Check if we're on a custom domain or subdomain
   const [businessData, setBusinessData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Get current location
   const [location, setLocation] = useLocation();
-  
+
   // Check if the URL looks like a business portal URL (e.g., /salonelegante)
   const businessPortalRegex = /^\/([a-zA-Z0-9_-]+)(?:\/.*)?$/;
   const match = location.match(businessPortalRegex);
-  
+
   // Define reserved paths that should not be treated as business slugs
   const reservedPaths = [
     'api', 'auth', 'admin', 'checkout', 'preview', 'instructions',
@@ -77,17 +92,17 @@ function AppContent() {
     'new-appointment', 'customer-portal', 'error-testing', 'payment',
     'theme-editor', 'theme-showcase', 'theme-marketplace', 'platform-admin'
   ];
-  
+
   const potentialBusinessSlug = match && 
     !reservedPaths.includes(match[1]) ? match[1] : null;
-  
+
   // Handle customer portal routes - retain as separate routes
   useEffect(() => {
     // Don't automatically redirect customer portal routes
     // This allows us to have a dedicated customer portal distinct from business portals
     console.log("Customer portal route detected:", location);
   }, [location]);
-  
+
   useEffect(() => {
     // First check if we have business data from window
     if (typeof window !== "undefined" && (window as any).BUSINESS_DATA) {
@@ -95,11 +110,11 @@ function AppContent() {
       setIsLoading(false);
       return;
     }
-    
+
     // If we're on a potential business URL, try to fetch business data by slug
     if (potentialBusinessSlug) {
       console.log(`Detected potential business slug: ${potentialBusinessSlug}, fetching data...`);
-      
+
       fetch(`/api/business-data/${potentialBusinessSlug}`)
         .then(response => {
           if (!response.ok) {
@@ -128,14 +143,14 @@ function AppContent() {
         .finally(() => setIsLoading(false));
     }
   }, [potentialBusinessSlug]);
-  
+
   // Determine if this is a business portal based on the data we have
   const isBusinessPortal = (!!businessData?.business || !!potentialBusinessSlug) && 
                           !location.startsWith('/auth') && 
                           !location.startsWith('/admin') &&
                           !location.startsWith('/customer-portal') &&
                           !location.startsWith('/color-mode-demo');
-  
+
   // Debug information to help troubleshoot
   console.log("App.tsx is rendering");
   console.log("Location:", location);
@@ -143,7 +158,7 @@ function AppContent() {
   console.log("businessData:", businessData);
   console.log("window.BUSINESS_DATA:", typeof window !== "undefined" ? (window as any).BUSINESS_DATA : "Not available");
   console.log("currentUser:", currentUser);
-  
+
   // If we're still loading or auth is loading, show a simple loading state
   if (isLoading || authLoading) {
     return (
@@ -152,7 +167,7 @@ function AppContent() {
       </div>
     );
   }
-  
+
   return (
     isBusinessPortal ? (
       <div className="min-h-screen bg-background">
@@ -203,7 +218,7 @@ function AppContent() {
               const searchParams = new URLSearchParams(window.location.search);
               const businessId = searchParams.get('businessId');
               const businessIdNum = businessId ? parseInt(businessId, 10) : undefined;
-              
+
               return (
                 <BusinessContextProvider initialBusiness={null}>
                   <ThemeProvider businessId={businessIdNum}>
@@ -219,7 +234,7 @@ function AppContent() {
               const searchParams = new URLSearchParams(window.location.search);
               const businessId = searchParams.get('businessId');
               const businessIdNum = businessId ? parseInt(businessId, 10) : undefined;
-              
+
               return (
                 <BusinessContextProvider initialBusiness={null}>
                   <ThemeProvider businessId={businessIdNum}>
@@ -235,7 +250,7 @@ function AppContent() {
               const searchParams = new URLSearchParams(window.location.search);
               const businessId = searchParams.get('businessId');
               const businessIdNum = businessId ? parseInt(businessId, 10) : undefined;
-              
+
               return (
                 <BusinessContextProvider initialBusiness={null}>
                   <ThemeProvider businessId={businessIdNum}>
@@ -251,7 +266,7 @@ function AppContent() {
               const searchParams = new URLSearchParams(window.location.search);
               const businessId = searchParams.get('businessId');
               const businessIdNum = businessId ? parseInt(businessId, 10) : undefined;
-              
+
               return (
                 <BusinessContextProvider initialBusiness={null}>
                   <ThemeProvider businessId={businessIdNum}>
@@ -382,7 +397,7 @@ function AppContent() {
               <StaffSchedule />
             </ProtectedRoute>
           </Route>
-          
+
           {/* Theme and Settings routes */}
           <Route path="/theme-selector-demo">
             <ProtectedRoute>
@@ -454,7 +469,7 @@ function AppContent() {
               </BusinessContextProvider>
             </ProtectedRoute>
           </Route>
-          
+
           {/* Payment related routes */}
           <Route path="/payment/success">
             {() => {
@@ -462,7 +477,7 @@ function AppContent() {
               const searchParams = new URLSearchParams(window.location.search);
               const businessId = searchParams.get('businessId');
               const businessIdNum = businessId ? parseInt(businessId, 10) : undefined;
-              
+
               return (
                 <BusinessContextProvider initialBusiness={null}>
                   <ThemeProvider businessId={businessIdNum}>
@@ -478,7 +493,7 @@ function AppContent() {
               const searchParams = new URLSearchParams(window.location.search);
               const businessId = searchParams.get('businessId');
               const businessIdNum = businessId ? parseInt(businessId, 10) : undefined;
-              
+
               return (
                 <BusinessContextProvider initialBusiness={null}>
                   <ThemeProvider businessId={businessIdNum}>
@@ -494,7 +509,7 @@ function AppContent() {
               const searchParams = new URLSearchParams(window.location.search);
               const businessId = searchParams.get('businessId');
               const businessIdNum = businessId ? parseInt(businessId, 10) : undefined;
-              
+
               return (
                 <BusinessContextProvider initialBusiness={null}>
                   <ThemeProvider businessId={businessIdNum}>
@@ -510,7 +525,7 @@ function AppContent() {
               const searchParams = new URLSearchParams(window.location.search);
               const businessId = searchParams.get('businessId');
               const businessIdNum = businessId ? parseInt(businessId, 10) : undefined;
-              
+
               return (
                 <BusinessContextProvider initialBusiness={null}>
                   <ThemeProvider businessId={businessIdNum}>
@@ -520,7 +535,7 @@ function AppContent() {
               );
             }}
           </Route>
-          
+
           <Route path="/error-testing" component={ErrorTestingPage} />
           <Route component={NotFound} />
         </Switch>
@@ -533,18 +548,14 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        {/* Global Theme Provider from 2025 Edition - App-wide theming */}
-        <GlobalThemeProvider>
-          <BusinessContextProvider>
-            {/* 
-              Important: Don't wrap AppContent in a ThemeProvider here.
-              AppContent manages its own theme providers based on routes.
-              Having a ThemeProvider here creates an unfortunate circular dependency.
-            */}
-            <AppContent />
-            <DarkModeInitializer />
-          </BusinessContextProvider>
-        </GlobalThemeProvider>
+        <LanguageProvider>
+          <GlobalThemeProvider>
+            <BusinessContextProvider>
+              <AppContent />
+              <DarkModeInitializer />
+            </BusinessContextProvider>
+          </GlobalThemeProvider>
+        </LanguageProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
