@@ -144,35 +144,18 @@ export class DatabaseStorage implements IStorage {
         return [];
       }
       
-      // Check if the services table has the business_slug column using introspection
-      const checkResult = await pool.query(`
-        SELECT column_name 
-        FROM information_schema.columns 
-        WHERE table_name = 'services' AND column_name = 'business_slug'
-      `);
+      // Directly query by userId only - no longer using the business_slug for querying
+      // This is the safest approach since we know the business_slug column is missing
+      console.log(`Fetching services for user ID ${userId} (no business_slug filtering)`);
+      const serviceList = await db.select().from(services).where(eq(services.userId, userId));
       
-      // If the business_slug column doesn't exist, use the old query approach
-      if (checkResult.rows.length === 0) {
-        console.log(`business_slug column not found in services table, using userId filter only`);
-        return db.select().from(services).where(eq(services.userId, userId));
-      }
+      // Logging for debugging
+      console.log(`Found ${serviceList.length} services for user ID ${userId}`);
       
-      // Use the businessSlug in the query if the column exists in the schema
-      const businessSlug = business.businessSlug;
-      
-      if (!businessSlug) {
-        console.warn(`Business with ID ${userId} has no slug, falling back to user ID filtering`);
-        return db.select().from(services).where(eq(services.userId, userId));
-      }
-      
-      // Query services with both userId and businessSlug for better indexing
-      return db.select().from(services)
-               .where(and(
-                 eq(services.userId, userId),
-                 eq(services.businessSlug, businessSlug)
-               ));
+      return serviceList;
     } catch (error) {
       console.error(`Error fetching services for user ID ${userId}:`, error);
+      console.error(error); // Log the actual error details
       // Return empty array instead of throwing, to prevent cascading errors
       return []; 
     }
@@ -722,7 +705,10 @@ export class DatabaseStorage implements IStorage {
         return undefined;
       }
       
-      // Map the raw SQL result to our customer type
+      // Log the actual column names returned for debugging
+      console.log("Customer columns available:", Object.keys(rows[0]));
+      
+      // Map the raw SQL result to our customer type - never reference business_slug directly
       return {
         id: rows[0].id,
         userId: rows[0].user_id,
@@ -732,10 +718,12 @@ export class DatabaseStorage implements IStorage {
         phone: rows[0].phone || null,
         notes: rows[0].notes || null,
         createdAt: rows[0].created_at,
-        businessSlug: rows[0].business_slug || ''
+        // Generate a synthetic businessSlug from the businessId, never try to access non-existent column
+        businessSlug: `business-${businessId}`
       };
     } catch (error) {
       console.error("Error fetching customer by email and business ID:", error);
+      console.error(error); // Log the full error
       return undefined;
     }
   }
