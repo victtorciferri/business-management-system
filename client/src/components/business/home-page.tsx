@@ -47,7 +47,7 @@ export default function HomePage({ business, services, slug }: HomePageProps) {
       <section className="relative">
         <div className="max-w-4xl mx-auto text-center px-4">
           <h1 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-indigo-500 text-transparent bg-clip-text">
-            {t('homepage.welcome')} {business.businessName}
+            {t('homepage.welcome')} {business.businessName || ''}
           </h1>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
             {t('homepage.experience')} 
@@ -79,7 +79,7 @@ export default function HomePage({ business, services, slug }: HomePageProps) {
       <section className="max-w-5xl mx-auto px-4">
         <div className="text-center mb-10">
           <h2 className="text-3xl font-bold mb-4">{t('common.services')}</h2>
-          <p className="text-muted-foreground">Discover our range of professional services</p>
+          <p className="text-muted-foreground">{t('services.professional_service')}</p>
         </div>
         
         <div className="grid gap-6 md:grid-cols-3">
@@ -133,7 +133,7 @@ export default function HomePage({ business, services, slug }: HomePageProps) {
         <div className="max-w-5xl mx-auto px-4">
           <div className="text-center mb-10">
             <h2 className="text-3xl font-bold mb-4">{t('whyChooseUs.title')}</h2>
-            <p className="text-muted-foreground">{t('whyChooseUs.subtitle')} {business.businessName}</p>
+            <p className="text-muted-foreground">{t('whyChooseUs.subtitle')} {business.businessName || ''}</p>
           </div>
           
           <div className="grid gap-6 md:grid-cols-3">
@@ -216,7 +216,7 @@ export default function HomePage({ business, services, slug }: HomePageProps) {
         <div className="max-w-3xl mx-auto text-center px-4">
           <h2 className="text-3xl font-bold mb-6">{t('homepage.ready_experience')}</h2>
           <p className="text-lg opacity-90 mb-8">
-            {t('homepage.book_discover')} {business.businessName}.
+            {t('homepage.book_discover')} {business.businessName || ''}.
           </p>
           <Button 
             size="lg" 
