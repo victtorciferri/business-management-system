@@ -8,7 +8,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 
 interface AppointmentDetails {
   id: number;
-  date: string;
+  date: string | Date;
   serviceName: string;
   servicePrice: number;
   businessName: string;
@@ -47,10 +47,10 @@ export default function PaymentSuccess() {
             
             setAppointment({
               id: appt.id,
-              date: new Date(appt.date).toLocaleString(),
-              serviceName: service?.name || "Service",
+              date: new Date(appt.date),
+              serviceName: service?.name || t('payment.service'),
               servicePrice: service?.price || 0,
-              businessName: appt.businessName || "Salon",
+              businessName: appt.businessName || t('payment.business'),
               staffName: appt.staffName
             });
           }
@@ -66,10 +66,10 @@ export default function PaymentSuccess() {
           
           setAppointment({
             id: appt.id,
-            date: new Date(appt.date).toLocaleString(),
+            date: new Date(appt.date),
             serviceName: service.name,
             servicePrice: service.price,
-            businessName: "Your Business",
+            businessName: t('payment.business'),
             staffName: appt.staffName
           });
           
@@ -170,7 +170,9 @@ export default function PaymentSuccess() {
               
               <div className="flex justify-between items-center">
                 <span className="font-medium">{t('payment.date_time')}</span>
-                <span>{appointment.date}</span>
+                <span>{typeof appointment.date === 'string' ? 
+                  formatDate(new Date(appointment.date)) : 
+                  formatDate(appointment.date)}</span>
               </div>
               
               <div className="flex justify-between items-center pt-2 border-t mt-2">
