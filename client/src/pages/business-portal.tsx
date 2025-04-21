@@ -163,11 +163,11 @@ export default function BusinessPortal({ slug, subPath, initialData }: BusinessP
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'scheduled':
-        return <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">Scheduled</span>;
+        return <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">{t('appointments.status_scheduled')}</span>;
       case 'completed':
-        return <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">Completed</span>;
+        return <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">{t('appointments.status_completed')}</span>;
       case 'cancelled':
-        return <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-medium">Cancelled</span>;
+        return <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-medium">{t('appointments.status_cancelled')}</span>;
       default:
         return <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs font-medium">{status}</span>;
     }
@@ -177,6 +177,7 @@ export default function BusinessPortal({ slug, subPath, initialData }: BusinessP
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
+        <span className="ml-3 text-muted-foreground">{t('common.loading')}</span>
       </div>
     );
   }
@@ -184,11 +185,11 @@ export default function BusinessPortal({ slug, subPath, initialData }: BusinessP
   if (error || !data) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        <h1 className="text-3xl font-bold mb-4">Business Not Found</h1>
+        <h1 className="text-3xl font-bold mb-4">{t('error.business_not_found')}</h1>
         <p className="text-lg text-muted-foreground mb-6">
-          The business you're looking for doesn't seem to exist.
+          {t('error.business_not_exist')}
         </p>
-        <Button onClick={() => window.history.back()}>Go Back</Button>
+        <Button onClick={() => window.history.back()}>{t('common.go_back')}</Button>
       </div>
     );
   }
@@ -308,32 +309,32 @@ export default function BusinessPortal({ slug, subPath, initialData }: BusinessP
             <TabsContent value="my-appointments">
               <Card>
                 <CardHeader>
-                  <CardTitle>Find Your Appointments</CardTitle>
-                  <CardDescription>Enter your email to view your appointments</CardDescription>
+                  <CardTitle>{t('appointments.find_yours')}</CardTitle>
+                  <CardDescription>{t('appointments.enter_email')}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleSearchSubmit} className="flex space-x-2">
                     <Input 
-                      placeholder="Enter your email address" 
+                      placeholder={t('appointments.email_placeholder')}
                       type="email"
                       value={searchEmail}
                       onChange={(e) => setSearchEmail(e.target.value)}
                       className="flex-1"
                     />
                     <Button onClick={() => window.location.href = `/customer-portal/my-appointments?email=${searchEmail}&businessId=${business.id}`}>
-                      Find Appointments
+                      {t('appointments.find_button')}
                     </Button>
                   </form>
                   
                   {searchEmail && customer && customerAppointments && customerAppointments.length > 0 && (
                     <div className="mt-6">
-                      <h3 className="text-lg font-medium mb-4">Your Scheduled Appointments</h3>
+                      <h3 className="text-lg font-medium mb-4">{t('appointments.your_scheduled')}</h3>
                       <div className="rounded-md border">
                         <div className="grid grid-cols-4 gap-4 p-4 font-medium border-b">
-                          <div>Service</div>
-                          <div>Date</div>
-                          <div>Time</div>
-                          <div>Status</div>
+                          <div>{t('appointments.service')}</div>
+                          <div>{t('appointments.date')}</div>
+                          <div>{t('appointments.time')}</div>
+                          <div>{t('appointments.status')}</div>
                         </div>
                         <div className="divide-y">
                           {customerAppointments.map((appointment: Appointment) => {
@@ -355,9 +356,9 @@ export default function BusinessPortal({ slug, subPath, initialData }: BusinessP
                   {searchEmail && (!customer || !customerAppointments || customerAppointments.length === 0) && (
                     <div className="text-center py-8 mt-4">
                       <CalendarIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-xl font-medium mb-2">No Appointments Found</h3>
+                      <h3 className="text-xl font-medium mb-2">{t('appointments.none_found')}</h3>
                       <p className="text-muted-foreground mb-4">
-                        We couldn't find any appointments with the email address provided.
+                        {t('appointments.not_found_message')}
                       </p>
                     </div>
                   )}
@@ -368,10 +369,10 @@ export default function BusinessPortal({ slug, subPath, initialData }: BusinessP
           
           <div className="mt-12 text-center">
             <p className="text-muted-foreground mb-6">
-              Need help? Contact us at <span className="text-primary">contact@{business.businessSlug}.cl</span> or call <span className="text-primary">{business.phone || "+56 9 9876 5432"}</span>
+              {t('footer.need_help')} <span className="text-primary">contact@{business.businessSlug}.cl</span> {t('footer.or_call')} <span className="text-primary">{business.phone || "+56 9 9876 5432"}</span>
             </p>
             <Button variant="outline" onClick={() => window.location.href = "/"}>
-              Business Login
+              {t('footer.business_login')}
             </Button>
           </div>
         </div>
