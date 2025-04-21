@@ -673,17 +673,29 @@ export class DatabaseStorage implements IStorage {
   async getCustomerByAccessToken(token: string): Promise<Customer | undefined> {
     try {
       // First get the token and make sure it's not expired
+      console.log(`Checking for customer access token: ${token.substring(0, 10)}...`);
+      
       const [accessToken] = await db
         .select()
         .from(customerAccessTokens)
-        .where(and(
-          eq(customerAccessTokens.token, token),
-          gte(customerAccessTokens.expiresAt, new Date())
-        ));
+        .where(eq(customerAccessTokens.token, token));
       
       if (!accessToken) {
+        console.log('Token not found in database');
         return undefined;
       }
+      
+      // Check if token is expired separately to provide better logging
+      if (new Date(accessToken.expiresAt) < new Date()) {
+        console.log(`Token found but expired. Expiration: ${accessToken.expiresAt}, Current: ${new Date()}`);
+        return undefined;
+      }
+      
+      // Update the last used timestamp
+      await db
+        .update(customerAccessTokens)
+        .set({ lastUsedAt: new Date() })
+        .where(eq(customerAccessTokens.token, token));
       
       // Then get the customer
       const [customer] = await db
@@ -691,7 +703,13 @@ export class DatabaseStorage implements IStorage {
         .from(customers)
         .where(eq(customers.id, accessToken.customerId));
       
-      return customer || undefined;
+      if (!customer) {
+        console.log(`Token valid but no customer found with ID: ${accessToken.customerId}`);
+        return undefined;
+      }
+      
+      console.log(`Successfully retrieved customer: ${customer.firstName} ${customer.lastName}`);
+      return customer;
     } catch (error) {
       console.error("Error fetching customer by access token:", error);
       return undefined;

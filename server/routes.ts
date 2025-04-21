@@ -1316,19 +1316,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? authHeader.substring(7) 
         : req.query.token as string;
       
+      console.log(`Customer-profile endpoint accessed with token: ${token ? token.substring(0, 10) + '...' : 'none'}`);
+      
       if (!token) {
+        console.log('No token provided in the request');
         return res.status(401).json({ message: "Access token is required" });
       }
       
       // Get the customer using the access token
+      console.log(`Looking up customer with token: ${token.substring(0, 10)}...`);
       const customer = await storage.getCustomerByAccessToken(token);
       
       if (!customer) {
+        console.log('No customer found with provided token');
         return res.status(401).json({ message: "Invalid or expired access token" });
       }
       
+      console.log(`Found customer: ${customer.firstName} ${customer.lastName} (ID: ${customer.id})`);
+      
       // Get the customer's appointments
+      console.log(`Fetching appointments for customer ID: ${customer.id}`);
       const appointments = await storage.getAppointmentsByCustomerId(customer.id);
+      console.log(`Found ${appointments.length} appointments for customer`);
       
       // Return the customer profile with appointments
       res.json({
@@ -1337,7 +1346,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error fetching customer profile:", error);
-      res.status(500).json({ message: "Failed to fetch customer profile" });
+      // Provide more detailed error message
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ 
+        message: "Failed to fetch customer profile", 
+        error: errorMessage 
+      });
     }
   });
   
