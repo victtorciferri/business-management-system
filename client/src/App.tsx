@@ -55,22 +55,12 @@ import DarkModeInitializer from "@/components/shared/dark-mode-initializer";
 // New theme-related pages for 2025 edition
 import { ThemeMarketplacePage } from "@/pages/ThemeMarketplacePage";
 
-const LanguageContext = createContext<{ language: string; setLanguage: (language: string) => void }>({
-  language: 'en',
-  setLanguage: () => {}
-});
-
-const LanguageProvider = ({ children }: { children: React.ReactNode }) => {
-  const [language, setLanguage] = useState('en');
-  return (
-    <LanguageContext.Provider value={{ language, setLanguage }}>
-      {children}
-    </LanguageContext.Provider>
-  );
-};
+// Import the proper LanguageProvider and useLanguage hook from the contexts folder
+import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext';
 
 function AppContent() {
-  const { language } = useContext(LanguageContext);
+  // Import the useLanguage hook
+  const { language } = useLanguage();
   const { user: currentUser, isLoading: authLoading } = useAuth();
 
   // Check if we're on a custom domain or subdomain
