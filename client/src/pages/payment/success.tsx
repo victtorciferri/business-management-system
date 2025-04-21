@@ -141,53 +141,53 @@ export default function PaymentSuccess() {
           </CardContent>
         ) : error ? (
           <CardContent className="text-center text-red-500 py-6">
-            Error loading appointment details
+            {t('payment.error_loading')}
           </CardContent>
         ) : appointment ? (
           <CardContent className="space-y-4 p-6">
             <div className="border border-green-100 rounded-md p-4 space-y-3">
               <div className="flex justify-between items-center">
-                <span className="font-medium">Appointment</span>
+                <span className="font-medium">{t('payment.appointment')}</span>
                 <span>#{appointment.id}</span>
               </div>
               
               <div className="flex justify-between items-center">
-                <span className="font-medium">Business</span>
+                <span className="font-medium">{t('payment.business')}</span>
                 <span>{appointment.businessName}</span>
               </div>
               
               <div className="flex justify-between items-center">
-                <span className="font-medium">Service</span>
+                <span className="font-medium">{t('payment.service')}</span>
                 <span>{appointment.serviceName}</span>
               </div>
               
               {appointment.staffName && (
                 <div className="flex justify-between items-center">
-                  <span className="font-medium">Staff Member</span>
+                  <span className="font-medium">{t('payment.staff_member')}</span>
                   <span>{appointment.staffName}</span>
                 </div>
               )}
               
               <div className="flex justify-between items-center">
-                <span className="font-medium">Date & Time</span>
+                <span className="font-medium">{t('payment.date_time')}</span>
                 <span>{appointment.date}</span>
               </div>
               
               <div className="flex justify-between items-center pt-2 border-t mt-2">
-                <span className="font-medium">Amount Paid</span>
+                <span className="font-medium">{t('payment.amount_paid')}</span>
                 <span className="font-bold text-lg">${typeof appointment.servicePrice === 'number' ? appointment.servicePrice.toFixed(2) : appointment.servicePrice}</span>
               </div>
             </div>
             
             <div className="bg-green-50 p-4 rounded-md">
               <p className="text-sm text-green-800">
-                Your appointment has been confirmed. Thank you for your payment. We've sent you a confirmation email with these details.
+                {t('payment.confirmation_message')}
               </p>
             </div>
           </CardContent>
         ) : (
           <CardContent className="text-center text-muted-foreground py-6">
-            No appointment information available
+            {t('payment.no_information')}
           </CardContent>
         )}
         
@@ -197,7 +197,7 @@ export default function PaymentSuccess() {
             onClick={handleViewAppointments}
           >
             <Calendar className="mr-2 h-4 w-4" />
-            View My Appointments
+            {t('payment.view_appointments')}
           </Button>
         </CardFooter>
       </Card>

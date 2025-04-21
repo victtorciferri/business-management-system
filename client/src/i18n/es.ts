@@ -20,6 +20,20 @@ export default {
     english: 'Inglés',
     spanish: 'Español'
   },
+  payment: {
+    successful: 'Pago Exitoso',
+    confirmed: 'Su cita ha sido confirmada',
+    appointment: 'Cita',
+    business: 'Negocio',
+    service: 'Servicio',
+    staff_member: 'Miembro del Personal',
+    date_time: 'Fecha y Hora',
+    amount_paid: 'Monto Pagado',
+    confirmation_message: 'Su cita ha sido confirmada. Gracias por su pago. Le hemos enviado un correo electrónico de confirmación con estos detalles.',
+    error_loading: 'Error al cargar los detalles de la cita',
+    no_information: 'No hay información de cita disponible',
+    view_appointments: 'Ver Mis Citas'
+  },
   navigation: {
     home: 'Inicio',
     services: 'Servicios',

@@ -20,6 +20,20 @@ export default {
     english: 'English',
     spanish: 'Spanish'
   },
+  payment: {
+    successful: 'Payment Successful',
+    confirmed: 'Your appointment has been confirmed',
+    appointment: 'Appointment',
+    business: 'Business',
+    service: 'Service',
+    staff_member: 'Staff Member',
+    date_time: 'Date & Time',
+    amount_paid: 'Amount Paid',
+    confirmation_message: 'Your appointment has been confirmed. Thank you for your payment. We\'ve sent you a confirmation email with these details.',
+    error_loading: 'Error loading appointment details',
+    no_information: 'No appointment information available',
+    view_appointments: 'View My Appointments'
+  },
   navigation: {
     home: 'Home',
     services: 'Services',
