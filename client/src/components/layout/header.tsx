@@ -11,6 +11,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ColorModeToggle } from '../theme-aware/ColorModeToggle';
+import { LanguageSelector } from '../ui/language-selector'; // Added import
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -23,7 +25,7 @@ export default function Layout({ children, currentUser }: LayoutProps) {
   const { logout } = useAuth();
   const { resolvedColorMode, setColorMode } = useGlobalTheme();
   const isDarkMode = resolvedColorMode === 'dark';
-  
+
   // Function to toggle dark mode
   const toggleDarkMode = () => {
     setColorMode(isDarkMode ? 'light' : 'dark');
@@ -32,7 +34,7 @@ export default function Layout({ children, currentUser }: LayoutProps) {
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
-  
+
   const handleLogout = async () => {
     await logout();
     window.location.href = '/auth';
@@ -48,7 +50,7 @@ export default function Layout({ children, currentUser }: LayoutProps) {
     { name: "Staff", path: "/staff-management" },
     { name: "Custom Domain", path: "/custom-domain" },
   ];
-  
+
   const staffNavItems = [
     { name: "Dashboard", path: "/" },
     { name: "My Schedule", path: "/staff/schedule" },
@@ -56,11 +58,11 @@ export default function Layout({ children, currentUser }: LayoutProps) {
     { name: "Appointments", path: "/appointments" },
     { name: "Customers", path: "/customers" },
   ];
-  
+
   const adminNavItems = [
     { name: "Admin Dashboard", path: "/admin" },
   ];
-  
+
   // Select navigation items based on user role
   let navItems;
   if (currentUser?.role === 'admin') {
@@ -98,19 +100,10 @@ export default function Layout({ children, currentUser }: LayoutProps) {
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:items-center">
               {/* Theme toggle */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="mr-2">
-                    {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-                    <span className="sr-only">Toggle theme</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => toggleDarkMode()}>
-                    {isDarkMode ? "Light mode" : "Dark mode"}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <div className="flex items-center gap-2"> {/* Modified div */}
+                <LanguageSelector /> {/* Added LanguageSelector */}
+                <ColorModeToggle />
+              </div>
 
               <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
                 <span className="sr-only">View notifications</span>
@@ -133,7 +126,7 @@ export default function Layout({ children, currentUser }: LayoutProps) {
                   </Button>
                 </div>
               </div>
-              
+
               {/* Logout button */}
               {currentUser && (
                 <Button 
@@ -179,7 +172,7 @@ export default function Layout({ children, currentUser }: LayoutProps) {
                 {item.name}
               </Link>
             ))}
-            
+
             {/* Mobile theme toggle */}
             <button
               className="border-transparent text-muted-foreground hover:bg-muted hover:border-muted-foreground hover:text-foreground block w-full text-left pl-3 pr-4 py-2 border-l-4 text-base font-medium flex items-center"
@@ -190,7 +183,7 @@ export default function Layout({ children, currentUser }: LayoutProps) {
               {isDarkMode ? <Sun className="h-4 w-4 mr-2" /> : <Moon className="h-4 w-4 mr-2" />}
               {isDarkMode ? "Light mode" : "Dark mode"}
             </button>
-            
+
             {/* Mobile logout button */}
             {currentUser && (
               <button
