@@ -15,7 +15,8 @@ export default {
     loading: 'Loading...',
     go_back: 'Go Back',
     customer_portal: 'Customer Portal',
-    business_portal: 'Business Portal'
+    business_portal: 'Business Portal',
+    language: 'Language'
   },
   navigation: {
     home: 'Home',
@@ -100,6 +101,10 @@ export default {
     mission_text: 'At {businessName}, our mission is to enhance the natural beauty and well-being of our clients through personalized, professional services delivered in a welcoming and relaxing environment. We believe that everyone deserves to feel their best, and we are dedicated to helping our clients achieve that feeling with every visit.',
     meet_team: 'Meet Our Team',
     team_subtitle: 'The faces behind',
+    team_member1_name: 'John Davis',
+    team_member1_role: 'Founder & Lead Stylist',
+    team_member2_name: 'Sarah Miller',
+    team_member2_role: 'Senior Stylist',
     visit_us: 'Visit Us',
     visit_subtitle: 'Our location and hours',
     address: 'Address',

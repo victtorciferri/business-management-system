@@ -46,7 +46,7 @@ export default function AboutPage({ business, slug }: AboutPageProps) {
           <Card>
             <CardHeader>
               <CardTitle>{t('about.meet_team')}</CardTitle>
-              <CardDescription>{t('about.team_subtitle')} {business.businessName}</CardDescription>
+              <CardDescription>{t('about.team_subtitle')} {business.businessName || ''}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid gap-6 md:grid-cols-2">
@@ -54,16 +54,16 @@ export default function AboutPage({ business, slug }: AboutPageProps) {
                   <div className="w-32 h-32 mx-auto mb-4 rounded-full bg-gray-200 flex items-center justify-center">
                     <span className="text-4xl font-bold text-gray-500">JD</span>
                   </div>
-                  <h3 className="font-medium text-lg">John Davis</h3>
-                  <p className="text-muted-foreground">Founder & Lead Stylist</p>
+                  <h3 className="font-medium text-lg">{t('about.team_member1_name')}</h3>
+                  <p className="text-muted-foreground">{t('about.team_member1_role')}</p>
                 </div>
                 
                 <div className="text-center">
                   <div className="w-32 h-32 mx-auto mb-4 rounded-full bg-gray-200 flex items-center justify-center">
                     <span className="text-4xl font-bold text-gray-500">SM</span>
                   </div>
-                  <h3 className="font-medium text-lg">Sarah Miller</h3>
-                  <p className="text-muted-foreground">Senior Stylist</p>
+                  <h3 className="font-medium text-lg">{t('about.team_member2_name')}</h3>
+                  <p className="text-muted-foreground">{t('about.team_member2_role')}</p>
                 </div>
               </div>
             </CardContent>
