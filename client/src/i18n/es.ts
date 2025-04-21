@@ -8,7 +8,10 @@ export default {
     appointments: 'Mis Citas',
     login: 'Iniciar Sesión',
     signup: 'Registrarse',
-    logout: 'Cerrar Sesión'
+    logout: 'Cerrar Sesión',
+    switchToLightMode: 'Cambiar a Modo Claro',
+    switchToDarkMode: 'Cambiar a Modo Oscuro',
+    about: 'Acerca de'
   },
   appointments: {
     new: 'Nueva Cita',

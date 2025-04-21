@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ReactNode } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useBusinessContext } from "@/contexts/BusinessContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Moon, Sun } from "lucide-react";
 import { LanguageSelector } from "@/components/ui/language-selector";
 import { 
@@ -47,6 +48,7 @@ export default function BaseHeader({
   const [_, navigate] = useLocation();
   const { theme, isDarkMode, toggleDarkMode } = useTheme();
   const { config } = useBusinessContext();
+  const { t } = useLanguage();
   
   // Helper functions for theme color management
   const getPrimaryColor = () => 'text-blue-600';

@@ -8,7 +8,10 @@ export default {
     appointments: 'My Appointments',
     login: 'Login',
     signup: 'Sign Up',
-    logout: 'Logout'
+    logout: 'Logout',
+    switchToLightMode: 'Switch to Light Mode',
+    switchToDarkMode: 'Switch to Dark Mode',
+    about: 'About'
   },
   appointments: {
     new: 'New Appointment',
