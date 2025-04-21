@@ -19,21 +19,24 @@ export default function HomePage({ business, services, slug }: HomePageProps) {
   // Display only a subset of services on homepage
   const featuredServices = services?.slice(0, 3) || [];
 
-  // Customer testimonials
+  // Customer testimonials with translations via language context
   const testimonials = [
     {
       name: "Carolina Herrera",
-      comment: "Amazing service! The staff was professional and I loved my new look.",
+      comment: t('testimonials.comment1'),
+      commentEs: "¡Servicio increíble! El personal fue profesional y me encantó mi nuevo look.",
       rating: 5
     },
     {
       name: "Juan Mendez",
-      comment: "Always a great experience. I've been coming here for over a year and I'm always satisfied.",
+      comment: t('testimonials.comment2'),
+      commentEs: "Siempre una gran experiencia. Llevo más de un año viniendo aquí y siempre estoy satisfecho.",
       rating: 5
     },
     {
       name: "Andrea Fuentes",
-      comment: "Very satisfied with the results. Will definitely come back again.",
+      comment: t('testimonials.comment3'),
+      commentEs: "Muy satisfecha con los resultados. Definitivamente volveré.",
       rating: 4
     }
   ];

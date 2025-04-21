@@ -11,6 +11,18 @@ export default {
     logout: 'Logout',
     switchToLightMode: 'Switch to Light Mode',
     switchToDarkMode: 'Switch to Dark Mode',
+    about: 'About',
+    loading: 'Loading...',
+    go_back: 'Go Back',
+    customer_portal: 'Customer Portal',
+    business_portal: 'Business Portal'
+  },
+  navigation: {
+    home: 'Home',
+    services: 'Services',
+    store: 'Store',
+    book: 'Book',
+    my_appointments: 'My Appointments',
     about: 'About'
   },
   appointments: {
@@ -18,7 +30,26 @@ export default {
     select_service: 'Select Service',
     select_date: 'Select Date',
     select_time: 'Select Time',
-    confirm: 'Confirm Booking'
+    confirm: 'Confirm Booking',
+    find_yours: 'Find Your Appointments',
+    enter_email: 'Enter your email to view your appointments',
+    email_placeholder: 'Enter your email address',
+    find_button: 'Find Appointments',
+    your_scheduled: 'Your Scheduled Appointments',
+    service: 'Service',
+    date: 'Date',
+    time: 'Time',
+    status: 'Status',
+    none_found: 'No Appointments Found',
+    not_found_message: 'We couldn\'t find any appointments with the email address provided.',
+    status_scheduled: 'Scheduled',
+    status_completed: 'Completed',
+    status_cancelled: 'Cancelled',
+    new_booking: 'Book a New Appointment',
+    booking_description: 'Schedule your next visit with us',
+    booking_experience: 'Enhanced Booking Experience',
+    booking_improved: 'We\'ve improved our booking system to make scheduling appointments faster and easier.',
+    start_booking: 'Start Booking'
   },
   services: {
     duration: 'Duration',
@@ -37,7 +68,57 @@ export default {
     testimonials_desc: 'Read testimonials from our satisfied clients',
     book_discover: 'Book your appointment today and discover why our clients love',
     visit_us: 'Visit Us',
-    find_location: 'Find us at our convenient location'
+    find_location: 'Find us at our convenient location',
+    ready_experience: 'Ready to Experience Our Services?',
+    book_cta: 'Book your appointment today and transform your look.'
+  },
+  whyChooseUs: {
+    title: 'Why Choose Us',
+    subtitle: 'Experience the difference at',
+    professional_staff: 'Professional Staff',
+    professional_desc: 'Our team of certified professionals is dedicated to providing the highest quality services.',
+    premium_products: 'Premium Products',
+    premium_desc: 'We use only the highest quality products to ensure the best results for our clients.',
+    customer_satisfaction: 'Customer Satisfaction',
+    customer_desc: 'Your satisfaction is our priority. We strive to exceed your expectations with every visit.'
+  },
+  testimonials: {
+    title: 'What Our Clients Say',
+    subtitle: 'Read testimonials from our satisfied clients',
+    comment1: 'Amazing service! The staff was professional and I loved my new look.',
+    comment2: 'Always a great experience. I\'ve been coming here for over a year and I\'m always satisfied.',
+    comment3: 'Very satisfied with the results. Will definitely come back again.'
+  },
+  about: {
+    title: 'About',
+    our_story: 'Our Story',
+    story_subtitle: 'Learn more about how we started',
+    story_part1: 'was founded with a passion for providing exceptional beauty and wellness services to our community. Since our establishment, we have been dedicated to delivering outstanding customer experiences that leave our clients feeling refreshed, confident, and satisfied.',
+    story_part2: 'Our team of skilled professionals is committed to staying at the forefront of the latest trends and techniques in beauty and wellness, ensuring that every client receives the highest quality service tailored to their unique needs and preferences.',
+    our_mission: 'Our Mission',
+    mission_subtitle: 'What drives us every day',
+    mission_text: 'At {businessName}, our mission is to enhance the natural beauty and well-being of our clients through personalized, professional services delivered in a welcoming and relaxing environment. We believe that everyone deserves to feel their best, and we are dedicated to helping our clients achieve that feeling with every visit.',
+    meet_team: 'Meet Our Team',
+    team_subtitle: 'The faces behind',
+    visit_us: 'Visit Us',
+    visit_subtitle: 'Our location and hours',
+    address: 'Address',
+    hours: 'Hours of Operation',
+    monday_friday: 'Monday - Friday',
+    saturday: 'Saturday',
+    sunday: 'Sunday',
+    contact: 'Contact',
+    phone: 'Phone:',
+    email: 'Email:'
+  },
+  error: {
+    business_not_found: 'Business Not Found',
+    business_not_exist: 'The business you\'re looking for doesn\'t seem to exist.'
+  },
+  footer: {
+    need_help: 'Need help? Contact us at',
+    or_call: 'or call',
+    business_login: 'Business Login'
   },
   admin: {
     manage_services: 'Manage your service offerings',
