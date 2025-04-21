@@ -146,22 +146,16 @@ export const customers = pgTable("customers", {
   };
 });
 
-// Create a schema that doesn't require businessSlug
+// Create a schema for customer insertion without businessSlug
 export const insertCustomerSchema = createInsertSchema(customers)
-  .omit({ businessSlug: true })
-  .extend({
-    // Make businessSlug optional in the insert schema
-    businessSlug: z.string().optional(),
-  })
   .pick({
     userId: true,
-    businessSlug: true,
     firstName: true,
     lastName: true,
-  email: true,
-  phone: true,
-  notes: true,
-});
+    email: true,
+    phone: true,
+    notes: true,
+  });
 
 // Appointment schema
 export const appointments = pgTable("appointments", {
@@ -187,18 +181,14 @@ export const appointments = pgTable("appointments", {
   };
 });
 
-// Create a schema that doesn't require businessSlug
+// Create appointment schema without businessSlug
 export const insertAppointmentSchema = createInsertSchema(appointments)
-  .omit({ businessSlug: true })
   .extend({
-    // Make businessSlug optional in the insert schema
-    businessSlug: z.string().optional(),
     // Accept string for date (ISO format) instead of requiring a Date object
     date: z.string().or(z.date()),
   })
   .pick({
     userId: true,
-    businessSlug: true,
     customerId: true,
     serviceId: true,
     staffId: true,

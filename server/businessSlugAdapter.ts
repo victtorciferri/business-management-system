@@ -165,23 +165,35 @@ export class BusinessSlugAdapter implements IStorage {
   }
 
   async createCustomer(customer: InsertCustomer): Promise<Customer> {
-    // Remove the businessSlug from the customer object before insertion
-    const customerWithoutSlug = this.stripBusinessSlug(customer);
-    const createdCustomer = await this.storage.createCustomer(customerWithoutSlug as InsertCustomer);
-    
-    // Add the businessSlug property to the returned object
-    return this.addBusinessSlugToObject(createdCustomer, createdCustomer.userId, customer.businessSlug);
+    try {
+      // Remove the businessSlug from the customer object before insertion
+      const customerWithoutSlug = this.stripBusinessSlug(customer);
+      
+      // Create the customer in the database
+      const createdCustomer = await this.storage.createCustomer(customerWithoutSlug as InsertCustomer);
+      
+      // Simply return the created customer without adding businessSlug
+      return createdCustomer;
+    } catch (error) {
+      console.error("Error in adapter createCustomer:", error);
+      throw error;
+    }
   }
 
   async updateCustomer(id: number, customerUpdate: Partial<InsertCustomer>): Promise<Customer | undefined> {
-    // Remove the businessSlug from the update object
-    const updateWithoutSlug = this.stripBusinessSlug(customerUpdate);
-    const updatedCustomer = await this.storage.updateCustomer(id, updateWithoutSlug as Partial<InsertCustomer>);
-    
-    if (updatedCustomer) {
-      return this.addBusinessSlugToObject(updatedCustomer, updatedCustomer.userId, customerUpdate.businessSlug);
+    try {
+      // Remove the businessSlug from the update object
+      const updateWithoutSlug = this.stripBusinessSlug(customerUpdate);
+      
+      // Update the customer in the database
+      const updatedCustomer = await this.storage.updateCustomer(id, updateWithoutSlug as Partial<InsertCustomer>);
+      
+      // Simply return the updated customer without adding businessSlug
+      return updatedCustomer;
+    } catch (error) {
+      console.error("Error in adapter updateCustomer:", error);
+      return undefined;
     }
-    return undefined;
   }
 
   async deleteCustomer(id: number): Promise<boolean> {
@@ -203,8 +215,14 @@ export class BusinessSlugAdapter implements IStorage {
   }
 
   async getAppointmentsByCustomerId(customerId: number): Promise<Appointment[]> {
-    const appointments = await this.storage.getAppointmentsByCustomerId(customerId);
-    return this.addBusinessSlugToArray(appointments);
+    try {
+      // Get appointments directly without adding businessSlug
+      const appointments = await this.storage.getAppointmentsByCustomerId(customerId);
+      return appointments;
+    } catch (error) {
+      console.error("Error in adapter getAppointmentsByCustomerId:", error);
+      return [];
+    }
   }
 
   async getAppointmentsByDateRange(userId: number, startDate: Date, endDate: Date): Promise<Appointment[]> {
@@ -213,23 +231,35 @@ export class BusinessSlugAdapter implements IStorage {
   }
 
   async createAppointment(appointment: InsertAppointment): Promise<Appointment> {
-    // Remove the businessSlug from the appointment object before insertion
-    const appointmentWithoutSlug = this.stripBusinessSlug(appointment);
-    const createdAppointment = await this.storage.createAppointment(appointmentWithoutSlug as InsertAppointment);
-    
-    // Add the businessSlug property to the returned object
-    return this.addBusinessSlugToObject(createdAppointment, createdAppointment.userId, appointment.businessSlug);
+    try {
+      // Remove the businessSlug from the appointment object before insertion
+      const appointmentWithoutSlug = this.stripBusinessSlug(appointment);
+      
+      // Create the appointment in the database
+      const createdAppointment = await this.storage.createAppointment(appointmentWithoutSlug as InsertAppointment);
+      
+      // Simply return the created appointment without adding businessSlug
+      return createdAppointment;
+    } catch (error) {
+      console.error("Error in adapter createAppointment:", error);
+      throw error;
+    }
   }
 
   async updateAppointment(id: number, appointmentUpdate: Partial<InsertAppointment>): Promise<Appointment | undefined> {
-    // Remove the businessSlug from the update object
-    const updateWithoutSlug = this.stripBusinessSlug(appointmentUpdate);
-    const updatedAppointment = await this.storage.updateAppointment(id, updateWithoutSlug as Partial<InsertAppointment>);
-    
-    if (updatedAppointment) {
-      return this.addBusinessSlugToObject(updatedAppointment, updatedAppointment.userId, appointmentUpdate.businessSlug);
+    try {
+      // Remove the businessSlug from the update object
+      const updateWithoutSlug = this.stripBusinessSlug(appointmentUpdate);
+      
+      // Update the appointment in the database
+      const updatedAppointment = await this.storage.updateAppointment(id, updateWithoutSlug as Partial<InsertAppointment>);
+      
+      // Simply return the updated appointment without adding businessSlug
+      return updatedAppointment;
+    } catch (error) {
+      console.error("Error in adapter updateAppointment:", error);
+      return undefined;
     }
-    return undefined;
   }
 
   async deleteAppointment(id: number): Promise<boolean> {
