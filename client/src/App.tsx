@@ -164,6 +164,7 @@ function AppContent() {
         <BusinessContextProvider>
           {/* Use the new theme provider with business context for business portals */}
           <ThemeProvider>
+            <LanguageProvider>
               <Switch>
                 {/* For business subpages like /:slug/services */}
                 <Route path="/:slug/:subPath*">
@@ -186,6 +187,7 @@ function AppContent() {
                 </Route>
                 <Route component={NotFound} />
               </Switch>
+            </LanguageProvider>
           </ThemeProvider>
         </BusinessContextProvider>
       </div>
@@ -212,7 +214,9 @@ function AppContent() {
               return (
                 <BusinessContextProvider initialBusiness={null}>
                   <ThemeProvider businessId={businessIdNum}>
-                    <CustomerPortal />
+                    <LanguageProvider>
+                      <CustomerPortal />
+                    </LanguageProvider>
                   </ThemeProvider>
                 </BusinessContextProvider>
               );
@@ -228,7 +232,9 @@ function AppContent() {
               return (
                 <BusinessContextProvider initialBusiness={null}>
                   <ThemeProvider businessId={businessIdNum}>
-                    <NewAppointment />
+                    <LanguageProvider>
+                      <NewAppointment />
+                    </LanguageProvider>
                   </ThemeProvider>
                 </BusinessContextProvider>
               );
@@ -244,7 +250,9 @@ function AppContent() {
               return (
                 <BusinessContextProvider initialBusiness={null}>
                   <ThemeProvider businessId={businessIdNum}>
-                    <MyAppointments />
+                    <LanguageProvider>
+                      <MyAppointments />
+                    </LanguageProvider>
                   </ThemeProvider>
                 </BusinessContextProvider>
               );
@@ -260,7 +268,9 @@ function AppContent() {
               return (
                 <BusinessContextProvider initialBusiness={null}>
                   <ThemeProvider businessId={businessIdNum}>
-                    <CustomerServices />
+                    <LanguageProvider>
+                      <CustomerServices />
+                    </LanguageProvider>
                   </ThemeProvider>
                 </BusinessContextProvider>
               );
@@ -471,7 +481,9 @@ function AppContent() {
               return (
                 <BusinessContextProvider initialBusiness={null}>
                   <ThemeProvider businessId={businessIdNum}>
-                    <PaymentSuccess />
+                    <LanguageProvider>
+                      <PaymentSuccess />
+                    </LanguageProvider>
                   </ThemeProvider>
                 </BusinessContextProvider>
               );
@@ -487,7 +499,9 @@ function AppContent() {
               return (
                 <BusinessContextProvider initialBusiness={null}>
                   <ThemeProvider businessId={businessIdNum}>
-                    <PaymentFailure />
+                    <LanguageProvider>
+                      <PaymentFailure />
+                    </LanguageProvider>
                   </ThemeProvider>
                 </BusinessContextProvider>
               );
@@ -503,7 +517,9 @@ function AppContent() {
               return (
                 <BusinessContextProvider initialBusiness={null}>
                   <ThemeProvider businessId={businessIdNum}>
-                    <PaymentPending />
+                    <LanguageProvider>
+                      <PaymentPending />
+                    </LanguageProvider>
                   </ThemeProvider>
                 </BusinessContextProvider>
               );
@@ -519,7 +535,9 @@ function AppContent() {
               return (
                 <BusinessContextProvider initialBusiness={null}>
                   <ThemeProvider businessId={businessIdNum}>
-                    <MockPayment />
+                    <LanguageProvider>
+                      <MockPayment />
+                    </LanguageProvider>
                   </ThemeProvider>
                 </BusinessContextProvider>
               );

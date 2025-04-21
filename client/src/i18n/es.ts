@@ -15,7 +15,10 @@ export default {
     loading: 'Cargando...',
     go_back: 'Regresar',
     customer_portal: 'Portal del Cliente',
-    business_portal: 'Portal del Negocio'
+    business_portal: 'Portal del Negocio',
+    language: 'Idioma',
+    english: 'Inglés',
+    spanish: 'Español'
   },
   navigation: {
     home: 'Inicio',

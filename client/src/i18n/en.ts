@@ -16,7 +16,9 @@ export default {
     go_back: 'Go Back',
     customer_portal: 'Customer Portal',
     business_portal: 'Business Portal',
-    language: 'Language'
+    language: 'Language',
+    english: 'English',
+    spanish: 'Spanish'
   },
   navigation: {
     home: 'Home',
