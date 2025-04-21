@@ -305,17 +305,35 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createAppointment(appointment: InsertAppointment): Promise<Appointment> {
-    const [newAppointment] = await db.insert(appointments).values(appointment).returning();
-    return newAppointment;
+    try {
+      // Remove the businessSlug property if it exists since it's not in the database
+      const { businessSlug, ...appointmentData } = appointment;
+      
+      console.log('Creating appointment with data:', appointmentData);
+      const [newAppointment] = await db.insert(appointments).values(appointmentData).returning();
+      return newAppointment;
+    } catch (error) {
+      console.error('Error creating appointment:', error);
+      throw error;
+    }
   }
 
   async updateAppointment(id: number, appointmentUpdate: Partial<InsertAppointment>): Promise<Appointment | undefined> {
-    const [updatedAppointment] = await db
-      .update(appointments)
-      .set(appointmentUpdate)
-      .where(eq(appointments.id, id))
-      .returning();
-    return updatedAppointment || undefined;
+    try {
+      // Remove the businessSlug property if it exists since it's not in the database
+      const { businessSlug, ...appointmentData } = appointmentUpdate;
+      
+      console.log('Updating appointment with data:', appointmentData);
+      const [updatedAppointment] = await db
+        .update(appointments)
+        .set(appointmentData)
+        .where(eq(appointments.id, id))
+        .returning();
+      return updatedAppointment || undefined;
+    } catch (error) {
+      console.error('Error updating appointment:', error);
+      throw error;
+    }
   }
 
   async deleteAppointment(id: number): Promise<boolean> {
