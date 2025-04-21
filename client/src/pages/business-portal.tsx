@@ -12,6 +12,7 @@ import { Clock, CalendarIcon, DollarSign, CalendarPlus } from "lucide-react";
 import { User, Service, Customer, Appointment } from "@shared/schema";
 import { useTheme } from "@/contexts/ThemeContext";
 import { applyTheme } from "@/utils/applyTheme";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // Import business components
 import BusinessLayout from "@/components/business/layout";
@@ -45,6 +46,9 @@ export default function BusinessPortal({ slug, subPath, initialData }: BusinessP
     notes: ""
   });
   const [searchEmail, setSearchEmail] = useState("");
+  
+  // Access language context
+  const { t } = useLanguage();
   
   // Access theme context
   const { theme, businessTheme, updateBusinessTheme } = useTheme();
@@ -203,18 +207,18 @@ export default function BusinessPortal({ slug, subPath, initialData }: BusinessP
               </span>
             </h1>
             <p className="text-lg text-muted-foreground max-w-xl">
-              Book your next appointment online and enjoy the best beauty and wellness services
+              {t('homepage.experience')}
             </p>
           </div>
           
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-6">
-              <TabsTrigger value="home">Home</TabsTrigger>
-              <TabsTrigger value="services">Our Services</TabsTrigger>
-              <TabsTrigger value="store">Store</TabsTrigger>
-              <TabsTrigger value="book">Book Appointment</TabsTrigger>
-              <TabsTrigger value="my-appointments">My Appointments</TabsTrigger>
-              <TabsTrigger value="about">About Us</TabsTrigger>
+              <TabsTrigger value="home">{t('navigation.home')}</TabsTrigger>
+              <TabsTrigger value="services">{t('navigation.services')}</TabsTrigger>
+              <TabsTrigger value="store">{t('navigation.store')}</TabsTrigger>
+              <TabsTrigger value="book">{t('navigation.book')}</TabsTrigger>
+              <TabsTrigger value="my-appointments">{t('navigation.my_appointments')}</TabsTrigger>
+              <TabsTrigger value="about">{t('navigation.about')}</TabsTrigger>
             </TabsList>
             
             {/* Home Tab */}
@@ -230,14 +234,14 @@ export default function BusinessPortal({ slug, subPath, initialData }: BusinessP
                     <div className="h-2" style={{ backgroundColor: (service.color as string) || "#cccccc" }}></div>
                     <CardHeader>
                       <CardTitle>{service.name}</CardTitle>
-                      <CardDescription>Professional service</CardDescription>
+                      <CardDescription>{t('services.professional_service')}</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <p className="mb-4 text-sm">{service.description}</p>
                       <div className="flex justify-between text-sm">
                         <div className="flex items-center gap-1">
                           <Clock className="h-4 w-4 text-muted-foreground" />
-                          <span>{service.duration} mins</span>
+                          <span>{service.duration} {t('services.minutes')}</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -250,7 +254,7 @@ export default function BusinessPortal({ slug, subPath, initialData }: BusinessP
                         className="w-full" 
                         onClick={() => handleServiceSelect(service)}
                       >
-                        Book Now
+                        {t('services.book_now')}
                       </Button>
                     </CardFooter>
                   </Card>
@@ -262,8 +266,8 @@ export default function BusinessPortal({ slug, subPath, initialData }: BusinessP
             <TabsContent value="book">
               <Card>
                 <CardHeader>
-                  <CardTitle>New Appointment Booking</CardTitle>
-                  <CardDescription>Book your appointment with our new streamlined system</CardDescription>
+                  <CardTitle>{t('appointments.new_booking')}</CardTitle>
+                  <CardDescription>{t('appointments.booking_description')}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="text-center space-y-6 py-4">
@@ -271,9 +275,9 @@ export default function BusinessPortal({ slug, subPath, initialData }: BusinessP
                       <CalendarPlus className="w-8 h-8 text-primary" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-semibold mb-2">Our New Booking Experience</h3>
+                      <h3 className="text-xl font-semibold mb-2">{t('appointments.booking_experience')}</h3>
                       <p className="text-muted-foreground max-w-md mx-auto">
-                        We've improved our appointment booking system to make scheduling easier for you.
+                        {t('appointments.booking_improved')}
                       </p>
                     </div>
                     <Button 
@@ -281,7 +285,7 @@ export default function BusinessPortal({ slug, subPath, initialData }: BusinessP
                       onClick={() => window.location.href = `/customer-portal/new-appointment?businessId=${business.id}`}
                       className="mt-4"
                     >
-                      Start Booking Process
+                      {t('appointments.start_booking')}
                     </Button>
                   </div>
                 </CardContent>
