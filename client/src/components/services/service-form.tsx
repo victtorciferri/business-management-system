@@ -19,6 +19,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Service } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { appointmentColors } from "@/utils/date-utils";
 
 interface ServiceFormProps {
@@ -38,6 +39,9 @@ const formSchema = z.object({
     .transform(val => parseFloat(val)),
   color: z.string().default("#06b6d4"),
   active: z.boolean().default(true),
+  serviceType: z.enum(["individual", "class"]).default("individual"),
+  capacity: z.string().default("1")
+    .transform(val => parseInt(val)),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -61,6 +65,8 @@ export function ServiceForm({
       price: existingService ? existingService.price.toString() : "",
       color: existingService?.color || "#06b6d4",
       active: existingService ? existingService.active : true,
+      serviceType: existingService?.serviceType || "individual",
+      capacity: existingService?.capacity ? existingService.capacity.toString() : "1",
     },
   });
 
@@ -245,6 +251,60 @@ export function ServiceForm({
             </FormItem>
           )}
         />
+
+        <FormField
+          control={form.control}
+          name="serviceType"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Service Type</FormLabel>
+              <Select 
+                onValueChange={field.onChange} 
+                defaultValue={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select service type" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="individual">Individual Appointment</SelectItem>
+                  <SelectItem value="class">Class/Group Session</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormDescription>
+                Individual appointments are for one customer at a time. Classes allow multiple attendees.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {form.watch("serviceType") === "class" && (
+          <FormField
+            control={form.control}
+            name="capacity"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Class Capacity</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="2"
+                    max="100"
+                    step="1"
+                    {...field}
+                    onChange={(e) => field.onChange(e.target.value)}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Maximum number of attendees that can book this class (2-100).
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
         
         <FormField
           control={form.control}
