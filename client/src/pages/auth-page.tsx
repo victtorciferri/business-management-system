@@ -8,13 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import { User } from "@shared/schema";
+import { InsertUser, User } from "@shared/schema";
 
 export default function AuthPage() {
   const [activeTab, setActiveTab] = useState("login");
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  const { login, register, isLoading, user } = useAuth();
+  const { loginMutation, registerMutation, user, isLoading } = useAuth();
   
   // Redirect if user is already logged in
   useEffect(() => {
@@ -31,7 +31,7 @@ export default function AuthPage() {
   const [loginForm, setLoginForm] = useState({ username: "", password: "" });
   
   // Register form state
-  const [registerForm, setRegisterForm] = useState({
+  const [registerForm, setRegisterForm] = useState<InsertUser>({
     username: "",
     password: "",
     email: "",
@@ -48,41 +48,17 @@ export default function AuthPage() {
 
   const handleRegisterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setRegisterForm(prev => ({ ...prev, [name]: value }));
+    setRegisterForm(prev => ({ ...prev, [name]: value } as InsertUser));
   };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    try {
-      // Use the login function from useAuth
-      const userData = await login(loginForm.username, loginForm.password);
-      
-      // Redirect will be handled by the useEffect watching the user state
-    } catch (error) {
-      toast({
-        title: "Login failed",
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
-        variant: "destructive",
-      });
-    }
+    loginMutation.mutate(loginForm);
   };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    try {
-      // Use the register function from useAuth
-      const userData = await register(registerForm);
-      
-      // Redirect will be handled by the useEffect watching the user state
-    } catch (error) {
-      toast({
-        title: "Registration failed",
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
-        variant: "destructive",
-      });
-    }
+    registerMutation.mutate(registerForm);
   };
 
   return (
