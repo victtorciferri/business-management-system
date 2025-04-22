@@ -136,15 +136,13 @@ function AppContent() {
 
   // Determine if this is a business portal based on the data we have
   const isBusinessPortal = (!!businessData?.business || !!potentialBusinessSlug) && 
+                          // Check if this is a business URL with a slug pattern (e.g., /salonelegante)
+                          (location === '/' || /^\/[a-zA-Z0-9-]+\/?$/.test(location) || /^\/[a-zA-Z0-9-]+\/.*$/.test(location)) &&
+                          // Exclude specific admin and system routes
                           !location.startsWith('/auth') && 
                           !location.startsWith('/admin') &&
                           !location.startsWith('/customer-portal') &&
-                          !location.startsWith('/color-mode-demo') &&
-                          !location.startsWith('/dashboard') &&
-                          !location.startsWith('/services') &&
-                          !location.startsWith('/customers') &&
-                          !location.startsWith('/appointments') &&
-                          !location.startsWith('/products');
+                          !location.startsWith('/color-mode-demo');
 
   // Debug information to help troubleshoot
   console.log("App.tsx is rendering");
