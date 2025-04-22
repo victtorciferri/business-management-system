@@ -139,7 +139,12 @@ function AppContent() {
                           !location.startsWith('/auth') && 
                           !location.startsWith('/admin') &&
                           !location.startsWith('/customer-portal') &&
-                          !location.startsWith('/color-mode-demo');
+                          !location.startsWith('/color-mode-demo') &&
+                          !location.startsWith('/dashboard') &&
+                          !location.startsWith('/services') &&
+                          !location.startsWith('/customers') &&
+                          !location.startsWith('/appointments') &&
+                          !location.startsWith('/products');
 
   // Debug information to help troubleshoot
   console.log("App.tsx is rendering");
