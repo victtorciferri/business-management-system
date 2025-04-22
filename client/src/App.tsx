@@ -211,13 +211,13 @@ function AppContent() {
     ) : (
       <Layout currentUser={currentUser}>
         <Switch>
+          <Route path="/auth">
+            <AuthPage />
+          </Route>
           <Route path="/">
             <ProtectedRoute>
               <Dashboard />
             </ProtectedRoute>
-          </Route>
-          <Route path="/auth">
-            <AuthPage />
           </Route>
           <Route path="/new-appointment">
             <Redirect to="/customer-portal/new-appointment" />
