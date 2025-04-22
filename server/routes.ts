@@ -1835,6 +1835,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ...processedAppointmentData,
           date: processedAppointmentData.date.toISOString()
         }));
+
+        // Get the service to check capacity limits
+        const service = await storage.getService(processedAppointmentData.serviceId);
+        if (!service) {
+          return res.status(404).json({ message: "Service not found" });
+        }
+
+        // For class-based services, check if there's still capacity available
+        if (service.serviceType === 'class' && service.capacity && service.capacity > 1) {
+          // Get existing appointments for this service on this date
+          const userId = processedAppointmentData.userId;
+          const appointmentDate = processedAppointmentData.date;
+          const startOfDay = new Date(appointmentDate);
+          startOfDay.setHours(0, 0, 0, 0);
+          
+          const endOfDay = new Date(appointmentDate);
+          endOfDay.setHours(23, 59, 59, 999);
+
+          const dailyAppointments = await storage.getAppointmentsByDateRange(userId, startOfDay, endOfDay);
+
+          // Import the checkServiceAvailability function
+          const { checkServiceAvailability } = await import('../shared/serviceUtils.js');
+          
+          // Check if there's capacity available
+          const availabilityCheck = await checkServiceAvailability(
+            service,
+            dailyAppointments,
+            appointmentDate
+          );
+
+          if (!availabilityCheck.available) {
+            return res.status(400).json({ 
+              message: "Class is full", 
+              capacity: availabilityCheck.capacity,
+              booked: availabilityCheck.booked,
+              remaining: availabilityCheck.remaining
+            });
+          }
+        }
         
         // Create appointment
         const appointment = await storage.createAppointment(processedAppointmentData);

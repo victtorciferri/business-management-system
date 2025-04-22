@@ -104,6 +104,8 @@ export const services = pgTable("services", {
   price: numeric("price").notNull(),
   color: text("color").default("#06b6d4"),
   active: boolean("active").default(true),
+  serviceType: text("service_type").default("individual"), // "individual" or "class" for yoga classes
+  capacity: integer("capacity").default(1), // Default 1 for individual appointments, can be higher for classes
 }, (table) => {
   return {
     userIdIdx: index("services_user_id_idx").on(table.userId),
@@ -126,6 +128,8 @@ export const insertServiceSchema = createInsertSchema(services)
     price: true,
     color: true,
     active: true,
+    serviceType: true,
+    capacity: true,
   });
 
 // Customer schema
