@@ -134,15 +134,31 @@ function AppContent() {
     }
   }, [potentialBusinessSlug]);
 
+  // List of admin routes that should never be treated as business portals
+  const adminRoutes = [
+    '/auth',
+    '/admin',
+    '/customer-portal',
+    '/color-mode-demo',
+    '/dashboard',
+    '/services',
+    '/customers',
+    '/appointments',
+    '/products',
+    '/staff-management',
+    '/theme-editor',
+    '/theme-marketplace'
+  ];
+  
+  // Check if the current location starts with any admin route
+  const isAdminRoute = adminRoutes.some(route => location.startsWith(route));
+  
   // Determine if this is a business portal based on the data we have
   const isBusinessPortal = (!!businessData?.business || !!potentialBusinessSlug) && 
+                          // Must not be an admin route
+                          !isAdminRoute &&
                           // Check if this is a business URL with a slug pattern (e.g., /salonelegante)
-                          (location === '/' || /^\/[a-zA-Z0-9-]+\/?$/.test(location) || /^\/[a-zA-Z0-9-]+\/.*$/.test(location)) &&
-                          // Exclude specific admin and system routes
-                          !location.startsWith('/auth') && 
-                          !location.startsWith('/admin') &&
-                          !location.startsWith('/customer-portal') &&
-                          !location.startsWith('/color-mode-demo');
+                          (location === '/' || /^\/[a-zA-Z0-9-]+\/?$/.test(location) || /^\/[a-zA-Z0-9-]+\/.*$/.test(location));
 
   // Debug information to help troubleshoot
   console.log("App.tsx is rendering");
@@ -200,7 +216,9 @@ function AppContent() {
               <Dashboard />
             </ProtectedRoute>
           </Route>
-          <Route path="/auth" component={AuthPage} />
+          <Route path="/auth">
+            <AuthPage />
+          </Route>
           <Route path="/new-appointment">
             <Redirect to="/customer-portal/new-appointment" />
           </Route>
