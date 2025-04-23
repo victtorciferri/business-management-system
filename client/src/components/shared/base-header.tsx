@@ -110,19 +110,20 @@ export default function BaseHeader({
         <div className="flex flex-col md:flex-row justify-between items-center py-4">
           {/* Logo and Business Name */}
           <div className="flex items-center mb-4 md:mb-0">
-            <Link href={portalType === 'business' && slug ? `/${slug}` : buildUrl('/customer-portal')}>
-              <a className="flex items-center">
-                {renderLogo()}
-                <h1 className={`text-xl font-bold ${isDarkMode ? 'text-foreground' : 'text-gray-800'}`}>
-                  {logoText}
-                  {portalType === 'customer' && (
-                    <span className={`${isDarkMode ? 'text-primary' : getPrimaryColor()} font-normal ml-2`}>
-                      {getPortalLabel()}
-                    </span>
-                  )}
-                </h1>
-              </a>
-            </Link>
+            <div 
+              className="flex items-center cursor-pointer" 
+              onClick={() => navigate(portalType === 'business' && slug ? `/${slug}` : buildUrl('/customer-portal'))}
+            >
+              {renderLogo()}
+              <h1 className={`text-xl font-bold ${isDarkMode ? 'text-foreground' : 'text-gray-800'}`}>
+                {logoText}
+                {portalType === 'customer' && (
+                  <span className={`${isDarkMode ? 'text-primary' : getPrimaryColor()} font-normal ml-2`}>
+                    {getPortalLabel()}
+                  </span>
+                )}
+              </h1>
+            </div>
           </div>
 
           {/* Navigation */}
