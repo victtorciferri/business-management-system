@@ -22,7 +22,7 @@ interface LayoutProps {
 export default function Layout({ children, currentUser }: LayoutProps) {
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { logout } = useAuth();
+  const { logoutMutation } = useAuth();
   const { resolvedColorMode, setColorMode } = useGlobalTheme();
   const isDarkMode = resolvedColorMode === 'dark';
 
@@ -35,8 +35,8 @@ export default function Layout({ children, currentUser }: LayoutProps) {
     setMobileMenuOpen(!mobileMenuOpen);
   };
 
-  const handleLogout = async () => {
-    await logout();
+  const handleLogout = () => {
+    logoutMutation.mutate();
     window.location.href = '/auth';
   };
 
