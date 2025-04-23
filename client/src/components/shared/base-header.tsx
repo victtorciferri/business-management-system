@@ -51,10 +51,24 @@ export default function BaseHeader({
   const { config } = useBusinessContext();
   const { t } = useLanguage();
   
-  // Helper functions for theme color management
-  const getPrimaryColor = () => 'text-blue-600';
+  // Helper functions for theme color management - use yoga green for Pride&Flow
+  const getPrimaryColor = () => {
+    // Use green colors for Pride&Flow
+    if (logoText === "Pride&Flow Yoga" || business?.businessSlug === "prideandflow" || slug === "prideandflow") {
+      return 'text-green-600';
+    }
+    return 'text-blue-600';
+  };
+  
   const getTextColor = () => isDarkMode ? 'text-foreground' : 'text-gray-800';
-  const getButtonClass = () => isDarkMode ? 'bg-primary' : 'bg-blue-600';
+  
+  const getButtonClass = () => {
+    // Use green colors for Pride&Flow
+    if (logoText === "Pride&Flow Yoga" || business?.businessSlug === "prideandflow" || slug === "prideandflow") {
+      return isDarkMode ? 'bg-green-700' : 'bg-green-600';
+    }
+    return isDarkMode ? 'bg-primary' : 'bg-blue-600';
+  };
 
   // Helper function to build URL with query parameters
   const buildUrl = (path: string) => {
@@ -135,8 +149,12 @@ export default function BaseHeader({
                 size="sm"
                 className={`flex items-center ${
                   item.isActive 
-                    ? (isDarkMode ? 'bg-primary hover:bg-primary/80 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white')
-                    : (isDarkMode ? 'text-muted-foreground hover:text-foreground hover:bg-muted' : 'text-gray-700 hover:text-gray-900')
+                    ? (isDarkMode 
+                        ? 'bg-primary hover:bg-primary/80 text-white' 
+                        : `${getButtonClass()} hover:opacity-90 text-white`)
+                    : (isDarkMode 
+                        ? 'text-muted-foreground hover:text-foreground hover:bg-muted' 
+                        : 'text-gray-700 hover:text-gray-900')
                 }`}
                 onClick={() => navigate(buildUrl(item.path))}
               >
