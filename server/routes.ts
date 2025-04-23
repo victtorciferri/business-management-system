@@ -1,9 +1,11 @@
-import type { Express, Request, Response, NextFunction } from "express";
+import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db, pool } from "./db";
 import { sql } from "drizzle-orm";
 import rateLimit from 'express-rate-limit';
+import path from 'path';
+import fs from 'fs';
 import { createPreference, processWebhook } from './mercadopago';
 import themeRoutes from './routes/themeRoutes';
 import themeApiRoutes from './routes/themeApiRoutes';
@@ -132,6 +134,13 @@ const sendTokenEmail = async (req: Request, token: string, customer: Customer, b
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Serve static files from the 'uploads' directory
+  const uploadsDir = path.join(process.cwd(), 'uploads');
+  console.log('Serving uploads from:', uploadsDir);
+  app.use('/uploads', (req, res, next) => {
+    console.log(`Static file request for: ${req.path}`);
+    next();
+  }, express.static(uploadsDir));
   /**
    * GET /api/default-theme
    * Get the default theme for reference - accessible without authentication or business context

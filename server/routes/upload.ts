@@ -46,30 +46,74 @@ const router = Router();
 // Route for uploading images
 router.post('/api/upload', upload.single('image'), async (req, res) => {
   try {
+    console.log('Upload request received');
+    console.log('Request body:', req.body);
+    console.log('Request file:', req.file);
+    console.log('Authentication status:', req.isAuthenticated());
+    
     if (!req.file) {
+      console.log('No file in request');
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
     if (!req.isAuthenticated()) {
+      console.log('User not authenticated, deleting file');
       // Delete the file if the user is not authenticated
       fs.unlinkSync(req.file.path);
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
+    // Check uploads directory access
+    try {
+      console.log('Checking uploads directory:', uploadsDir);
+      fs.accessSync(uploadsDir, fs.constants.W_OK);
+      console.log('Uploads directory exists and is writable');
+    } catch (err) {
+      console.error('Uploads directory access error:', err);
+    }
+
     // Process the image with sharp
     const processedFilename = `processed_${path.basename(req.file.path)}`;
     const processedPath = path.join(uploadsDir, processedFilename);
+    console.log('Original file path:', req.file.path);
+    console.log('Processed file path:', processedPath);
 
-    await sharp(req.file.path)
-      .resize(800) // Resize to max width of 800px
-      .jpeg({ quality: 80 }) // Convert to JPEG with quality 80
-      .toFile(processedPath);
+    try {
+      // Check if original file exists
+      console.log('Checking if original file exists:', req.file.path);
+      fs.accessSync(req.file.path, fs.constants.R_OK);
+      console.log('Original file exists and is readable');
+      
+      // Process image
+      console.log('Processing image with sharp');
+      await sharp(req.file.path)
+        .resize(800) // Resize to max width of 800px
+        .jpeg({ quality: 80 }) // Convert to JPEG with quality 80
+        .toFile(processedPath);
+      console.log('Image processing completed');
+
+      // Check if processed file exists
+      console.log('Checking if processed file exists:', processedPath);
+      fs.accessSync(processedPath, fs.constants.R_OK);
+      console.log('Processed file exists and is readable');
+    } catch (err) {
+      console.error('Error during image processing:', err);
+      throw err;
+    }
 
     // Remove the original file
-    fs.unlinkSync(req.file.path);
+    try {
+      console.log('Removing original file:', req.file.path);
+      fs.unlinkSync(req.file.path);
+      console.log('Original file removed successfully');
+    } catch (err) {
+      console.error('Error removing original file:', err);
+      // Continue even if original file deletion fails
+    }
 
     // Return the URL to the processed image
     const imageUrl = `/uploads/${processedFilename}`;
+    console.log('Return URL:', imageUrl);
     res.status(200).json({ url: imageUrl });
   } catch (error) {
     console.error('Error processing uploaded file:', error);
