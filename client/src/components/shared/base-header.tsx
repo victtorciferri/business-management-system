@@ -141,30 +141,33 @@ export default function BaseHeader({
           </div>
 
           {/* Navigation */}
-          <nav className="flex flex-wrap gap-2">
-            {navigationItems.map((item) => (
-              <Button
-                key={item.path}
-                variant={item.isActive ? "default" : "ghost"}
-                size="sm"
-                className={`flex items-center ${
-                  item.isActive 
-                    ? (isDarkMode 
-                        ? 'bg-primary hover:bg-primary/80 text-white' 
-                        : `${getButtonClass()} hover:opacity-90 text-white`)
-                    : (isDarkMode 
-                        ? 'text-muted-foreground hover:text-foreground hover:bg-muted' 
-                        : 'text-gray-700 hover:text-gray-900')
-                }`}
-                onClick={() => navigate(buildUrl(item.path))}
-              >
-                {item.icon}
-                {item.label}
-              </Button>
-            ))}
+          <div className="flex items-center">
+            <ul className="flex items-center space-x-2 mr-2">
+              {navigationItems.map((item) => (
+                <li key={item.path}>
+                  <Button
+                    variant={item.isActive ? "default" : "ghost"}
+                    size="sm"
+                    className={`flex items-center ${
+                      item.isActive 
+                        ? (isDarkMode 
+                            ? 'bg-primary hover:bg-primary/80 text-white' 
+                            : `${getButtonClass()} hover:opacity-90 text-white`)
+                        : (isDarkMode 
+                            ? 'text-muted-foreground hover:text-foreground hover:bg-muted' 
+                            : 'text-gray-700 hover:text-gray-900')
+                    }`}
+                    onClick={() => navigate(buildUrl(item.path))}
+                  >
+                    {item.icon}
+                    {item.label}
+                  </Button>
+                </li>
+              ))}
+            </ul>
             
             {/* Language selector */}
-            <div className="ml-2">
+            <div className="mx-2">
               <LanguageSelector />
             </div>
             
@@ -174,7 +177,7 @@ export default function BaseHeader({
                 <Button 
                   variant="ghost" 
                   size="sm"
-                  className={`ml-2 ${
+                  className={`${
                     isDarkMode 
                       ? 'text-muted-foreground hover:text-foreground hover:bg-muted' 
                       : 'text-gray-700 hover:text-gray-900'
@@ -189,7 +192,7 @@ export default function BaseHeader({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </nav>
+          </div>
         </div>
       </div>
     </header>
