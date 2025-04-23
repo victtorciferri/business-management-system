@@ -83,7 +83,7 @@ export default function BaseHeader({
   const renderLogo = () => {
     // Special case for Pride&Flow Yoga
     if (logoText === "Pride&Flow Yoga" || business?.businessSlug === "prideandflow" || slug === "prideandflow") {
-      return <BusinessLogo className="h-10 w-auto mr-3" />;
+      return <BusinessLogo className="h-10 w-auto mr-3" businessSlug="prideandflow" />;
     }
     
     // If a logo URL is available, use it
