@@ -64,8 +64,8 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="flex w-full max-w-5xl bg-card dark:bg-card rounded-lg shadow-xl overflow-hidden border dark:border-border">
-        {/* Hero section - improved gradient for better readability in light mode */}
-        <div className="hidden md:block md:w-1/2 bg-gradient-to-br from-primary/90 to-primary-foreground dark:from-primary dark:to-primary-900 text-white p-12 flex flex-col justify-center">
+        {/* Hero section - completely different colors for light vs dark mode */}
+        <div className="hidden md:block md:w-1/2 bg-gradient-to-br from-indigo-700 to-purple-800 dark:from-primary dark:to-primary-900 text-white p-12 flex flex-col justify-center">
           <h1 className="text-4xl font-bold mb-6">AppointEase</h1>
           <h2 className="text-2xl font-semibold mb-4">Streamline your service business</h2>
           <p className="text-lg mb-6">
