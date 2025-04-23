@@ -29,39 +29,42 @@ export function ImageUpload({
 
   // Size classes for different previewSizes
   const sizeClasses = {
-    small: 'h-10 w-10',
-    medium: 'h-16 w-16',
-    large: 'h-32 w-32',
+    small: 'h-20 w-20',
+    medium: 'h-32 w-32',
+    large: 'h-48 w-48',
   };
 
-  // Size classes for aspect ratios
+  // Aspect ratio classes
   const aspectRatioClasses = {
     square: 'aspect-square',
-    portrait: 'aspect-[3/4]', 
+    portrait: 'aspect-[3/4]',
     landscape: 'aspect-[4/3]',
   };
 
-  // Handle file change event
+  // Handle file selection
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Only allow images
+    
+    if (!file) {
+      console.log('No file selected');
+      return;
+    }
+    
+    // File type validation
     if (!file.type.startsWith('image/')) {
       toast({
         title: 'Invalid file type',
-        description: 'Please upload an image file',
+        description: 'Please select an image file (JPEG, PNG, etc.).',
         variant: 'destructive',
       });
       return;
     }
-
-    // Maximum file size: 5MB
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    if (file.size > maxSize) {
+    
+    // File size validation (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
       toast({
         title: 'File too large',
-        description: 'Image must be less than 5MB',
+        description: 'Image size should be less than 5MB.',
         variant: 'destructive',
       });
       return;
@@ -91,29 +94,53 @@ export function ImageUpload({
       if (!response.ok) {
         let errorText;
         try {
-          const errorJson = await response.json();
-          errorText = errorJson.error || JSON.stringify(errorJson);
-        } catch {
-          errorText = await response.text() || `Server error: ${response.status} ${response.statusText}`;
+          // First try to get the response as text
+          const responseText = await response.text();
+          
+          // Check if the response starts with HTML doctype (indicating a redirect to HTML)
+          if (responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html')) {
+            errorText = `Received HTML instead of JSON. Possible redirect or server error. Status: ${response.status}`;
+          } else {
+            // Try to parse as JSON if it doesn't look like HTML
+            try {
+              const errorJson = JSON.parse(responseText);
+              errorText = errorJson.error || JSON.stringify(errorJson);
+            } catch {
+              // If it can't be parsed as JSON, use the raw text
+              errorText = responseText || `Server error: ${response.status} ${response.statusText}`;
+            }
+          }
+        } catch (parseError) {
+          console.error('Error parsing response:', parseError);
+          errorText = `Server error: ${response.status} ${response.statusText}`;
         }
         throw new Error(errorText);
       }
       
-      const data = await response.json();
-      console.log('Upload response data:', data);
-      
-      if (!data || !data.url) {
-        throw new Error('Invalid response from server: No URL returned');
+      // For successful responses, first get the text and then parse it
+      // This avoids JSON parsing errors
+      let data;
+      try {
+        const responseText = await response.text();
+        data = JSON.parse(responseText);
+        console.log('Upload response data:', data);
+        
+        if (!data || !data.url) {
+          throw new Error('Invalid response from server: No URL returned');
+        }
+        
+        // Success - call the onChange handler with the new URL
+        console.log('Upload successful, URL:', data.url);
+        onChange(data.url);
+        
+        toast({
+          title: 'Image uploaded',
+          description: 'Your image has been uploaded successfully',
+        });
+      } catch (parseError) {
+        console.error('Error parsing successful response:', parseError);
+        throw new Error('Invalid JSON in server response');
       }
-      
-      // Success - call the onChange handler with the new URL
-      console.log('Upload successful, URL:', data.url);
-      onChange(data.url);
-      
-      toast({
-        title: 'Image uploaded',
-        description: 'Your image has been uploaded successfully',
-      });
     } catch (error) {
       console.error('Error uploading image:', error);
       let errorMessage = 'Failed to upload image. Please try again.';
