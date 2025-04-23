@@ -139,19 +139,28 @@ router.patch('/api/business/update-logo', async (req, res) => {
       sessionID: req.sessionID,
       hasSession: !!req.session,
       sessionData: req.session,
+      isAuthenticated: req.isAuthenticated(),
+      userInPassport: !!req.user,
       userInSession: !!req.session?.user
     });
     
-    // Check if user is authenticated via session
-    if (!req.session?.user) {
-      console.log('User not authenticated - no user in session');
+    // Enhanced authentication check - we try both methods to be robust
+    // First check if authenticated via passport
+    if (!req.isAuthenticated() && !req.session?.user) {
+      console.log('User not authenticated - neither via passport nor session');
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
     const { logoUrl } = req.body;
-    const userId = req.session.user.id;
-    console.log(`User ID from session: ${userId}`);
     
+    // Get user ID from either passport or session (passport is preferred)
+    const userId = req.user?.id || req.session?.user?.id;
+    if (!userId) {
+      console.log('Could not determine user ID');
+      return res.status(401).json({ error: 'Could not determine user ID' });
+    }
+    
+    console.log(`User ID from auth: ${userId}`);
     console.log(`Updating logo for user ID ${userId} with logoUrl: ${logoUrl}`);
 
     // Get current user
