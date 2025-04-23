@@ -129,8 +129,8 @@ export default function BaseHeader({
               onClick={() => navigate(portalType === 'business' && slug ? `/${slug}` : buildUrl('/customer-portal'))}
             >
               {renderLogo()}
-              <h1 className={`text-xl font-bold ${isDarkMode ? 'text-foreground' : 'text-gray-800'}`}>
-                {logoText}
+              <h1 className={`text-xl font-bold break-words ${isDarkMode ? 'text-foreground' : 'text-gray-800'}`}>
+                <span className="md:inline">{logoText}</span>
                 {portalType === 'customer' && (
                   <span className={`${isDarkMode ? 'text-primary' : getPrimaryColor()} font-normal ml-2`}>
                     {getPortalLabel()}
@@ -142,10 +142,12 @@ export default function BaseHeader({
 
           {/* Navigation */}
           <div className="flex items-center">
-            <ul className="flex items-center space-x-2 mr-2">
-              {navigationItems.map((item) => (
-                <li key={item.path}>
+            <div className="flex flex-wrap items-center justify-center md:justify-end gap-2">
+              {/* Navigation buttons in their own container */}
+              <div className="flex flex-wrap items-center gap-2">
+                {navigationItems.map((item) => (
                   <Button
+                    key={item.path}
                     variant={item.isActive ? "default" : "ghost"}
                     size="sm"
                     className={`flex items-center ${
@@ -162,36 +164,37 @@ export default function BaseHeader({
                     {item.icon}
                     {item.label}
                   </Button>
-                </li>
-              ))}
-            </ul>
-            
-            {/* Language selector */}
-            <div className="mx-2">
-              <LanguageSelector />
+                ))}
+              </div>
+              
+              {/* Utilities in their own container */}
+              <div className="flex items-center gap-2">
+                {/* Language selector */}
+                <LanguageSelector />
+                
+                {/* Dark mode toggle for all sites */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      className={`${
+                        isDarkMode 
+                          ? 'text-muted-foreground hover:text-foreground hover:bg-muted' 
+                          : 'text-gray-700 hover:text-gray-900'
+                      }`}
+                    >
+                      {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={toggleDarkMode}>
+                      {isDarkMode ? t('common.switchToLightMode') : t('common.switchToDarkMode')}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
-            
-            {/* Dark mode toggle for all sites */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  className={`${
-                    isDarkMode 
-                      ? 'text-muted-foreground hover:text-foreground hover:bg-muted' 
-                      : 'text-gray-700 hover:text-gray-900'
-                  }`}
-                >
-                  {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={toggleDarkMode}>
-                  {isDarkMode ? t('common.switchToLightMode') : t('common.switchToDarkMode')}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
       </div>
