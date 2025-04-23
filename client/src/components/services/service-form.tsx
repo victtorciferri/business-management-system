@@ -28,18 +28,20 @@ interface ServiceFormProps {
   onSubmitSuccess?: () => void;
 }
 
+// Define valid service types
+const ServiceTypeEnum = z.enum(["individual", "class"]);
+type ServiceType = z.infer<typeof ServiceTypeEnum>;
+
 // Service form schema
 const formSchema = z.object({
   userId: z.number(),
   name: z.string().min(1, { message: "Service name is required" }),
   description: z.string().optional(),
-  duration: z.string().min(1, { message: "Duration is required" })
-    .transform(val => parseInt(val)),
-  price: z.string().min(1, { message: "Price is required" })
-    .transform(val => parseFloat(val)),
+  duration: z.string().min(1, { message: "Duration is required" }),
+  price: z.string().min(1, { message: "Price is required" }),
   color: z.string().default("#06b6d4"),
   active: z.boolean().default(true),
-  serviceType: z.enum(["individual", "class"]).default("individual"),
+  serviceType: ServiceTypeEnum.default("individual"),
   capacity: z.string().default("1")
     .refine(
       (val) => {
@@ -49,12 +51,11 @@ const formSchema = z.object({
       },
       { message: "Capacity must be a valid number" }
     )
-    .transform(val => parseInt(val)),
 }).refine(
   (data) => {
     // For class type, require capacity to be at least 2
     if (data.serviceType === "class") {
-      return data.capacity >= 2;
+      return parseInt(data.capacity) >= 2;
     }
     return true;
   },
@@ -84,8 +85,11 @@ export function ServiceForm({
       duration: existingService ? existingService.duration.toString() : "60",
       price: existingService ? existingService.price.toString() : "",
       color: existingService?.color || "#06b6d4",
-      active: existingService ? existingService.active : true,
-      serviceType: existingService?.serviceType || "individual",
+      active: existingService?.active === false ? false : true,
+      // Ensure serviceType is a valid enum value
+      serviceType: (existingService?.serviceType === "class" || existingService?.serviceType === "individual") 
+                    ? existingService.serviceType 
+                    : "individual",
       capacity: existingService?.capacity ? existingService.capacity.toString() : "1",
     },
   });
@@ -93,13 +97,14 @@ export function ServiceForm({
   // Handle form submission
   const onSubmit = async (values: FormValues) => {
     try {
-      // Ensure proper type conversions for numeric fields
+      // Ensure we're sending data in the expected format for the API
+      // The API expects duration and price as strings that can be parsed as numbers
       const serviceData = {
         ...values,
-        // Make sure these are always converted to numbers for the API
-        duration: Number(values.duration),
-        price: Number(values.price),
-        capacity: values.serviceType === "class" ? Number(values.capacity) : 1
+        // Convert to strings to match API expectations
+        duration: values.duration.toString(),
+        price: values.price.toString(),
+        capacity: (values.serviceType === "class" ? values.capacity : 1).toString()
       };
       
       console.log("Submitting service data:", serviceData);
