@@ -7,6 +7,7 @@ import { useBusinessContext } from "@/contexts/BusinessContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Moon, Sun } from "lucide-react";
 import { LanguageSelector } from "@/components/ui/language-selector";
+import BusinessLogo from "@/components/business/BusinessLogo";
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -66,6 +67,11 @@ export default function BaseHeader({
 
   // Get logo based on business configuration
   const renderLogo = () => {
+    // Special case for Pride&Flow Yoga
+    if (logoText === "Pride&Flow Yoga" || business?.businessSlug === "prideandflow" || slug === "prideandflow") {
+      return <BusinessLogo className="h-10 w-auto mr-3" />;
+    }
+    
     // If a logo URL is available, use it
     if (business?.logoUrl || config.logoUrl) {
       return (
