@@ -104,8 +104,12 @@ export const services = pgTable("services", {
   price: numeric("price").notNull(),
   color: text("color").default("#06b6d4"),
   active: boolean("active").default(true),
-  serviceType: text("service_type").default("individual"), // "individual" or "class" for yoga classes
+  serviceType: text("service_type").default("individual"), // "individual", "class", or "class_pack" 
   capacity: integer("capacity").default(1), // Default 1 for individual appointments, can be higher for classes
+  isRecurring: boolean("is_recurring").default(false), // Whether the class repeats weekly
+  recurringDays: text("recurring_days"), // JSON array of weekdays (0-6, Sunday to Saturday)
+  recurringTime: text("recurring_time"), // Time of day for recurring classes (HH:MM)
+  sessionsPerMonth: integer("sessions_per_month"), // For class packs: how many sessions included per month
 }, (table) => {
   return {
     userIdIdx: index("services_user_id_idx").on(table.userId),
@@ -118,6 +122,10 @@ export const insertServiceSchema = createInsertSchema(services)
   .extend({
     // Make businessSlug optional in the insert schema
     businessSlug: z.string().optional(),
+    // Add validation for recurring days array (for weekly classes)
+    recurringDays: z.string().optional().transform(val => val ? val : null),
+    // Validate time format (HH:MM)
+    recurringTime: z.string().optional().transform(val => val ? val : null),
   })
   .pick({
     userId: true,
@@ -130,6 +138,10 @@ export const insertServiceSchema = createInsertSchema(services)
     active: true,
     serviceType: true,
     capacity: true,
+    isRecurring: true,
+    recurringDays: true,
+    recurringTime: true,
+    sessionsPerMonth: true,
   });
 
 // Customer schema
