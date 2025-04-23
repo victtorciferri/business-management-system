@@ -27,6 +27,7 @@ import DashboardSettings from "@/pages/dashboard/settings";
 import TemplateSettings from "@/pages/dashboard/settings/theme/templates";
 import ThemeSelectorDemo from "@/pages/theme-selector-demo";
 import ColorModeDemo from "@/pages/color-mode-demo";
+import BusinessProfilePage from "@/pages/business-profile-page";
 
 // Payment-related pages
 import PaymentSuccess from "@/pages/payment/success";
@@ -300,6 +301,11 @@ function AppContent() {
           <Route path="/services">
             <ProtectedRoute>
               <Services />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/business-profile">
+            <ProtectedRoute>
+              <BusinessProfilePage />
             </ProtectedRoute>
           </Route>
           <Route path="/products">
