@@ -80,25 +80,35 @@ router.post('/api/upload', upload.single('image'), async (req, res) => {
 // Route for updating business logo
 router.patch('/api/business/update-logo', async (req, res) => {
   try {
+    console.log('Received update logo request with body:', req.body);
+    
     if (!req.isAuthenticated()) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
     const { logoUrl } = req.body;
     const userId = req.user!.id;
+    
+    console.log(`Updating logo for user ID ${userId} with logoUrl: ${logoUrl}`);
 
     // Get current user
     const user = await storage.getUser(userId);
     if (!user) {
+      console.log(`User with ID ${userId} not found`);
       return res.status(404).json({ error: 'User not found' });
     }
+    
+    console.log('Current user data:', { ...user, password: '[REDACTED]' });
 
     // Update user with new logo URL
     const updatedUser = await storage.updateUser(userId, { logoUrl });
     
     if (!updatedUser) {
+      console.log('storage.updateUser returned null or undefined');
       return res.status(500).json({ error: 'Failed to update logo' });
     }
+    
+    console.log('Updated user data:', { ...updatedUser, password: '[REDACTED]' });
 
     // Omit password from response
     const { password, ...userWithoutPassword } = updatedUser;
