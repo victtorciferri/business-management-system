@@ -7,7 +7,7 @@ import { useBusinessContext } from "@/contexts/BusinessContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Moon, Sun } from "lucide-react";
 import { LanguageSelector } from "@/components/ui/language-selector";
-import BusinessLogo from "@/components/business/BusinessLogo";
+import { BusinessLogo } from "@/components/business/BusinessLogo";
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -24,7 +24,7 @@ export interface NavigationItem {
 
 // Extended business interface to include logoUrl
 interface BusinessWithLogo extends Omit<User, "password"> {
-  logoUrl?: string;
+  // logoUrl is already included in the User type
 }
 
 interface BaseHeaderProps {
@@ -83,7 +83,11 @@ export default function BaseHeader({
   const renderLogo = () => {
     // Special case for Pride&Flow Yoga
     if (logoText === "Pride&Flow Yoga" || business?.businessSlug === "prideandflow" || slug === "prideandflow") {
-      return <BusinessLogo className="h-10 w-auto mr-3" businessSlug="prideandflow" />;
+      return business ? (
+        <BusinessLogo business={business} className="h-10 w-auto mr-3" size="small" />
+      ) : (
+        <img src="/src/assets/pride-flow-logo.svg" alt="Pride&Flow Yoga logo" className="h-10 w-auto mr-3" />
+      );
     }
     
     // If a logo URL is available, use it

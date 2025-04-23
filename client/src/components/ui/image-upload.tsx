@@ -1,84 +1,84 @@
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Upload, X, Image as ImageIcon } from 'lucide-react';
+import { 
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogHeader,
+  DialogFooter,
+  DialogDescription
+} from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/spinner';
+import { Upload, X, Image as ImageIcon } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface ImageUploadProps {
   id: string;
-  value?: string | null;
+  value: string | null;
   onChange: (url: string | null) => void;
-  maxSizeInMB?: number;
-  className?: string;
-  aspectRatio?: 'square' | 'portrait' | 'landscape';
-  previewSize?: 'small' | 'medium' | 'large';
   placeholder?: string;
   disabled?: boolean;
+  previewSize?: 'small' | 'medium' | 'large';
+  aspectRatio?: 'square' | 'portrait' | 'landscape';
 }
 
 export function ImageUpload({
   id,
   value,
   onChange,
-  maxSizeInMB = 5,
-  className = '',
-  aspectRatio = 'square',
+  placeholder = 'Upload image',
+  disabled = false,
   previewSize = 'medium',
-  placeholder = 'Upload an image',
-  disabled = false
+  aspectRatio = 'square'
 }: ImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
-  // Convert size to pixels based on previewSize
-  const getPreviewSizeInPx = () => {
-    switch (previewSize) {
-      case 'small': return 100;
-      case 'large': return 300;
-      case 'medium':
-      default: return 200;
-    }
+  const sizeClasses = {
+    small: 'h-10 w-10',
+    medium: 'h-24 w-24',
+    large: 'h-48 w-48'
   };
 
-  // Get aspect ratio class based on the aspectRatio prop
-  const getAspectRatioClass = () => {
-    switch (aspectRatio) {
-      case 'portrait': return 'aspect-[3/4]';
-      case 'landscape': return 'aspect-[4/3]';
-      case 'square':
-      default: return 'aspect-square';
-    }
-  };
-
-  const previewSizePx = getPreviewSizeInPx();
-  const aspectRatioClass = getAspectRatioClass();
-
-  const handleClick = () => {
-    if (!disabled && fileInputRef.current) {
-      fileInputRef.current.click();
-    }
+  const aspectRatioClasses = {
+    square: 'aspect-square',
+    portrait: 'aspect-[3/4]',
+    landscape: 'aspect-[4/3]'
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check file size
-    const fileSizeInMB = file.size / (1024 * 1024);
-    if (fileSizeInMB > maxSizeInMB) {
-      setError(`File size exceeds the maximum limit of ${maxSizeInMB}MB.`);
+    // Check file type and size
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: 'Invalid file type',
+        description: 'Please upload an image file (jpg, png, gif)',
+        variant: 'destructive'
+      });
       return;
     }
 
-    setIsUploading(true);
-    setError(null);
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: 'File too large',
+        description: 'Image must be less than 5MB',
+        variant: 'destructive'
+      });
+      return;
+    }
 
     try {
-      // Create FormData object to upload file
+      setIsUploading(true);
+      
+      // Create FormData to send the file
       const formData = new FormData();
       formData.append('file', file);
 
-      // Upload to server
+      // Upload the file to the server
       const response = await fetch('/api/upload-image', {
         method: 'POST',
         body: formData,
@@ -90,85 +90,131 @@ export function ImageUpload({
 
       const data = await response.json();
       onChange(data.imageUrl);
-    } catch (err) {
-      console.error('Error uploading image:', err);
-      setError('Failed to upload image. Please try again.');
+      
+      toast({
+        title: 'Upload successful',
+        description: 'Your image has been uploaded',
+      });
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast({
+        title: 'Upload failed',
+        description: 'Failed to upload image. Please try again.',
+        variant: 'destructive'
+      });
     } finally {
       setIsUploading(false);
-      // Reset the file input so the same file can be selected again if needed
+      // Reset the file input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
     }
   };
 
-  const handleRemove = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleRemoveImage = () => {
+    setIsDialogOpen(false);
     onChange(null);
-    setError(null);
+    toast({
+      title: 'Image removed',
+      description: 'The image has been removed',
+    });
   };
 
   return (
-    <div className={`${className}`}>
-      <input
+    <div className="flex flex-col items-center">
+      <input 
         id={id}
         type="file"
-        ref={fileInputRef}
         accept="image/*"
         onChange={handleFileChange}
         className="hidden"
+        ref={fileInputRef}
         disabled={disabled || isUploading}
       />
 
-      {!value ? (
+      {/* Image preview or upload button */}
+      {value ? (
         <div 
-          onClick={handleClick}
-          className={`border-2 border-dashed border-gray-300 dark:border-gray-700 ${aspectRatioClass} rounded-lg cursor-pointer
-            flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors
-            ${disabled ? 'opacity-60 cursor-not-allowed' : ''}`}
-          style={{ width: previewSizePx, height: previewSizePx }}
+          className={`${sizeClasses[previewSize]} ${aspectRatioClasses[aspectRatio]} relative cursor-pointer overflow-hidden rounded-md border border-border hover:opacity-90 transition-opacity`}
+          onClick={() => !disabled && setIsDialogOpen(true)}
         >
-          {isUploading ? (
-            <Spinner className="h-8 w-8 text-primary" />
-          ) : (
-            <>
-              <Upload className="h-8 w-8 text-gray-400 dark:text-gray-600 mb-2" />
-              <span className="text-sm text-gray-500 dark:text-gray-400">{placeholder}</span>
-              <span className="text-xs text-gray-400 dark:text-gray-500 mt-1">Max {maxSizeInMB}MB</span>
-            </>
+          <img 
+            src={value} 
+            alt="Uploaded image" 
+            className="object-cover w-full h-full"
+          />
+          {isUploading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-background/70">
+              <Spinner size="md" color="primary" />
+            </div>
           )}
         </div>
       ) : (
-        <div 
-          className="relative group"
-          style={{ width: previewSizePx, height: previewSizePx }}
+        <label 
+          htmlFor={id}
+          className={`${sizeClasses[previewSize]} ${aspectRatioClasses[aspectRatio]} flex flex-col items-center justify-center rounded-md border border-dashed border-muted-foreground/50 bg-background hover:bg-muted/50 transition-colors cursor-pointer ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          <div className={`${aspectRatioClass} bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden`}>
-            <img
-              src={value}
-              alt="Uploaded image"
-              className="w-full h-full object-cover"
+          {isUploading ? (
+            <Spinner size="md" color="primary" />
+          ) : (
+            <>
+              <ImageIcon className="h-8 w-8 text-muted-foreground mb-2" />
+              <span className="text-xs text-muted-foreground text-center px-2">
+                {placeholder}
+              </span>
+            </>
+          )}
+        </label>
+      )}
+
+      {/* Confirmation dialog for removing images */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Image Options</DialogTitle>
+            <DialogDescription>
+              You can change or remove this image
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex justify-center my-4">
+            <img 
+              src={value || ''} 
+              alt="Preview" 
+              className="max-h-48 rounded-md shadow-md"
             />
           </div>
           
-          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 flex items-center justify-center">
-            <Button
+          <DialogFooter className="gap-2 sm:gap-0">
+            <label 
+              htmlFor={id}
+              className="w-full sm:w-auto"
+            >
+              <Button 
+                variant="outline" 
+                disabled={disabled || isUploading}
+                className="w-full flex items-center gap-2"
+                onClick={() => setIsDialogOpen(false)}
+                type="button"
+              >
+                <Upload className="h-4 w-4" />
+                Change
+              </Button>
+            </label>
+            
+            <Button 
+              variant="destructive" 
+              onClick={handleRemoveImage}
+              disabled={disabled || isUploading}
+              className="w-full sm:w-auto flex items-center gap-2"
               type="button"
-              size="icon"
-              variant="destructive"
-              className="opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={handleRemove}
-              disabled={disabled}
             >
               <X className="h-4 w-4" />
+              Remove
             </Button>
-          </div>
-        </div>
-      )}
-
-      {error && (
-        <p className="text-destructive text-sm mt-1">{error}</p>
-      )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,4 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
+import path from "path";
+import { fileURLToPath } from "url";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { seedDatabase } from "./seed";
@@ -9,9 +11,17 @@ import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { registerThemeRoutes } from "./theme/registerThemeRoutes";
 
+// Get current file path and directory path
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Serve uploaded files from the uploads directory
+const uploadsDir = path.join(__dirname, '../uploads');
+app.use('/uploads', express.static(uploadsDir));
 
 app.use((req, res, next) => {
   const start = Date.now();

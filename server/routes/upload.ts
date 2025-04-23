@@ -4,8 +4,13 @@ import path from 'path';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import sharp from 'sharp';
+import { fileURLToPath } from 'url';
 
 const uploadRouter = Router();
+
+// Get current file path and directory path
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Create uploads directory if it doesn't exist
 const uploadsDir = path.join(__dirname, '../../uploads');

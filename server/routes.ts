@@ -9,6 +9,7 @@ import themeRoutes from './routes/themeRoutes';
 import themeApiRoutes from './routes/themeApiRoutes';
 import themeTestRoutes from './routes/theme-test';
 import themeMarketplaceRoutes from './routes/theme-marketplace';
+import uploadRouter from './routes/upload';
 import { convertLegacyThemeToTheme, convertThemeToLegacyTheme, updateThemeForBusiness, getThemeForBusiness } from './utils/themeUtils';
 import { 
   insertUserSchema, 
@@ -296,6 +297,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register the theme marketplace routes
   app.use('/api/themes', themeMarketplaceRoutes);
+  
+  // Register upload routes for image handling
+  app.use('/api', uploadRouter);
+  
+  // Endpoint to update business logo
+  app.patch('/api/business/logo', async (req: Request, res: Response) => {
+    try {
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      
+      const { logoUrl } = req.body;
+      
+      // Update the user's logo_url in the database
+      const result = await db.update(users)
+        .set({ logoUrl })
+        .where(eq(users.id, req.user.id))
+        .returning();
+        
+      if (!result || result.length === 0) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      // Remove password from response
+      const { password, ...updatedUser } = result[0];
+      
+      res.status(200).json({ user: updatedUser });
+    } catch (error) {
+      console.error('Error updating business logo:', error);
+      res.status(500).json({ error: 'Failed to update business logo' });
+    }
+  });
   
   // Make the theme API available by using the router directly
   app.use(themeApiRoutes);

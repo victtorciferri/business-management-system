@@ -1,36 +1,79 @@
-import { memo } from 'react';
-import prideFlowLogo from '@/assets/pride-flow-logo.svg';
-import yogaLogo from '@/assets/yoga-logo.svg';
+import React from 'react';
+import { ImageUpload } from '@/components/ui/image-upload';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import type { User } from '@shared/schema';
 
 interface BusinessLogoProps {
+  business: Omit<User, 'password'>;
   className?: string;
-  alt?: string;
-  size?: number;
-  businessSlug?: string;
+  showLabel?: boolean;
+  size?: 'small' | 'medium' | 'large';
+  aspectRatio?: 'square' | 'portrait' | 'landscape';
+  readOnly?: boolean;
 }
 
-// This component is used to display the business logo
-// It's memoized to avoid unnecessary re-renders
-const BusinessLogo = memo(({ 
-  className = "h-10 w-auto", 
-  alt = "Pride&Flow Yoga", 
-  size = 40,
-  businessSlug
-}: BusinessLogoProps) => {
-  // Use different logos based on business slug
-  const logoSrc = businessSlug === 'prideandflow' ? prideFlowLogo : yogaLogo;
+export function BusinessLogo({
+  business,
+  className = '',
+  showLabel = true,
+  size = 'medium',
+  aspectRatio = 'square',
+  readOnly = false
+}: BusinessLogoProps) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  const updateLogoMutation = useMutation({
+    mutationFn: async (logoUrl: string | null) => {
+      const response = await apiRequest('PATCH', `/api/business/logo`, { logoUrl });
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/current-business'] });
+      toast({
+        title: 'Logo updated',
+        description: 'Your business logo has been updated successfully',
+      });
+    },
+    onError: (error) => {
+      console.error('Error updating logo:', error);
+      toast({
+        title: 'Update failed',
+        description: 'Failed to update logo. Please try again.',
+        variant: 'destructive'
+      });
+    }
+  });
+  
+  const handleLogoChange = (url: string | null) => {
+    updateLogoMutation.mutate(url);
+  };
   
   return (
-    <img
-      src={logoSrc}
-      alt={alt}
-      className={className}
-      width={size}
-      height={size}
-    />
+    <div className={`flex flex-col items-center ${className}`}>
+      <ImageUpload
+        id="business-logo"
+        value={business.logoUrl || null}
+        onChange={readOnly ? () => {} : handleLogoChange}
+        previewSize={size}
+        aspectRatio={aspectRatio}
+        placeholder="Upload business logo"
+        disabled={readOnly || updateLogoMutation.isPending}
+      />
+      
+      {showLabel && (
+        <div className="mt-2 text-center">
+          <h3 className="text-sm font-medium">Business Logo</h3>
+          {!readOnly && (
+            <p className="text-xs text-muted-foreground mt-1">
+              {business.logoUrl ? 'Click to change or remove' : 'Click to upload'}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
   );
-});
-
-BusinessLogo.displayName = 'BusinessLogo';
-
-export default BusinessLogo;
+}
