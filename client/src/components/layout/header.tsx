@@ -48,6 +48,7 @@ export default function Layout({ children, currentUser }: LayoutProps) {
     { name: "Services", path: "/services" },
     { name: "Products", path: "/products" },
     { name: "Staff", path: "/staff-management" },
+    { name: "Business Profile", path: "/business-profile" },
     { name: "Custom Domain", path: "/custom-domain" },
   ];
 
