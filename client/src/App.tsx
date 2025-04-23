@@ -81,7 +81,8 @@ function AppContent() {
     'products', 'services', 'dashboard', 'appointments', 'customers',
     'staff-management', 'staff-profile', 'staff', 'staff-schedule',
     'new-appointment', 'customer-portal', 'error-testing', 'payment',
-    'theme-editor', 'theme-showcase', 'theme-marketplace', 'platform-admin'
+    'theme-editor', 'theme-showcase', 'theme-marketplace', 'platform-admin',
+    'business-profile', 'custom-domain'
   ];
 
   const potentialBusinessSlug = match && 
@@ -148,7 +149,9 @@ function AppContent() {
     '/products',
     '/staff-management',
     '/theme-editor',
-    '/theme-marketplace'
+    '/theme-marketplace',
+    '/business-profile',
+    '/custom-domain'
   ];
   
   // Check if the current location starts with any admin route
