@@ -81,66 +81,89 @@ export function ImageUpload({
       // Log authentication state
       console.log('Auth check before upload - document.cookie:', document.cookie ? 'Cookie exists' : 'No cookie');
       
-      // Upload the file with credentials to ensure cookies are sent
-      console.log('Sending upload request to /api/upload');
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-        credentials: 'include', // Include credentials (cookies) with the request
-      });
+      // Switch to XMLHttpRequest for better debugging
+      console.log('Sending upload request using XMLHttpRequest to /api/upload');
       
-      console.log('Upload response status:', response.status);
-      
-      if (!response.ok) {
-        let errorText;
-        try {
-          // First try to get the response as text
-          const responseText = await response.text();
+      // Using a Promise to wrap XMLHttpRequest for better async/await compatibility
+      const uploadResponse = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        
+        xhr.onreadystatechange = function() {
+          console.log(`XHR state changed: readyState=${xhr.readyState}, status=${xhr.status}`);
           
-          // Check if the response starts with HTML doctype (indicating a redirect to HTML)
-          if (responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html')) {
-            errorText = `Received HTML instead of JSON. Possible redirect or server error. Status: ${response.status}`;
-          } else {
-            // Try to parse as JSON if it doesn't look like HTML
-            try {
-              const errorJson = JSON.parse(responseText);
-              errorText = errorJson.error || JSON.stringify(errorJson);
-            } catch {
-              // If it can't be parsed as JSON, use the raw text
-              errorText = responseText || `Server error: ${response.status} ${response.statusText}`;
+          if (xhr.readyState === 4) { // Request completed
+            console.log('XHR completed with status:', xhr.status);
+            console.log('Response headers:', xhr.getAllResponseHeaders());
+            
+            if (xhr.status >= 200 && xhr.status < 300) {
+              // Success - 2xx status code
+              console.log('XHR raw response:', xhr.responseText);
+              
+              // Try to get the URL from the response
+              let responseData;
+              try {
+                if (xhr.responseText.trim().length === 0) {
+                  console.warn('Empty response received from server');
+                  reject(new Error('Empty response received from server'));
+                  return;
+                }
+                
+                // Try to parse response as JSON
+                if (xhr.getResponseHeader('Content-Type')?.includes('application/json')) {
+                  responseData = JSON.parse(xhr.responseText);
+                  console.log('Parsed JSON response:', responseData);
+                  
+                  if (!responseData || !responseData.url) {
+                    reject(new Error('No URL in response'));
+                    return;
+                  }
+                  
+                  // Resolve with the URL
+                  resolve(responseData.url);
+                } else {
+                  console.warn('Response is not JSON, content type:', xhr.getResponseHeader('Content-Type'));
+                  
+                  // Check if it looks like a URL directly
+                  const trimmedResponse = xhr.responseText.trim();
+                  if (trimmedResponse.startsWith('/uploads/') || trimmedResponse.startsWith('http')) {
+                    console.log('Response appears to be a raw URL');
+                    resolve(trimmedResponse);
+                  } else {
+                    reject(new Error(`Unexpected response format: ${xhr.responseText.substring(0, 100)}...`));
+                  }
+                }
+              } catch (parseError) {
+                console.error('Error parsing response:', parseError);
+                console.error('Raw response text:', xhr.responseText);
+                reject(new Error('Could not parse server response'));
+              }
+            } else {
+              // Error - non-2xx status code
+              console.error('XHR error:', xhr.status, xhr.statusText);
+              reject(new Error(`Server error: ${xhr.status} ${xhr.statusText}`));
             }
           }
-        } catch (parseError) {
-          console.error('Error parsing response:', parseError);
-          errorText = `Server error: ${response.status} ${response.statusText}`;
-        }
-        throw new Error(errorText);
-      }
+        };
+        
+        xhr.onerror = function() {
+          console.error('XHR network error');
+          reject(new Error('Network error while uploading'));
+        };
+        
+        // Open and send the request with credentials
+        xhr.open('POST', '/api/upload', true);
+        xhr.withCredentials = true; // Include cookies
+        xhr.send(formData);
+      });
       
-      // For successful responses, first get the text and then parse it
-      // This avoids JSON parsing errors
-      let data;
-      try {
-        const responseText = await response.text();
-        data = JSON.parse(responseText);
-        console.log('Upload response data:', data);
-        
-        if (!data || !data.url) {
-          throw new Error('Invalid response from server: No URL returned');
-        }
-        
-        // Success - call the onChange handler with the new URL
-        console.log('Upload successful, URL:', data.url);
-        onChange(data.url);
-        
-        toast({
-          title: 'Image uploaded',
-          description: 'Your image has been uploaded successfully',
-        });
-      } catch (parseError) {
-        console.error('Error parsing successful response:', parseError);
-        throw new Error('Invalid JSON in server response');
-      }
+      // If we got here, we have a URL
+      console.log('Upload successful, URL:', uploadResponse);
+      onChange(uploadResponse);
+      
+      toast({
+        title: 'Image uploaded',
+        description: 'Your image has been uploaded successfully',
+      });
     } catch (error) {
       console.error('Error uploading image:', error);
       let errorMessage = 'Failed to upload image. Please try again.';
