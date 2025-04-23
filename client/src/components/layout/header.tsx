@@ -106,7 +106,20 @@ export default function Layout({ children, currentUser }: LayoutProps) {
                 <ColorModeToggle />
               </div>
 
-              <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+              {/* Business Profile link - Always visible */}
+              {currentUser && currentUser.role === 'business' && (
+                <Link href="/business-profile">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="ml-4 text-foreground flex items-center"
+                  >
+                    Business Profile
+                  </Button>
+                </Link>
+              )}
+
+              <Button variant="ghost" size="icon" className="ml-4 relative text-muted-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
                 <span className="sr-only">View notifications</span>
                 <Bell className="h-5 w-5" />
               </Button>
@@ -173,6 +186,17 @@ export default function Layout({ children, currentUser }: LayoutProps) {
                 {item.name}
               </Link>
             ))}
+
+            {/* Emphasize Business Profile link on mobile */}
+            {currentUser && currentUser.role === 'business' && (
+              <Link 
+                href="/business-profile"
+                className="bg-primary/10 border-primary text-primary dark:text-primary block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Business Profile
+              </Link>
+            )}
 
             {/* Mobile theme toggle */}
             <button
