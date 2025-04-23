@@ -27,9 +27,9 @@ export function BusinessLogo({
     mutationFn: async (logoUrl: string | null) => {
       // Enhanced debug logging
       console.log('Updating logo with URL:', logoUrl);
-      const res = await apiRequest('PATCH', `/api/business/update-logo`, { logoUrl }, {
-        credentials: 'include' // Ensure cookies are sent with the request
-      });
+      
+      // Include credentials in all requests using fetch directly since apiRequest already includes them
+      const res = await apiRequest('PATCH', `/api/business/update-logo`, { logoUrl });
       const result = await res.json();
       console.log('Logo update response:', result);
       return result;

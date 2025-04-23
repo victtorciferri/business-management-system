@@ -53,6 +53,19 @@ export default function AuthPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Attempting login with:', { ...loginForm, password: '[REDACTED]' });
+    
+    // Check session/cookie status before login
+    try {
+      const res = await fetch('/api/auth-debug', { 
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' } 
+      });
+      console.log('Auth state before login:', await res.json());
+    } catch (err) {
+      console.error('Error checking auth state:', err);
+    }
+    
     loginMutation.mutate(loginForm);
   };
 

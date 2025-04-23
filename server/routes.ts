@@ -1052,11 +1052,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
    * This endpoint is used by the auth hook on the frontend
    */
   app.get("/api/user", (req: Request, res: Response) => {
+    console.log("User authentication check:", {
+      sessionID: req.sessionID,
+      hasSession: !!req.session,
+      sessionCookie: req.session?.cookie,
+      userInSession: !!req.session?.user,
+      sessionData: req.session
+    });
+    
     if (!req.session?.user) {
+      console.log("User not authenticated when calling /api/user");
       return res.status(401).json({ message: "Not authenticated" });
     }
     
+    console.log("User authenticated when calling /api/user", {
+      userID: req.session.user.id,
+      username: req.session.user.username
+    });
+    
     return res.json(req.session.user);
+  });
+  
+  /**
+   * Debug endpoint for checking authentication state
+   * This is used for debugging session issues
+   */
+  app.get("/api/auth-debug", (req: Request, res: Response) => {
+    const debugInfo = {
+      isAuthenticated: !!req.session?.user,
+      sessionID: req.sessionID,
+      hasSession: !!req.session,
+      sessionCookie: req.session?.cookie,
+      headers: {
+        cookie: req.headers.cookie
+      }
+    };
+    
+    console.log("Auth debug info:", debugInfo);
+    res.json(debugInfo);
   });
   
   app.post("/api/logout", (req: Request, res: Response) => {
