@@ -69,29 +69,45 @@ export function ImageUpload({
 
     try {
       setIsUploading(true);
+      console.log('Starting image upload process');
       
       // Create form data for file upload
       const formData = new FormData();
       formData.append('image', file);
       
+      // Log authentication state
+      console.log('Auth check before upload - document.cookie:', document.cookie ? 'Cookie exists' : 'No cookie');
+      
       // Upload the file with credentials to ensure cookies are sent
+      console.log('Sending upload request to /api/upload');
       const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
         credentials: 'include', // Include credentials (cookies) with the request
       });
       
+      console.log('Upload response status:', response.status);
+      
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || 'Failed to upload image');
+        let errorText;
+        try {
+          const errorJson = await response.json();
+          errorText = errorJson.error || JSON.stringify(errorJson);
+        } catch {
+          errorText = await response.text() || `Server error: ${response.status} ${response.statusText}`;
+        }
+        throw new Error(errorText);
       }
       
       const data = await response.json();
+      console.log('Upload response data:', data);
       
       if (!data || !data.url) {
         throw new Error('Invalid response from server: No URL returned');
       }
       
+      // Success - call the onChange handler with the new URL
+      console.log('Upload successful, URL:', data.url);
       onChange(data.url);
       
       toast({
@@ -102,9 +118,16 @@ export function ImageUpload({
       console.error('Error uploading image:', error);
       let errorMessage = 'Failed to upload image. Please try again.';
       
-      // Try to extract a meaningful error message if available
+      // Enhanced error handling with more detailed diagnostics
       if (error instanceof Error) {
         errorMessage = error.message || errorMessage;
+        
+        // If it's a network or CORS error, add more specific guidance
+        if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+          errorMessage = 'Network error during upload. Please check your connection and try again.';
+        } else if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+          errorMessage = 'Authentication error. Please log in again and retry.';
+        }
       }
       
       toast({

@@ -49,28 +49,37 @@ router.post('/api/upload', upload.single('image'), async (req, res) => {
     console.log('Upload request received');
     console.log('Request body:', req.body);
     console.log('Request file:', req.file);
-    console.log('Authentication status:', req.isAuthenticated());
-    console.log('Session ID:', req.sessionID);
+    console.log('Authentication state:', {
+      isAuthenticated: req.isAuthenticated(),
+      sessionID: req.sessionID,
+      userInPassport: !!req.user,
+      userInSession: !!req.session?.user
+    });
     console.log('Session:', req.session);
-    console.log('User in session:', req.user ? 'Yes' : 'No');
     
     if (!req.file) {
       console.log('No file in request');
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    // Check session authentication
-    if (!req.session?.user) {
-      console.log('User not authenticated (no user in session), but continuing for debugging');
+    // Enhanced authentication check - try both methods but don't block uploads yet
+    // This allows us to diagnose issues while still allowing uploads to work
+    if (!req.isAuthenticated() && !req.session?.user) {
+      console.log('User not authenticated via passport or session, but continuing for debugging');
       console.log('Session data:', req.session);
       console.log('Session cookie in headers:', req.headers.cookie);
       
-      // Continue without authentication for now to debug the issue
-      // In production, we would delete the file and return 401
+      // In production, we would uncomment these lines:
       // fs.unlinkSync(req.file.path);
       // return res.status(401).json({ error: 'Unauthorized' });
     } else {
-      console.log('User authenticated in session:', req.session.user.username);
+      // Log which auth method worked
+      if (req.isAuthenticated()) {
+        console.log('User authenticated via passport:', req.user.username);
+      }
+      if (req.session?.user) {
+        console.log('User authenticated in session:', req.session.user.username);
+      }
     }
 
     // Check uploads directory access
@@ -190,6 +199,33 @@ router.patch('/api/business/update-logo', async (req, res) => {
     console.error('Error updating logo:', error);
     res.status(500).json({ error: 'Error updating logo' });
   }
+});
+
+// Debug route to check authentication status
+router.get('/api/auth-status', (req, res) => {
+  console.log('Auth status check requested');
+  console.log('Session ID:', req.sessionID);
+  console.log('Session data:', req.session);
+  console.log('Is authenticated:', req.isAuthenticated());
+  console.log('User in session:', req.session?.user ? 'Yes' : 'No');
+  
+  if (req.isAuthenticated()) {
+    console.log('User authenticated via passport:', req.user.username);
+  }
+  
+  if (req.session?.user) {
+    console.log('User authenticated via session:', req.session.user.username);
+  }
+  
+  // Return auth status
+  res.status(200).json({
+    authenticated: req.isAuthenticated() || !!req.session?.user,
+    method: req.isAuthenticated() ? 'passport' : (req.session?.user ? 'session' : 'none'),
+    sessionID: req.sessionID,
+    sessionExists: !!req.session,
+    userInSession: !!req.session?.user,
+    userInPassport: req.isAuthenticated()
+  });
 });
 
 export default router;
