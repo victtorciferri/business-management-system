@@ -7,6 +7,17 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { storage } from '../storage';
 
+// Global array to store the latest uploads (used for recovery)
+interface UploadRecord {
+  url: string;
+  filename: string;
+  timestamp: string;
+  userId: number | undefined;
+}
+
+// This global state is used for recovery if the client can't parse the response
+const globalLatestUploads: UploadRecord[] = [];
+
 // ES Module workaround for __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -144,15 +155,23 @@ router.post('/api/upload', upload.single('image'), async (req, res) => {
     const imageUrl = `/uploads/${processedFilename}`;
     console.log('Return URL:', imageUrl);
     
-    // Ensure a proper JSON response even if the json() method fails
-    try {
-      res.status(200).json({ url: imageUrl, success: true });
-    } catch (jsonError) {
-      console.error('Error sending JSON response:', jsonError);
-      // Fallback to manually-formatted JSON
-      res.setHeader('Content-Type', 'application/json');
-      res.status(200).send(JSON.stringify({ url: imageUrl, success: true }));
+    // Store the latest upload in a global variable for recovery purposes
+    globalLatestUploads.unshift({
+      url: imageUrl,
+      filename: processedFilename,
+      timestamp: new Date().toISOString(),
+      userId: req.user?.id || req.session?.user?.id
+    });
+    
+    // Keep only the latest 10 uploads
+    if (globalLatestUploads.length > 10) {
+      globalLatestUploads.pop();
     }
+    
+    // Send a direct text response with just the URL to avoid any JSON parsing issues
+    // This is more robust since the client can still extract the URL even from HTML or mixed responses
+    res.setHeader('Content-Type', 'text/plain');
+    res.status(200).send(imageUrl);
   } catch (error) {
     console.error('Error processing uploaded file:', error);
     
@@ -309,6 +328,35 @@ router.get('/api/auth-status', (req, res) => {
       success: true
     }));
   }
+});
+
+// Fallback endpoint for retrieving latest uploads (used for recovery)
+router.get('/api/uploads/latest', (req, res) => {
+  console.log('Latest uploads requested');
+  console.log('Authentication state:', {
+    isAuthenticated: req.isAuthenticated(),
+    sessionID: req.sessionID,
+    userInPassport: !!req.user,
+    userInSession: !!req.session?.user
+  });
+  
+  // Require authentication
+  if (!req.isAuthenticated() && !req.session?.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  // Get user ID from either passport or session
+  const userId = req.user?.id || req.session?.user?.id;
+  
+  // Filter uploads by user ID if available
+  let userUploads = globalLatestUploads;
+  if (userId) {
+    userUploads = globalLatestUploads.filter(upload => upload.userId === userId);
+  }
+  
+  console.log(`Found ${userUploads.length} uploads for user ID ${userId || 'unknown'}`);
+  
+  res.status(200).json(userUploads);
 });
 
 export default router;

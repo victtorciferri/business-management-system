@@ -81,88 +81,121 @@ export function ImageUpload({
       // Log authentication state
       console.log('Auth check before upload - document.cookie:', document.cookie ? 'Cookie exists' : 'No cookie');
       
-      // Switch to XMLHttpRequest for better debugging
-      console.log('Sending upload request using XMLHttpRequest to /api/upload');
+      // Let's try a more direct approach with fetch API but with built-in retry support
+      console.log('Sending upload request to /api/upload with special direct handling');
       
-      // Using a Promise to wrap XMLHttpRequest for better async/await compatibility
-      const uploadResponse = await new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
+      // Function to extract URL from HTML response (as a fallback)
+      const extractUrlFromHtml = (html: string): string | null => {
+        console.log('Attempting to extract URL from HTML response');
+        // Look for a URL pattern that starts with /uploads/ in the HTML
+        const uploadUrlMatch = html.match(/\/uploads\/[a-zA-Z0-9_.-]+/);
+        if (uploadUrlMatch) {
+          console.log('Found URL in HTML:', uploadUrlMatch[0]);
+          return uploadUrlMatch[0];
+        }
+        return null;
+      };
+      
+      // Wrapper function for fetch with retries
+      const fetchWithRetry = async (
+        url: string, 
+        options: RequestInit, 
+        retries = 3, 
+        backoff = 300
+      ): Promise<Response> => {
+        try {
+          return await fetch(url, options);
+        } catch (err) {
+          if (retries <= 1) throw err;
+          await new Promise(resolve => setTimeout(resolve, backoff));
+          return fetchWithRetry(url, options, retries - 1, backoff * 2);
+        }
+      };
+      
+      // First try our normal approach with a direct POST
+      try {
+        const response = await fetchWithRetry('/api/upload', {
+          method: 'POST',
+          body: formData,
+          credentials: 'include',
+        }, 3, 500);
         
-        xhr.onreadystatechange = function() {
-          console.log(`XHR state changed: readyState=${xhr.readyState}, status=${xhr.status}`);
+        console.log('Upload response status:', response.status);
+        console.log('Upload response type:', response.headers.get('Content-Type'));
+        
+        // Get the response as text first
+        const responseText = await response.text();
+        console.log('Raw response text (first 100 chars):', responseText.substring(0, 100));
+        
+        // Try different approaches to extract the URL
+        let imageUrl: string | null = null;
+        
+        // Method 1: Try to parse as JSON if it looks like JSON
+        if (responseText.trim().startsWith('{') || responseText.trim().startsWith('[')) {
+          try {
+            const data = JSON.parse(responseText);
+            console.log('Parsed JSON response:', data);
+            if (data && data.url) {
+              imageUrl = data.url;
+              console.log('Found URL in JSON response:', imageUrl);
+            }
+          } catch (e) {
+            console.warn('Failed to parse JSON, trying other methods');
+          }
+        }
+        
+        // Method 2: See if the response is a direct URL string
+        if (!imageUrl && (responseText.trim().startsWith('/uploads/') || responseText.trim().startsWith('http'))) {
+          imageUrl = responseText.trim();
+          console.log('Response appears to be a direct URL:', imageUrl);
+        }
+        
+        // Method 3: If it's HTML, try to extract a URL
+        if (!imageUrl && responseText.includes('<!DOCTYPE html>')) {
+          imageUrl = extractUrlFromHtml(responseText);
+          console.log('Extracted URL from HTML:', imageUrl);
+        }
+        
+        // If we found a URL by any method, use it
+        if (imageUrl) {
+          console.log('Found URL through one of our extraction methods:', imageUrl);
+          return imageUrl;
+        }
+        
+        // If we got here, we couldn't find a URL
+        throw new Error('Could not extract image URL from server response');
+      } catch (error) {
+        console.error('First upload attempt failed:', error);
+        
+        // Fall back to a direct API fetch to get the latest upload - this is a recovery mechanism
+        try {
+          console.log('Attempting fallback to get the most recent upload');
+          const latestUploadsResponse = await fetch('/api/uploads/latest', { 
+            credentials: 'include' 
+          });
           
-          if (xhr.readyState === 4) { // Request completed
-            console.log('XHR completed with status:', xhr.status);
-            console.log('Response headers:', xhr.getAllResponseHeaders());
-            
-            if (xhr.status >= 200 && xhr.status < 300) {
-              // Success - 2xx status code
-              console.log('XHR raw response:', xhr.responseText);
-              
-              // Try to get the URL from the response
-              let responseData;
-              try {
-                if (xhr.responseText.trim().length === 0) {
-                  console.warn('Empty response received from server');
-                  reject(new Error('Empty response received from server'));
-                  return;
-                }
-                
-                // Try to parse response as JSON
-                if (xhr.getResponseHeader('Content-Type')?.includes('application/json')) {
-                  responseData = JSON.parse(xhr.responseText);
-                  console.log('Parsed JSON response:', responseData);
-                  
-                  if (!responseData || !responseData.url) {
-                    reject(new Error('No URL in response'));
-                    return;
-                  }
-                  
-                  // Resolve with the URL
-                  resolve(responseData.url);
-                } else {
-                  console.warn('Response is not JSON, content type:', xhr.getResponseHeader('Content-Type'));
-                  
-                  // Check if it looks like a URL directly
-                  const trimmedResponse = xhr.responseText.trim();
-                  if (trimmedResponse.startsWith('/uploads/') || trimmedResponse.startsWith('http')) {
-                    console.log('Response appears to be a raw URL');
-                    resolve(trimmedResponse);
-                  } else {
-                    reject(new Error(`Unexpected response format: ${xhr.responseText.substring(0, 100)}...`));
-                  }
-                }
-              } catch (parseError) {
-                console.error('Error parsing response:', parseError);
-                console.error('Raw response text:', xhr.responseText);
-                reject(new Error('Could not parse server response'));
-              }
-            } else {
-              // Error - non-2xx status code
-              console.error('XHR error:', xhr.status, xhr.statusText);
-              reject(new Error(`Server error: ${xhr.status} ${xhr.statusText}`));
+          if (latestUploadsResponse.ok) {
+            const latestUploads = await latestUploadsResponse.json();
+            if (latestUploads && latestUploads.length > 0) {
+              console.log('Found latest upload:', latestUploads[0]);
+              return latestUploads[0].url;
             }
           }
-        };
+        } catch (fallbackError) {
+          console.error('Fallback attempt also failed:', fallbackError);
+        }
         
-        xhr.onerror = function() {
-          console.error('XHR network error');
-          reject(new Error('Network error while uploading'));
-        };
-        
-        // Open and send the request with credentials
-        xhr.open('POST', '/api/upload', true);
-        xhr.withCredentials = true; // Include cookies
-        xhr.send(formData);
-      });
+        // If we reached here, both attempts failed
+        throw error;
+      }
       
-      // If we got here, we have a URL
-      console.log('Upload successful, URL:', uploadResponse);
-      onChange(uploadResponse);
-      
+      // This code shouldn't be reached if all goes well - the successful branch returns directly
+      console.log('Upload successful, but execution reached an unexpected point');
+      // If we somehow got here without a returned value, don't change anything
       toast({
-        title: 'Image uploaded',
-        description: 'Your image has been uploaded successfully',
+        title: 'Warning',
+        description: 'Upload completed but with unexpected flow. Please check console logs.',
+        variant: 'destructive',
       });
     } catch (error) {
       console.error('Error uploading image:', error);
