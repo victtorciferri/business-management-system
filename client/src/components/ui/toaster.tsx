@@ -23,7 +23,9 @@ export function Toaster() {
                 <ToastDescription
                   className={isError ? "select-text whitespace-pre-wrap font-mono text-xs" : ""}
                 >
-                  {description}
+                  {typeof description === 'string' 
+                    ? description 
+                    : description?.toString?.() || 'An error occurred'}
                 </ToastDescription>
               )}
             </div>

@@ -44,9 +44,16 @@ export function BusinessLogo({
     },
     onError: (error) => {
       console.error('Error updating logo:', error);
+      let errorMessage = 'Failed to update logo. Please try again.';
+      
+      // Try to extract a meaningful error message if available
+      if (error instanceof Error) {
+        errorMessage = error.message || errorMessage;
+      }
+      
       toast({
         title: 'Update failed',
-        description: 'Failed to update logo. Please try again.',
+        description: errorMessage,
         variant: 'destructive'
       });
     }

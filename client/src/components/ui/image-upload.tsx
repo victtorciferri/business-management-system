@@ -82,10 +82,16 @@ export function ImageUpload({
       });
       
       if (!response.ok) {
-        throw new Error('Failed to upload image');
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to upload image');
       }
       
       const data = await response.json();
+      
+      if (!data || !data.url) {
+        throw new Error('Invalid response from server: No URL returned');
+      }
+      
       onChange(data.url);
       
       toast({
@@ -94,9 +100,16 @@ export function ImageUpload({
       });
     } catch (error) {
       console.error('Error uploading image:', error);
+      let errorMessage = 'Failed to upload image. Please try again.';
+      
+      // Try to extract a meaningful error message if available
+      if (error instanceof Error) {
+        errorMessage = error.message || errorMessage;
+      }
+      
       toast({
         title: 'Upload failed',
-        description: 'Failed to upload image. Please try again.',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
