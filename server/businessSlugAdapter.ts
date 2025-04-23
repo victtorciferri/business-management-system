@@ -110,6 +110,19 @@ export class BusinessSlugAdapter implements IStorage {
   async createUser(user: InsertUser): Promise<User> {
     return this.storage.createUser(user);
   }
+  
+  async updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined> {
+    // Remove the businessSlug from the update object if it exists
+    const updateWithoutSlug = this.stripBusinessSlug(userData);
+    
+    // Update the user in the database
+    const updatedUser = await this.storage.updateUser(id, updateWithoutSlug as Partial<InsertUser>);
+    
+    if (updatedUser) {
+      return this.addBusinessSlugToObject(updatedUser, updatedUser.id, userData.businessSlug);
+    }
+    return undefined;
+  }
 
   // Service methods
   async getService(id: number): Promise<Service | undefined> {
