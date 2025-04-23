@@ -75,6 +75,14 @@ export function ServiceForm({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
+  // Helper function to safely extract service type
+  const getServiceType = (type: string | null | undefined): ServiceType => {
+    if (type === "class" || type === "individual") {
+      return type;
+    }
+    return "individual";
+  };
+  
   // Initialize form with default values or existing service
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -85,11 +93,10 @@ export function ServiceForm({
       duration: existingService ? existingService.duration.toString() : "60",
       price: existingService ? existingService.price.toString() : "",
       color: existingService?.color || "#06b6d4",
-      active: existingService?.active === false ? false : true,
-      // Ensure serviceType is a valid enum value
-      serviceType: (existingService?.serviceType === "class" || existingService?.serviceType === "individual") 
-                    ? existingService.serviceType 
-                    : "individual",
+      // Use nullish coalescing to handle null or undefined
+      active: existingService?.active ?? true,
+      // Use the helper function to validate service type
+      serviceType: getServiceType(existingService?.serviceType),
       capacity: existingService?.capacity ? existingService.capacity.toString() : "1",
     },
   });
@@ -97,14 +104,18 @@ export function ServiceForm({
   // Handle form submission
   const onSubmit = async (values: FormValues) => {
     try {
-      // Ensure we're sending data in the expected format for the API
-      // The API expects duration and price as strings that can be parsed as numbers
+      // The backend expects numeric fields as numbers, not strings
+      // Convert form values to match API expectations
       const serviceData = {
-        ...values,
-        // Convert to strings to match API expectations
-        duration: values.duration.toString(),
-        price: values.price.toString(),
-        capacity: (values.serviceType === "class" ? values.capacity : 1).toString()
+        userId: values.userId,
+        name: values.name,
+        description: values.description || null,
+        duration: parseInt(values.duration),
+        price: parseFloat(values.price),
+        color: values.color,
+        active: values.active,
+        serviceType: values.serviceType,
+        capacity: values.serviceType === "class" ? parseInt(values.capacity) : 1
       };
       
       console.log("Submitting service data:", serviceData);
