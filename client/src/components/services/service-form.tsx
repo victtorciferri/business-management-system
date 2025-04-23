@@ -106,18 +106,18 @@ export function ServiceForm({
     try {
       // Create service data that exactly matches the expected schema format
       // The backend validates using the insertServiceSchema from shared/schema.ts
+      // Numbers are expected as numbers, strings as strings
       const serviceData = {
-        userId: values.userId,
+        userId: values.userId,  // Already a number
         name: values.name,
         description: values.description || null,
-        // Make sure to convert string fields to the correct number types
-        // price is numeric in the database, duration and capacity are integers
-        duration: parseInt(values.duration),
-        price: parseFloat(values.price),
+        // Numeric fields - convert from strings appropriately
+        duration: parseInt(values.duration),  // integer in database
+        price: values.price,  // Keep as string for numeric type
         color: values.color,
         active: values.active,
         serviceType: values.serviceType,
-        capacity: values.serviceType === "class" ? parseInt(values.capacity) : 1
+        capacity: values.serviceType === "class" ? parseInt(values.capacity) : 1  // integer in database
       };
       
       console.log("Submitting service data:", serviceData);
