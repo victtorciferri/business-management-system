@@ -59,14 +59,18 @@ router.post('/api/upload', upload.single('image'), async (req, res) => {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    // Even if the user is not authenticated, we'll continue for debugging purposes
-    if (!req.isAuthenticated()) {
-      console.log('User not authenticated, but continuing for debugging');
+    // Check session authentication
+    if (!req.session?.user) {
+      console.log('User not authenticated (no user in session), but continuing for debugging');
+      console.log('Session data:', req.session);
       console.log('Session cookie in headers:', req.headers.cookie);
       
-      // This is for debugging only - in production, we would delete the file and return 401
+      // Continue without authentication for now to debug the issue
+      // In production, we would delete the file and return 401
       // fs.unlinkSync(req.file.path);
       // return res.status(401).json({ error: 'Unauthorized' });
+    } else {
+      console.log('User authenticated in session:', req.session.user.username);
     }
 
     // Check uploads directory access
@@ -131,13 +135,22 @@ router.post('/api/upload', upload.single('image'), async (req, res) => {
 router.patch('/api/business/update-logo', async (req, res) => {
   try {
     console.log('Received update logo request with body:', req.body);
+    console.log('Authentication state:', {
+      sessionID: req.sessionID,
+      hasSession: !!req.session,
+      sessionData: req.session,
+      userInSession: !!req.session?.user
+    });
     
-    if (!req.isAuthenticated()) {
+    // Check if user is authenticated via session
+    if (!req.session?.user) {
+      console.log('User not authenticated - no user in session');
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
     const { logoUrl } = req.body;
-    const userId = req.user!.id;
+    const userId = req.session.user.id;
+    console.log(`User ID from session: ${userId}`);
     
     console.log(`Updating logo for user ID ${userId} with logoUrl: ${logoUrl}`);
 
