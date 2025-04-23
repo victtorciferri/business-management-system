@@ -143,10 +143,36 @@ router.post('/api/upload', upload.single('image'), async (req, res) => {
     // Return the URL to the processed image
     const imageUrl = `/uploads/${processedFilename}`;
     console.log('Return URL:', imageUrl);
-    res.status(200).json({ url: imageUrl });
+    
+    // Ensure a proper JSON response even if the json() method fails
+    try {
+      res.status(200).json({ url: imageUrl, success: true });
+    } catch (jsonError) {
+      console.error('Error sending JSON response:', jsonError);
+      // Fallback to manually-formatted JSON
+      res.setHeader('Content-Type', 'application/json');
+      res.status(200).send(JSON.stringify({ url: imageUrl, success: true }));
+    }
   } catch (error) {
     console.error('Error processing uploaded file:', error);
-    res.status(500).json({ error: 'Error processing uploaded file' });
+    
+    // Ensure a proper error JSON response
+    try {
+      res.status(500).json({ 
+        error: 'Error processing uploaded file', 
+        success: false,
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    } catch (jsonError) {
+      console.error('Error sending JSON error response:', jsonError);
+      // Fallback to manually-formatted JSON
+      res.setHeader('Content-Type', 'application/json');
+      res.status(500).send(JSON.stringify({ 
+        error: 'Error processing uploaded file', 
+        success: false,
+        message: error instanceof Error ? error.message : 'Unknown error'
+      }));
+    }
   }
 });
 
@@ -204,10 +230,41 @@ router.patch('/api/business/update-logo', async (req, res) => {
     // Omit password from response
     const { password, ...userWithoutPassword } = updatedUser;
     
-    res.status(200).json(userWithoutPassword);
+    // Ensure a proper JSON response even if the json() method fails
+    try {
+      res.status(200).json({ 
+        ...userWithoutPassword,
+        success: true 
+      });
+    } catch (jsonError) {
+      console.error('Error sending JSON response:', jsonError);
+      // Fallback to manually-formatted JSON
+      res.setHeader('Content-Type', 'application/json');
+      res.status(200).send(JSON.stringify({ 
+        ...userWithoutPassword,
+        success: true 
+      }));
+    }
   } catch (error) {
     console.error('Error updating logo:', error);
-    res.status(500).json({ error: 'Error updating logo' });
+    
+    // Ensure a proper error JSON response
+    try {
+      res.status(500).json({ 
+        error: 'Error updating logo', 
+        success: false,
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    } catch (jsonError) {
+      console.error('Error sending JSON error response:', jsonError);
+      // Fallback to manually-formatted JSON
+      res.setHeader('Content-Type', 'application/json');
+      res.status(500).send(JSON.stringify({ 
+        error: 'Error updating logo', 
+        success: false,
+        message: error instanceof Error ? error.message : 'Unknown error'
+      }));
+    }
   }
 });
 
@@ -227,15 +284,31 @@ router.get('/api/auth-status', (req, res) => {
     console.log('User authenticated via session:', req.session.user.username);
   }
   
-  // Return auth status
-  res.status(200).json({
-    authenticated: req.isAuthenticated() || !!req.session?.user,
-    method: req.isAuthenticated() ? 'passport' : (req.session?.user ? 'session' : 'none'),
-    sessionID: req.sessionID,
-    sessionExists: !!req.session,
-    userInSession: !!req.session?.user,
-    userInPassport: req.isAuthenticated()
-  });
+  // Return auth status - with robust error handling
+  try {
+    res.status(200).json({
+      authenticated: req.isAuthenticated() || !!req.session?.user,
+      method: req.isAuthenticated() ? 'passport' : (req.session?.user ? 'session' : 'none'),
+      sessionID: req.sessionID,
+      sessionExists: !!req.session,
+      userInSession: !!req.session?.user,
+      userInPassport: req.isAuthenticated(),
+      success: true
+    });
+  } catch (jsonError) {
+    console.error('Error sending auth status JSON response:', jsonError);
+    // Fallback to manually-formatted JSON
+    res.setHeader('Content-Type', 'application/json');
+    res.status(200).send(JSON.stringify({
+      authenticated: req.isAuthenticated() || !!req.session?.user,
+      method: req.isAuthenticated() ? 'passport' : (req.session?.user ? 'session' : 'none'),
+      sessionID: req.sessionID,
+      sessionExists: !!req.session,
+      userInSession: !!req.session?.user,
+      userInPassport: req.isAuthenticated(),
+      success: true
+    }));
+  }
 });
 
 export default router;
