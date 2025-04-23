@@ -25,8 +25,14 @@ export function BusinessLogo({
   // Mutation to update the logo
   const logoMutation = useMutation({
     mutationFn: async (logoUrl: string | null) => {
-      const res = await apiRequest('PATCH', `/api/business/update-logo`, { logoUrl });
-      return await res.json();
+      // Enhanced debug logging
+      console.log('Updating logo with URL:', logoUrl);
+      const res = await apiRequest('PATCH', `/api/business/update-logo`, { logoUrl }, {
+        credentials: 'include' // Ensure cookies are sent with the request
+      });
+      const result = await res.json();
+      console.log('Logo update response:', result);
+      return result;
     },
     onSuccess: () => {
       // Update the business data in the cache after successful update

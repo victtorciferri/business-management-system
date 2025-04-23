@@ -74,10 +74,11 @@ export function ImageUpload({
       const formData = new FormData();
       formData.append('image', file);
       
-      // Upload the file
+      // Upload the file with credentials to ensure cookies are sent
       const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
+        credentials: 'include', // Include credentials (cookies) with the request
       });
       
       if (!response.ok) {

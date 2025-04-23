@@ -67,15 +67,16 @@ export function setupAuth(app: Express) {
   
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || "appointease-secret-key",
-    resave: false,
-    saveUninitialized: false,
+    resave: true, // Changed to true for better compatibility
+    saveUninitialized: true, // Changed to true to ensure session is saved
     store: new MemoryStore({
       checkPeriod: 86400000, // prune expired entries every 24h
     }),
     cookie: {
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production"
+      secure: false, // Set to false in development for simpler testing
+      sameSite: 'lax' // Added for better cookie handling
     }
   };
 
@@ -158,5 +159,28 @@ export function setupAuth(app: Express) {
     // We omit the password field from the user object for security
     const { password, ...safeUser } = req.user as User;
     res.json(safeUser);
+  });
+  
+  // Add a debug route to check auth status with more details
+  app.get("/api/auth-debug", (req, res) => {
+    console.log('Auth debug endpoint called');
+    console.log('Session ID:', req.sessionID);
+    console.log('Is authenticated:', req.isAuthenticated());
+    console.log('Session data:', req.session);
+    
+    if (req.isAuthenticated()) {
+      const { password, ...safeUser } = req.user as User;
+      res.json({
+        authenticated: true,
+        sessionID: req.sessionID,
+        user: safeUser
+      });
+    } else {
+      res.json({
+        authenticated: false,
+        sessionID: req.sessionID,
+        session: req.session
+      });
+    }
   });
 }

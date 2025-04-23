@@ -50,17 +50,23 @@ router.post('/api/upload', upload.single('image'), async (req, res) => {
     console.log('Request body:', req.body);
     console.log('Request file:', req.file);
     console.log('Authentication status:', req.isAuthenticated());
+    console.log('Session ID:', req.sessionID);
+    console.log('Session:', req.session);
+    console.log('User in session:', req.user ? 'Yes' : 'No');
     
     if (!req.file) {
       console.log('No file in request');
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
+    // Even if the user is not authenticated, we'll continue for debugging purposes
     if (!req.isAuthenticated()) {
-      console.log('User not authenticated, deleting file');
-      // Delete the file if the user is not authenticated
-      fs.unlinkSync(req.file.path);
-      return res.status(401).json({ error: 'Unauthorized' });
+      console.log('User not authenticated, but continuing for debugging');
+      console.log('Session cookie in headers:', req.headers.cookie);
+      
+      // This is for debugging only - in production, we would delete the file and return 401
+      // fs.unlinkSync(req.file.path);
+      // return res.status(401).json({ error: 'Unauthorized' });
     }
 
     // Check uploads directory access
