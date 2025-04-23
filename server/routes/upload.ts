@@ -62,16 +62,26 @@ router.post('/api/upload', upload.single('image'), async (req, res) => {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    // Enhanced authentication check - try both methods but don't block uploads yet
-    // This allows us to diagnose issues while still allowing uploads to work
+    // Enhanced authentication check - we now enforce authentication from either method
     if (!req.isAuthenticated() && !req.session?.user) {
-      console.log('User not authenticated via passport or session, but continuing for debugging');
+      console.log('User not authenticated via passport or session - rejecting upload');
       console.log('Session data:', req.session);
       console.log('Session cookie in headers:', req.headers.cookie);
       
-      // In production, we would uncomment these lines:
-      // fs.unlinkSync(req.file.path);
-      // return res.status(401).json({ error: 'Unauthorized' });
+      // Delete the uploaded file to prevent storage issues
+      if (req.file?.path) {
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (err) {
+          console.error('Error deleting unauthorized upload:', err);
+        }
+      }
+      
+      return res.status(401).json({ 
+        error: 'Unauthorized - Please log in before uploading images',
+        sessionExists: !!req.session,
+        sessionId: req.sessionID || 'not available'
+      });
     } else {
       // Log which auth method worked
       if (req.isAuthenticated()) {

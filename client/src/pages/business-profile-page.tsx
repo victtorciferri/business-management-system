@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { BusinessLogo } from '@/components/business/BusinessLogo';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { AuthDebugger } from '@/components/debug/AuthDebugger';
 
 export default function BusinessProfilePage() {
   const { user, isLoading } = useAuth();
@@ -32,6 +33,9 @@ export default function BusinessProfilePage() {
     <div className="container mx-auto">
       <div className="px-4 py-6">
         <h1 className="text-2xl font-bold mb-6">Business Profile Settings</h1>
+        
+        {/* Authentication Debugger - For troubleshooting purposes */}
+        <AuthDebugger />
         
         <div className="grid gap-6 md:grid-cols-2">
           {/* Business Logo Card */}
