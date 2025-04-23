@@ -21,6 +21,9 @@ export const users = pgTable("users", {
   country: text("country"), // Country
   latitude: text("latitude"), // Latitude for map coordinates
   longitude: text("longitude"), // Longitude for map coordinates
+  logoUrl: text("logo_url"), // Logo image URL
+  coverImageUrl: text("cover_image_url"), // Cover image URL
+  description: text("description"), // Business description
   role: text("role").notNull().default("business"), // "business", "admin", "staff", "customer"
   businessId: integer("business_id").references(() => users.id), // For staff accounts to link to the business
   subscription: text("subscription").default("free"), // "free", "basic", "premium", etc.
@@ -82,6 +85,9 @@ export const insertUserSchema = createInsertSchema(users).pick({
   country: true,
   latitude: true,
   longitude: true,
+  logoUrl: true,
+  coverImageUrl: true,
+  description: true,
   role: true,
   subscription: true,
   subscriptionStatus: true,
