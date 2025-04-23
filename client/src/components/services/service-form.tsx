@@ -21,6 +21,8 @@ import { apiRequest } from "@/lib/queryClient";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { appointmentColors } from "@/utils/date-utils";
+import { Checkbox } from "@/components/ui/checkbox";
+import { format } from "date-fns";
 
 interface ServiceFormProps {
   userId: number;
@@ -29,8 +31,19 @@ interface ServiceFormProps {
 }
 
 // Define valid service types
-const ServiceTypeEnum = z.enum(["individual", "class"]);
+const ServiceTypeEnum = z.enum(["individual", "class", "class_pack"]);
 type ServiceType = z.infer<typeof ServiceTypeEnum>;
+
+// Days of the week for recurring classes
+const weekDays = [
+  { value: "0", label: "Sunday" },
+  { value: "1", label: "Monday" },
+  { value: "2", label: "Tuesday" },
+  { value: "3", label: "Wednesday" },
+  { value: "4", label: "Thursday" },
+  { value: "5", label: "Friday" },
+  { value: "6", label: "Saturday" },
+];
 
 // Service form schema
 const formSchema = z.object({
@@ -45,23 +58,60 @@ const formSchema = z.object({
   capacity: z.string().default("1")
     .refine(
       (val) => {
-        // For class type, ensure capacity is at least 2
+        // Ensure capacity is a valid number
         const numVal = parseInt(val);
         return !isNaN(numVal) && numVal >= 1;
       },
       { message: "Capacity must be a valid number" }
+    ),
+  // Fields for class packs and recurring classes
+  isRecurring: z.boolean().default(false),
+  recurringDays: z.array(z.string()).optional().default([]),
+  recurringTime: z.string().optional(),
+  sessionsPerMonth: z.string().optional()
+    .refine(
+      (val) => {
+        if (!val) return true;
+        const numVal = parseInt(val);
+        return !isNaN(numVal) && numVal >= 1;
+      },
+      { message: "Sessions per month must be a valid number" }
     )
 }).refine(
   (data) => {
-    // For class type, require capacity to be at least 2
-    if (data.serviceType === "class") {
+    // For class/class_pack types, require capacity to be at least 2
+    if (data.serviceType === "class" || data.serviceType === "class_pack") {
       return parseInt(data.capacity) >= 2;
     }
     return true;
   },
   {
-    message: "Class capacity must be at least 2",
+    message: "Class capacity must be at least 2 people",
     path: ["capacity"],
+  }
+).refine(
+  (data) => {
+    // For class_pack type with recurring schedule, require recurring days and time
+    if (data.serviceType === "class_pack" && data.isRecurring) {
+      return data.recurringDays && data.recurringDays.length > 0 && !!data.recurringTime;
+    }
+    return true;
+  },
+  {
+    message: "Recurring class packs must have at least one day and time selected",
+    path: ["recurringDays"]
+  }
+).refine(
+  (data) => {
+    // For class_pack type, require sessions per month
+    if (data.serviceType === "class_pack") {
+      return !!data.sessionsPerMonth && parseInt(data.sessionsPerMonth) > 0;
+    }
+    return true;
+  },
+  {
+    message: "Class packs must specify the number of sessions included per month",
+    path: ["sessionsPerMonth"]
   }
 );
 
@@ -77,10 +127,20 @@ export function ServiceForm({
   
   // Helper function to safely extract service type
   const getServiceType = (type: string | null | undefined): ServiceType => {
-    if (type === "class" || type === "individual") {
-      return type;
+    if (type === "class" || type === "individual" || type === "class_pack") {
+      return type as ServiceType;
     }
     return "individual";
+  };
+  
+  // Parse recurring days from string to array
+  const parseRecurringDays = (days: string | null | undefined): string[] => {
+    if (!days) return [];
+    try {
+      return JSON.parse(days);
+    } catch {
+      return [];
+    }
   };
   
   // Initialize form with default values or existing service
@@ -98,6 +158,11 @@ export function ServiceForm({
       // Use the helper function to validate service type
       serviceType: getServiceType(existingService?.serviceType),
       capacity: existingService?.capacity ? existingService.capacity.toString() : "1",
+      // Class pack specific fields with defaults
+      isRecurring: existingService?.isRecurring ?? false,
+      recurringDays: parseRecurringDays(existingService?.recurringDays),
+      recurringTime: existingService?.recurringTime || "",
+      sessionsPerMonth: existingService?.sessionsPerMonth ? existingService.sessionsPerMonth.toString() : "",
     },
   });
 
@@ -117,7 +182,21 @@ export function ServiceForm({
         color: values.color,
         active: values.active,
         serviceType: values.serviceType,
-        capacity: values.serviceType === "class" ? parseInt(values.capacity) : 1  // integer in database
+        // For class or class_pack, use the specified capacity, otherwise default to 1
+        capacity: (values.serviceType === "class" || values.serviceType === "class_pack") 
+          ? parseInt(values.capacity) 
+          : 1,
+        // Class pack specific fields
+        isRecurring: values.serviceType === "class_pack" ? values.isRecurring : false,
+        recurringDays: values.serviceType === "class_pack" && values.isRecurring 
+          ? JSON.stringify(values.recurringDays) 
+          : null,
+        recurringTime: values.serviceType === "class_pack" && values.isRecurring 
+          ? values.recurringTime 
+          : null,
+        sessionsPerMonth: values.serviceType === "class_pack" && values.sessionsPerMonth
+          ? parseInt(values.sessionsPerMonth)
+          : null
       };
       
       console.log("Submitting service data:", serviceData);
@@ -328,17 +407,18 @@ export function ServiceForm({
                   <SelectContent>
                     <SelectItem value="individual">Individual Appointment</SelectItem>
                     <SelectItem value="class">Class/Group Session</SelectItem>
+                    <SelectItem value="class_pack">Class Pack (Multi-Session)</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormDescription>
-                  Individual appointments are for one customer at a time. Classes allow multiple attendees.
+                  Individual appointments are for one customer at a time. Classes allow multiple attendees, and class packs include multiple sessions.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
 
-          {form.watch("serviceType") === "class" && (
+          {(form.watch("serviceType") === "class" || form.watch("serviceType") === "class_pack") && (
             <FormField
               control={form.control}
               name="capacity"
@@ -362,6 +442,132 @@ export function ServiceForm({
                 </FormItem>
               )}
             />
+          )}
+          
+          {form.watch("serviceType") === "class_pack" && (
+            <>
+              <FormField
+                control={form.control}
+                name="sessionsPerMonth"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Sessions Per Month</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="1"
+                        max="31"
+                        step="1"
+                        {...field}
+                        value={field.value || ""}
+                        placeholder="4"
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Number of sessions included in this class pack each month.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="isRecurring"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">Recurring Schedule</FormLabel>
+                      <FormDescription>
+                        Set up a recurring schedule for this class pack (same days and times each week).
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              {form.watch("isRecurring") && (
+                <>
+                  <FormField
+                    control={form.control}
+                    name="recurringDays"
+                    render={() => (
+                      <FormItem>
+                        <div className="mb-4">
+                          <FormLabel className="text-base">Recurring Days</FormLabel>
+                          <FormDescription>
+                            Select which days of the week this class occurs.
+                          </FormDescription>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+                          {weekDays.map((day) => (
+                            <FormField
+                              key={day.value}
+                              control={form.control}
+                              name="recurringDays"
+                              render={({ field }) => {
+                                return (
+                                  <FormItem
+                                    key={day.value}
+                                    className="flex flex-row items-start space-x-3 space-y-0"
+                                  >
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={field.value?.includes(day.value)}
+                                        onCheckedChange={(checked) => {
+                                          return checked
+                                            ? field.onChange([...field.value, day.value])
+                                            : field.onChange(
+                                                field.value?.filter(
+                                                  (value) => value !== day.value
+                                                )
+                                              )
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">
+                                      {day.label}
+                                    </FormLabel>
+                                  </FormItem>
+                                )
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="recurringTime"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Class Time</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="time"
+                            {...field}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          The time when this class starts on each selected day.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </>
+              )}
+            </>
           )}
           
           <FormField
