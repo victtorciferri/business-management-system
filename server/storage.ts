@@ -22,6 +22,7 @@ export interface IStorage {
   getUserByBusinessSlug(slug: string): Promise<User | undefined>;
   getUserByCustomDomain(domain: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined>;
   
   // Theme methods
   getThemeById(id: number): Promise<ThemeEntity | undefined>;
