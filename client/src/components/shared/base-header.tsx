@@ -126,7 +126,7 @@ export default function BaseHeader({
           <div className="flex items-center mb-4 md:mb-0">
             <div 
               className="flex items-center cursor-pointer" 
-              onClick={() => navigate(portalType === 'business' && slug ? `/${slug}` : buildUrl('/customer-portal'))}
+              onClick={() => navigate(portalType === 'business' ? (slug ? `/${slug}` : '/') : buildUrl('/customer-portal'))}
             >
               {renderLogo()}
               <h1 className={`text-xl font-bold break-words ${isDarkMode ? 'text-foreground' : 'text-gray-800'}`}>
@@ -159,7 +159,14 @@ export default function BaseHeader({
                             ? 'text-muted-foreground hover:text-foreground hover:bg-muted' 
                             : 'text-gray-700 hover:text-gray-900')
                     }`}
-                    onClick={() => navigate(buildUrl(item.path))}
+                    onClick={() => {
+                      // For main dashboard links, redirect to root instead of relative path
+                      if (item.path === '/dashboard') {
+                        navigate('/');
+                      } else {
+                        navigate(buildUrl(item.path));
+                      }
+                    }}
                   >
                     {item.icon}
                     {item.label}
