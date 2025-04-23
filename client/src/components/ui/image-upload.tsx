@@ -123,46 +123,53 @@ export function ImageUpload({
         console.log('Upload response status:', response.status);
         console.log('Upload response type:', response.headers.get('Content-Type'));
         
-        // Get the response as text first
+        // If the request failed with an error status
+        if (!response.ok) {
+          throw new Error(`Upload failed with status ${response.status}`);
+        }
+        
+        // Get the response as text first - the server now returns plain text with just the URL
         const responseText = await response.text();
         console.log('Raw response text (first 100 chars):', responseText.substring(0, 100));
         
-        // Try different approaches to extract the URL
-        let imageUrl: string | null = null;
+        // Trim any whitespace from the response text
+        const trimmedText = responseText.trim();
         
-        // Method 1: Try to parse as JSON if it looks like JSON
-        if (responseText.trim().startsWith('{') || responseText.trim().startsWith('[')) {
+        // Our server now returns plain text content with just the URL
+        // So we can use the response directly if it starts with /uploads/ or http
+        if (trimmedText.startsWith('/uploads/') || trimmedText.startsWith('http')) {
+          console.log('Response is a direct URL string:', trimmedText);
+          onChange(trimmedText); // Update the image URL directly
+          return trimmedText;
+        }
+        
+        // Method 1: Try to parse as JSON if it looks like JSON (as a fallback)
+        if (trimmedText.startsWith('{') || trimmedText.startsWith('[')) {
           try {
-            const data = JSON.parse(responseText);
+            const data = JSON.parse(trimmedText);
             console.log('Parsed JSON response:', data);
             if (data && data.url) {
-              imageUrl = data.url;
-              console.log('Found URL in JSON response:', imageUrl);
+              console.log('Found URL in JSON response:', data.url);
+              onChange(data.url);
+              return data.url;
             }
           } catch (e) {
             console.warn('Failed to parse JSON, trying other methods');
           }
         }
         
-        // Method 2: See if the response is a direct URL string
-        if (!imageUrl && (responseText.trim().startsWith('/uploads/') || responseText.trim().startsWith('http'))) {
-          imageUrl = responseText.trim();
-          console.log('Response appears to be a direct URL:', imageUrl);
+        // Method 2: If it's HTML, try to extract a URL
+        if (trimmedText.includes('<!DOCTYPE html>')) {
+          const extractedUrl = extractUrlFromHtml(trimmedText);
+          if (extractedUrl) {
+            console.log('Extracted URL from HTML:', extractedUrl);
+            onChange(extractedUrl);
+            return extractedUrl;
+          }
         }
         
-        // Method 3: If it's HTML, try to extract a URL
-        if (!imageUrl && responseText.includes('<!DOCTYPE html>')) {
-          imageUrl = extractUrlFromHtml(responseText);
-          console.log('Extracted URL from HTML:', imageUrl);
-        }
-        
-        // If we found a URL by any method, use it
-        if (imageUrl) {
-          console.log('Found URL through one of our extraction methods:', imageUrl);
-          return imageUrl;
-        }
-        
-        // If we got here, we couldn't find a URL
+        // If we got here, we couldn't find a URL in the response
+        console.error('Could not extract image URL from server response:', trimmedText);
         throw new Error('Could not extract image URL from server response');
       } catch (error) {
         console.error('First upload attempt failed:', error);
@@ -176,10 +183,17 @@ export function ImageUpload({
           
           if (latestUploadsResponse.ok) {
             const latestUploads = await latestUploadsResponse.json();
+            console.log('Latest uploads response:', latestUploads);
+            
             if (latestUploads && latestUploads.length > 0) {
               console.log('Found latest upload:', latestUploads[0]);
+              onChange(latestUploads[0].url);
               return latestUploads[0].url;
             }
+          } else {
+            console.error('Fallback failed with status:', latestUploadsResponse.status);
+            const fallbackText = await latestUploadsResponse.text();
+            console.error('Fallback response:', fallbackText);
           }
         } catch (fallbackError) {
           console.error('Fallback attempt also failed:', fallbackError);
