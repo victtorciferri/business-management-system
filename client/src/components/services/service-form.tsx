@@ -190,10 +190,10 @@ export function ServiceForm({
         isRecurring: values.serviceType === "class_pack" ? values.isRecurring : false,
         recurringDays: values.serviceType === "class_pack" && values.isRecurring 
           ? JSON.stringify(values.recurringDays) 
-          : null,
+          : "", // Empty string instead of null
         recurringTime: values.serviceType === "class_pack" && values.isRecurring 
-          ? values.recurringTime 
-          : null,
+          ? values.recurringTime || "" 
+          : "", // Empty string instead of null
         sessionsPerMonth: values.serviceType === "class_pack" && values.sessionsPerMonth
           ? parseInt(values.sessionsPerMonth)
           : null
