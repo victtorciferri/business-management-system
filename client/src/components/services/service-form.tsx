@@ -166,9 +166,9 @@ export function ServiceForm({
         {existingService ? "Edit Service" : "New Service"}
       </h3>
       
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 max-w-3xl mx-auto">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 w-full max-h-[calc(100vh-12rem)] overflow-y-auto pb-20 relative">
         {/* Main content container with improved responsiveness */}
-        <div className="grid grid-cols-1 gap-6">
+        <div className="grid grid-cols-1 gap-6 w-full max-w-2xl mx-auto pb-4">
           <FormField
             control={form.control}
             name="name"
@@ -176,7 +176,7 @@ export function ServiceForm({
               <FormItem>
                 <FormLabel>Service Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="Haircut & Style" {...field} />
+                  <Input placeholder="Yoga Class" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -368,7 +368,8 @@ export function ServiceForm({
           />
         </div>
         
-        <div className="flex justify-end gap-3 pt-4">
+        {/* Fixed action buttons at the bottom */}
+        <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border py-3 px-4 flex justify-end gap-3 z-10">
           <Button 
             type="button" 
             variant="outline"

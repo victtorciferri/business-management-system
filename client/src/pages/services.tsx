@@ -286,7 +286,7 @@ export default function Services() {
       
       {/* New/Edit Service Dialog */}
       <Dialog open={isNewServiceOpen} onOpenChange={setIsNewServiceOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-2xl md:max-w-3xl lg:max-w-4xl w-[95vw] max-h-[90vh] p-0 overflow-hidden">
           <ServiceForm 
             userId={userId}
             existingService={editingService}
