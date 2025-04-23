@@ -104,12 +104,14 @@ export function ServiceForm({
   // Handle form submission
   const onSubmit = async (values: FormValues) => {
     try {
-      // The backend expects numeric fields as numbers, not strings
-      // Convert form values to match API expectations
+      // Create service data that exactly matches the expected schema format
+      // The backend validates using the insertServiceSchema from shared/schema.ts
       const serviceData = {
         userId: values.userId,
         name: values.name,
         description: values.description || null,
+        // Make sure to convert string fields to the correct number types
+        // price is numeric in the database, duration and capacity are integers
         duration: parseInt(values.duration),
         price: parseFloat(values.price),
         color: values.color,
