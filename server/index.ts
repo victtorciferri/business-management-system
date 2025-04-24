@@ -149,6 +149,61 @@ app.post('/direct-update-logo', express.json(), async (req, res) => {
   }
 });
 
+// Direct business data endpoint for the customer portal
+// This endpoint bypasses middleware that might interfere with responses
+app.get('/direct-business-data/:businessId', async (req, res) => {
+  console.log('Direct business data endpoint hit for:', req.params.businessId);
+  
+  try {
+    const businessId = parseInt(req.params.businessId, 10);
+    
+    if (isNaN(businessId)) {
+      console.log('Invalid business ID in direct business data endpoint');
+      return res.status(400).json({ 
+        error: 'Invalid business ID', 
+        success: false 
+      });
+    }
+    
+    // Import storage directly to avoid middleware issues
+    const { storage } = await import('./storage');
+    
+    // Get business data
+    const business = await storage.getUser(businessId);
+    if (!business) {
+      console.log(`Business with ID ${businessId} not found in direct business data endpoint`);
+      return res.status(404).json({ 
+        error: 'Business not found', 
+        success: false 
+      });
+    }
+    
+    // Get services for this business
+    const services = await storage.getServicesByUserId(businessId);
+    const activeServices = services.filter(service => service.active || true);
+    
+    console.log(`Direct business data endpoint: Found business "${business.businessName}" with ${activeServices.length} services`);
+    
+    // Explicitly set content type
+    res.setHeader('Content-Type', 'application/json');
+    
+    // Return a successful response with business data (without password)
+    const { password, ...businessWithoutPassword } = business;
+    return res.status(200).json({
+      business: businessWithoutPassword,
+      services: activeServices,
+      success: true
+    });
+  } catch (error) {
+    console.error('Error in direct business data endpoint:', error);
+    return res.status(500).json({ 
+      error: 'Failed to fetch business data',
+      message: error instanceof Error ? error.message : 'Unknown error',
+      success: false
+    });
+  }
+});
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
