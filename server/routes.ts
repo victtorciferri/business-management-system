@@ -563,6 +563,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         country: result.rows[0].country,
         latitude: result.rows[0].latitude,
         longitude: result.rows[0].longitude,
+        // Add logo URL
+        logoUrl: result.rows[0].logo_url,
+        coverImageUrl: result.rows[0].cover_image_url,
         // Add theme settings from JSONB column
         themeSettings: result.rows[0].theme_settings || {
           primaryColor: '#4f46e5',
@@ -663,6 +666,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         country: result.rows[0].country,
         latitude: result.rows[0].latitude,
         longitude: result.rows[0].longitude,
+        // Add logo URL
+        logoUrl: result.rows[0].logo_url,
+        coverImageUrl: result.rows[0].cover_image_url,
         themeSettings: result.rows[0].theme_settings || {
           primaryColor: '#4f46e5',
           secondaryColor: '#06b6d4',
