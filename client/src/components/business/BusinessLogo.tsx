@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { User } from '@shared/schema';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { useToast } from '@/hooks/use-toast';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { useMutation } from '@tanstack/react-query';
+import { queryClient } from '@/lib/queryClient';
 
 interface BusinessLogoProps {
   business: Omit<User, 'password'>;
@@ -118,80 +118,47 @@ export function BusinessLogo({
     logoMutation.mutate(url);
   };
   
-  // If no logo is set, show initial letter with a gradient background
-  // Check both cachedLogoUrl and business.logoUrl to be safe
-  if (!cachedLogoUrl && !business.logoUrl) {
-    console.log('BusinessLogo: No logo found, displaying initial for business:', business.businessName || business.username);
-    
-    const businessName = business.businessName || business.username;
-    const initial = businessName ? businessName.charAt(0).toUpperCase() : '?';
-    
-    const sizeClasses = {
-      small: 'h-8 w-8 text-base',
-      medium: 'h-12 w-12 text-lg',
-      large: 'h-24 w-24 text-3xl',
-    };
-    
-    // Different styling based on business type
-    let gradientClass = 'bg-gradient-to-br from-blue-500 to-indigo-700';
-    if (business.businessSlug === 'prideandflow') {
-      // Special color for yoga businesses
-      console.log('BusinessLogo: Using special yoga gradient for prideandflow');
-      gradientClass = 'bg-gradient-to-br from-green-500 to-teal-700';
-    }
-    
-    return (
-      <div className="flex flex-col items-center">
-        <div className={`${sizeClasses[size]} ${className} rounded-md flex items-center justify-center text-white font-bold ${gradientClass}`}>
-          {initial}
-        </div>
-        
-        {showLabel && (
-          <div className="mt-4 w-full">
-            <ImageUpload
-              id="business-logo"
-              value={null} 
-              onChange={handleLogoChange}
-              placeholder="Upload logo"
-              previewSize={size}
-              aspectRatio={aspectRatio}
-              disabled={logoMutation.isPending}
-            />
-          </div>
-        )}
-      </div>
-    );
+  // Derive the initial letter from the business name
+  const businessName = business.businessName || business.username;
+  const initial = businessName ? businessName.charAt(0).toUpperCase() : '?';
+  
+  // Configure size classes based on the size prop
+  const sizeClasses = {
+    small: 'h-8 w-8',
+    medium: 'h-12 w-12',
+    large: 'h-24 w-24',
+  };
+  
+  const textSizes = {
+    small: 'text-sm',
+    medium: 'text-xl',
+    large: 'text-4xl',
+  };
+  
+  // Determine styling based on business type
+  let gradientClass = 'bg-gradient-to-br from-blue-500 to-indigo-700';
+  if (business.businessSlug === 'prideandflow') {
+    console.log('BusinessLogo: Using special yoga gradient for prideandflow');
+    gradientClass = 'bg-gradient-to-br from-green-500 to-teal-700';
   }
   
-  // If logo is set, show the actual image logo
-  // Use the cached logo URL if available (with the latest refresh), otherwise fall back to business.logoUrl
+  // If no logo is set, show initial letter with a gradient background
+  // Check both cachedLogoUrl and business.logoUrl to be safe
   const logoUrl = cachedLogoUrl || business.logoUrl;
+  const hasValidLogo = logoUrl && logoUrl.trim() !== '';
   
-  // Extra validation to ensure logoUrl isn't null, undefined, or empty string
-  if (!logoUrl || logoUrl.trim() === '') {
-    console.log('BusinessLogo: Logo URL is empty or invalid:', logoUrl);
-    
-    // Return the initial/default letter representation for safety
-    const businessName = business.businessName || business.username;
-    const initial = businessName ? businessName.charAt(0).toUpperCase() : '?';
-    
-    const sizeClasses = {
-      small: 'h-8 w-8 text-base',
-      medium: 'h-12 w-12 text-lg',
-      large: 'h-24 w-24 text-3xl',
-    };
-    
-    // Different styling based on business type  
-    let gradientClass = 'bg-gradient-to-br from-blue-500 to-indigo-700';
-    if (business.businessSlug === 'prideandflow') {
-      console.log('BusinessLogo: Using special yoga gradient for prideandflow');
-      gradientClass = 'bg-gradient-to-br from-green-500 to-teal-700';
-    }
+  if (!hasValidLogo) {
+    console.log('BusinessLogo: No valid logo found, displaying initial for business:', businessName);
     
     return (
       <div className="flex flex-col items-center">
-        <div className={`${sizeClasses[size]} ${className} rounded-md flex items-center justify-center text-white font-bold ${gradientClass}`}>
-          {initial}
+        <div 
+          className={`${sizeClasses[size]} ${className} rounded-md flex items-center justify-center text-white font-bold ${gradientClass}`}
+          data-testid="initial-logo"
+        >
+          <span className={`${textSizes[size]} leading-none`}>
+            {initial}
+          </span>
         </div>
         
         {showLabel && (
@@ -211,6 +178,7 @@ export function BusinessLogo({
     );
   }
 
+  // If we have a valid logo URL, show the actual image
   return (
     <div className="flex flex-col items-center">
       {showLabel ? (
@@ -227,8 +195,23 @@ export function BusinessLogo({
         <img 
           // Add cache-busting parameter to avoid browser caching of the image
           src={`${logoUrl}?_t=${Date.now()}`}
-          alt={`${business.businessName || business.username} logo`}
-          className={`rounded-md object-cover ${className}`}
+          alt={`${businessName} logo`}
+          className={`${sizeClasses[size]} rounded-md object-cover ${className}`}
+          onError={(e) => {
+            console.error('BusinessLogo: Failed to load image:', logoUrl);
+            e.currentTarget.style.display = 'none';
+            // If image fails to load, show the fallback initial in the DOM
+            const container = e.currentTarget.parentElement;
+            if (container) {
+              const fallback = document.createElement('div');
+              fallback.className = `${sizeClasses[size]} ${className} rounded-md flex items-center justify-center text-white font-bold ${gradientClass}`;
+              const span = document.createElement('span');
+              span.className = `${textSizes[size]} leading-none`;
+              span.textContent = initial;
+              fallback.appendChild(span);
+              container.appendChild(fallback);
+            }
+          }}
         />
       )}
     </div>
