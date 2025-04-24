@@ -49,6 +49,21 @@ export default function BusinessProfilePage() {
     },
   });
   
+  // Update form values when user data changes
+  React.useEffect(() => {
+    if (user) {
+      form.reset({
+        address: user.address || '',
+        city: user.city || '',
+        state: user.state || '',
+        postalCode: user.postalCode || '',
+        country: user.country || '',
+        latitude: user.latitude || '',
+        longitude: user.longitude || '',
+      });
+    }
+  }, [user, form]);
+  
   // Handle form submission
   const onSubmit = async (data: LocationFormValues) => {
     setIsSaving(true);

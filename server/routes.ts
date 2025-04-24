@@ -2667,11 +2667,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
    */
   app.patch("/api/business/location", async (req: Request, res: Response) => {
     try {
-      if (!req.session?.user) {
+      if (!req.isAuthenticated()) {
+        console.log('User not authenticated for location update');
         return res.status(401).json({ message: "Authentication required" });
       }
       
-      const userId = req.session.user.id;
+      const userId = req.user.id;
       const { address, city, state, postalCode, country, latitude, longitude } = req.body;
       
       // Update the business location in the database
