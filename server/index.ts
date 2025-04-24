@@ -84,6 +84,8 @@ app.post('/direct-upload', upload.single('image'), async (req, res) => {
   }
 });
 
+
+
 // Direct update logo endpoint that bypasses problematic middleware
 // This is the companion to the direct-upload endpoint
 app.post('/direct-update-logo', express.json(), async (req, res) => {
