@@ -408,8 +408,8 @@ export default function BusinessProfilePage() {
                 
                 <div>
                   <div className="bg-muted/30 rounded-md flex flex-col items-center justify-center min-h-[250px] h-full">
-                    {hasLocation ? (
-                      user && <BusinessMap business={user} />
+                    {user?.address && user?.city ? (
+                      <BusinessMap business={user} />
                     ) : (
                       <div className="p-6 flex flex-col items-center justify-center">
                         <MapPin className="h-12 w-12 text-muted mb-4" />

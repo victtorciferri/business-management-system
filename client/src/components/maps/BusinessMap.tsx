@@ -111,18 +111,14 @@ export function BusinessMap({ business, className, compact = false }: BusinessMa
   const getDirectionsUrl = () => {
     let destination = '';
     
-    if (business?.latitude && business?.longitude) {
+    if (hasCoordinates) {
       // If we have coordinates, use them
       destination = `${business.latitude},${business.longitude}`;
-    } else if (business?.address) {
+    } else if (hasAddress) {
       // Otherwise use the address
-      const addressParts = [];
-      if (business.address) addressParts.push(business.address);
-      if (business.city) addressParts.push(business.city);
-      if (business.state) addressParts.push(business.state);
-      if (business.country) addressParts.push(business.country);
-      
-      destination = encodeURIComponent(addressParts.join(', '));
+      destination = encodeURIComponent(formatAddress(', '));
+    } else {
+      return '#'; // No location data available
     }
     
     return `https://www.google.com/maps/dir/?api=1&destination=${destination}`;
@@ -130,12 +126,42 @@ export function BusinessMap({ business, className, compact = false }: BusinessMa
 
   // Handle open in Google Maps button click
   const handleOpenMaps = () => {
-    window.open(getDirectionsUrl(), '_blank');
+    const url = getDirectionsUrl();
+    if (url !== '#') {
+      window.open(url, '_blank');
+    }
   };
 
-  if (loadError) {
+  // If we're in a compact display mode, show a simpler version
+  if (compact) {
     return (
-      <Card>
+      <div className={cn("space-y-2", className)}>
+        <div className="flex items-start gap-2">
+          <MapPin className="h-4 w-4 text-primary mt-1 flex-shrink-0" />
+          <p className="text-sm text-muted-foreground whitespace-pre-line">
+            {formatAddress()}
+          </p>
+        </div>
+        
+        {hasAddress && (
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="flex items-center gap-2 w-full" 
+            onClick={handleOpenMaps}
+          >
+            <Navigation className="h-3 w-3" />
+            Get Directions
+          </Button>
+        )}
+      </div>
+    );
+  }
+
+  // Error state
+  if (status === 'error') {
+    return (
+      <Card className={className}>
         <CardHeader>
           <CardTitle>Visit Us</CardTitle>
           <CardDescription>Our location and contact information</CardDescription>
@@ -155,23 +181,26 @@ export function BusinessMap({ business, className, compact = false }: BusinessMa
               </p>
             </div>
             
-            <Button 
-              variant="outline" 
-              className="flex items-center gap-2 w-full" 
-              onClick={handleOpenMaps}
-            >
-              <ExternalLink className="h-4 w-4" />
-              Get Directions
-            </Button>
+            {hasAddress && (
+              <Button 
+                variant="outline" 
+                className="flex items-center gap-2 w-full" 
+                onClick={handleOpenMaps}
+              >
+                <ExternalLink className="h-4 w-4" />
+                Get Directions
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
     );
   }
 
-  if (!isLoaded) {
+  // Loading state
+  if (status === 'loading') {
     return (
-      <Card>
+      <Card className={className}>
         <CardHeader>
           <CardTitle>Visit Us</CardTitle>
           <CardDescription>Our location and contact information</CardDescription>
@@ -184,19 +213,20 @@ export function BusinessMap({ business, className, compact = false }: BusinessMa
     );
   }
 
+  // Map display
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader>
         <CardTitle>Visit Us</CardTitle>
         <CardDescription>Our location and contact information</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="grid gap-4">
-          {hasLocation ? (
+          {(hasCoordinates || hasAddress) ? (
             <div className="relative w-full h-[300px] rounded-md overflow-hidden">
               <GoogleMap
                 mapContainerStyle={containerStyle}
-                center={center}
+                center={center || { lat: 0, lng: 0 }} // Fallback center if none is provided
                 zoom={15}
                 onLoad={onLoad}
                 onUnmount={onUnmount}
@@ -205,14 +235,20 @@ export function BusinessMap({ business, className, compact = false }: BusinessMa
                   zoomControl: true,
                   mapTypeControl: false,
                   streetViewControl: false,
+                  fullscreenControl: true,
                 }}
               >
-                <Marker position={center} />
+                {hasCoordinates && center && (
+                  <Marker position={center} />
+                )}
               </GoogleMap>
             </div>
           ) : (
             <div className="bg-muted h-[300px] rounded-md flex items-center justify-center">
-              <p className="text-muted-foreground">Map location not available</p>
+              <div className="text-center p-6">
+                <MapPin className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+                <p className="text-muted-foreground">No location information available</p>
+              </div>
             </div>
           )}
 
@@ -225,14 +261,16 @@ export function BusinessMap({ business, className, compact = false }: BusinessMa
               {formatAddress()}
             </p>
             
-            <Button 
-              variant="default" 
-              className="flex items-center gap-2 w-full" 
-              onClick={handleOpenMaps}
-            >
-              <ExternalLink className="h-4 w-4" />
-              Get Directions
-            </Button>
+            {hasAddress && (
+              <Button 
+                variant="default" 
+                className="flex items-center gap-2 w-full" 
+                onClick={handleOpenMaps}
+              >
+                <Navigation className="h-4 w-4" />
+                Get Directions
+              </Button>
+            )}
           </div>
         </div>
       </CardContent>
