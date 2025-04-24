@@ -186,13 +186,21 @@ export const BusinessProvider: React.FC<{
     try {
       // Determine if we have an ID (numeric) or a slug
       const isId = !isNaN(Number(slugOrId));
-      const endpoint = isId 
-        ? `/api/business/id/${slugOrId}` 
-        : `/api/business/${slugOrId}`;
+      
+      // Check if we're in a customer portal context
+      const isCustomerPortal = window.location.pathname.includes('/customer-portal');
+      
+      // If we have a numeric ID and we're in customer portal, use the direct endpoint
+      // This bypasses middleware and authentication issues
+      const endpoint = isId && isCustomerPortal
+        ? `/direct-business-data/${slugOrId}`
+        : isId 
+          ? `/api/business/id/${slugOrId}` 
+          : `/api/business/${slugOrId}`;
       
       console.log(`BusinessContext: Fetching business data from ${endpoint}`);
-      // Fetch business data from API
-      const response = await fetch(endpoint);
+      // Fetch business data from API - adding cache-busting parameter to avoid caching
+      const response = await fetch(`${endpoint}?_t=${Date.now()}`);
       
       if (!response.ok) {
         throw new Error(`Failed to load business data: ${response.statusText}`);

@@ -88,6 +88,30 @@ export default function CustomerPortalLayout({
     console.log('CustomerPortalLayout: Business ID from URL:', businessId);
   }, [theme, business, businessId]);
   
+  // When the component mounts or businessId changes, force a refresh of the business data
+  // This ensures we always have the latest logo and other business information
+  useEffect(() => {
+    if (businessId) {
+      // Directly fetch the latest business data from our direct endpoint
+      // This will bypass any middleware that might interfere with the response
+      fetch(`/direct-business-data/${businessId}?_t=${Date.now()}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Error fetching business data: ${response.statusText}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          console.log('CustomerPortalLayout: Successfully fetched fresh business data from direct endpoint:', data);
+          // No need to do anything here as our BusinessContext will use the direct endpoint 
+          // when it detects we're in the customer portal
+        })
+        .catch(error => {
+          console.error('CustomerPortalLayout: Error fetching business data from direct endpoint:', error);
+        });
+    }
+  }, [businessId]);
+  
   return (
     <BaseLayout
       business={business}

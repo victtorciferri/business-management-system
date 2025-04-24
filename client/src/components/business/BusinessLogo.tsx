@@ -21,6 +21,27 @@ export function BusinessLogo({
   showLabel = false
 }: BusinessLogoProps) {
   const { toast } = useToast();
+  const [cachedLogoUrl, setCachedLogoUrl] = useState<string | null>(business.logoUrl || null);
+  
+  // When the component mounts, check if we're in a customer portal and fetch the latest business data
+  useEffect(() => {
+    const isCustomerPortal = window.location.pathname.includes('/customer-portal');
+    
+    if (isCustomerPortal && business.id) {
+      // Try to get the latest business data from our direct endpoint
+      fetch(`/direct-business-data/${business.id}?_t=${Date.now()}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.business && data.business.logoUrl && data.business.logoUrl !== cachedLogoUrl) {
+            console.log('BusinessLogo: Updating cached logo URL from direct endpoint:', data.business.logoUrl);
+            setCachedLogoUrl(data.business.logoUrl);
+          }
+        })
+        .catch(error => {
+          console.error('BusinessLogo: Error fetching latest business data:', error);
+        });
+    }
+  }, [business.id]);
   
   // Mutation to update the logo
   const logoMutation = useMutation({
@@ -139,12 +160,15 @@ export function BusinessLogo({
   }
   
   // If logo is set, show the actual image logo
+  // Use the cached logo URL if available (with the latest refresh), otherwise fall back to business.logoUrl
+  const logoUrl = cachedLogoUrl || business.logoUrl;
+
   return (
     <div className="flex flex-col items-center">
       {showLabel ? (
         <ImageUpload
           id="business-logo"
-          value={business.logoUrl}
+          value={logoUrl}
           onChange={handleLogoChange}
           placeholder="Change logo"
           previewSize={size}
@@ -153,7 +177,8 @@ export function BusinessLogo({
         />
       ) : (
         <img 
-          src={business.logoUrl} 
+          // Add cache-busting parameter to avoid browser caching of the image
+          src={`${logoUrl}?_t=${Date.now()}`}
           alt={`${business.businessName || business.username} logo`}
           className={`rounded-md object-cover ${className}`}
         />
