@@ -98,14 +98,23 @@ export function ImageUpload({
         xhr.withCredentials = true;
         
         xhr.onload = function() {
+          console.log('====================== DEBUG IMAGE UPLOAD ======================');
           console.log('XHR status:', xhr.status);
           console.log('Content-Type:', xhr.getResponseHeader('Content-Type'));
-          console.log('Full Response text:', xhr.responseText);
+          console.log('Raw responseText:', JSON.stringify(xhr.responseText));
           console.log('Response length:', xhr.responseText.length);
+          console.log('Response headers:', xhr.getAllResponseHeaders());
           
           if (xhr.status >= 200 && xhr.status < 300) {
             const responseText = xhr.responseText.trim();
             console.log('Trimmed response length:', responseText.length);
+            console.log('Trimmed responseText (quoted):', JSON.stringify(responseText));
+            
+            // SUPER DETAILED DEBUG - Show each character and its code
+            console.log('Character-by-character inspection:');
+            for (let i = 0; i < Math.min(responseText.length, 100); i++) {
+              console.log(`Char ${i}: '${responseText[i]}' (code: ${responseText.charCodeAt(i)})`);
+            }
             
             // Try to parse as JSON first
             try {
@@ -118,10 +127,12 @@ export function ImageUpload({
                 console.log('Found URL in JSON response:', data.url);
                 resolve(data.url);
                 return;
+              } else {
+                console.log('JSON parsed but no url property found in:', data);
               }
             } catch (e) {
               console.error('JSON parse error:', e);
-              console.log('Raw response is not valid JSON, trying alternative extraction methods');
+              console.log('Failed to parse as JSON, trying alternative extraction methods');
             }
             
             // 2. Direct URL format (fallback)

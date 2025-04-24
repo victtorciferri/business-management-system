@@ -170,15 +170,24 @@ router.post('/api/upload', upload.single('image'), async (req, res) => {
       globalLatestUploads.pop();
     }
     
-    // Send a JSON response with the URL as an explicit property
+    // Send a detailed JSON response with the URL as an explicit property
     // This ensures the client can reliably extract the URL
     console.log('Setting Content-Type to application/json');
     console.log('Response will include URL:', imageUrl);
-    res.setHeader('Content-Type', 'application/json');
-    res.status(200).json({ 
+    
+    // Make sure content type is set correctly and cache headers are appropriate
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache');
+    
+    // Use manual string instead of json() in case something is interfering
+    const jsonResponse = JSON.stringify({ 
       url: imageUrl, 
-      success: true 
+      success: true,
+      timestamp: new Date().toISOString()
     });
+    
+    console.log('Sending JSON response (raw):', jsonResponse);
+    res.status(200).send(jsonResponse);
     console.log('JSON response sent to client');
   } catch (error) {
     console.error('Error processing uploaded file:', error);
