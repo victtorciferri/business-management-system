@@ -223,6 +223,9 @@ function AppContent() {
               <Dashboard />
             </ProtectedRoute>
           </Route>
+          <Route path="/dashboard">
+            <Redirect to="/" />
+          </Route>
           <Route path="/new-appointment">
             <Redirect to="/customer-portal/new-appointment" />
           </Route>
