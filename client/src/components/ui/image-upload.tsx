@@ -107,27 +107,28 @@ export function ImageUpload({
             const responseText = xhr.responseText.trim();
             console.log('Trimmed response length:', responseText.length);
             
-            // 1. Direct URL format
+            // Try to parse as JSON first
+            try {
+              console.log('Attempting to parse response as JSON');
+              const data = JSON.parse(responseText);
+              console.log('Successfully parsed JSON:', data);
+              
+              // Check for url property in JSON
+              if (data && data.url) {
+                console.log('Found URL in JSON response:', data.url);
+                resolve(data.url);
+                return;
+              }
+            } catch (e) {
+              console.error('JSON parse error:', e);
+              console.log('Raw response is not valid JSON, trying alternative extraction methods');
+            }
+            
+            // 2. Direct URL format (fallback)
             if (responseText.startsWith('/uploads/') || responseText.startsWith('http')) {
               console.log('Response is a direct URL:', responseText);
               resolve(responseText);
               return;
-            }
-            
-            // 2. JSON format with URL
-            if (responseText.startsWith('{') || responseText.startsWith('[')) {
-              try {
-                console.log('Attempting to parse as JSON');
-                const data = JSON.parse(responseText);
-                console.log('Parsed JSON data:', data);
-                if (data && data.url) {
-                  console.log('Found URL in JSON response:', data.url);
-                  resolve(data.url);
-                  return;
-                }
-              } catch (e) {
-                console.log('Not valid JSON, trying other methods');
-              }
             }
             
             // 3. Extract URL from HTML
