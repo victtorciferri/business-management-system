@@ -134,11 +134,36 @@ const sendTokenEmail = async (req: Request, token: string, customer: Customer, b
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Serve static files from the 'uploads' directory
+  // Setup and serve static files from the 'uploads' directory
   const uploadsDir = path.join(process.cwd(), 'uploads');
-  console.log('Serving uploads from:', uploadsDir);
+  console.log('======== STATIC FILES SETUP ========');
+  console.log('Uploads directory path:', uploadsDir);
+  
+  // Create uploads directory if it doesn't exist
+  if (!fs.existsSync(uploadsDir)) {
+    console.log('Uploads directory does not exist, creating it...');
+    fs.mkdirSync(uploadsDir, { recursive: true });
+    console.log('Uploads directory created');
+  } else {
+    console.log('Uploads directory already exists');
+  }
+  
+  // Check if directory is writable
+  try {
+    const testFile = path.join(uploadsDir, '.test_write');
+    fs.writeFileSync(testFile, 'test');
+    fs.unlinkSync(testFile);
+    console.log('Uploads directory is writable');
+  } catch (err) {
+    console.error('ERROR: Uploads directory is not writable:', err);
+  }
+  
+  // Serve static files with enhanced logging
   app.use('/uploads', (req, res, next) => {
     console.log(`Static file request for: ${req.path}`);
+    const fullPath = path.join(uploadsDir, req.path);
+    console.log(`Full path: ${fullPath}`);
+    console.log(`File exists: ${fs.existsSync(fullPath)}`);
     next();
   }, express.static(uploadsDir));
   /**

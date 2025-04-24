@@ -57,9 +57,11 @@ const router = Router();
 // Route for uploading images
 router.post('/api/upload', upload.single('image'), async (req, res) => {
   try {
+    console.log('====== UPLOAD DEBUG ======');
     console.log('Upload request received');
     console.log('Request body:', req.body);
     console.log('Request file:', req.file);
+    console.log('Headers:', req.headers);
     console.log('Authentication state:', {
       isAuthenticated: req.isAuthenticated(),
       sessionID: req.sessionID,
@@ -168,10 +170,16 @@ router.post('/api/upload', upload.single('image'), async (req, res) => {
       globalLatestUploads.pop();
     }
     
-    // Send a direct text response with just the URL to avoid any JSON parsing issues
-    // This is more robust since the client can still extract the URL even from HTML or mixed responses
-    res.setHeader('Content-Type', 'text/plain');
-    res.status(200).send(imageUrl);
+    // Send a JSON response with the URL as an explicit property
+    // This ensures the client can reliably extract the URL
+    console.log('Setting Content-Type to application/json');
+    console.log('Response will include URL:', imageUrl);
+    res.setHeader('Content-Type', 'application/json');
+    res.status(200).json({ 
+      url: imageUrl, 
+      success: true 
+    });
+    console.log('JSON response sent to client');
   } catch (error) {
     console.error('Error processing uploaded file:', error);
     
