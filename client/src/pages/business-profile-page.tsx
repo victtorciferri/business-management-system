@@ -320,6 +320,71 @@ export default function BusinessProfilePage() {
                         />
                       </div>
 
+                      {/* Auto-generate coordinates if address is filled but coordinates aren't */}
+                      {form.watch('address') && form.watch('city') && (!form.watch('latitude') || !form.watch('longitude')) && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => {
+                            // Get the full address
+                            const address = `${form.watch('address')}, ${form.watch('city')}, ${form.watch('state') || ''} ${form.watch('postalCode') || ''}, ${form.watch('country') || ''}`;
+                            
+                            // Use the Google Maps Geocoding API to get coordinates
+                            const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+                            if (!apiKey) {
+                              toast({
+                                title: "Geocoding unavailable",
+                                description: "Google Maps API key is required to generate coordinates.",
+                                variant: "destructive",
+                              });
+                              return;
+                            }
+
+                            // Show loading toast
+                            toast({
+                              title: "Generating coordinates",
+                              description: "Please wait while we locate your address..."
+                            });
+
+                            // Make the geocoding request
+                            fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`)
+                              .then(response => response.json())
+                              .then(data => {
+                                if (data.status === "OK" && data.results && data.results[0] && data.results[0].geometry) {
+                                  const { lat, lng } = data.results[0].geometry.location;
+                                  
+                                  // Update the form with the coordinates
+                                  form.setValue('latitude', lat.toString());
+                                  form.setValue('longitude', lng.toString());
+                                  
+                                  toast({
+                                    title: "Coordinates generated",
+                                    description: "Latitude and longitude have been set based on your address.",
+                                  });
+                                } else {
+                                  toast({
+                                    title: "Geocoding failed",
+                                    description: `Could not find coordinates: ${data.status || 'Unknown error'}`,
+                                    variant: "destructive",
+                                  });
+                                }
+                              })
+                              .catch(error => {
+                                console.error('Error generating coordinates:', error);
+                                toast({
+                                  title: "Geocoding error",
+                                  description: "Failed to generate coordinates from your address.",
+                                  variant: "destructive",
+                                });
+                              });
+                          }}
+                        >
+                          <MapPin className="h-4 w-4 mr-2" />
+                          Generate Coordinates from Address
+                        </Button>
+                      )}
+
                       <div className="flex justify-end gap-2 pt-4">
                         <Button 
                           type="reset" 
