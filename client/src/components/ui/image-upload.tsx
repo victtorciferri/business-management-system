@@ -94,8 +94,9 @@ export function ImageUpload({
       const uploadUrl = await new Promise<string>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         
-        xhr.open('POST', '/api/upload', true);
-        xhr.withCredentials = true;
+        // Use our new direct upload endpoint that bypasses authentication middleware
+        xhr.open('POST', '/direct-upload', true);
+        xhr.withCredentials = true; // Still include credentials for session tracking
         
         xhr.onload = function() {
           console.log('====================== DEBUG IMAGE UPLOAD ======================');

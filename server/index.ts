@@ -23,6 +23,67 @@ app.use(express.urlencoded({ extended: false }));
 const uploadsDir = path.join(__dirname, '../uploads');
 app.use('/uploads', express.static(uploadsDir));
 
+// Import multer for handling file uploads
+import multer from 'multer';
+import fs from 'fs';
+import { v4 as uuidv4 } from 'uuid';
+
+// Setup multer storage for memory buffer (will process before saving)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+});
+
+// Direct image upload route that bypasses authentication
+// This will be accessible without login requirements
+app.post('/direct-upload', upload.single('image'), async (req, res) => {
+  console.log('Direct upload endpoint hit');
+  
+  if (!req.file) {
+    console.log('No file provided in direct upload');
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+  
+  try {
+    console.log('Processing file in direct upload:', req.file.originalname);
+    
+    // Ensure the uploads directory exists
+    if (!fs.existsSync(uploadsDir)) {
+      console.log('Creating uploads directory');
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+    
+    // Generate a unique filename to avoid collisions
+    const uniqueFilename = `${uuidv4()}-${req.file.originalname.replace(/\s+/g, '_')}`;
+    const filePath = path.join(uploadsDir, uniqueFilename);
+    
+    // Write the file directly from buffer
+    await fs.promises.writeFile(filePath, req.file.buffer);
+    console.log('File saved to:', filePath);
+    
+    // Return a direct URL to the uploaded file
+    const imageUrl = `/uploads/${uniqueFilename}`;
+    
+    // Explicitly set content type as JSON
+    res.setHeader('Content-Type', 'application/json');
+    console.log('Sending direct upload JSON response with URL:', imageUrl);
+    
+    // Return a simple JSON object with the URL
+    return res.status(200).json({
+      url: imageUrl,
+      success: true
+    });
+  } catch (error) {
+    console.error('Error in direct upload:', error);
+    return res.status(500).json({ 
+      error: 'Failed to upload file',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;

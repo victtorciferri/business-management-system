@@ -1,0 +1,205 @@
+ {\n  sendError(evt.reason);\n});\n</script>\n\n    <script type=\"module\">\nimport RefreshRuntime from \"/@react-refresh\"\nRefreshRuntime.injectIntoGlobalHook(window)\nwindow.$RefreshReg$ = () => {}\nwindow.$RefreshSig$ = () => (type) => type\nwindow.__vite_plugin_react_preamble_installed__ = true\n</script>\n\n    <script type=\"module\" src=\"/@vite/client\"></script>\n\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, maximum-scale=1\" />\n    <!-- Inline script to detect and apply dark mode before any rendering -->\n    <script>\n      // Apply dark mode early if needed\n      (function() {\n        // Check if URL includes salonelegante or other dark mode businesses\n        var path = window.location.pathname;\n        if (path.includes('/salonelegante')) {\n          document.documentElement.classList.add('dark');\n          console.log('Dark mode applied early in index.html for Salon Elegante');\n        }\n        // Also check system preference\n        else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {\n          document.documentElement.classList.add('dark');\n          console.log('Dark mode applied early in index.html for system preference');\n        }\n      })();\n    </script>\n    <script type=\"module\">\"use strict\";(()=>{var F=\"0.0.11\";var T={HIGHLIGHT_COLOR:\"#0079F2\",HIGHLIGHT_BG:\"#0079F210\",ALLOWED_DOMAIN:\".replit.dev\"},I={highlighter:{position:\"absolute\",zIndex:Number.MAX_SAFE_INTEGER-3,boxSizing:\"border-box\",pointerEvents:\"none\",border:`2px solid ${T.HIGHLIGHT_COLOR}`,borderRadius:\"4px\",background:T.HIGHLIGHT_BG,transition:\"opacity 0.2s\",willChange:\"opacity\",opacity:\"0\"},label:{position:\"absolute\",backgroundColor:T.HIGHLIGHT_COLOR,color:\"#FFFFFF\",padding:\"2px 6px\",borderRadius:\"4px\",fontSize:\"12px\",fontFamily:\"monospace\",transform:\"translateY(-100%)\",marginTop:\"-4px\",zIndex:Number.MAX_SAFE_INTEGER-2,pointerEvents:\"none\",opacity:\"0\"}};function Le(e,n){return e[13]=1,e[14]=n>>8,e[15]=n&255,e[16]=n>>8,e[17]=n&255,e}var ne=112,re=72,oe=89,ie=115,W;function Ne(){let e=new Int32Array(256);for(let n=0;n<256;n++){let t=n;for(let r=0;r<8;r++)t=t&1?3988292384^t>>>1:t>>>1;e[n]=t}return e}function Ie(e){let n=-1;W||(W=Ne());for(let t=0;t<e.length;t++)n=W[(n^e[t])&255]^n>>>8;return n^-1}function xe(e){let n=e.length-1;for(let t=n;t>=4;t--)if(e[t-4]===9&&e[t-3]===ne&&e[t-2]===re&&e[t-1]===oe&&e[t]===ie)return t-3;return 0}function De(e,n,t=!1){let r=new Uint8Array(13);n*=39.3701,r[0]=ne,r[1]=re,r[2]=oe,r[3]=ie,r[4]=n>>>24,r[5]=n>>>16,r[6]=n>>>8,r[7]=n&255,r[8]=r[4],r[9]=r[5],r[10]=r[6],r[11]=r[7],r[12]=1;let s=Ie(r),i=new Uint8Array(4);if(i[0]=s>>>24,i[1]=s>>>16,i[2]=s>>>8,i[3]=s&255,t){let a=xe(e);return e.set(r,a),e.set(i,a+13),e}else{let a=new Uint8Array(4);a[0]=0,a[1]=0,a[2]=0,a[3]=9;let o=new Uint8Array(54);return o.set(e,0),o.set(a,33),o.set(r,37),o.set(i,50),o}}var se=\"[modern-screenshot]\",A=typeof window<\"u\",_e=A&&\"Worker\"in window,Me=A&&\"atob\"in window,Wt=A&&\"btoa\"in window,j=A?window.navigator?.u
+ Response length: 34311
+ Response headers: content-type: text/html; charset=utf-8
+date: Thu, 24 Apr 2025 16:02:11 GMT
+replit-cluster: spock
+transfer-encoding: chunked
+vary: Origin
+x-powered-by: Express
+x-robots-tag: none, noindex, noarchive, nofollow, nositelinkssearchbox, noimageindex, none, noindex, noarchive, nofollow, nositelinkssearchbox, noimageindex
+
+ Trimmed response length: 34311
+ Trimmed responseText (quoted): "<!DOCTYPE html>\n<html lang=\"en\">\n  <head>\n    <style data-vite-theme=\"\" data-inject-first=\"\">:root {\n      --background: 0 0% 100%;\n--foreground: 20 14.3% 4.1%;\n--muted: 60 4.8% 95.9%;\n--muted-foreground: 25 5.3% 44.7%;\n--popover: 0 0% 100%;\n--popover-foreground: 20 14.3% 4.1%;\n--card: 0 0% 100%;\n--card-foreground: 20 14.3% 4.1%;\n--border: 20 5.9% 90%;\n--input: 20 5.9% 90%;\n--primary: 189 94% 43%;\n--primary-foreground: 193 64% 99%;\n--secondary: 60 4.8% 95.9%;\n--secondary-foreground: 24 9.8% 10%;\n--accent: 60 4.8% 95.9%;\n--accent-foreground: 24 9.8% 10%;\n--destructive: 0 84.2% 60.2%;\n--destructive-foreground: 60 9.1% 97.8%;\n--ring: 20 14.3% 4.1%;\n--radius: 0.5rem;\n  }\n  .dark {\n      --background: 240 10% 3.9%;\n--foreground: 0 0% 98%;\n--muted: 240 3.7% 15.9%;\n--muted-foreground: 240 5% 64.9%;\n--popover: 240 10% 3.9%;\n--popover-foreground: 0 0% 98%;\n--card: 240 10% 3.9%;\n--card-foreground: 0 0% 98%;\n--border: 240 3.7% 15.9%;\n--input: 240 3.7% 15.9%;\n--primary: 189 94% 43%;\n--primary-foreground: 193 64% 99%;\n--secondary: 240 3.7% 15.9%;\n--secondary-foreground: 0 0% 98%;\n--accent: 240 3.7% 15.9%;\n--accent-foreground: 0 0% 98%;\n--destructive: 0 62.8% 30.6%;\n--destructive-foreground: 0 0% 98%;\n--ring: 240 4.9% 83.9%;\n--radius: 0.5rem;\n  }</style>\n\n    <script type=\"module\">\nimport { createHotContext } from \"/@vite/client\";\nconst hot = createHotContext(\"/__dummy__runtime-error-plugin\");\n\nfunction sendError(error) {\n  if (!(error instanceof Error)) {\n    error = new Error(\"(unknown runtime error)\");\n  }\n  const serialized = {\n    message: error.message,\n    stack: error.stack,\n  };\n  hot.send(\"runtime-error-plugin:error\", serialized);\n}\n\nwindow.addEventListener(\"error\", (evt) => {\n  sendError(evt.error);\n});\n\nwindow.addEventListener(\"unhandledrejection\", (evt) => {\n  sendError(evt.reason);\n});\n</script>\n\n    <script type=\"module\">\nimport RefreshRuntime from \"/@react-refresh\"\nRefreshRuntime.injectIntoGlobalHook(window)\nwindow.$RefreshReg$ = () => {}\nwindow.$RefreshSig$ = () => (type) => type\nwindow.__vite_plugin_react_preamble_installed__ = true\n</script>\n\n    <script type=\"module\" src=\"/@vite/client\"></script>\n\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, maximum-scale=1\" />\n    <!-- Inline script to detect and apply dark mode before any rendering -->\n    <script>\n      // Apply dark mode early if needed\n      (function() {\n        // Check if URL includes salonelegante or other dark mode businesses\n        var path = window.location.pathname;\n        if (path.includes('/salonelegante')) {\n          document.documentElement.classList.add('dark');\n          console.log('Dark mode applied early in index.html for Salon Elegante');\n        }\n        // Also check system preference\n        else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {\n          document.documentElement.classList.add('dark');\n          console.log('Dark mode applied early in index.html for system preference');\n        }\n      })();\n    </script>\n    <script type=\"module\">\"use strict\";(()=>{var F=\"0.0.11\";var T={HIGHLIGHT_COLOR:\"#0079F2\",HIGHLIGHT_BG:\"#0079F210\",ALLOWED_DOMAIN:\".replit.dev\"},I={highlighter:{position:\"absolute\",zIndex:Number.MAX_SAFE_INTEGER-3,boxSizing:\"border-box\",pointerEvents:\"none\",border:`2px solid ${T.HIGHLIGHT_COLOR}`,borderRadius:\"4px\",background:T.HIGHLIGHT_BG,transition:\"opacity 0.2s\",willChange:\"opacity\",opacity:\"0\"},label:{position:\"absolute\",backgroundColor:T.HIGHLIGHT_COLOR,color:\"#FFFFFF\",padding:\"2px 6px\",borderRadius:\"4px\",fontSize:\"12px\",fontFamily:\"monospace\",transform:\"translateY(-100%)\",marginTop:\"-4px\",zIndex:Number.MAX_SAFE_INTEGER-2,pointerEvents:\"none\",opacity:\"0\"}};function Le(e,n){return e[13]=1,e[14]=n>>8,e[15]=n&255,e[16]=n>>8,e[17]=n&255,e}var ne=112,re=72,oe=89,ie=115,W;function Ne(){let e=new Int32Array(256);for(let n=0;n<256;n++){let t=n;for(let r=0;r<8;r++)t=t&1?3988292384^t>>>1:t>>>1;e[n]=t}return e}function Ie(e){let n=-1;W||(W=Ne());for(let t=0;t<e.length;t++)n=W[(n^e[t])&255]^n>>>8;return n^-1}function xe(e){let n=e.length-1;for(let t=n;t>=4;t--)if(e[t-4]===9&&e[t-3]===ne&&e[t-2]===re&&e[t-1]===oe&&e[t]===ie)return t-3;return 0}function De(e,n,t=!1){let r=new Uint8Array(13);n*=39.3701,r[0]=ne,r[1]=re,r[2]=oe,r[3]=ie,r[4]=n>>>24,r[5]=n>>>16,r[6]=n>>>8,r[7]=n&255,r[8]=r[4],r[9]=r[5],r[10]=r[6],r[11]=r[7],r[12]=1;let s=Ie(r),i=new Uint8Array(4);if(i[0]=s>>>24,i[1]=s>>>16,i[2]=s>>>8,i[3]=s&255,t){let a=xe(e);return e.set(r,a),e.set(i,a+13),e}else{let a=new Uint8Array(4);a[0]=0,a[1]=0,a[2]=0,a[3]=9;let o=new Uint8Array(54);return o.set(e,0),o.set(a,33),o.set(r,37),o.set(i,50),o}}var se=\"[modern-screenshot]\",A=typeof window<\"u\",_e=A&&\"Worker\"in window,Me=A&&\"atob\"in window,Wt=A&&\"btoa\"in window,j=A?window.navigator?.u
+ Character-by-character inspection:
+ Char 0: '<' (code: 60)
+ Char 1: '!' (code: 33)
+ Char 2: 'D' (code: 68)
+ Char 3: 'O' (code: 79)
+ Char 4: 'C' (code: 67)
+ Char 5: 'T' (code: 84)
+ Char 6: 'Y' (code: 89)
+ Char 7: 'P' (code: 80)
+ Char 8: 'E' (code: 69)
+ Char 9: ' ' (code: 32)
+ Char 10: 'h' (code: 104)
+ Char 11: 't' (code: 116)
+ Char 12: 'm' (code: 109)
+ Char 13: 'l' (code: 108)
+ Char 14: '>' (code: 62)
+ Char 15: '
+' (code: 10)
+ Char 16: '<' (code: 60)
+ Char 17: 'h' (code: 104)
+ Char 18: 't' (code: 116)
+ Char 19: 'm' (code: 109)
+ Char 20: 'l' (code: 108)
+ Char 21: ' ' (code: 32)
+ Char 22: 'l' (code: 108)
+ Char 23: 'a' (code: 97)
+ Char 24: 'n' (code: 110)
+ Char 25: 'g' (code: 103)
+ Char 26: '=' (code: 61)
+ Char 27: '"' (code: 34)
+ Char 28: 'e' (code: 101)
+ Char 29: 'n' (code: 110)
+ Char 30: '"' (code: 34)
+ Char 31: '>' (code: 62)
+ Char 32: '
+' (code: 10)
+ Char 33: ' ' (code: 32)
+ Char 34: ' ' (code: 32)
+ Char 35: '<' (code: 60)
+ Char 36: 'h' (code: 104)
+ Char 37: 'e' (code: 101)
+ Char 38: 'a' (code: 97)
+ Char 39: 'd' (code: 100)
+ Char 40: '>' (code: 62)
+ Char 41: '
+' (code: 10)
+ Char 42: ' ' (code: 32)
+ Char 43: ' ' (code: 32)
+ Char 44: ' ' (code: 32)
+ Char 45: ' ' (code: 32)
+ Char 46: '<' (code: 60)
+ Char 47: 's' (code: 115)
+ Char 48: 't' (code: 116)
+ Char 49: 'y' (code: 121)
+ Char 50: 'l' (code: 108)
+ Char 51: 'e' (code: 101)
+ Char 52: ' ' (code: 32)
+ Char 53: 'd' (code: 100)
+ Char 54: 'a' (code: 97)
+ Char 55: 't' (code: 116)
+ Char 56: 'a' (code: 97)
+ Char 57: '-' (code: 45)
+ Char 58: 'v' (code: 118)
+ Char 59: 'i' (code: 105)
+ Char 60: 't' (code: 116)
+ Char 61: 'e' (code: 101)
+ Char 62: '-' (code: 45)
+ Char 63: 't' (code: 116)
+ Char 64: 'h' (code: 104)
+ Char 65: 'e' (code: 101)
+ Char 66: 'm' (code: 109)
+ Char 67: 'e' (code: 101)
+ Char 68: '=' (code: 61)
+ Char 69: '"' (code: 34)
+ Char 70: '"' (code: 34)
+ Char 71: ' ' (code: 32)
+ Char 72: 'd' (code: 100)
+ Char 73: 'a' (code: 97)
+ Char 74: 't' (code: 116)
+ Char 75: 'a' (code: 97)
+ Char 76: '-' (code: 45)
+ Char 77: 'i' (code: 105)
+ Char 78: 'n' (code: 110)
+ Char 79: 'j' (code: 106)
+ Char 80: 'e' (code: 101)
+ Char 81: 'c' (code: 99)
+ Char 82: 't' (code: 116)
+ Char 83: '-' (code: 45)
+ Char 84: 'f' (code: 102)
+ Char 85: 'i' (code: 105)
+ Char 86: 'r' (code: 114)
+ Char 87: 's' (code: 115)
+ Char 88: 't' (code: 116)
+ Char 89: '=' (code: 61)
+ Char 90: '"' (code: 34)
+ Char 91: '"' (code: 34)
+ Char 92: '>' (code: 62)
+ Char 93: ':' (code: 58)
+ Char 94: 'r' (code: 114)
+ Char 95: 'o' (code: 111)
+ Char 96: 'o' (code: 111)
+ Char 97: 't' (code: 116)
+ Char 98: ' ' (code: 32)
+ Char 99: '{' (code: 123)
+ Attempting to parse response as JSON
+ JSON parse error: SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+    at JSON.parse (<anonymous>)
+    at xhr.onload (src/components/ui/im…e-upload.tsx:103:33)
+xhr.onload @ src/components/ui/image-upload.tsx:113
+XMLHttpRequest.send
+uploadUrl @ src/components/ui/image-upload.tsx:145
+handleFileChange @ src/components/ui/image-upload.tsx:82
+callCallback2 @ chunk-RPCDYKBN.js:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js:3736
+executeDispatch @ chunk-RPCDYKBN.js:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js:7034
+processDispatchQueue @ chunk-RPCDYKBN.js:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js:7051
+(anonymous) @ chunk-RPCDYKBN.js:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js:18913
+batchedUpdates @ chunk-RPCDYKBN.js:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js:5478
+dispatchEvent @ chunk-RPCDYKBN.js:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js:5449Understand this error
+ Failed to parse as JSON, trying alternative extraction methods
+ Attempting to extract URL from HTML response
+ Trying regex pattern matching
+ All URL extraction methods failed
+ Upload failed: Error: Could not extract image URL from server response
+    at xhr.onload (src/components/ui/im…e-upload.tsx:137:20)
+handleFileChange @ src/components/ui/image-upload.tsx:154
+await in handleFileChange
+callCallback2 @ chunk-RPCDYKBN.js:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js:3736
+executeDispatch @ chunk-RPCDYKBN.js:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js:7034
+processDispatchQueue @ chunk-RPCDYKBN.js:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js:7051
+(anonymous) @ chunk-RPCDYKBN.js:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js:18913
+batchedUpdates @ chunk-RPCDYKBN.js:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js:5478
+dispatchEvent @ chunk-RPCDYKBN.js:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js:5449Understand this error
+ Trying fallback - fetching latest uploads
+ Fallback also failed: SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+handleFileChange @ src/components/ui/image-upload.tsx:173
+await in handleFileChange
+callCallback2 @ chunk-RPCDYKBN.js:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js:3736
+executeDispatch @ chunk-RPCDYKBN.js:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js:7034
+processDispatchQueue @ chunk-RPCDYKBN.js:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js:7051
+(anonymous) @ chunk-RPCDYKBN.js:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js:18913
+batchedUpdates @ chunk-RPCDYKBN.js:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js:5478
+dispatchEvent @ chunk-RPCDYKBN.js:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js:5449Understand this error
+App.tsx:168 App.tsx is rendering
+App.tsx:169 Location: /business-profile
+App.tsx:170 isBusinessPortal: false
+App.tsx:171 businessData: null
+App.tsx:172 window.BUSINESS_DATA: undefined
+App.tsx:173 currentUser: {id: 11, username: 'prideflow', email: 'info@prideandflow.com', businessName: 'Pride&Flow Yoga', businessSlug: 'prideandflow', …}
+App.tsx:168 App.tsx is rendering
+App.tsx:169 Location: /business-profile
+App.tsx:170 isBusinessPortal: false
+App.tsx:171 businessData: null
+App.tsx:172 window.BUSINESS_DATA: undefined
+App.tsx:173 currentUser: {id: 11, username: 'prideflow', email: 'info@prideandflow.com', businessName: 'Pride&Flow Yoga', businessSlug: 'prideandflow', …}
+App.tsx:168 App.tsx is rendering
+App.tsx:169 Location: /business-profile
+App.tsx:170 isBusinessPortal: false
+App.tsx:171 businessData: null
+App.tsx:172 window.BUSINESS_DATA: undefined
+App.tsx:173 currentUser: {id: 11, username: 'prideflow', email: 'info@prideandflow.com', businessName: 'Pride&Flow Yoga', businessSlug: 'prideandflow', …}
+App.tsx:168 App.tsx is rendering
+App.tsx:169 Location: /business-profile
+App.tsx:170 isBusinessPortal: false
+App.tsx:171 businessData: null
+App.tsx:172 window.BUSINESS_DATA: undefined
+App.tsx:173 currentUser: {id: 11, username: 'prideflow', email: 'info@prideandflow.com', businessName: 'Pride&Flow Yoga', businessSlug: 'prideandflow', …}
