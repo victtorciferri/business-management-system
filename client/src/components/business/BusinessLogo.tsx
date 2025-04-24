@@ -145,7 +145,16 @@ export function BusinessLogo({
   // If no logo is set, show initial letter with a gradient background
   // Check both cachedLogoUrl and business.logoUrl to be safe
   const logoUrl = cachedLogoUrl || business.logoUrl;
-  const hasValidLogo = logoUrl && logoUrl.trim() !== '';
+  
+  // Debug what we're working with
+  console.log('BusinessLogo debug info:', {
+    cachedLogoUrl,
+    businessLogoUrl: business.logoUrl,
+    finalLogoUrl: logoUrl
+  });
+  
+  // More permissive check for valid logo
+  const hasValidLogo = logoUrl && typeof logoUrl === 'string' && logoUrl.length > 0;
   
   if (!hasValidLogo) {
     console.log('BusinessLogo: No valid logo found, displaying initial for business:', businessName);
