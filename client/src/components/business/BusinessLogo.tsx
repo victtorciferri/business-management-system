@@ -21,27 +21,56 @@ export function BusinessLogo({
   showLabel = false
 }: BusinessLogoProps) {
   const { toast } = useToast();
-  const [cachedLogoUrl, setCachedLogoUrl] = useState<string | null>(business.logoUrl || null);
+  const [cachedLogoUrl, setCachedLogoUrl] = useState<string | null>(null);
+  const [lastFetchTime, setLastFetchTime] = useState<number>(0);
+  const [isLogoLoaded, setIsLogoLoaded] = useState<boolean>(false);
   
-  // When the component mounts, check if we're in a customer portal and fetch the latest business data
+  // Always initialize with business.logoUrl if available
   useEffect(() => {
-    const isCustomerPortal = window.location.pathname.includes('/customer-portal');
+    if (business.logoUrl) {
+      console.log('BusinessLogo: Setting initial logo URL from business prop:', business.logoUrl);
+      setCachedLogoUrl(business.logoUrl);
+    }
+  }, [business.logoUrl]);
+  
+  // Fetch the latest business data regardless of which portal we're in
+  // This ensures we always have the most up-to-date logoUrl
+  useEffect(() => {
+    // Only fetch at most once every 5 seconds to prevent excessive requests
+    const now = Date.now();
+    if (now - lastFetchTime < 5000) {
+      return;
+    }
     
-    if (isCustomerPortal && business.id) {
+    if (business.id) {
+      console.log('BusinessLogo: Fetching latest business data for ID:', business.id);
+      setLastFetchTime(now);
+      
       // Try to get the latest business data from our direct endpoint
-      fetch(`/direct-business-data/${business.id}?_t=${Date.now()}`)
-        .then(response => response.json())
+      fetch(`/direct-business-data/${business.id}?_t=${now}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Failed to fetch business data: ${response.statusText}`);
+          }
+          return response.json();
+        })
         .then(data => {
-          if (data.business && data.business.logoUrl && data.business.logoUrl !== cachedLogoUrl) {
-            console.log('BusinessLogo: Updating cached logo URL from direct endpoint:', data.business.logoUrl);
-            setCachedLogoUrl(data.business.logoUrl);
+          if (data.business && data.business.logoUrl) {
+            console.log('BusinessLogo: Got logo URL from direct endpoint:', data.business.logoUrl);
+            // Only update if different to avoid unnecessary re-renders
+            if (data.business.logoUrl !== cachedLogoUrl) {
+              console.log('BusinessLogo: Updating cached logo URL to:', data.business.logoUrl);
+              setCachedLogoUrl(data.business.logoUrl);
+            }
+          } else {
+            console.log('BusinessLogo: No logo URL in response:', data);
           }
         })
         .catch(error => {
           console.error('BusinessLogo: Error fetching latest business data:', error);
         });
     }
-  }, [business.id]);
+  }, [business.id, lastFetchTime]);
   
   // Mutation to update the logo
   const logoMutation = useMutation({
@@ -206,19 +235,44 @@ export function BusinessLogo({
           src={`${logoUrl}?_t=${Date.now()}`}
           alt={`${businessName} logo`}
           className={`${sizeClasses[size]} rounded-md object-cover ${className}`}
+          onLoad={() => {
+            console.log('BusinessLogo: Successfully loaded image from URL:', logoUrl);
+            setIsLogoLoaded(true);
+          }}
           onError={(e) => {
             console.error('BusinessLogo: Failed to load image:', logoUrl);
+            
+            // If image fails to load, mark it as not loaded
+            setIsLogoLoaded(false);
+            
+            // Hide the broken image
             e.currentTarget.style.display = 'none';
+            
             // If image fails to load, show the fallback initial in the DOM
             const container = e.currentTarget.parentElement;
             if (container) {
-              const fallback = document.createElement('div');
-              fallback.className = `${sizeClasses[size]} ${className} rounded-md flex items-center justify-center text-white font-bold ${gradientClass}`;
-              const span = document.createElement('span');
-              span.className = `${textSizes[size]} leading-none`;
-              span.textContent = initial;
-              fallback.appendChild(span);
-              container.appendChild(fallback);
+              // Check if fallback already exists to avoid duplicates
+              if (!container.querySelector('[data-fallback="true"]')) {
+                console.log('BusinessLogo: Adding fallback letter avatar');
+                const fallback = document.createElement('div');
+                fallback.className = `${sizeClasses[size]} ${className} rounded-md flex items-center justify-center text-white font-bold ${gradientClass}`;
+                fallback.setAttribute('data-fallback', 'true');
+                
+                const span = document.createElement('span');
+                span.className = `${textSizes[size]} leading-none`;
+                span.textContent = initial;
+                fallback.appendChild(span);
+                container.appendChild(fallback);
+              }
+            }
+            
+            // If logo fails to load, try to fetch business data again after a short delay
+            // This creates a retry mechanism for loading the logo
+            if (cachedLogoUrl) {
+              setTimeout(() => {
+                console.log('BusinessLogo: Retrying to fetch business data after image load failure');
+                setLastFetchTime(0); // Reset last fetch time to force a new fetch
+              }, 2000);
             }
           }}
         />
