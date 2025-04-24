@@ -119,7 +119,10 @@ export function BusinessLogo({
   };
   
   // If no logo is set, show initial letter with a gradient background
-  if (!business.logoUrl) {
+  // Check both cachedLogoUrl and business.logoUrl to be safe
+  if (!cachedLogoUrl && !business.logoUrl) {
+    console.log('BusinessLogo: No logo found, displaying initial for business:', business.businessName || business.username);
+    
     const businessName = business.businessName || business.username;
     const initial = businessName ? businessName.charAt(0).toUpperCase() : '?';
     
@@ -133,6 +136,7 @@ export function BusinessLogo({
     let gradientClass = 'bg-gradient-to-br from-blue-500 to-indigo-700';
     if (business.businessSlug === 'prideandflow') {
       // Special color for yoga businesses
+      console.log('BusinessLogo: Using special yoga gradient for prideandflow');
       gradientClass = 'bg-gradient-to-br from-green-500 to-teal-700';
     }
     
@@ -146,7 +150,7 @@ export function BusinessLogo({
           <div className="mt-4 w-full">
             <ImageUpload
               id="business-logo"
-              value={business.logoUrl || null}
+              value={null} 
               onChange={handleLogoChange}
               placeholder="Upload logo"
               previewSize={size}
@@ -162,6 +166,50 @@ export function BusinessLogo({
   // If logo is set, show the actual image logo
   // Use the cached logo URL if available (with the latest refresh), otherwise fall back to business.logoUrl
   const logoUrl = cachedLogoUrl || business.logoUrl;
+  
+  // Extra validation to ensure logoUrl isn't null, undefined, or empty string
+  if (!logoUrl || logoUrl.trim() === '') {
+    console.log('BusinessLogo: Logo URL is empty or invalid:', logoUrl);
+    
+    // Return the initial/default letter representation for safety
+    const businessName = business.businessName || business.username;
+    const initial = businessName ? businessName.charAt(0).toUpperCase() : '?';
+    
+    const sizeClasses = {
+      small: 'h-8 w-8 text-base',
+      medium: 'h-12 w-12 text-lg',
+      large: 'h-24 w-24 text-3xl',
+    };
+    
+    // Different styling based on business type  
+    let gradientClass = 'bg-gradient-to-br from-blue-500 to-indigo-700';
+    if (business.businessSlug === 'prideandflow') {
+      console.log('BusinessLogo: Using special yoga gradient for prideandflow');
+      gradientClass = 'bg-gradient-to-br from-green-500 to-teal-700';
+    }
+    
+    return (
+      <div className="flex flex-col items-center">
+        <div className={`${sizeClasses[size]} ${className} rounded-md flex items-center justify-center text-white font-bold ${gradientClass}`}>
+          {initial}
+        </div>
+        
+        {showLabel && (
+          <div className="mt-4 w-full">
+            <ImageUpload
+              id="business-logo"
+              value={null}
+              onChange={handleLogoChange}
+              placeholder="Upload logo"
+              previewSize={size}
+              aspectRatio={aspectRatio}
+              disabled={logoMutation.isPending}
+            />
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center">
