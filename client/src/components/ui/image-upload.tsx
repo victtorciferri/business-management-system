@@ -100,10 +100,12 @@ export function ImageUpload({
         xhr.onload = function() {
           console.log('XHR status:', xhr.status);
           console.log('Content-Type:', xhr.getResponseHeader('Content-Type'));
-          console.log('Response text:', xhr.responseText.substring(0, 100));
+          console.log('Full Response text:', xhr.responseText);
+          console.log('Response length:', xhr.responseText.length);
           
           if (xhr.status >= 200 && xhr.status < 300) {
             const responseText = xhr.responseText.trim();
+            console.log('Trimmed response length:', responseText.length);
             
             // 1. Direct URL format
             if (responseText.startsWith('/uploads/') || responseText.startsWith('http')) {
@@ -115,7 +117,9 @@ export function ImageUpload({
             // 2. JSON format with URL
             if (responseText.startsWith('{') || responseText.startsWith('[')) {
               try {
+                console.log('Attempting to parse as JSON');
                 const data = JSON.parse(responseText);
+                console.log('Parsed JSON data:', data);
                 if (data && data.url) {
                   console.log('Found URL in JSON response:', data.url);
                   resolve(data.url);
@@ -136,14 +140,17 @@ export function ImageUpload({
               }
             }
             
-            // 4. Last resort - regex search
-            const uploadUrlMatch = responseText.match(/\/uploads\/[a-zA-Z0-9_.-]+/);
+            // 4. Last resort - regex search with improved pattern for processed files
+            console.log('Trying regex pattern matching');
+            // Try to match both standard and processed file patterns
+            const uploadUrlMatch = responseText.match(/\/uploads\/(?:processed_)?[a-zA-Z0-9_.-]+/);
             if (uploadUrlMatch) {
               console.log('Found URL with regex:', uploadUrlMatch[0]);
               resolve(uploadUrlMatch[0]);
               return;
             }
             
+            console.log('All URL extraction methods failed');
             reject(new Error('Could not extract image URL from server response'));
           } else {
             reject(new Error(`Upload failed with status ${xhr.status}`));
