@@ -2662,6 +2662,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   /**
+   * Update business location information
+   * PATCH /api/business/location
+   */
+  app.patch("/api/business/location", async (req: Request, res: Response) => {
+    try {
+      if (!req.session?.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const userId = req.session.user.id;
+      const { address, city, state, postalCode, country, latitude, longitude } = req.body;
+      
+      // Update the business location in the database
+      try {
+        await db.execute(sql`
+          UPDATE users
+          SET 
+            address = ${address || null},
+            city = ${city || null},
+            state = ${state || null},
+            postal_code = ${postalCode || null},
+            country = ${country || null},
+            latitude = ${latitude || null},
+            longitude = ${longitude || null},
+            updated_at = NOW()
+          WHERE id = ${userId}
+        `);
+        
+        console.log(`Updated location for business ID: ${userId}`);
+        
+        // Return success
+        return res.json({ 
+          message: "Location updated successfully",
+          location: {
+            address,
+            city,
+            state,
+            postalCode,
+            country,
+            latitude,
+            longitude
+          }
+        });
+      } catch (dbError) {
+        console.error('Error updating location:', dbError);
+        return res.status(500).json({ message: "Database error while updating location" });
+      }
+    } catch (error) {
+      console.error('Error updating business location:', error);
+      return res.status(500).json({ message: "Failed to update business location" });
+    }
+  });
+
+  /**
    * Update business industry type (template)
    * This endpoint updates the industry type for the current logged-in business
    */
