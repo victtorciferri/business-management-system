@@ -117,13 +117,16 @@ export default function CustomerPortalLayout({
   const renderLogoHeader = () => {
     if (business?.businessSlug === 'prideandflow' && business?.logoUrl) {
       return (
-        <div className="flex flex-col items-center justify-center py-8 mb-6 bg-gradient-to-r from-green-50 to-teal-50 dark:from-green-900/20 dark:to-teal-900/20 rounded-lg shadow-sm">
-          <BusinessLogo 
-            business={business} 
-            size="large" 
-            className="mb-4"
-          />
-          <h1 className="text-3xl font-bold text-center text-green-800 dark:text-green-400">
+        <div className="flex flex-col items-center justify-center py-6 md:py-8 mb-4 md:mb-6 bg-gradient-to-r from-green-50 to-teal-50 dark:from-green-900/20 dark:to-teal-900/20 rounded-lg shadow-sm">
+          {/* Use different size classes based on screen size */}
+          <div className="max-w-[150px] md:max-w-[250px] w-auto mb-3 md:mb-4">
+            <BusinessLogo 
+              business={business} 
+              size="medium" 
+              className="w-full h-auto"
+            />
+          </div>
+          <h1 className="text-2xl md:text-3xl font-bold text-center text-green-800 dark:text-green-400">
             {business.businessName}
           </h1>
         </div>

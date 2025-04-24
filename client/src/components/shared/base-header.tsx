@@ -83,12 +83,12 @@ export default function BaseHeader({
   const renderLogo = () => {
     // Special case for Pride&Flow Yoga
     if (logoText === "Pride&Flow Yoga" || business?.businessSlug === "prideandflow" || slug === "prideandflow") {
-      // Use large size for customer portal, small for other views
       const isCustomerPortal = window.location.pathname.includes('/customer-portal');
-      const logoSize = isCustomerPortal ? "large" : "small";
-      const logoClass = isCustomerPortal 
-        ? "w-auto mr-3 max-w-full" 
-        : "h-10 w-auto mr-3";
+      
+      // Always use small size in the header, regardless of which portal
+      // The large logo will be displayed in the customer portal content area
+      const logoSize = "small";
+      const logoClass = "h-10 w-auto mr-3"; 
       
       return business ? (
         <BusinessLogo business={business} className={logoClass} size={logoSize} />
