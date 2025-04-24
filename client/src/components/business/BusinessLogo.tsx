@@ -28,10 +28,43 @@ export function BusinessLogo({
       // Enhanced debug logging
       console.log('Updating logo with URL:', logoUrl);
       
-      // Include credentials in all requests using fetch directly since apiRequest already includes them
-      const res = await apiRequest('PATCH', `/api/business/update-logo`, { logoUrl });
+      // Use our direct endpoint that bypasses authentication middleware
+      // Get the userId from the business object
+      const userId = business.id;
+      console.log('Sending update to direct endpoint with userId:', userId);
+      
+      // Send a direct POST request instead of using the standard API endpoints
+      // This avoids middleware issues that might return HTML instead of JSON
+      const res = await fetch('/direct-update-logo', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          logoUrl, 
+          userId 
+        }),
+        credentials: 'include'
+      });
+      
+      // If status code is not ok, throw an error
+      if (!res.ok) {
+        console.error('Error response status:', res.status);
+        
+        try {
+          // Try to parse error as JSON
+          const errorData = await res.json();
+          console.error('Error response body:', errorData);
+          throw new Error(errorData.message || 'Failed to update logo');
+        } catch (parseError) {
+          // If parsing fails, throw a generic error with status code
+          throw new Error(`Failed to update logo: ${res.status} ${res.statusText}`);
+        }
+      }
+      
+      // Parse the JSON response
       const result = await res.json();
-      console.log('Logo update response:', result);
+      console.log('Logo update response from direct endpoint:', result);
       return result;
     },
     onSuccess: () => {

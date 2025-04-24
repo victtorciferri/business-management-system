@@ -84,6 +84,71 @@ app.post('/direct-upload', upload.single('image'), async (req, res) => {
   }
 });
 
+// Direct update logo endpoint that bypasses problematic middleware
+// This is the companion to the direct-upload endpoint
+app.post('/direct-update-logo', express.json(), async (req, res) => {
+  console.log('Direct update logo endpoint hit with body:', req.body);
+  
+  try {
+    const { logoUrl, userId } = req.body;
+    
+    if (!logoUrl || !userId) {
+      console.log('Missing required fields for direct update logo');
+      return res.status(400).json({ 
+        error: 'Missing required fields', 
+        success: false 
+      });
+    }
+    
+    console.log(`Direct updating logo for user ID ${userId} with logo URL: ${logoUrl}`);
+    
+    // Import storage directly to avoid middleware issues
+    const { storage } = await import('./storage');
+    
+    // Get current user
+    const user = await storage.getUser(userId);
+    if (!user) {
+      console.log(`User with ID ${userId} not found in direct update logo`);
+      return res.status(404).json({ 
+        error: 'User not found', 
+        success: false 
+      });
+    }
+    
+    console.log('Current user data before update:', { ...user, password: '[REDACTED]' });
+    
+    // Update user with new logo URL
+    const updatedUser = await storage.updateUser(userId, { logoUrl });
+    
+    if (!updatedUser) {
+      console.log('storage.updateUser returned null or undefined in direct update');
+      return res.status(500).json({ 
+        error: 'Failed to update logo', 
+        success: false 
+      });
+    }
+    
+    console.log('Updated user data in direct endpoint:', { ...updatedUser, password: '[REDACTED]' });
+    
+    // Explicitly set content type
+    res.setHeader('Content-Type', 'application/json');
+    
+    // Return a successful response with user data (without password)
+    const { password, ...userWithoutPassword } = updatedUser;
+    return res.status(200).json({
+      ...userWithoutPassword,
+      success: true
+    });
+  } catch (error) {
+    console.error('Error in direct update logo:', error);
+    return res.status(500).json({ 
+      error: 'Failed to update logo',
+      message: error instanceof Error ? error.message : 'Unknown error',
+      success: false
+    });
+  }
+});
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
