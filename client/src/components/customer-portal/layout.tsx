@@ -14,6 +14,7 @@ import { useBusinessContext } from "@/contexts/BusinessContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useEffect } from "react";
+import { BusinessLogo } from "@/components/business/BusinessLogo";
 
 interface CustomerPortalLayoutProps {
   children: React.ReactNode;
@@ -112,6 +113,25 @@ export default function CustomerPortalLayout({
     }
   }, [businessId]);
   
+  // Show a prominent business logo on the customer portal if available
+  const renderLogoHeader = () => {
+    if (business?.businessSlug === 'prideandflow' && business?.logoUrl) {
+      return (
+        <div className="flex flex-col items-center justify-center py-8 mb-6 bg-gradient-to-r from-green-50 to-teal-50 dark:from-green-900/20 dark:to-teal-900/20 rounded-lg shadow-sm">
+          <BusinessLogo 
+            business={business} 
+            size="large" 
+            className="mb-4"
+          />
+          <h1 className="text-3xl font-bold text-center text-green-800 dark:text-green-400">
+            {business.businessName}
+          </h1>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <BaseLayout
       business={business}
@@ -122,6 +142,7 @@ export default function CustomerPortalLayout({
       // Use theme from ThemeContext rather than config.themeSettings
       // This ensures we're using the most up-to-date theme from the database
     >
+      {renderLogoHeader()}
       {children}
     </BaseLayout>
   );

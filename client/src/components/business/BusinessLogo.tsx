@@ -153,15 +153,15 @@ export function BusinessLogo({
   
   // Configure size classes based on the size prop
   const sizeClasses = {
-    small: 'h-8 w-8',
-    medium: 'h-12 w-12',
-    large: 'h-24 w-24',
+    small: 'h-10 w-10 md:h-12 md:w-12',
+    medium: 'h-16 w-16 md:h-20 md:w-20',
+    large: 'h-40 w-40 md:h-48 md:w-48 lg:h-60 lg:w-60 xl:h-64 xl:w-64',
   };
   
   const textSizes = {
-    small: 'text-sm',
-    medium: 'text-xl',
-    large: 'text-4xl',
+    small: 'text-lg md:text-xl',
+    medium: 'text-2xl md:text-3xl',
+    large: 'text-6xl md:text-7xl lg:text-8xl',
   };
   
   // Determine styling based on business type

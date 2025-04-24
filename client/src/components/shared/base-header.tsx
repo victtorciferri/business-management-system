@@ -83,8 +83,15 @@ export default function BaseHeader({
   const renderLogo = () => {
     // Special case for Pride&Flow Yoga
     if (logoText === "Pride&Flow Yoga" || business?.businessSlug === "prideandflow" || slug === "prideandflow") {
+      // Use large size for customer portal, small for other views
+      const isCustomerPortal = window.location.pathname.includes('/customer-portal');
+      const logoSize = isCustomerPortal ? "large" : "small";
+      const logoClass = isCustomerPortal 
+        ? "w-auto mr-3 max-w-full" 
+        : "h-10 w-auto mr-3";
+      
       return business ? (
-        <BusinessLogo business={business} className="h-10 w-auto mr-3" size="small" />
+        <BusinessLogo business={business} className={logoClass} size={logoSize} />
       ) : (
         <img src="/src/assets/pride-flow-logo.svg" alt="Pride&Flow Yoga logo" className="h-10 w-auto mr-3" />
       );
