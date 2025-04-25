@@ -220,7 +220,12 @@ function AppContent() {
             <AuthPage />
           </Route>
           <Route path="/">
-            <LandingPage />
+            <GlobalThemeProvider>
+              <ThemeProvider>
+                <DarkModeInitializer />
+                <LandingPage />
+              </ThemeProvider>
+            </GlobalThemeProvider>
           </Route>
           <Route path="/dashboard">
             {currentUser ? <Dashboard /> : <Redirect to="/auth" />}
