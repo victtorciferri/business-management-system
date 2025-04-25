@@ -4,7 +4,7 @@ import { Menu, Bell, LogOut, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { useGlobalTheme } from "@/providers/GlobalThemeProvider";
+import { useGlobalTheme } from "@/hooks/useGlobalTheme";
 import {
   DropdownMenu,
   DropdownMenuContent,
