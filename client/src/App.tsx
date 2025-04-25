@@ -19,6 +19,7 @@ import AuthPage from "@/pages/auth-page";
 import StaffManagement from "@/pages/staff-management";
 import StaffProfile from "@/pages/staff-profile";
 import StaffSchedule from "@/pages/staff-schedule";
+import LandingPage from "@/pages/landing-page";
 
 // Settings and theme pages
 import ThemeEditor from "@/pages/theme-editor";
@@ -219,12 +220,10 @@ function AppContent() {
             <AuthPage />
           </Route>
           <Route path="/">
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
+            <LandingPage />
           </Route>
           <Route path="/dashboard">
-            <Redirect to="/" />
+            {currentUser ? <Dashboard /> : <Redirect to="/auth" />}
           </Route>
           <Route path="/new-appointment">
             <Redirect to="/customer-portal/new-appointment" />
