@@ -26,7 +26,7 @@ const LandingPage: React.FC = () => {
               <Button size="lg" className="bg-white text-indigo-900 hover:bg-white/90">
                 <Link href="/auth">Get Started</Link>
               </Button>
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
+              <Button size="lg" variant="outline" className="border-white text-white bg-white/20 hover:bg-white/30">
                 Book a Demo
               </Button>
             </div>
@@ -317,7 +317,7 @@ const LandingPage: React.FC = () => {
             <Button size="lg" className="bg-white text-indigo-900 hover:bg-white/90">
               <Link href="/auth">Experience AI-Powered Scheduling</Link>
             </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
+            <Button size="lg" variant="outline" className="border-white text-white bg-white/20 hover:bg-white/30">
               Schedule a Demo
             </Button>
           </div>
