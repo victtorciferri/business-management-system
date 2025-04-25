@@ -13,9 +13,14 @@ const LandingPage: React.FC = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 to-purple-900 opacity-90 z-0"></div>
         <div className="container mx-auto px-4 py-24 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
+            <div className="inline-block bg-white/10 backdrop-blur-sm px-4 py-1 rounded-full mb-4 border border-white/20">
+              <span className="text-white/90 font-medium flex items-center gap-2 text-sm">
+                <Bot className="h-4 w-4" /> AI-First Platform
+              </span>
+            </div>
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">AppointEase</h1>
             <p className="text-xl md:text-2xl text-white/90 mb-8">
-              Empowering SMEs in Chile with an all-in-one appointment scheduling and customer engagement platform.
+              Empowering SMEs in Chile with an intelligent, AI-driven appointment scheduling and customer engagement platform.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" className="bg-white text-indigo-900 hover:bg-white/90">
@@ -38,41 +43,47 @@ const LandingPage: React.FC = () => {
 
       {/* Key Features Section */}
       <section className="py-20 container mx-auto px-4">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">Key Features</h2>
-        <p className="text-xl text-muted-foreground text-center mb-12 max-w-3xl mx-auto">
-          Our platform provides everything service businesses need to succeed digitally
-        </p>
+        <div className="max-w-xl mx-auto text-center mb-12">
+          <div className="inline-flex items-center justify-center gap-2 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 px-4 py-1 rounded-full mb-4">
+            <Bot className="h-4 w-4" /> 
+            <span className="text-sm font-medium">Powered by AI at every level</span>
+          </div>
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">AI-Driven Features</h2>
+          <p className="text-xl text-muted-foreground">
+            Our intelligent platform enhances every aspect of your business operations
+          </p>
+        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <FeatureCard 
-            icon={<Globe className="h-8 w-8 text-indigo-600" />}
-            title="Custom Domains" 
-            description="White-labeled domains for each business, offering a professional web presence under their own brand."
+            icon={<Bot className="h-8 w-8 text-indigo-600" />}
+            title="Smart Booking Assistant" 
+            description="AI-powered chatbot guides clients through bookings in real-time and answers questions naturally."
           />
           <FeatureCard 
-            icon={<Users className="h-8 w-8 text-indigo-600" />}
-            title="Friction-Free Sessions" 
-            description="No logins, no passwords, no OTP codes. Clients are recognized by their email address."
+            icon={<TrendingUp className="h-8 w-8 text-indigo-600" />}
+            title="Predictive Analytics" 
+            description="AI identifies demand peaks, risk of no-shows, and intelligently suggests upsell opportunities."
           />
           <FeatureCard 
             icon={<Calendar className="h-8 w-8 text-indigo-600" />}
-            title="Online Booking & Calendar" 
-            description="Manage bookings and real-time availability through a user-friendly interface."
+            title="Intelligent Scheduling" 
+            description="Advanced algorithms optimize your calendar and adapt to real-time availability."
           />
           <FeatureCard 
-            icon={<BellRing className="h-8 w-8 text-indigo-600" />}
-            title="Automated Reminders" 
-            description="Reduce no-shows with timely booking confirmations and reminders via email or WhatsApp."
+            icon={<Mail className="h-8 w-8 text-indigo-600" />}
+            title="AI-Driven Marketing" 
+            description="Automated campaigns based on client behavior patterns and personalized re-engagement."
           />
           <FeatureCard 
-            icon={<Clock className="h-8 w-8 text-indigo-600" />}
-            title="Flexible Scheduling" 
-            description="Define services, prices, durations, and availability settings including holidays or special rules."
+            icon={<Users className="h-8 w-8 text-indigo-600" />}
+            title="Smart Client Profiles" 
+            description="AI-enhanced profiles that learn from client interactions and predict preferences."
           />
           <FeatureCard 
-            icon={<CreditCard className="h-8 w-8 text-indigo-600" />}
-            title="Payment Integration" 
-            description="Accept credit cards, debit, or wallets—with no monthly fees, just a revenue-sharing model."
+            icon={<Globe className="h-8 w-8 text-indigo-600" />}
+            title="Custom AI Domains" 
+            description="White-labeled domains with intelligent content that adapts to visitor behavior."
           />
         </div>
       </section>
@@ -80,9 +91,16 @@ const LandingPage: React.FC = () => {
       {/* Advanced Features with Tabs */}
       <section className="py-20 bg-slate-50 dark:bg-slate-900">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">Advanced Platform Features</h2>
+          <div className="inline-block bg-gradient-to-r from-indigo-500 to-purple-500 p-px rounded-lg mb-6 mx-auto">
+            <div className="bg-slate-50 dark:bg-slate-900 rounded-lg px-4 py-2">
+              <span className="bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent font-medium">
+                Built for the AI generation
+              </span>
+            </div>
+          </div>
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">AI-Powered Platform Technology</h2>
           <p className="text-xl text-muted-foreground text-center mb-12 max-w-3xl mx-auto">
-            Powered by the latest technology to enhance your business
+            Experience next-generation business tools built with artificial intelligence at their core
           </p>
           
           <Tabs defaultValue="business" className="max-w-4xl mx-auto">
@@ -238,18 +256,18 @@ const LandingPage: React.FC = () => {
           <div className="bg-white dark:bg-slate-800 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-lg">
             <div className="p-2 bg-indigo-600"></div>
             <div className="p-6 md:p-8">
-              <h3 className="text-2xl font-bold mb-4">Standard Plan</h3>
+              <h3 className="text-2xl font-bold mb-4">Standard AI Plan</h3>
               <div className="mb-6">
                 <span className="text-4xl font-bold">5%</span>
                 <span className="text-muted-foreground"> revenue share</span>
               </div>
               <ul className="space-y-3 mb-8">
                 <FeatureItem text="Custom domain for your business" />
-                <FeatureItem text="Online booking system" />
-                <FeatureItem text="Automated reminders" /> 
-                <FeatureItem text="Client profiles" />
-                <FeatureItem text="Basic analytics" />
-                <FeatureItem text="Payment processing" />
+                <FeatureItem text="AI-powered booking system" />
+                <FeatureItem text="Smart automated reminders" /> 
+                <FeatureItem text="AI-generated client profiles" />
+                <FeatureItem text="Intelligent analytics" />
+                <FeatureItem text="Secure payment processing" />
               </ul>
               <Button className="w-full" size="lg">
                 Get Started
@@ -263,18 +281,18 @@ const LandingPage: React.FC = () => {
             </div>
             <div className="p-2 bg-gradient-to-r from-indigo-600 to-purple-600"></div>
             <div className="p-6 md:p-8">
-              <h3 className="text-2xl font-bold mb-4">Premium Plan</h3>
+              <h3 className="text-2xl font-bold mb-4">Advanced AI Plan</h3>
               <div className="mb-6">
                 <span className="text-4xl font-bold">8%</span>
                 <span className="text-muted-foreground"> revenue share</span>
               </div>
               <ul className="space-y-3 mb-8">
-                <FeatureItem text="Everything in Standard Plan" />
-                <FeatureItem text="AI booking assistant" />
-                <FeatureItem text="Advanced analytics & insights" />
-                <FeatureItem text="WhatsApp integration" />
-                <FeatureItem text="Marketing automation" />
-                <FeatureItem text="Priority support" />
+                <FeatureItem text="Everything in Standard AI Plan" />
+                <FeatureItem text="Advanced AI booking assistant" />
+                <FeatureItem text="Predictive analytics & deep insights" />
+                <FeatureItem text="AI-driven WhatsApp integration" />
+                <FeatureItem text="Intelligent marketing automation" />
+                <FeatureItem text="AI-enhanced customer support" />
               </ul>
               <Button className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700" size="lg">
                 Start Free Trial
@@ -287,13 +305,17 @@ const LandingPage: React.FC = () => {
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-br from-indigo-900 to-purple-900 text-white">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6">Ready to transform your business?</h2>
+          <div className="inline-flex items-center justify-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-1 rounded-full mb-4 border border-white/20">
+            <Bot className="h-4 w-4" /> 
+            <span className="text-sm font-medium">The Future is AI-First</span>
+          </div>
+          <h2 className="text-3xl md:text-4xl font-bold mb-6">Ready to transform your business with AI?</h2>
           <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-            Join hundreds of service businesses in Chile that are growing with AppointEase
+            Join hundreds of service businesses in Chile that are growing with AppointEase's intelligent platform
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" className="bg-white text-indigo-900 hover:bg-white/90">
-              <Link href="/auth">Get Started Today</Link>
+              <Link href="/auth">Experience AI-Powered Scheduling</Link>
             </Button>
             <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
               Schedule a Demo
@@ -309,16 +331,16 @@ const LandingPage: React.FC = () => {
             <div>
               <h3 className="text-xl font-bold text-white mb-4">AppointEase</h3>
               <p className="text-slate-400">
-                Empowering SMEs in Chile with the tools they need to succeed in the digital age.
+                Chile's first AI-powered platform empowering SMEs to succeed in the digital age with intelligent scheduling solutions.
               </p>
             </div>
             <div>
-              <h4 className="font-bold text-white mb-4">Features</h4>
+              <h4 className="font-bold text-white mb-4">AI Features</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="hover:text-white">Online Booking</a></li>
-                <li><a href="#" className="hover:text-white">Customer Management</a></li>
-                <li><a href="#" className="hover:text-white">Payment Processing</a></li>
-                <li><a href="#" className="hover:text-white">AI Assistant</a></li>
+                <li><a href="#" className="hover:text-white">AI Booking Assistant</a></li>
+                <li><a href="#" className="hover:text-white">Intelligent Analytics</a></li>
+                <li><a href="#" className="hover:text-white">Predictive Scheduling</a></li>
+                <li><a href="#" className="hover:text-white">Smart Customer Insights</a></li>
               </ul>
             </div>
             <div>
