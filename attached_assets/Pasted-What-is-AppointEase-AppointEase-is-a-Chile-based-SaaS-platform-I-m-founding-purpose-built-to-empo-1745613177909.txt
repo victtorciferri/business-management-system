@@ -1,0 +1,48 @@
+What is AppointEase?
+
+AppointEase is a Chile-based SaaS platform I'm founding, purpose-built to empower SMEs in the service sector by accelerating their digital transformation. We aim to be more than a tool—we’re a strategic partner in helping small businesses build a strong, omnichannel presence without technical or financial friction.
+
+We offer a cost-effective, white-labeled appointment scheduling and customer engagement platform, making it easy for service providers to digitize operations, reach more customers, and scale sustainably.
+
+🔑 Key Features
+🧾 Custom Domains for Each Business
+White-labeled domains like smallbusiness.cl or downtownbarber.cl, offering a professional web presence under the business’s own brand.
+
+🧍‍♂️ Friction-Free Sessions
+No logins, no passwords, no OTP codes. Clients are recognized by their email address upon booking, creating a seamless and intuitive experience.
+
+📅 Online Booking & Calendar Management
+Businesses can manage bookings and real-time availability through a user-friendly interface.
+
+🔔 Automated Email & WhatsApp Reminders
+Reduce no-shows with timely booking confirmations, reminders, and follow-ups via email or WhatsApp.
+
+🗂️ Client Profiles
+Auto-generated on first booking, each profile stores interaction history, preferences, and service records.
+
+📱 Mobile Accessibility
+Fully accessible for both business owners and clients from any mobile device.
+
+🧰 Service Customization & Flexible Availability
+Define services, prices, durations, and availability settings including holidays or special rules.
+
+♻️ Appointment Rescheduling & Cancellation
+Clients can reschedule or cancel appointments with real-time updates.
+
+📊 Analytics Dashboard
+Gain insights into booking patterns, customer retention, and operational efficiency.
+
+💳 Payment Integration
+Accept credit cards, debit, or wallets—with no monthly fees, just a revenue-sharing model (pay as you grow).
+
+🎨 Theme Customization
+Per-business color schemes (primary, secondary, background, text) with support for default and custom themes.
+
+🤖 Smart Booking Assistant
+An AI-powered chatbot that guides clients through bookings in real time.
+
+📈 Predictive Analytics
+AI identifies demand peaks, risk of no-shows, and upsell opportunities.
+
+📢 AI-Driven Marketing Services
+Auto-segmented client campaigns, re-engagement workflows, and satisfaction surveys.
