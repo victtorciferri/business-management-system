@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
+import { useGlobalTheme } from '@/hooks/useGlobalTheme';
 
 // Map our component sizes to shadcn button sizes
 const sizeMap: Record<string, "sm" | "default" | "lg" | "icon"> = {
@@ -33,7 +34,15 @@ export function ColorModeToggle({
   size = 'md',
   className = '',
 }: ColorModeToggleProps) {
-  const { appearance, setAppearance, darkMode, systemPreference } = useContext(GlobalThemeContext);
+  // First try to use the hook, and if it fails, fall back to the context
+  let themeContext;
+  try {
+    themeContext = useGlobalTheme();
+  } catch (e) {
+    themeContext = useContext(GlobalThemeContext);
+  }
+  
+  const { appearance, setAppearance, darkMode, systemPreference } = themeContext;
 
   // Icon sizes based on component size
   const iconSizes = {

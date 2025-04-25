@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { GlobalThemeContext, GlobalTokens, defaultGlobalTheme } from './GlobalThemeContext';
+import React, { useState, useEffect, ReactNode } from 'react';
+import { GlobalThemeContext } from './GlobalThemeContext';
+import { defaultGlobalTheme, GlobalTokens } from '@/lib/theme';
 
 interface GlobalThemeContextProviderProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 /**
- * GlobalThemeContextProvider - 2025 Edition
+ * Global Theme Context Provider
  * 
- * Provider component for global theme context that properly manages:
- * - Dark mode state and system preference detection
- * - Theme appearance (light, dark, or system)
+ * Provides theme state and functions for the entire application:
+ * - Dark mode toggle with system preference detection
  * - Border radius customization
  * - Global design tokens
  */
