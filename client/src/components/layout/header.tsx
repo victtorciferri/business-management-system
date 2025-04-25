@@ -23,12 +23,12 @@ export default function Layout({ children, currentUser }: LayoutProps) {
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { logoutMutation } = useAuth();
-  const { resolvedColorMode, setColorMode } = useGlobalTheme();
-  const isDarkMode = resolvedColorMode === 'dark';
+  const { darkMode, setAppearance } = useGlobalTheme();
+  const isDarkMode = darkMode;
 
   // Function to toggle dark mode
   const toggleDarkMode = () => {
-    setColorMode(isDarkMode ? 'light' : 'dark');
+    setAppearance(isDarkMode ? 'light' : 'dark');
   };
 
   const toggleMobileMenu = () => {
