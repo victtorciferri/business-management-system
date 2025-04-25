@@ -23,10 +23,10 @@ const LandingPage: React.FC = () => {
               Empowering SMEs in Chile with an intelligent, AI-driven appointment scheduling and customer engagement platform.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-white text-indigo-900 hover:bg-white/90">
+              <Button size="lg" className="bg-white text-indigo-900 hover:bg-white/90 w-full sm:w-auto py-6 sm:py-4">
                 <Link href="/auth">Get Started</Link>
               </Button>
-              <Button size="lg" variant="outline" className="border-white text-white bg-white/20 hover:bg-white/30">
+              <Button size="lg" variant="outline" className="border-white text-white bg-white/20 hover:bg-white/30 w-full sm:w-auto py-6 sm:py-4">
                 Book a Demo
               </Button>
             </div>
@@ -248,13 +248,13 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* Pricing Section */}
-      <section className="py-20 container mx-auto px-4">
+      <section className="py-16 sm:py-20 container mx-auto px-4">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">Simple, Fair Pricing</h2>
-        <p className="text-xl text-muted-foreground text-center mb-12 max-w-3xl mx-auto">
+        <p className="text-lg sm:text-xl text-muted-foreground text-center mb-8 sm:mb-12 max-w-3xl mx-auto">
           No monthly fees — pay as you grow with our revenue-sharing model
         </p>
         
-        <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
           <div className="bg-white dark:bg-slate-800 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-lg">
             <div className="p-2 bg-indigo-600"></div>
             <div className="p-6 md:p-8">
@@ -271,7 +271,7 @@ const LandingPage: React.FC = () => {
                 <FeatureItem text="Intelligent analytics" />
                 <FeatureItem text="Secure payment processing" />
               </ul>
-              <Button className="w-full" size="lg">
+              <Button className="w-full py-6 sm:py-4" size="lg">
                 Get Started
               </Button>
             </div>
@@ -296,7 +296,7 @@ const LandingPage: React.FC = () => {
                 <FeatureItem text="Intelligent marketing automation" />
                 <FeatureItem text="AI-enhanced customer support" />
               </ul>
-              <Button className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700" size="lg">
+              <Button className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 py-6 sm:py-4" size="lg">
                 Start Free Trial
               </Button>
             </div>
@@ -316,10 +316,10 @@ const LandingPage: React.FC = () => {
             Join hundreds of service businesses in Chile that are growing with AppointEase's intelligent platform
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-white text-indigo-900 hover:bg-white/90">
+            <Button size="lg" className="bg-white text-indigo-900 hover:bg-white/90 w-full sm:w-auto py-6 sm:py-4">
               <Link href="/auth">Experience AI-Powered Scheduling</Link>
             </Button>
-            <Button size="lg" variant="outline" className="border-white text-white bg-white/20 hover:bg-white/30">
+            <Button size="lg" variant="outline" className="border-white text-white bg-white/20 hover:bg-white/30 w-full sm:w-auto py-6 sm:py-4">
               Schedule a Demo
             </Button>
           </div>
@@ -379,11 +379,11 @@ const FeatureCard: React.FC<{
   description: string;
 }> = ({ icon, title, description }) => {
   return (
-    <Card className="border-slate-200 dark:border-slate-700 overflow-hidden transition-all duration-300 hover:shadow-md">
-      <CardContent className="p-6">
+    <Card className="border-slate-200 dark:border-slate-700 overflow-hidden transition-all duration-300 hover:shadow-md h-full">
+      <CardContent className="p-4 sm:p-6">
         <div className="mb-4">{icon}</div>
-        <h3 className="text-xl font-bold mb-2">{title}</h3>
-        <p className="text-muted-foreground">{description}</p>
+        <h3 className="text-lg sm:text-xl font-bold mb-2">{title}</h3>
+        <p className="text-sm sm:text-base text-muted-foreground">{description}</p>
       </CardContent>
     </Card>
   );
