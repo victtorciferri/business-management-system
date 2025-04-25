@@ -4,7 +4,7 @@ import { Menu, Bell, LogOut, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { useGlobalTheme } from "@/hooks/useGlobalTheme";
+import { useGlobalTheme } from "@/providers/GlobalThemeProvider";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,12 +23,12 @@ export default function Layout({ children, currentUser }: LayoutProps) {
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { logoutMutation } = useAuth();
-  const { darkMode, setAppearance } = useGlobalTheme();
-  const isDarkMode = darkMode;
+  const { resolvedColorMode, setColorMode } = useGlobalTheme();
+  const isDarkMode = resolvedColorMode === 'dark';
 
   // Function to toggle dark mode
   const toggleDarkMode = () => {
-    setAppearance(isDarkMode ? 'light' : 'dark');
+    setColorMode(isDarkMode ? 'light' : 'dark');
   };
 
   const toggleMobileMenu = () => {
