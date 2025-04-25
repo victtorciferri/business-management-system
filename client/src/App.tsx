@@ -52,6 +52,7 @@ import { BusinessContextProvider } from "@/contexts/BusinessContext";
 // New 2025 theme providers
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import GlobalThemeProvider from "@/providers/GlobalThemeProvider";
+import { GlobalThemeContextProvider } from "@/providers/GlobalThemeContextProvider";
 import DarkModeInitializer from "@/components/shared/dark-mode-initializer";
 
 // New theme-related pages for 2025 edition
@@ -220,12 +221,12 @@ function AppContent() {
             <AuthPage />
           </Route>
           <Route path="/">
-            <GlobalThemeProvider>
+            <GlobalThemeContextProvider>
               <ThemeProvider>
                 <DarkModeInitializer />
                 <LandingPage />
               </ThemeProvider>
-            </GlobalThemeProvider>
+            </GlobalThemeContextProvider>
           </Route>
           <Route path="/dashboard">
             {currentUser ? <Dashboard /> : <Redirect to="/auth" />}
