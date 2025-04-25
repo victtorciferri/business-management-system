@@ -91,11 +91,13 @@ const LandingPage: React.FC = () => {
       {/* Advanced Features with Tabs */}
       <section className="py-20 bg-slate-50 dark:bg-slate-900">
         <div className="container mx-auto px-4">
-          <div className="inline-block bg-gradient-to-r from-indigo-500 to-purple-500 p-px rounded-lg mb-6 mx-auto">
-            <div className="bg-slate-50 dark:bg-slate-900 rounded-lg px-4 py-2">
-              <span className="bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent font-medium">
-                Built for the AI generation
-              </span>
+          <div className="flex justify-center mb-6">
+            <div className="inline-block bg-gradient-to-r from-indigo-500 to-purple-500 p-px rounded-lg">
+              <div className="bg-slate-50 dark:bg-slate-900 rounded-lg px-4 py-2">
+                <span className="bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent font-medium">
+                  Built for the AI generation
+                </span>
+              </div>
             </div>
           </div>
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">AI-Powered Platform Technology</h2>
@@ -104,10 +106,10 @@ const LandingPage: React.FC = () => {
           </p>
           
           <Tabs defaultValue="business" className="max-w-4xl mx-auto">
-            <TabsList className="grid w-full grid-cols-3 mb-8">
-              <TabsTrigger value="business">Business Tools</TabsTrigger>
-              <TabsTrigger value="customers">Customer Experience</TabsTrigger>
-              <TabsTrigger value="ai">AI Capabilities</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 mb-8 overflow-x-auto text-sm md:text-base">
+              <TabsTrigger value="business" className="px-2 md:px-4">Business Tools</TabsTrigger>
+              <TabsTrigger value="customers" className="px-2 md:px-4">Customer Experience</TabsTrigger>
+              <TabsTrigger value="ai" className="px-2 md:px-4">AI Capabilities</TabsTrigger>
             </TabsList>
             
             <TabsContent value="business" className="space-y-4">
@@ -327,8 +329,8 @@ const LandingPage: React.FC = () => {
       {/* Footer */}
       <footer className="bg-slate-900 text-slate-300 py-12">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-            <div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+            <div className="col-span-1 sm:col-span-2 md:col-span-1">
               <h3 className="text-xl font-bold text-white mb-4">AppointEase</h3>
               <p className="text-slate-400">
                 Chile's first AI-powered platform empowering SMEs to succeed in the digital age with intelligent scheduling solutions.
@@ -337,27 +339,27 @@ const LandingPage: React.FC = () => {
             <div>
               <h4 className="font-bold text-white mb-4">AI Features</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="hover:text-white">AI Booking Assistant</a></li>
-                <li><a href="#" className="hover:text-white">Intelligent Analytics</a></li>
-                <li><a href="#" className="hover:text-white">Predictive Scheduling</a></li>
-                <li><a href="#" className="hover:text-white">Smart Customer Insights</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">AI Booking Assistant</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Intelligent Analytics</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Predictive Scheduling</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Smart Customer Insights</a></li>
               </ul>
             </div>
             <div>
               <h4 className="font-bold text-white mb-4">Company</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="hover:text-white">About Us</a></li>
-                <li><a href="#" className="hover:text-white">Blog</a></li>
-                <li><a href="#" className="hover:text-white">Careers</a></li>
-                <li><a href="#" className="hover:text-white">Contact</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">About Us</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
               </ul>
             </div>
             <div>
               <h4 className="font-bold text-white mb-4">Legal</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="hover:text-white">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-white">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-white">Cookie Policy</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Cookie Policy</a></li>
               </ul>
             </div>
           </div>
