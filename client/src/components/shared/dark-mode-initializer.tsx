@@ -16,6 +16,7 @@ const DarkModeInitializer = () => {
       console.log('DarkModeInitializer: Using dark mode based on preference');
       htmlElement.classList.add('dark');
     } else {
+      console.log('DarkModeInitializer: Using light mode based on preference');
       htmlElement.classList.remove('dark');
     }
     
