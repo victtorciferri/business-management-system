@@ -1,0 +1,168 @@
+1. Project Overview
+AppointEase is a React/Vite single-page app (SPA) with an Express back-end, bundled via esbuild, intended to run as a single service on Google Cloud Run.
+
+Front-end: Vite builds into dist/public/.
+
+Back-end: TypeScript API in server/index.ts, compiled and bundled into dist/index.js.
+
+Database: Neon Serverless Postgres, accessed via @neondatabase/serverless.
+
+Goal: automate a “git push → Cloud Run” pipeline that produces a running revision bound to port 8080, serving both static assets and API routes.
+
+2. Architecture & Platforms
+
+Layer	Technology / Service
+Local dev	Node 20, npm, Vite, esbuild, Docker
+CI/CD & Container	Docker multi-stage build
+Container registry	Artifact Registry (Docker)
+Runtime	Cloud Run (southamerica-west1)
+Secrets & Config	Secret Manager (DATABASE_URL)
+Database	Neon Serverless Postgres
+Monitoring	Cloud Run logs / Log Explorer
+3. Repository Structure
+pgsql
+Copiar
+Editar
+business-management-system/
+├─ client/                ← Vite source (React)
+│   └─ src/
+├─ server/
+│   ├─ index.ts           ← Express app entrypoint
+│   ├─ storage.ts         ← NeonClient wrapper
+│   └─ routes.ts          ← API route registrations
+├─ dist/                  ← Output (built assets + server bundle)
+│   ├─ public/            ← SPA files
+│   └─ index.js           ← Bundled server
+├─ package.json           ← npm scripts + dependencies
+├─ vite.config.ts         ← Vite build config
+└─ Dockerfile             ← multi-stage build definition
+4. Key Files & Roles
+Dockerfile
+
+Stage 1 “builder”: installs all deps, runs npm run build → generates dist/.
+
+Stage 2 “runtime”: copies dist/, installs only prod-deps, sets CMD node dist/index.js.
+
+package.json
+
+scripts.build:
+
+vite build → SPA
+
+esbuild server/index.ts → bundles server
+
+Dependencies vs devDependencies:
+
+Vite plugins (e.g. @vitejs/plugin-react) and esbuild are needed to build but not necessarily at runtime—yet esbuild may pull some imports into the final bundle.
+
+server/index.ts
+
+Sets up Express:
+
+app.use(express.static(...dist/public))
+
+registerRoutes(app)
+
+app.get('*', ...) fallback → index.html
+
+server/storage.ts
+
+Lazy-initializes the NeonClient to avoid connect-time crashes.
+
+Must import the correct symbol from @neondatabase/serverless.
+
+vite.config.ts
+
+Configures asset path, plugins (React), and build targets.
+
+5. Deployment Pipeline
+Local build
+
+bash
+Copiar
+Editar
+rm -rf node_modules dist
+npm install           # dev + prod deps for builder
+npm run build         # Vite + esbuild → dist/
+Docker build
+
+bash
+Copiar
+Editar
+docker build -t appointease-local .
+Local smoke test
+
+bash
+Copiar
+Editar
+docker run -p 8080:8080 -e DATABASE_URL="$DATABASE_URL" appointease-local
+# Preview on port 8080 → React app should load
+Push to Artifact Registry
+
+bash
+Copiar
+Editar
+export IMAGE="…/containers/appointease:$TAG"
+docker tag appointease-local "$IMAGE"
+docker push "$IMAGE"
+Cloud Run deploy
+
+bash
+Copiar
+Editar
+gcloud run deploy appointease \
+  --image "$IMAGE" \
+  --region southamerica-west1 \
+  --port 8080 \
+  --allow-unauthenticated \
+  --set-secrets "DATABASE_URL=DATABASE_URL:latest"
+Wait for Serving ✅, open https://…run.app.
+
+6. Errors Encountered
+
+Symptom	Root Cause	Fix Attempted
+404 “Page not found”	dist/public wasn’t copied (Dockerfile copy order)	Moved COPY --from=builder /app/dist ./dist above npm ci
+ERR_MODULE_NOT_FOUND @vitejs/plugin-react	Server bundle still imported Vite plugin; deps pruned in runtime	Tried moving plugin to dependencies & removing --external:… flags
+Chunking / Esbuild externals	Dynamic import('./vite.js') & Vite internals pulled in, causing missing modules (lightningcss, babel presets)	Externalized ./vite.js and shifted between esm/cjs
+Dynamic require of "path" is not supported	Bundled as ESM, but Express uses CommonJS require	Switched esbuild output to --format=cjs
+No matching export in @neondatabase/serverless	Wrong import syntax for Neon client	Adjusted import to import { Client as NeonClient } from …
+Despite these iterations, the image still fails locally—likely due to complex dev-time code in Vite or Express middleware being bundled incorrectly.
+
+7. Recommended Next Steps for a Full-Stack Dev
+Audit the Dockerfile
+
+Verify only one multi-stage build, no duplicated COPY/RUN.
+
+Ensure correct order: build → copy → prune.
+
+Simplify server bundling
+
+Option A: Don’t bundle the server at all—just tsc → transpile server/**/*.ts to CJS, copy to image, and run node server/index.js.
+
+Option B: If bundling with esbuild, use a minimal config file to exclude all dev-only code and fully inline dynamic requires.
+
+Separate front + back
+
+Host the SPA in Cloud Storage + CDN, and keep only the API in Cloud Run—avoids mixing static + API layers.
+
+Validate imports
+
+Confirm every require/import in dist/index.js resolves at runtime:
+
+bash
+Copiar
+Editar
+docker run --rm appointease-local node -p "Object.keys(require('module').builtinModules)"
+docker run --rm appointease-local node -p "await import('path')"
+Or simply spin up a /bin/sh in the image and inspect dist/.
+
+Implement a CI trigger
+
+Configure Cloud Build or GitHub Actions to run these steps automatically on main pushes, surface errors early.
+
+Logging & Debugging
+
+In Cloud Run, set LOGGING_LEVEL=debug and review stack traces in Log Explorer.
+
+Add a health‐check endpoint (e.g. /ping) before static serving to isolate API vs static issues.
+
