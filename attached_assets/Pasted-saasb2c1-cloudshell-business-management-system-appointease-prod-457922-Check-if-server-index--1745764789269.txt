@@ -1,0 +1,170 @@
+saasb2c1@cloudshell:~/business-management-system (appointease-prod-457922)$ # Check if server/index.ts exists and view the port configuration
+ls -la server/index.ts
+grep -n "port" server/index.ts | grep -i listen
+-rw-rw-r-- 1 saasb2c1 saasb2c1 3522 Apr 27 02:16 server/index.ts
+76:  server.listen({ port, host: "0.0.0.0", reusePort: true }, () =>
+saasb2c1@cloudshell:~/business-management-system (appointease-prod-457922)$ # Create a backup first
+cp server/index.ts server/index.ts.bak
+
+# Update the port configuration - you may need to adjust this based on the exact code
+sed -i 's/const port = 5000/const port = process.env.PORT ? parseInt(process.env.PORT) : 5000/' server/index.ts
+saasb2c1@cloudshell:~/business-management-system (appointease-prod-457922)$ # Make sure Docker is authenticated with Google Cloud
+gcloud auth configure-docker --quiet
+
+# Create Artifact Registry repository if it doesn't exist
+gcloud artifacts repositories create containers \
+  --repository-format=docker \
+  --location=$REGION \
+  --description="Docker repository for AppointEase" || true
+
+# Build the Docker image
+docker build -t $REGION-docker.pkg.dev/$PROJECT_ID/containers/$SERVICE_NAME:$TAG .
+
+# Push the image to Artifact Registry
+docker push $REGION-docker.pkg.dev/$PROJECT_ID/containers/$SERVICE_NAME:$TAG
+
+# Deploy to Cloud Run
+gcloud run deploy $SERVICE_NAME \
+  --image $REGION-docker.pkg.dev/$PROJECT_ID/containers/$SERVICE_NAME:$TAG \
+  --region $REGION \
+  --platform managed \
+  --allow-unauthenticated \
+  --port 8080 \
+  --set-env-vars=NODE_ENV=production
+WARNING: Your config file at [/home/saasb2c1/.docker/config.json] contains these credential helper entries:
+
+{
+  "credHelpers": {
+    "gcr.io": "gcloud",
+    "us.gcr.io": "gcloud",
+    "eu.gcr.io": "gcloud",
+    "asia.gcr.io": "gcloud",
+    "staging-k8s.gcr.io": "gcloud",
+    "marketplace.gcr.io": "gcloud",
+    "africa-south1-docker.pkg.dev": "gcloud",
+    "asia-docker.pkg.dev": "gcloud",
+    "asia-east1-docker.pkg.dev": "gcloud",
+    "asia-east2-docker.pkg.dev": "gcloud",
+    "asia-northeast1-docker.pkg.dev": "gcloud",
+    "asia-northeast2-docker.pkg.dev": "gcloud",
+    "asia-northeast3-docker.pkg.dev": "gcloud",
+    "asia-south1-docker.pkg.dev": "gcloud",
+    "asia-south2-docker.pkg.dev": "gcloud",
+    "asia-southeast1-docker.pkg.dev": "gcloud",
+    "asia-southeast2-docker.pkg.dev": "gcloud",
+    "australia-southeast1-docker.pkg.dev": "gcloud",
+    "australia-southeast2-docker.pkg.dev": "gcloud",
+    "docker.europe-west3.rep.pkg.dev": "gcloud",
+    "docker.europe-west8.rep.pkg.dev": "gcloud",
+    "docker.europe-west9.rep.pkg.dev": "gcloud",
+    "docker.me-central2.rep.pkg.dev": "gcloud",
+    "docker.us-central1.rep.pkg.dev": "gcloud",
+    "docker.us-central2.rep.pkg.dev": "gcloud",
+    "docker.us-east1.rep.pkg.dev": "gcloud",
+    "docker.us-east4.rep.pkg.dev": "gcloud",
+    "docker.us-east5.rep.pkg.dev": "gcloud",
+    "docker.us-east7.rep.pkg.dev": "gcloud",
+    "docker.us-south1.rep.pkg.dev": "gcloud",
+    "docker.us-west1.rep.pkg.dev": "gcloud",
+    "docker.us-west2.rep.pkg.dev": "gcloud",
+    "docker.us-west3.rep.pkg.dev": "gcloud",
+    "docker.us-west4.rep.pkg.dev": "gcloud",
+    "europe-central2-docker.pkg.dev": "gcloud",
+    "europe-docker.pkg.dev": "gcloud",
+    "europe-north1-docker.pkg.dev": "gcloud",
+    "europe-north2-docker.pkg.dev": "gcloud",
+    "europe-southwest1-docker.pkg.dev": "gcloud",
+    "europe-west1-docker.pkg.dev": "gcloud",
+    "europe-west10-docker.pkg.dev": "gcloud",
+    "europe-west12-docker.pkg.dev": "gcloud",
+    "europe-west2-docker.pkg.dev": "gcloud",
+    "europe-west3-docker.pkg.dev": "gcloud",
+    "europe-west4-docker.pkg.dev": "gcloud",
+    "europe-west6-docker.pkg.dev": "gcloud",
+    "europe-west8-docker.pkg.dev": "gcloud",
+    "europe-west9-docker.pkg.dev": "gcloud",
+    "me-central1-docker.pkg.dev": "gcloud",
+    "me-central2-docker.pkg.dev": "gcloud",
+    "me-west1-docker.pkg.dev": "gcloud",
+    "northamerica-northeast1-docker.pkg.dev": "gcloud",
+    "northamerica-northeast2-docker.pkg.dev": "gcloud",
+    "northamerica-south1-docker.pkg.dev": "gcloud",
+    "southamerica-east1-docker.pkg.dev": "gcloud",
+    "southamerica-west1-docker.pkg.dev": "gcloud",
+    "us-central1-docker.pkg.dev": "gcloud",
+    "us-central2-docker.pkg.dev": "gcloud",
+    "us-docker.pkg.dev": "gcloud",
+    "us-east1-docker.pkg.dev": "gcloud",
+    "us-east4-docker.pkg.dev": "gcloud",
+    "us-east5-docker.pkg.dev": "gcloud",
+    "us-east7-docker.pkg.dev": "gcloud",
+    "us-south1-docker.pkg.dev": "gcloud",
+    "us-west1-docker.pkg.dev": "gcloud",
+    "us-west2-docker.pkg.dev": "gcloud",
+    "us-west3-docker.pkg.dev": "gcloud",
+    "us-west4-docker.pkg.dev": "gcloud",
+    "us-west8-docker.pkg.dev": "gcloud"
+  }
+}
+Adding credentials for all GCR repositories.
+WARNING: A long list of credential helpers may cause delays running 'docker build'. We recommend passing the registry name to configure only the registry you are using.
+gcloud credential helpers already registered correctly.
+ERROR: (gcloud.artifacts.repositories.create) ALREADY_EXISTS: the repository already exists
+[+] Building 59.3s (14/14) FINISHED                                                                                                                                           docker:default
+ => [internal] load build definition from Dockerfile                                                                                                                                    0.0s
+ => => transferring dockerfile: 874B                                                                                                                                                    0.0s
+ => [internal] load metadata for docker.io/library/node:20-slim                                                                                                                         0.6s
+ => [internal] load .dockerignore                                                                                                                                                       0.0s
+ => => transferring context: 418B                                                                                                                                                       0.0s
+ => [builder 1/6] FROM docker.io/library/node:20-slim@sha256:9513b8d4c59c7c35e76934765add45efb89102d639f945341d7948b168237633                                                           5.8s
+ => => resolve docker.io/library/node:20-slim@sha256:9513b8d4c59c7c35e76934765add45efb89102d639f945341d7948b168237633                                                                   0.0s
+ => => sha256:d1dd334a81115b09134618d67d53ebb6162d9cd6858905dfaec3a8da9e64ae39 3.31kB / 3.31kB                                                                                          0.2s
+ => => sha256:b452662ac2b1cc5015de958ca3db9cf65d6ea42ad1ffda528555cad4476cd3f9 41.16MB / 41.16MB                                                                                        1.0s
+ => => sha256:9513b8d4c59c7c35e76934765add45efb89102d639f945341d7948b168237633 6.49kB / 6.49kB                                                                                          0.0s
+ => => sha256:86411625dd36474c07519f3c0d6e83d1a0dfe2c710c2e7962e52330aa474ae03 1.93kB / 1.93kB                                                                                          0.0s
+ => => sha256:348ac50847e32230b2d67a1c03ee9afb38ee5c68c5fb3066b201bc10afed1221 6.58kB / 6.58kB                                                                                          0.0s
+ => => sha256:8a628cdd7ccc83e90e5a95888fcb0ec24b991141176c515ad101f12d6433eb96 28.23MB / 28.23MB                                                                                        0.5s
+ => => sha256:b085206451dbd0bcfa0cdf6c5c2cf33f257e2d077408c49b0a9ff1b411c126a8 1.71MB / 1.71MB                                                                                          0.4s
+ => => sha256:9a176e756f6b6a4029593582d7c51f7c2839913d7da3e1a3f967de6e82654258 449B / 449B                                                                                              0.5s
+ => => extracting sha256:8a628cdd7ccc83e90e5a95888fcb0ec24b991141176c515ad101f12d6433eb96                                                                                               2.6s
+ => => extracting sha256:d1dd334a81115b09134618d67d53ebb6162d9cd6858905dfaec3a8da9e64ae39                                                                                               0.0s
+ => => extracting sha256:b452662ac2b1cc5015de958ca3db9cf65d6ea42ad1ffda528555cad4476cd3f9                                                                                               2.3s
+ => => extracting sha256:b085206451dbd0bcfa0cdf6c5c2cf33f257e2d077408c49b0a9ff1b411c126a8                                                                                               0.1s
+ => => extracting sha256:9a176e756f6b6a4029593582d7c51f7c2839913d7da3e1a3f967de6e82654258                                                                                               0.0s
+ => [internal] load build context                                                                                                                                                       1.3s
+ => => transferring context: 27.79kB                                                                                                                                                    1.3s
+ => [builder 2/6] WORKDIR /app                                                                                                                                                          1.3s
+ => [builder 3/6] COPY package*.json ./                                                                                                                                                 0.0s
+ => [builder 4/6] RUN npm ci                                                                                                                                                           31.2s
+ => [runtime 4/6] RUN npm ci --omit=dev                                                                                                                                                31.2s
+ => [builder 5/6] COPY . .                                                                                                                                                              0.1s
+ => [runtime 5/6] RUN mkdir -p uploads                                                                                                                                                  0.3s
+ => [builder 6/6] RUN npm run build                                                                                                                                                    12.9s 
+ => [runtime 6/6] COPY --from=builder /app/dist ./dist                                                                                                                                  0.0s 
+ => exporting to image                                                                                                                                                                  6.6s 
+ => => exporting layers                                                                                                                                                                 6.5s 
+ => => writing image sha256:0ef33d6ae7073ef34b0a667a2094d040b98ba196b9d0b5b5bac0d70f46365b6a                                                                                            0.0s 
+ => => naming to southamerica-west1-docker.pkg.dev/appointease-prod-457922/containers/appointease:20250427-143538                                                                       0.0s 
+The push refers to repository [southamerica-west1-docker.pkg.dev/appointease-prod-457922/containers/appointease]                                                                             
+74d8ffde1505: Pushed 
+337b8a60bf97: Pushed 
+b65f82f807a8: Pushed 
+57d4c477b37e: Pushed 
+82d212d96e48: Pushed 
+c85a88735ff1: Pushed 
+189658bb17ad: Pushed 
+6dd335ad2e9f: Pushed 
+6641d3ff7e9b: Pushed 
+ea680fbff095: Pushed 
+20250427-143538: digest: sha256:18814b2ed943d250407c7702f43d25d295fe5990b910b0c9f128e63454104b7a size: 2413
+Deploying container to Cloud Run service [appointease] in project [appointease-prod-457922] region [southamerica-west1]
+X  Deploying...                                                                                                                                                                             
+  -  Creating Revision...                                                                                                                                                                   
+  .  Routing traffic...                                                                                                                                                                     
+  OK Setting IAM Policy...                                                                                                                                                                  
+Deployment failed                                                                                                                                                                           
+ERROR: (gcloud.run.deploy) Revision 'appointease-00029-6rg' is not ready and cannot serve traffic. The user-provided container failed to start and listen on the port defined provided by the PORT=8080 environment variable within the allocated timeout. This can happen when the container port is misconfigured or if the timeout is too short. The health check timeout can be extended. Logs for this revision might contain more information.
+
+Logs URL: https://console.cloud.google.com/logs/viewer?project=appointease-prod-457922&resource=cloud_run_revision/service_name/appointease/revision_name/appointease-00029-6rg&advancedFilter=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22appointease%22%0Aresource.labels.revision_name%3D%22appointease-00029-6rg%22 
+For more troubleshooting guidance, see https://cloud.google.com/run/docs/troubleshooting#container-failed-to-start
+saasb2c1@cloudshell:~/business-management-system (appointease-prod-457922)$ 

@@ -1,0 +1,73 @@
+saasb2c1@cloudshell:~/business-management-system (appointease-prod-457922)$ # First, let's view the current build script
+cd ~/business-management-system
+grep "build" package.json
+
+# Now update the package.json to use CommonJS format for the server
+sed -i 's/"build": "vite build && esbuild server\/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist"/"build": "vite build && esbuild server\/index.ts --platform=node --packages=external --bundle --format=cjs --outdir=dist"/' package.json
+    "build": "vite build && esbuild server/index.ts --platform=node --bundle --format=cjs --outdir=dist --external:./vite.js",
+    "esbuild": "^0.25.0",
+saasb2c1@cloudshell:~/business-management-system (appointease-prod-457922)$ # Set environment variables
+export PROJECT_ID=$(gcloud config get-value project)
+export REGION="southamerica-west1"
+export SERVICE_NAME="appointease"
+export TAG=$(date +%Y%m%d-%H%M%S)
+
+# Build the Docker image
+docker build -t $REGION-docker.pkg.dev/$PROJECT_ID/containers/$SERVICE_NAME:$TAG .
+
+# Push the image to Artifact Registry
+docker push $REGION-docker.pkg.dev/$PROJECT_ID/containers/$SERVICE_NAME:$TAG
+
+# Deploy to Cloud Run
+gcloud run deploy $SERVICE_NAME \
+  --image $REGION-docker.pkg.dev/$PROJECT_ID/containers/$SERVICE_NAME:$TAG \
+  --region $REGION \
+  --platform managed \
+  --allow-unauthenticated \
+  --port 8080 \
+  --set-env-vars=NODE_ENV=production
+Your active configuration is: [cloudshell-27367]
+[+] Building 13.9s (15/15) FINISHED                                                                                                                                           docker:default
+ => [internal] load build definition from Dockerfile                                                                                                                                    0.0s
+ => => transferring dockerfile: 1.01kB                                                                                                                                                  0.0s
+ => [internal] load metadata for docker.io/library/node:20-slim                                                                                                                         0.3s
+ => [internal] load .dockerignore                                                                                                                                                       0.0s
+ => => transferring context: 418B                                                                                                                                                       0.0s
+ => [builder 1/7] FROM docker.io/library/node:20-slim@sha256:9513b8d4c59c7c35e76934765add45efb89102d639f945341d7948b168237633                                                           0.0s
+ => [internal] load build context                                                                                                                                                       0.0s
+ => => transferring context: 24.61kB                                                                                                                                                    0.0s
+ => CACHED [builder 2/7] WORKDIR /app                                                                                                                                                   0.0s
+ => CACHED [builder 3/7] COPY package*.json ./                                                                                                                                          0.0s
+ => CACHED [builder 4/7] RUN npm ci                                                                                                                                                     0.0s
+ => [builder 5/7] COPY . .                                                                                                                                                              0.1s
+ => [builder 6/7] RUN npm run build                                                                                                                                                    12.3s
+ => [builder 7/7] RUN mv dist/index.js dist/index.cjs                                                                                                                                   0.3s
+ => CACHED [runtime 4/6] RUN npm ci --omit=dev                                                                                                                                          0.0s 
+ => CACHED [runtime 5/6] RUN mkdir -p uploads                                                                                                                                           0.0s 
+ => [runtime 6/6] COPY --from=builder /app/dist ./dist                                                                                                                                  0.0s 
+ => exporting to image                                                                                                                                                                  0.1s 
+ => => exporting layers                                                                                                                                                                 0.1s 
+ => => writing image sha256:0e9d9227605bed49bc6c7aa5b1b8fae3ff32f439147f970425493e922c262a56                                                                                            0.0s
+ => => naming to southamerica-west1-docker.pkg.dev/appointease-prod-457922/containers/appointease:20250427-144417                                                                       0.0s
+The push refers to repository [southamerica-west1-docker.pkg.dev/appointease-prod-457922/containers/appointease]
+0b8ef50df302: Pushed 
+337b8a60bf97: Layer already exists 
+b65f82f807a8: Layer already exists 
+57d4c477b37e: Layer already exists 
+82d212d96e48: Layer already exists 
+c85a88735ff1: Layer already exists 
+189658bb17ad: Layer already exists 
+6dd335ad2e9f: Layer already exists 
+6641d3ff7e9b: Layer already exists 
+ea680fbff095: Layer already exists 
+20250427-144417: digest: sha256:cca828147f6b93a93a067f9df4b988d230ab4020ce1170ecfc7c44e6435c03c4 size: 2413
+Deploying container to Cloud Run service [appointease] in project [appointease-prod-457922] region [southamerica-west1]
+X  Deploying...                                                                                                                                                                             
+  -  Creating Revision...                                                                                                                                                                   
+  .  Routing traffic...                                                                                                                                                                     
+  OK Setting IAM Policy...                                                                                                                                                                  
+Deployment failed                                                                                                                                                                           
+ERROR: (gcloud.run.deploy) Revision 'appointease-00030-v9c' is not ready and cannot serve traffic. The user-provided container failed to start and listen on the port defined provided by the PORT=8080 environment variable within the allocated timeout. This can happen when the container port is misconfigured or if the timeout is too short. The health check timeout can be extended. Logs for this revision might contain more information.
+
+Logs URL: https://console.cloud.google.com/logs/viewer?project=appointease-prod-457922&resource=cloud_run_revision/service_name/appointease/revision_name/appointease-00030-v9c&advancedFilter=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22appointease%22%0Aresource.labels.revision_name%3D%22appointease-00030-v9c%22 
+For more troubleshooting guidance, see https://cloud.google.com/run/docs/troubleshooting#container-failed-to-start

@@ -1,0 +1,52 @@
+verity
+Time
+Summary
+Showing logs for last 1 hour from 4/27/25, 9:42 AM to 4/27/25, 10:42 AM.
+2025-04-27 10:39:27.759
+file:///app/dist/index.js:39
+2025-04-27 10:39:27.759
+    var relative = require("path").relative;
+2025-04-27 10:39:27.759
+                   ^
+2025-04-27 10:39:27.759
+ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-04-27 10:39:27.759
+This file is being treated as an ES module because it has a '.js' file extension and '/app/package.json' contains "type": "module". To treat it as a CommonJS script, rename it to use the '.cjs' file extension.
+2025-04-27 10:39:27.759
+    at node_modules/depd/index.js (file:///app/dist/index.js:39:20)
+2025-04-27 10:39:27.759
+    at __require (file:///app/dist/index.js:12:50)
+2025-04-27 10:39:27.759
+    at node_modules/body-parser/index.js (file:///app/dist/index.js:17038:21)
+2025-04-27 10:39:27.759
+    at __require (file:///app/dist/index.js:12:50)
+2025-04-27 10:39:27.759
+    at node_modules/express/lib/express.js (file:///app/dist/index.js:23671:22)
+2025-04-27 10:39:27.759
+    at __require (file:///app/dist/index.js:12:50)
+2025-04-27 10:39:27.759
+    at node_modules/express/index.js (file:///app/dist/index.js:23740:23)
+2025-04-27 10:39:27.759
+    at __require (file:///app/dist/index.js:12:50)
+2025-04-27 10:39:27.759
+    at file:///app/dist/index.js:85200:31
+2025-04-27 10:39:27.759
+    at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-04-27 10:39:27.759
+Node.js v20.19.1
+2025-04-27 10:39:28.429
+Container called exit(1).
+2025-04-27 10:39:28.484
+Default STARTUP TCP probe failed 1 time consecutively for container "appointease-1" on port 8080. The instance was not started.
+Connection failed with status CANCELLED.
+
+{
+insertId: "680e41a000076597efbefca0"
+labels: {1}
+logName: "projects/appointease-prod-457922/logs/run.googleapis.com%2Fvarlog%2Fsystem"
+receiveTimestamp: "2025-04-27T14:39:28.764550930Z"
+resource: {2}
+severity: "ERROR"
+textPayload: "Default STARTUP TCP probe failed 1 time consecutively for container "appointease-1" on port 8080. The instance was not started.
+Connection failed with status CANCELLED."
+timestamp: "2025-04-27T14:39:28.484759Z"

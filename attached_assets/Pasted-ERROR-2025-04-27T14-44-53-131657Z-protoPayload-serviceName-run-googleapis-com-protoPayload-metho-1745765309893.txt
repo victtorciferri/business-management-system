@@ -1,0 +1,163 @@
+ERROR 2025-04-27T14:44:53.131657Z [protoPayload.serviceName: run.googleapis.com] [protoPayload.methodName: /Services.ReplaceService] [protoPayload.resourceName: namespaces/appointease-prod-457922/revisions/appointease-00030-v9c] Ready condition status changed to False for Revision appointease-00030-v9c with message: The user-provided container failed to start and listen on the port defined provided by the PORT=8080 environment variable within the allocated timeout. This can happen when the container port is misconfigured or if the timeout is too short. The health check timeout can be extended. Logs for this revision might contain more information. Logs URL: https://console.cloud.google.com/logs/viewer?project=appointease-prod-457922&resource=cloud_run_revision/service_name/appointease/revision_name/appointease-00030-v9c&advancedFilter=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22appointease%22%0Aresource.labels.revision_name%3D%22appointease-00030-v9c%22 For more troubleshooting guidance, see https://cloud.google.com/run/docs/troubleshooting#container-failed-to-start
+  {
+    "protoPayload": {
+      "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+      "status": {
+        "code": 9,
+        "message": "Ready condition status changed to False for Revision appointease-00030-v9c with message: The user-provided container failed to start and listen on the port defined provided by the PORT=8080 environment variable within the allocated timeout. This can happen when the container port is misconfigured or if the timeout is too short. The health check timeout can be extended. Logs for this revision might contain more information.\n\nLogs URL: https://console.cloud.google.com/logs/viewer?project=appointease-prod-457922&resource=cloud_run_revision/service_name/appointease/revision_name/appointease-00030-v9c&advancedFilter=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22appointease%22%0Aresource.labels.revision_name%3D%22appointease-00030-v9c%22 \nFor more troubleshooting guidance, see https://cloud.google.com/run/docs/troubleshooting#container-failed-to-start"
+      },
+      "serviceName": "run.googleapis.com",
+      "methodName": "/Services.ReplaceService",
+      "resourceName": "namespaces/appointease-prod-457922/revisions/appointease-00030-v9c",
+      "response": {
+        "metadata": {
+          "name": "appointease-00030-v9c",
+          "namespace": "249754346416",
+          "selfLink": "/apis/serving.knative.dev/v1/namespaces/249754346416/revisions/appointease-00030-v9c",
+          "uid": "f310e209-989b-47dc-8c85-1fdae41b6d94",
+          "resourceVersion": "AAYzw5w8myc",
+          "generation": 1,
+          "creationTimestamp": "2025-04-27T14:44:45.901474Z",
+          "labels": {
+            "client.knative.dev/nonce": "njpifrlejl",
+            "serving.knative.dev/configuration": "appointease",
+            "serving.knative.dev/configurationGeneration": "30",
+            "serving.knative.dev/service": "appointease",
+            "serving.knative.dev/serviceUid": "b305aeb7-01b6-4447-a085-cfe6d7f4da26",
+            "serving.knative.dev/route": "appointease",
+            "cloud.googleapis.com/location": "southamerica-west1",
+            "run.googleapis.com/startupProbeType": "Default"
+          },
+          "annotations": {
+            "run.googleapis.com/client-name": "gcloud",
+            "run.googleapis.com/client-version": "518.0.0",
+            "run.googleapis.com/startup-cpu-boost": "true",
+            "run.googleapis.com/operation-id": "4a5eb3c7-b8c5-4fbb-b698-eb4f1db0bf28",
+            "autoscaling.knative.dev/maxScale": "3",
+            "serving.knative.dev/creator": "saasb2c1@gmail.com"
+          },
+          "ownerReferences": [
+            {
+              "kind": "Configuration",
+              "name": "appointease",
+              "uid": "081ecb5d-79e0-4bad-a841-b98635a7c0ac",
+              "apiVersion": "serving.knative.dev/v1",
+              "controller": true,
+              "blockOwnerDeletion": true
+            }
+          ]
+        },
+        "apiVersion": "serving.knative.dev/v1",
+        "kind": "Revision",
+        "spec": {
+          "containerConcurrency": 80,
+          "timeoutSeconds": 300,
+          "serviceAccountName": "249754346416-compute@developer.gserviceaccount.com",
+          "containers": [
+            {
+              "name": "appointease-1",
+              "image": "southamerica-west1-docker.pkg.dev/appointease-prod-457922/containers/appointease@sha256:cca828147f6b93a93a067f9df4b988d230ab4020ce1170ecfc7c44e6435c03c4",
+              "ports": [
+                {
+                  "name": "http1",
+                  "containerPort": 8080
+                }
+              ],
+              "env": [
+                {
+                  "name": "DATABASE_URL",
+                  "valueFrom": {
+                    "secretKeyRef": {
+                      "key": "latest",
+                      "name": "DATABASE_URL"
+                    }
+                  }
+                },
+                {
+                  "name": "NODE_ENV",
+                  "value": "production"
+                }
+              ],
+              "resources": {
+                "limits": {
+                  "cpu": "1000m",
+                  "memory": "512Mi"
+                }
+              },
+              "startupProbe": {
+                "timeoutSeconds": 240,
+                "periodSeconds": 240,
+                "failureThreshold": 1,
+                "tcpSocket": {
+                  "port": 8080
+                }
+              }
+            }
+          ]
+        },
+        "status": {
+          "observedGeneration": 1,
+          "conditions": [
+            {
+              "type": "Ready",
+              "status": "False",
+              "reason": "HealthCheckContainerError",
+              "message": "The user-provided container failed to start and listen on the port defined provided by the PORT=8080 environment variable within the allocated timeout. This can happen when the container port is misconfigured or if the timeout is too short. The health check timeout can be extended. Logs for this revision might contain more information.\n\nLogs URL: https://console.cloud.google.com/logs/viewer?project=appointease-prod-457922&resource=cloud_run_revision/service_name/appointease/revision_name/appointease-00030-v9c&advancedFilter=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22appointease%22%0Aresource.labels.revision_name%3D%22appointease-00030-v9c%22 \nFor more troubleshooting guidance, see https://cloud.google.com/run/docs/troubleshooting#container-failed-to-start",
+              "lastTransitionTime": "2025-04-27T14:44:53.120807Z"
+            },
+            {
+              "type": "ContainerHealthy",
+              "status": "False",
+              "reason": "HealthCheckContainerError",
+              "message": "The user-provided container failed to start and listen on the port defined provided by the PORT=8080 environment variable within the allocated timeout. This can happen when the container port is misconfigured or if the timeout is too short. The health check timeout can be extended. Logs for this revision might contain more information.\n\nLogs URL: https://console.cloud.google.com/logs/viewer?project=appointease-prod-457922&resource=cloud_run_revision/service_name/appointease/revision_name/appointease-00030-v9c&advancedFilter=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22appointease%22%0Aresource.labels.revision_name%3D%22appointease-00030-v9c%22 \nFor more troubleshooting guidance, see https://cloud.google.com/run/docs/troubleshooting#container-failed-to-start",
+              "lastTransitionTime": "2025-04-27T14:44:53.120807Z"
+            },
+            {
+              "type": "ContainerReady",
+              "status": "True",
+              "message": "Container image import completed in 1.22s.",
+              "lastTransitionTime": "2025-04-27T14:44:47.697842Z"
+            },
+            {
+              "type": "ResourcesAvailable",
+              "status": "True",
+              "message": "Provisioning imported containers completed in 3.09s. Checking container health.",
+              "lastTransitionTime": "2025-04-27T14:44:50.785414Z"
+            },
+            {
+              "type": "Retry",
+              "status": "True",
+              "reason": "ImmediateRetry",
+              "message": "System will retry after 0:00:00 from lastTransitionTime for attempt 0.",
+              "lastTransitionTime": "2025-04-27T14:44:50.785414Z",
+              "severity": "Info"
+            }
+          ],
+          "logUrl": "https://console.cloud.google.com/logs/viewer?project=appointease-prod-457922&resource=cloud_run_revision/service_name/appointease/revision_name/appointease-00030-v9c&advancedFilter=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22appointease%22%0Aresource.labels.revision_name%3D%22appointease-00030-v9c%22",
+          "imageDigest": "southamerica-west1-docker.pkg.dev/appointease-prod-457922/containers/appointease@sha256:cca828147f6b93a93a067f9df4b988d230ab4020ce1170ecfc7c44e6435c03c4",
+          "containerStatuses": [
+            {
+              "name": "appointease-1",
+              "imageDigest": "southamerica-west1-docker.pkg.dev/appointease-prod-457922/containers/appointease@sha256:cca828147f6b93a93a067f9df4b988d230ab4020ce1170ecfc7c44e6435c03c4"
+            }
+          ]
+        },
+        "@type": "type.googleapis.com/google.cloud.run.v1.Revision"
+      }
+    },
+    "insertId": "-ianuf6caby",
+    "resource": {
+      "type": "cloud_run_revision",
+      "labels": {
+        "project_id": "appointease-prod-457922",
+        "revision_name": "appointease-00030-v9c",
+        "location": "southamerica-west1",
+        "service_name": "appointease",
+        "configuration_name": "appointease"
+      }
+    },
+    "timestamp": "2025-04-27T14:44:53.131657Z",
+    "severity": "ERROR",
+    "logName": "projects/appointease-prod-457922/logs/cloudaudit.googleapis.com%2Fsystem_event",
+    "receiveTimestamp": "2025-04-27T14:44:54.070973499Z"
+  }

@@ -1,0 +1,59 @@
+saasb2c1@cloudshell:~ (appointease-prod-457922)$ # Let's use Google Cloud Buildpacks which handles these complexities automatically
+cd ~/business-management-system
+
+# Update the file to use PORT environment variable just in case
+sed -i 's/const port = 5000/const port = process.env.PORT ? parseInt(process.env.PORT) : 5000/' server/index.ts 
+
+# Deploy directly with Cloud Run buildpacks
+gcloud run deploy $SERVICE_NAME \
+  --source . \
+  --region $REGION \
+  --platform managed \
+  --allow-unauthenticated \
+  --set-env-vars=NODE_ENV=production,DEBUG=express:*
+ERROR: (gcloud.run.deploy) argument --region: expected one argument
+Usage: gcloud run deploy [[SERVICE] --namespace=NAMESPACE] [optional flags]
+  optional flags may be  --add-cloudsql-instances | --add-custom-audiences |
+                         --add-volume | --add-volume-mount |
+                         --allow-unauthenticated | --allow-unencrypted-build |
+                         --args | --async | --automatic-updates | --base-image |
+                         --binary-authorization | --breakglass |
+                         --build-env-vars-file | --build-service-account |
+                         --build-worker-pool | --clear-base-image |
+                         --clear-binary-authorization | --clear-build-env-vars |
+                         --clear-build-service-account |
+                         --clear-build-worker-pool |
+                         --clear-cloudsql-instances | --clear-custom-audiences |
+                         --clear-encryption-key-shutdown-hours |
+                         --clear-env-vars | --clear-key | --clear-labels |
+                         --clear-network | --clear-network-tags |
+                         --clear-post-key-revocation-action-type |
+                         --clear-secrets | --clear-volume-mounts |
+                         --clear-volumes | --clear-vpc-connector | --command |
+                         --concurrency | --container | --cpu | --cpu-boost |
+                         --cpu-throttling | --depends-on | --description |
+                         --encryption-key-shutdown-hours | --env-vars-file |
+                         --execution-environment | --function | --gpu |
+                         --gpu-type | --gpu-zonal-redundancy | --help |
+                         --image | --ingress | --invoker-iam-check | --key |
+                         --labels | --liveness-probe | --max-instances |
+                         --memory | --min | --min-instances | --namespace |
+                         --network | --network-tags | --port |
+                         --post-key-revocation-action-type | --region |
+                         --remove-build-env-vars | --remove-cloudsql-instances |
+                         --remove-containers | --remove-custom-audiences |
+                         --remove-env-vars | --remove-labels |
+                         --remove-secrets | --remove-volume |
+                         --remove-volume-mount | --revision-suffix |
+                         --service-account | --session-affinity |
+                         --set-build-env-vars | --set-cloudsql-instances |
+                         --set-custom-audiences | --set-env-vars |
+                         --set-secrets | --source | --startup-probe | --subnet |
+                         --tag | --timeout | --no-traffic |
+                         --update-build-env-vars | --update-env-vars |
+                         --update-labels | --update-secrets | --use-http2 |
+                         --vpc-connector | --vpc-egress
+
+For detailed information on this command and its flags, run:
+  gcloud run deploy --help
+saasb2c1@cloudshell:~/business-management-system (appointease-prod-457922)$ 

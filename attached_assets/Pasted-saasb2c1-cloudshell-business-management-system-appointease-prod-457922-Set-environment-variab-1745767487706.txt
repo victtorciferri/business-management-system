@@ -1,0 +1,85 @@
+saasb2c1@cloudshell:~/business-management-system (appointease-prod-457922)$ # Set environment variables
+export PROJECT_ID=$(gcloud config get-value project)
+export REGION="southamerica-west1"
+export SERVICE_NAME="appointease"
+export TAG=$(date +%Y%m%d-%H%M%S)
+
+# Build the Docker image
+docker build -t $REGION-docker.pkg.dev/$PROJECT_ID/containers/$SERVICE_NAME:$TAG .
+
+# Push the image to Artifact Registry
+docker push $REGION-docker.pkg.dev/$PROJECT_ID/containers/$SERVICE_NAME:$TAG
+
+# Deploy to Cloud Run
+gcloud run deploy $SERVICE_NAME \
+  --image $REGION-docker.pkg.dev/$PROJECT_ID/containers/$SERVICE_NAME:$TAG \
+  --region $REGION \
+  --platform managed \
+  --allow-unauthenticated \
+  --port 8080 \
+  --set-env-vars=NODE_ENV=production,DEBUG=express:*
+Your active configuration is: [cloudshell-27367]
+[+] Building 1.1s (12/13)                                                                                                                                                     docker:default
+ => [internal] load build definition from Dockerfile                                                                                                                                    0.1s
+ => => transferring dockerfile: 761B                                                                                                                                                    0.0s
+ => [internal] load metadata for docker.io/library/node:20-slim                                                                                                                         0.3s
+ => [internal] load .dockerignore                                                                                                                                                       0.0s
+ => => transferring context: 418B                                                                                                                                                       0.0s
+ => [builder 1/6] FROM docker.io/library/node:20-slim@sha256:9513b8d4c59c7c35e76934765add45efb89102d639f945341d7948b168237633                                                           0.0s
+ => [internal] load build context                                                                                                                                                       0.0s
+ => => transferring context: 25.63kB                                                                                                                                                    0.0s
+ => CACHED [stage-1 4/6] RUN npm ci --omit=dev                                                                                                                                          0.0s
+ => CACHED [stage-1 5/6] RUN mkdir -p uploads                                                                                                                                           0.0s
+ => CACHED [builder 2/6] WORKDIR /app                                                                                                                                                   0.0s
+ => CACHED [builder 3/6] COPY package*.json ./                                                                                                                                          0.0s
+ => CACHED [builder 4/6] RUN npm ci                                                                                                                                                     0.0s
+ => CACHED [builder 5/6] COPY . .                                                                                                                                                       0.0s
+ => ERROR [builder 6/6] RUN node build.cjs                                                                                                                                              0.6s
+------                                                                                                                                                                                       
+ > [builder 6/6] RUN node build.cjs:                                                                                                                                                         
+0.316 Building frontend with Vite...                                                                                                                                                         
+0.321 /bin/sh: 1: vite: not found                                                                                                                                                            
+0.325 node:child_process:966                                                                                                                                                                 
+0.325     throw err;                                                                                                                                                                         
+0.325     ^
+0.325 
+0.325 Error: Command failed: vite build
+0.325     at genericNodeError (node:internal/errors:984:15)
+0.325     at wrappedFn (node:internal/errors:538:14)
+0.325     at checkExecSyncError (node:child_process:891:11)
+0.325     at execSync (node:child_process:963:15)
+0.325     at Object.<anonymous> (/app/build.cjs:9:1)
+0.325     at Module._compile (node:internal/modules/cjs/loader:1529:14)
+0.325     at Module._extensions..js (node:internal/modules/cjs/loader:1613:10)
+0.325     at Module.load (node:internal/modules/cjs/loader:1275:32)
+0.325     at Module._load (node:internal/modules/cjs/loader:1096:12)
+0.325     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12) {
+0.325   status: 127,
+0.325   signal: null,
+0.325   output: [ null, null, null ],
+0.325   pid: 14,
+0.325   stdout: null,
+0.325   stderr: null
+0.325 }
+0.325 
+0.325 Node.js v20.19.1
+------
+Dockerfile:14
+--------------------
+  12 |     
+  13 |     # Build the application using our custom build script
+  14 | >>> RUN node build.cjs
+  15 |     
+  16 |     # Runtime stage
+--------------------
+ERROR: failed to solve: process "/bin/sh -c node build.cjs" did not complete successfully: exit code: 1
+The push refers to repository [southamerica-west1-docker.pkg.dev/appointease-prod-457922/containers/appointease]
+tag does not exist: southamerica-west1-docker.pkg.dev/appointease-prod-457922/containers/appointease:20250427-152203
+Deploying container to Cloud Run service [appointease] in project [appointease-prod-457922] region [southamerica-west1]
+X  Deploying...                                                                                                                                                                             
+  -  Creating Revision...                                                                                                                                                                   
+  .  Routing traffic...                                                                                                                                                                     
+  OK Setting IAM Policy...                                                                                                                                                                  
+Deployment failed                                                                                                                                                                           
+ERROR: (gcloud.run.deploy) Revision 'appointease-00033-zbl' is not ready and cannot serve traffic. Image 'southamerica-west1-docker.pkg.dev/appointease-prod-457922/containers/appointease:20250427-152203' not found.
+saasb2c1@cloudshell:~/business-management-system (appointease-prod-457922)$ 
