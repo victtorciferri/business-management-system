@@ -1,0 +1,37 @@
+saasb2c1@cloudshell:~/business-management-system (appointease-prod-457922)$ # Export the database URL to a variable so we can use it for the secret
+DATABASE_URL_VALUE=$(echo $DATABASE_URL)
+
+# Make sure our environment variables are set
+export PROJECT_ID=$(gcloud config get-value project)
+export REGION="southamerica-west1"
+export SERVICE_NAME="appointease"
+
+# Create a database secret
+gcloud secrets create database-url --replication-policy="automatic"
+
+# Add your DATABASE_URL (using the value from our environment)
+echo $DATABASE_URL_VALUE | gcloud secrets versions add database-url --data-file=-
+
+# Deploy with the secret properly configured
+gcloud run deploy $SERVICE_NAME \
+  --source . \
+  --region=$REGION \
+  --platform=managed \
+  --allow-unauthenticated \
+  --set-env-vars="NODE_ENV=production,DEBUG=express:*" \
+  --update-secrets="DATABASE_URL=database-url:latest"
+Your active configuration is: [cloudshell-5905]
+ERROR: (gcloud.secrets.create) Resource in projects [appointease-prod-457922] is the subject of a conflict: Secret [projects/249754346416/secrets/database-url] already exists.
+Created version [2] of the secret [database-url].
+Building using Buildpacks and deploying container to Cloud Run service [appointease] in project [appointease-prod-457922] region [southamerica-west1]
+/  Building and deploying... Uploading sources.                                                                                                                                             
+-  Building and deploying... Uploading sources.                                                                                                                                             
+X  Building and deploying... Building Container.                                                                                                                                            
+  OK Uploading sources...                                                                                                                                                                   
+  -  Building Container... Logs are available at [https://console.cloud.google.com/cloud-build/builds;region=southamerica-west1/fc84ac64-1aa6-4b93-85d5-9ca24d761783?project=249754346416]. 
+  .  Setting IAM Policy...                                                                                                                                                                  
+Creating temporary archive of 345 file(s) totalling 10.1 MiB before compression.
+Uploading zipfile of [.] to [gs://run-sources-appointease-prod-457922-southamerica-west1/services/appointease/1745786418.841943-abe289feb0ae44e791a0b0e3720dfdcc.zip]
+Deployment failed                                                                                                                                                                           
+ERROR: (gcloud.run.deploy) Build failed; check build logs for details
+saasb2c1@cloudshell:~/business-management-system (appointease-prod-457922)$ 

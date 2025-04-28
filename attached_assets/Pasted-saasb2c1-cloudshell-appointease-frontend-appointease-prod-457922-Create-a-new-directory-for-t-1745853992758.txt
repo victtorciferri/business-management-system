@@ -1,0 +1,100 @@
+saasb2c1@cloudshell:~/appointease-frontend (appointease-prod-457922)$ # Create a new directory for the migration tools
+mkdir -p ~/db-migration
+cd ~/db-migration
+
+# Create the migration script
+cat > db-migration.js << 'EOF'
+const { Pool } = require('pg');
+const fs = require('fs');
+const readline = require('readline');
+const colors = require('colors/safe');
+
+// Configuration
+const sourceConfig = {
+  connectionString: process.env.SOURCE_DB_URL, // AWS Neon DB
+};
+
+const targetConfig = {
+  connectionString: process.env.TARGET_DB_URL, // GCP Cloud SQL
+};
+
+// Create connection pools
+const sourcePool = new Pool(sourceConfig);
+const targetPool = new Pool(targetConfig);
+
+// Tables to migrate - we'll dynamically fetch this list
+let tables = [];
+
+// Migration statistics
+const stats = {
+  totalTables: 0,
+  tablesProcessed: 0,
+  recordsMigrated: 0,
+================================================================================
+ DATABASE MIGRATION: AWS Neon → GCP Cloud SQL
+================================================================================
+
+ Progress: 13/14 tables processed
+ Elapsed: 00:00:25
+ Records: 144 migrated
+
+ [=====================================>  ] 93%
+
+ Table Migration Status:
+ ------------------------------------------------------------------------------
+ | Table Name                | Source Records | Target Records | Status      |
+ | ------------------------- | -------------- | -------------- | ----------- |
+ | appointments              |            109 |            112 | Count Mismatch |
+ | cart_items                |              0 |     (pending) | Count Mismatch |
+ | carts                     |              0 |     (pending) | Count Mismatch |
+ | customer_access_tokens    |              6 |              7 | Count Mismatch |
+================================================================================
+ DATABASE MIGRATION: AWS Neon → GCP Cloud SQL
+================================================================================
+
+ Progress: 14/14 tables processed
+ Elapsed: 00:00:27
+ Records: 153 migrated
+
+ [========================================>] 100%
+
+ Table Migration Status:
+ ------------------------------------------------------------------------------
+ | Table Name                | Source Records | Target Records | Status      |
+ | ------------------------- | -------------- | -------------- | ----------- |
+ | appointments              |            109 |            112 | Count Mismatch |
+ | cart_items                |              0 |     (pending) | Count Mismatch |
+ | carts                     |              0 |     (pending) | Count Mismatch |
+ | customer_access_tokens    |              6 |              7 | Count Mismatch |
+ | customers                 |              6 |              6 | Success     |
+ | payments                  |              0 |     (pending) | Count Mismatch |
+ | product_variants          |              0 |     (pending) | Count Mismatch |
+ | products                  |              2 |              2 | Success     |
+ | services                  |             11 |             14 | Count Mismatch |
+ | session                   |              1 |              1 | Success     |
+ | ssl_domains               |              0 |     (pending) | Count Mismatch |
+ | staff_availability        |              9 |             11 | Count Mismatch |
+ | themes                    |             25 |     (pending) | Error       |
+ | users                     |              9 |             11 | Count Mismatch |
+ ------------------------------------------------------------------------------
+
+ Migration completed in 00:00:27
+ Total records migrated: 153
+
+================================================================================
+
+Validating migration...
+Mismatch in table appointments: Source=109, Target=112
+Mismatch in table cart_items: Source=0, Target=null
+Mismatch in table carts: Source=0, Target=null
+Mismatch in table customer_access_tokens: Source=6, Target=7
+Mismatch in table payments: Source=0, Target=null
+Mismatch in table product_variants: Source=0, Target=null
+Mismatch in table services: Source=11, Target=14
+Mismatch in table ssl_domains: Source=0, Target=null
+Mismatch in table staff_availability: Source=9, Target=11
+Mismatch in table themes: Source=25, Target=null
+Mismatch in table users: Source=9, Target=11
+Found 11 tables with count mismatches.
+2025/04/28 15:25:53 Client closed local connection on 127.0.0.1:5432
+2025/04/28 15:25:53 Client closed local connection on 127.0.0.1:5432

@@ -1,0 +1,487 @@
+saasb2c1@cloudshell:~/business-management-system (appointease-prod-457922)$ # Get the build ID from the previous command output
+BUILD_ID=245883a9-bd4d-405f-ae92-69fe63343a55
+
+# View the build logs
+gcloud builds log $BUILD_ID --region=$REGION
+/usr/bin/../lib/google-cloud-sdk/lib/third_party/google/cloud/appengine_v1/proto/version_pb2.py:1476: SyntaxWarning: invalid escape sequence '\ '
+  '__doc__': """\ `Cloud Endpoints <https://cloud.google.com/endpoints>`__
+/usr/bin/../lib/google-cloud-sdk/lib/third_party/google/cloud/appengine_v1/proto/app_yaml_pb2.py:914: SyntaxWarning: invalid escape sequence '\ '
+  '__doc__': """\ `Google Cloud Endpoints
+/usr/bin/../lib/google-cloud-sdk/lib/third_party/google/cloud/appengine_v1/proto/app_yaml_pb2.py:958: SyntaxWarning: invalid escape sequence '\ '
+  '__doc__': """URL pattern and description of how the URL should be handled. App
+/usr/bin/../lib/google-cloud-sdk/lib/third_party/google/cloud/appengine_v1alpha/proto/version_pb2.py:1659: SyntaxWarning: invalid escape sequence '\ '
+  '__doc__': """\ `Cloud Endpoints <https://cloud.google.com/endpoints>`__
+/usr/bin/../lib/google-cloud-sdk/lib/third_party/google/cloud/appengine_v1alpha/proto/app_yaml_pb2.py:958: SyntaxWarning: invalid escape sequence '\ '
+  '__doc__': """URL pattern and description of how the URL should be handled. App
+/usr/bin/../lib/google-cloud-sdk/lib/third_party/google/cloud/appengine_v1beta/proto/version_pb2.py:1556: SyntaxWarning: invalid escape sequence '\ '
+  '__doc__': """\ `Cloud Endpoints <https://cloud.google.com/endpoints>`__
+/usr/bin/../lib/google-cloud-sdk/lib/third_party/google/cloud/appengine_v1beta/proto/app_yaml_pb2.py:958: SyntaxWarning: invalid escape sequence '\ '
+  '__doc__': """URL pattern and description of how the URL should be handled. App
+------------------------------------------------------------------------------------ REMOTE BUILD OUTPUT ------------------------------------------------------------------------------------
+starting build "245883a9-bd4d-405f-ae92-69fe63343a55"
+FETCHSOURCE
+Fetching storage object: gs://run-sources-appointease-prod-457922-southamerica-west1/services/appointease/1745793480.977067-e853f415e8a84a8692a0f9c1a6c674ca.zip#1745793483922295
+Copying gs://run-sources-appointease-prod-457922-southamerica-west1/services/appointease/1745793480.977067-e853f415e8a84a8692a0f9c1a6c674ca.zip#1745793483922295...
+/ [1 files][  4.0 MiB/  4.0 MiB]                                                
+Operation completed over 1 objects/4.0 MiB.
+Archive:  /tmp/source-archive.zip
+   creating: /workspace/server/
+   creating: /workspace/client/
+   creating: /workspace/uploads/
+   creating: /workspace/dist/
+   creating: /workspace/shared/
+   creating: /workspace/docs/
+   creating: /workspace/attached_assets/
+   creating: /workspace/.google/
+   creating: /workspace/.github/
+   creating: /workspace/server/routes/
+   creating: /workspace/server/utils/
+   creating: /workspace/server/middleware/
+   creating: /workspace/server/theme/
+   creating: /workspace/client/src/
+   creating: /workspace/client/src/types/
+   creating: /workspace/client/src/contexts/
+   creating: /workspace/client/src/components/
+   creating: /workspace/client/src/pages/
+   creating: /workspace/client/src/assets/
+   creating: /workspace/client/src/providers/
+   creating: /workspace/client/src/utils/
+   creating: /workspace/client/src/lib/
+   creating: /workspace/client/src/i18n/
+   creating: /workspace/client/src/hooks/
+   creating: /workspace/client/src/components/theme-editor/
+   creating: /workspace/client/src/components/products/
+   creating: /workspace/client/src/components/dashboard/
+   creating: /workspace/client/src/components/layout/
+   creating: /workspace/client/src/components/business/
+   creating: /workspace/client/src/components/customers/
+   creating: /workspace/client/src/components/theme-aware/
+   creating: /workspace/client/src/components/appointments/
+   creating: /workspace/client/src/components/shared/
+   creating: /workspace/client/src/components/debug/
+   creating: /workspace/client/src/components/services/
+   creating: /workspace/client/src/components/theme-marketplace/
+   creating: /workspace/client/src/components/payment/
+   creating: /workspace/client/src/components/ui/
+   creating: /workspace/client/src/components/theme/
+   creating: /workspace/client/src/components/maps/
+   creating: /workspace/client/src/components/customer-portal/
+   creating: /workspace/client/src/components/business/theme-customization/
+   creating: /workspace/client/src/components/business/settings/
+   creating: /workspace/client/src/components/customer-portal/templates/
+   creating: /workspace/client/src/components/customer-portal/base/
+   creating: /workspace/client/src/components/customer-portal/overrides/
+   creating: /workspace/client/src/components/customer-portal/templates/salon/
+   creating: /workspace/client/src/components/customer-portal/overrides/salonelegante/
+   creating: /workspace/client/src/pages/theme-editor/
+   creating: /workspace/client/src/pages/dashboard/
+   creating: /workspace/client/src/pages/payment/
+   creating: /workspace/client/src/pages/customer-portal/
+   creating: /workspace/client/src/pages/dashboard/settings/
+   creating: /workspace/client/src/pages/dashboard/settings/business/
+   creating: /workspace/client/src/pages/dashboard/settings/theme/
+   creating: /workspace/client/src/lib/multi-tenancy/
+   creating: /workspace/dist/public/
+   creating: /workspace/dist/public/assets/
+   creating: /workspace/shared/themes/
+   creating: /workspace/docs/theme-system/
+   creating: /workspace/docs/theme-system/examples/
+   creating: /workspace/.github/workflows/
+  inflating: /workspace/fix_app.js
+  inflating: /workspace/package.json
+  inflating: /workspace/temp-schema-check.sql
+  inflating: /workspace/test-theme-validation.cjs
+  inflating: /workspace/add-service-capacity-migration.js
+  inflating: /workspace/drizzle.config.ts
+  inflating: /workspace/app.yaml
+  inflating: /workspace/.nvmrc
+  inflating: /workspace/create-variants-table.js
+  inflating: /workspace/package.json.original
+  inflating: /workspace/add-service-class-pack-fields-migration.js
+  inflating: /workspace/add-is-default-field-migration.js
+  inflating: /workspace/test-theme-validation.js
+  inflating: /workspace/add-theme-settings-fields-migration.js
+  inflating: /workspace/esbuild-server.js
+  inflating: /workspace/create-themes-table.js
+  inflating: /workspace/postcss.config.js
+  inflating: /workspace/auth_fixes.cjs
+  inflating: /workspace/tailwind.config.ts
+  inflating: /workspace/err.json
+  inflating: /workspace/build.js
+  inflating: /workspace/package-lock.json
+  inflating: /workspace/add-service-capacity-and-type-migration.js
+  inflating: /workspace/build.cjs
+  inflating: /workspace/add-staff-id-migration.js
+  inflating: /workspace/tsconfig.json
+  inflating: /workspace/replit.nix
+  inflating: /workspace/.gcloudignore
+  inflating: /workspace/create-customer-access-tokens-table.js
+  inflating: /workspace/auth_fixes.js
+  inflating: /workspace/theme.json
+  inflating: /workspace/Dockerfile
+  inflating: /workspace/login-redirect.html
+  inflating: /workspace/push-schema.js
+  inflating: /workspace/vite.config.ts
+  inflating: /workspace/generated-icon.png
+  inflating: /workspace/create-themes-table.cjs
+  inflating: /workspace/SECURITY.md
+  inflating: /workspace/business-theme-migration.cjs
+  inflating: /workspace/env_variables.yaml
+  inflating: /workspace/.dockerignore
+  inflating: /workspace/add-address-fields-migration.js
+  inflating: /workspace/.replit
+  inflating: /workspace/cookies.txt
+  inflating: /workspace/tsconfig.server.json
+  inflating: /workspace/salonelegante.html
+  inflating: /workspace/server/mercadopago.ts
+  inflating: /workspace/server/databaseStorage.ts
+  inflating: /workspace/server/ssl.ts
+  inflating: /workspace/server/db.ts
+  inflating: /workspace/server/storage.ts
+  inflating: /workspace/server/index.ts
+  inflating: /workspace/server/auth.ts
+  inflating: /workspace/server/seed-themes.ts
+  inflating: /workspace/server/seed.ts
+  inflating: /workspace/server/routes.ts.backup
+  inflating: /workspace/server/vite.ts
+  inflating: /workspace/server/routes.ts
+  inflating: /workspace/server/businessSlugAdapter.ts
+  inflating: /workspace/server/routes/themeApiRoutes.ts
+  inflating: /workspace/server/routes/theme-marketplace.ts
+  inflating: /workspace/server/routes/theme.ts
+  inflating: /workspace/server/routes/themeRoutes.ts
+  inflating: /workspace/server/routes/theme-test.ts
+  inflating: /workspace/server/routes/upload.ts
+  inflating: /workspace/server/utils/themeUtils.ts
+  inflating: /workspace/server/middleware/businessDataInjector.ts
+  inflating: /workspace/server/middleware/businessExtractor.ts
+  inflating: /workspace/server/middleware/themeMiddleware.ts
+  inflating: /workspace/server/theme/cssVariableServer.ts
+  inflating: /workspace/server/theme/registerThemeRoutes.ts
+  inflating: /workspace/client/index.html
+  inflating: /workspace/client/src/main.tsx
+  inflating: /workspace/client/src/index-dark-mode.ts
+  inflating: /workspace/client/src/App.tsx
+  inflating: /workspace/client/src/index.css
+  inflating: /workspace/client/src/types/tinycolor2.d.ts
+  inflating: /workspace/client/src/types/theme.ts
+  inflating: /workspace/client/src/types/node-vibrant.d.ts
+  inflating: /workspace/client/src/contexts/BusinessContext.tsx
+  inflating: /workspace/client/src/contexts/LanguageContext.tsx
+  inflating: /workspace/client/src/contexts/ThemeContext.tsx
+  inflating: /workspace/client/src/contexts/NewThemeContext.tsx
+  inflating: /workspace/client/src/components/ProtectedRoute.tsx
+  inflating: /workspace/client/src/components/theme-editor/SpacingEditor.tsx
+  inflating: /workspace/client/src/components/theme-editor/ColorEditor.tsx
+  inflating: /workspace/client/src/components/theme-editor/ModernThemeEditor.tsx
+  inflating: /workspace/client/src/components/theme-editor/TypographyEditor.tsx
+  inflating: /workspace/client/src/components/theme-editor/ThemeSelector.tsx
+  inflating: /workspace/client/src/components/products/product-form.tsx
+  inflating: /workspace/client/src/components/products/variant-manager.tsx
+  inflating: /workspace/client/src/components/products/variant-form.tsx
+  inflating: /workspace/client/src/components/products/product-detail.tsx
+  inflating: /workspace/client/src/components/dashboard/LocationSettingsLink.tsx
+  inflating: /workspace/client/src/components/dashboard/upcoming-appointments.tsx
+  inflating: /workspace/client/src/components/dashboard/daily-schedule.tsx
+  inflating: /workspace/client/src/components/dashboard/monthly-calendar.tsx
+  inflating: /workspace/client/src/components/dashboard/stat-card.tsx
+  inflating: /workspace/client/src/components/dashboard/stats-overview.tsx
+  inflating: /workspace/client/src/components/layout/header.tsx
+  inflating: /workspace/client/src/components/business/layout.tsx
+  inflating: /workspace/client/src/components/business/BusinessLogo.tsx
+  inflating: /workspace/client/src/components/business/home-page.tsx
+  inflating: /workspace/client/src/components/business/header.tsx
+  inflating: /workspace/client/src/components/business/schedule-page.tsx
+  inflating: /workspace/client/src/components/business/about-page.tsx
+  inflating: /workspace/client/src/components/business/store-page.tsx
+  inflating: /workspace/client/src/components/business/theme-customization/ColorExtractor.tsx
+  inflating: /workspace/client/src/components/business/theme-customization/FontSelector.tsx
+  inflating: /workspace/client/src/components/business/theme-customization/SalonEleganteThemeCapture.tsx
+  inflating: /workspace/client/src/components/business/theme-customization/ColorPicker.tsx
+  inflating: /workspace/client/src/components/business/theme-customization/ThemePresetSelector.tsx
+  inflating: /workspace/client/src/components/business/theme-customization/PaletteSuggestions.tsx
+  inflating: /workspace/client/src/components/business/theme-customization/ThemePreview.tsx
+  inflating: /workspace/client/src/components/business/settings/ThemeSettings.tsx
+  inflating: /workspace/client/src/components/customers/customer-form.tsx
+  inflating: /workspace/client/src/components/theme-aware/ComponentVariantsDemo.tsx
+  inflating: /workspace/client/src/components/theme-aware/VariantAwareBadge.tsx
+  inflating: /workspace/client/src/components/theme-aware/VariantAwareButton.tsx
+  inflating: /workspace/client/src/components/theme-aware/VariantAwareCard.tsx
+  inflating: /workspace/client/src/components/theme-aware/ThemeTokenPreview.tsx
+  inflating: /workspace/client/src/components/theme-aware/ThemeDemo.tsx
+  inflating: /workspace/client/src/components/theme-aware/VariantAwareInput.tsx
+  inflating: /workspace/client/src/components/theme-aware/ColorModeToggle.tsx
+  inflating: /workspace/client/src/components/theme-aware/ThemeAwareButton.tsx
+  inflating: /workspace/client/src/components/appointments/appointment-form.tsx
+  inflating: /workspace/client/src/components/appointments/appointment-item.tsx
+  inflating: /workspace/client/src/components/appointments/customer-check.tsx
+  inflating: /workspace/client/src/components/shared/base-header.tsx
+  inflating: /workspace/client/src/components/shared/base-layout.tsx
+  inflating: /workspace/client/src/components/shared/dark-mode-initializer.tsx
+  inflating: /workspace/client/src/components/debug/AuthDebugger.tsx
+  inflating: /workspace/client/src/components/services/service-form.tsx
+  inflating: /workspace/client/src/components/theme-marketplace/ThemeMarketplaceCard.tsx
+  inflating: /workspace/client/src/components/theme-marketplace/ThemeMarketplacePreview.tsx
+  inflating: /workspace/client/src/components/theme-marketplace/ThemeMarketplace.tsx
+  inflating: /workspace/client/src/components/payment/checkout-form.tsx
+  inflating: /workspace/client/src/components/ui/context-menu.tsx
+  inflating: /workspace/client/src/components/ui/dialog.tsx
+  inflating: /workspace/client/src/components/ui/layout.tsx
+  inflating: /workspace/client/src/components/ui/alert.tsx
+  inflating: /workspace/client/src/components/ui/resizable.tsx
+  inflating: /workspace/client/src/components/ui/page-header.tsx
+  inflating: /workspace/client/src/components/ui/sheet.tsx
+  inflating: /workspace/client/src/components/ui/progress.tsx
+  inflating: /workspace/client/src/components/ui/loading-spinner.tsx
+  inflating: /workspace/client/src/components/ui/card.tsx
+  inflating: /workspace/client/src/components/ui/tooltip.tsx
+  inflating: /workspace/client/src/components/ui/textarea.tsx
+  inflating: /workspace/client/src/components/ui/toast.tsx
+  inflating: /workspace/client/src/components/ui/toaster.tsx
+  inflating: /workspace/client/src/components/ui/collapsible.tsx
+  inflating: /workspace/client/src/components/ui/toggle.tsx
+  inflating: /workspace/client/src/components/ui/accordion.tsx
+  inflating: /workspace/client/src/components/ui/badge.tsx
+  inflating: /workspace/client/src/components/ui/language-selector.tsx
+  inflating: /workspace/client/src/components/ui/sidebar.tsx
+  inflating: /workspace/client/src/components/ui/form.tsx
+  inflating: /workspace/client/src/components/ui/radio-group.tsx
+  inflating: /workspace/client/src/components/ui/carousel.tsx
+  inflating: /workspace/client/src/components/ui/tabs.tsx
+  inflating: /workspace/client/src/components/ui/navigation-menu.tsx
+  inflating: /workspace/client/src/components/ui/drawer.tsx
+  inflating: /workspace/client/src/components/ui/time-picker.tsx
+  inflating: /workspace/client/src/components/ui/slider.tsx
+  inflating: /workspace/client/src/components/ui/pagination.tsx
+  inflating: /workspace/client/src/components/ui/table.tsx
+  inflating: /workspace/client/src/components/ui/input-otp.tsx
+  inflating: /workspace/client/src/components/ui/dropdown-menu.tsx
+  inflating: /workspace/client/src/components/ui/checkbox.tsx
+  inflating: /workspace/client/src/components/ui/calendar.tsx
+  inflating: /workspace/client/src/components/ui/label.tsx
+  inflating: /workspace/client/src/components/ui/alert-dialog.tsx
+  inflating: /workspace/client/src/components/ui/select.tsx
+  inflating: /workspace/client/src/components/ui/popover.tsx
+  inflating: /workspace/client/src/components/ui/input.tsx
+  inflating: /workspace/client/src/components/ui/separator.tsx
+  inflating: /workspace/client/src/components/ui/button.tsx
+  inflating: /workspace/client/src/components/ui/menubar.tsx
+  inflating: /workspace/client/src/components/ui/aspect-ratio.tsx
+  inflating: /workspace/client/src/components/ui/hover-card.tsx
+  inflating: /workspace/client/src/components/ui/scroll-area.tsx
+  inflating: /workspace/client/src/components/ui/command.tsx
+  inflating: /workspace/client/src/components/ui/avatar.tsx
+  inflating: /workspace/client/src/components/ui/chart.tsx
+  inflating: /workspace/client/src/components/ui/image-upload.tsx
+  inflating: /workspace/client/src/components/ui/switch.tsx
+  inflating: /workspace/client/src/components/ui/skeleton.tsx
+  inflating: /workspace/client/src/components/ui/breadcrumb.tsx
+  inflating: /workspace/client/src/components/ui/spinner.tsx
+  inflating: /workspace/client/src/components/ui/toggle-group.tsx
+  inflating: /workspace/client/src/components/theme/ThemeDebugPanel.tsx
+  inflating: /workspace/client/src/components/theme/LegacyThemeAdapter.tsx
+  inflating: /workspace/client/src/components/theme/AppThemeProvider.tsx
+  inflating: /workspace/client/src/components/theme/componentHooks.ts
+  inflating: /workspace/client/src/components/theme/ThemeExamples.tsx
+  inflating: /workspace/client/src/components/theme/themeConverter.ts
+  inflating: /workspace/client/src/components/theme/RootThemeProvider.tsx
+  inflating: /workspace/client/src/components/theme/ThemedComponents.tsx
+  inflating: /workspace/client/src/components/maps/BusinessMap.tsx
+  inflating: /workspace/client/src/components/customer-portal/layout.tsx
+  inflating: /workspace/client/src/components/customer-portal/availability-hints.tsx
+  inflating: /workspace/client/src/components/customer-portal/header.tsx
+  inflating: /workspace/client/src/components/customer-portal/templates/salon/layout.tsx
+  inflating: /workspace/client/src/components/customer-portal/base/layout.tsx
+  inflating: /workspace/client/src/components/customer-portal/overrides/salonelegante/layout.tsx
+  inflating: /workspace/client/src/pages/error-testing.tsx
+  inflating: /workspace/client/src/pages/checkout.tsx
+  inflating: /workspace/client/src/pages/theme-selector-demo.tsx
+  inflating: /workspace/client/src/pages/platform-admin.tsx
+  inflating: /workspace/client/src/pages/ThemeShowcase.tsx
+  inflating: /workspace/client/src/pages/services.tsx
+  inflating: /workspace/client/src/pages/business-portal.tsx
+  inflating: /workspace/client/src/pages/admin-dashboard.tsx
+  inflating: /workspace/client/src/pages/dashboard.tsx
+  inflating: /workspace/client/src/pages/staff-management.tsx
+  inflating: /workspace/client/src/pages/theme-editor.tsx
+  inflating: /workspace/client/src/pages/customers.tsx
+  inflating: /workspace/client/src/pages/custom-domain.tsx
+  inflating: /workspace/client/src/pages/appointments.tsx
+  inflating: /workspace/client/src/pages/domain-setup.tsx
+  inflating: /workspace/client/src/pages/auth-page.tsx
+  inflating: /workspace/client/src/pages/customer-portal-simple.tsx
+  inflating: /workspace/client/src/pages/not-found.tsx
+  inflating: /workspace/client/src/pages/business-profile-page.tsx
+  inflating: /workspace/client/src/pages/staff-profile.tsx
+  inflating: /workspace/client/src/pages/admin-theme-editor.tsx
+  inflating: /workspace/client/src/pages/ThemeMarketplacePage.tsx
+  inflating: /workspace/client/src/pages/products.tsx
+  inflating: /workspace/client/src/pages/color-mode-demo.tsx
+  inflating: /workspace/client/src/pages/staff-schedule.tsx
+  inflating: /workspace/client/src/pages/landing-page.tsx
+  inflating: /workspace/client/src/pages/preview-business.tsx
+  inflating: /workspace/client/src/pages/theme-editor/index.tsx
+  inflating: /workspace/client/src/pages/dashboard/settings/theme-editor.tsx
+  inflating: /workspace/client/src/pages/dashboard/settings/index.tsx
+  inflating: /workspace/client/src/pages/dashboard/settings/business/location.tsx
+  inflating: /workspace/client/src/pages/dashboard/settings/business/profile.tsx
+  inflating: /workspace/client/src/pages/dashboard/settings/theme/templates.tsx
+  inflating: /workspace/client/src/pages/payment/success.tsx
+  inflating: /workspace/client/src/pages/payment/failure.tsx
+  inflating: /workspace/client/src/pages/payment/mock.tsx
+  inflating: /workspace/client/src/pages/payment/pending.tsx
+  inflating: /workspace/client/src/pages/customer-portal/services.tsx
+  inflating: /workspace/client/src/pages/customer-portal/zero-friction.tsx
+  inflating: /workspace/client/src/pages/customer-portal/my-appointments.tsx
+  inflating: /workspace/client/src/pages/customer-portal/new-appointment.tsx
+  inflating: /workspace/client/src/pages/customer-portal/index.tsx
+  inflating: /workspace/client/src/pages/customer-portal/book.tsx
+  inflating: /workspace/client/src/assets/pride-flow-logo.svg
+  inflating: /workspace/client/src/assets/yoga-logo.svg
+  inflating: /workspace/client/src/providers/GlobalThemeContext.tsx
+  inflating: /workspace/client/src/providers/ThemeProvider.tsx
+  inflating: /workspace/client/src/providers/GlobalThemeContextProvider.tsx
+  inflating: /workspace/client/src/providers/MultiTenantThemeProvider.tsx
+  inflating: /workspace/client/src/providers/GlobalThemeProvider.tsx
+  inflating: /workspace/client/src/utils/businessConfig.ts
+  inflating: /workspace/client/src/utils/tenant-router.ts
+  inflating: /workspace/client/src/utils/date-utils.ts
+  inflating: /workspace/client/src/utils/vibrant-wrapper.ts
+  inflating: /workspace/client/src/utils/applyTheme.ts
+  inflating: /workspace/client/src/utils/cssVariableGenerator.ts
+  inflating: /workspace/client/src/utils/availability-utils.ts
+  inflating: /workspace/client/src/lib/queryClient.ts
+  inflating: /workspace/client/src/lib/themeUtils.ts
+  inflating: /workspace/client/src/lib/theme.ts
+  inflating: /workspace/client/src/lib/componentVariants.ts
+  inflating: /workspace/client/src/lib/colorModeTransition.css
+  inflating: /workspace/client/src/lib/utils.ts
+  inflating: /workspace/client/src/lib/themeApi.ts
+  inflating: /workspace/client/src/lib/multi-tenancy/permissions.ts
+  inflating: /workspace/client/src/lib/multi-tenancy/loader.ts
+  inflating: /workspace/client/src/i18n/es.ts
+  inflating: /workspace/client/src/i18n/en.ts
+  inflating: /workspace/client/src/hooks/useGlobalTheme.ts
+  inflating: /workspace/client/src/hooks/useThemeVars.ts
+  inflating: /workspace/client/src/hooks/use-media-query.tsx
+  inflating: /workspace/client/src/hooks/use-toast.ts
+  inflating: /workspace/client/src/hooks/use-theme-variables.tsx
+  inflating: /workspace/client/src/hooks/use-theme-manager.ts
+  inflating: /workspace/client/src/hooks/use-auth.tsx
+  inflating: /workspace/client/src/hooks/use-local-storage.ts
+  inflating: /workspace/client/src/hooks/createThemeHook.ts
+  inflating: /workspace/client/src/hooks/use-mobile.tsx
+  inflating: /workspace/uploads/3e88cae7-642c-420b-927a-2909db121e66-374553215_736234748517460_1987936036921564853_n.jpg
+  inflating: /workspace/uploads/61b9560f-ee2d-44b3-97ae-eac4b5994b6d-374553215_736234748517460_1987936036921564853_n.jpg
+  inflating: /workspace/uploads/77dab7bd-ba6c-4105-89be-68033ba45486-374553215_736234748517460_1987936036921564853_n.jpg
+  inflating: /workspace/uploads/d7889bb8-b5c7-4249-a09c-b81ab3d76d58-374553215_736234748517460_1987936036921564853_n.jpg
+  inflating: /workspace/dist/index.js
+  inflating: /workspace/dist/public/index.html
+  inflating: /workspace/dist/public/assets/index-B1GZpIuC.css
+  inflating: /workspace/dist/public/assets/index-eOsZGEs8.js
+  inflating: /workspace/shared/designTokens.ts
+  inflating: /workspace/shared/config.ts
+  inflating: /workspace/shared/marketplaceThemes.ts
+  inflating: /workspace/shared/themePresets.ts
+  inflating: /workspace/shared/themeManager.ts
+  inflating: /workspace/shared/colorUtils.ts
+  inflating: /workspace/shared/typographyUtils.ts
+  inflating: /workspace/shared/serviceUtils.ts
+  inflating: /workspace/shared/schema.ts
+  inflating: /workspace/shared/defaultThemes.ts
+  inflating: /workspace/shared/themeCreator.ts
+  inflating: /workspace/shared/seasonalThemes.ts
+  inflating: /workspace/shared/themeSchema.ts
+  inflating: /workspace/shared/spacingUtils.ts
+  inflating: /workspace/shared/tokenUtils.ts
+  inflating: /workspace/shared/themes/index.ts
+  inflating: /workspace/docs/theme-system/01-architecture.md
+  inflating: /workspace/docs/theme-system/07-best-practices.md
+  inflating: /workspace/docs/theme-system/06-api-reference.md
+  inflating: /workspace/docs/theme-system/03-component-integration.md
+  inflating: /workspace/docs/theme-system/02-design-tokens.md
+  inflating: /workspace/docs/theme-system/04-theme-marketplace.md
+  inflating: /workspace/docs/theme-system/05-theme-customization.md
+  inflating: /workspace/docs/theme-system/examples/ThemeHooksExample.tsx
+  inflating: /workspace/docs/theme-system/examples/ThemeMarketplaceExample.tsx
+  inflating: /workspace/docs/theme-system/examples/ThemeAwareCard.tsx
+  inflating: /workspace/docs/theme-system/examples/ThemeAwareButton.tsx
+  inflating: /workspace/attached_assets/image_1745375770695.png
+  inflating: /workspace/attached_assets/image_1745376750670.png
+  inflating: /workspace/attached_assets/image_1744667877817.png
+  inflating: /workspace/attached_assets/image_1745110221890.png
+  inflating: /workspace/attached_assets/image_1745517298461.png
+  inflating: /workspace/attached_assets/image_1745193542443.png
+  inflating: /workspace/attached_assets/image_1745440494305.png
+  inflating: /workspace/attached_assets/image_1745532686013.png
+  inflating: /workspace/attached_assets/image_1745355041866.png
+  inflating: /workspace/attached_assets/image_1745531100122.png
+  inflating: /workspace/attached_assets/image_1745443704677.png
+  inflating: /workspace/attached_assets/image_1745376634288.png
+  inflating: /workspace/attached_assets/image_1745376091256.png
+  inflating: /workspace/attached_assets/image_1745194667790.png
+  inflating: /workspace/attached_assets/Pasted-Backend-Prompt-Part-2-Theme-Presets-Validation-Defaults-Objective-Extend-the-already-implem-1744853898878.txt
+  inflating: /workspace/attached_assets/image_1745523276098.png
+  inflating: /workspace/attached_assets/image_1745375361498.png
+  inflating: /workspace/attached_assets/Pasted-What-is-AppointEase-AppointEase-is-a-Chile-based-SaaS-platform-I-m-founding-purpose-built-to-empo-1745613177909.txt
+  inflating: /workspace/attached_assets/image_1744748229311.png
+  inflating: /workspace/attached_assets/image_1744667459989.png
+  inflating: /workspace/attached_assets/image_1745614581680.png
+  inflating: /workspace/attached_assets/Pasted-Full-Business-Theme-System-Objective-Implement-a-complete-business-theme-editor-UI-that-supports--1744858563742.txt
+  inflating: /workspace/attached_assets/Pasted--n-sendError-evt-reason-n-n-script-n-n-script-type-module-nimport-RefreshRuntime--1745510590169.txt
+  inflating: /workspace/attached_assets/image_1745617572835.png
+  inflating: /workspace/attached_assets/image_1745114158902.png
+  inflating: /workspace/attached_assets/image_1745376922437.png
+  inflating: /workspace/attached_assets/image_1744476472495.png
+  inflating: /workspace/attached_assets/image_1745375209995.png
+  inflating: /workspace/attached_assets/Pasted-Backend-Prompt-Part-2-Theme-Presets-Validation-Defaults-Objective-Extend-the-already-implem-1744853894678.txt
+  inflating: /workspace/.google/runtime-config.yaml
+  inflating: /workspace/.github/workflows/codeql.yml
+BUILD
+Already have image (with digest): gcr.io/cloud-builders/docker
+Sending build context to Docker daemon  4.462MB
+Step 1/20 : FROM node:20 AS builder
+20: Pulling from library/node
+23b7d26ef1d2: Already exists
+07d1b5af933d: Already exists
+1eb98adba0eb: Already exists
+b617a119f8a2: Already exists
+45649386e0b9: Pulling fs layer
+0d58e92a2d7c: Pulling fs layer
+ab8a2f40ca9e: Pulling fs layer
+ed806a526066: Pulling fs layer
+ed806a526066: Waiting
+ab8a2f40ca9e: Download complete
+45649386e0b9: Verifying Checksum
+45649386e0b9: Download complete
+45649386e0b9: Pull complete
+ed806a526066: Download complete
+0d58e92a2d7c: Verifying Checksum
+0d58e92a2d7c: Download complete
+0d58e92a2d7c: Pull complete
+ab8a2f40ca9e: Pull complete
+ed806a526066: Pull complete
+Digest: sha256:2b925d94e306faa9f9eca22852d2f0f79bc9192ce778e1cd435928e6a44f9164
+Status: Downloaded newer image for node:20
+ 8a078b1c5aaa
+Step 2/20 : WORKDIR /app
+ Running in e71684832fbc
+Removing intermediate container e71684832fbc
+ 10101f8766d7
+Step 3/20 : COPY package*.json ./
+ 918275739cf2
+Step 4/20 : RUN npm ci
+ Running in b874a669db73
+npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+npm warn deprecated @esbuild-kit/core-utils@3.3.2: Merged into tsx: https://tsx.is
+npm warn deprecated @esbuild-kit/esm-loader@2.6.5: Merged into tsx: https://tsx.is
+
+added 633 packages, and audited 634 packages in 16s
+ERROR: gcloud crashed (TypeError): expected string or bytes-like object, got 'NoneType'
+
+If you would like to report this issue, please run the following command:
+  gcloud feedback
+
+To check gcloud for common problems, please run the following command:
+  gcloud info --run-diagnostics
+saasb2c1@cloudshell:~/business-management-system (appointease-prod-457922)$ 

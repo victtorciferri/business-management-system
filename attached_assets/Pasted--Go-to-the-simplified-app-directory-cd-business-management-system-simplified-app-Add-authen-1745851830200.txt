@@ -1,0 +1,322 @@
+# Go to the simplified app directory
+cd ~/business-management-system/simplified-app
+
+# Add authentication and more API routes
+cat > index.js << 'EOF'
+const express = require('express');
+const fs = require('fs');
+const path = require('path');
+const { Pool } = require('pg');
+const session = require('express-session');
+const pgSession = require('connect-pg-simple')(session);
+const app = express();
+const port = process.env.PORT || 8080;
+
+// Database connection
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL
+});
+
+// Test database connection
+async function testDbConnection() {
+  try {
+    const client = await pool.connect();
+    const result = await client.query('SELECT NOW()');
+    console.log('Database connection successful:', result.rows[0]);
+    client.release();
+    return true;
+  } catch (err) {
+    console.error('Database connection error:', err);
+    return false;
+  }
+}
+
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
+// Session middleware
+app.use(
+  session({
+    store: new pgSession({
+      pool,
+      tableName: 'session' // Make sure this table exists
+    }),
+    secret: process.env.SESSION_SECRET || 'appointease-session-secret',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      secure: process.env.NODE_ENV === 'production'
+    }
+  })
+);
+
+// Serve static files from the dist/public directory
+const publicDir = path.join(__dirname, 'dist/public');
+if (fs.existsSync(publicDir)) {
+  console.log('Serving static files from:', publicDir);
+  app.use(express.static(publicDir));
+} else {
+  console.log('Public directory not found:', publicDir);
+}
+
+// Authentication middleware
+function isAuthenticated(req, res, next) {
+  if (req.session && req.session.userId) {
+    return next();
+  }
+  res.status(401).json({ error: 'Not authenticated' });
+}
+
+// Basic API endpoints
+app.get('/api/status', async (req, res) => {
+  const dbConnected = await testDbConnection();
+  res.json({
+    status: 'online',
+    environment: process.env.NODE_ENV,
+    databaseConnected: dbConnected,
+    version: '1.0.0',
+    authenticated: req.session && req.session.userId ? true : false
+  });
+});
+
+// Authentication APIs
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password are required' });
+    }
+    
+    const client = await pool.connect();
+    const result = await client.query(
+      'SELECT * FROM users WHERE username = $1',
+      [username]
+    );
+    
+    const user = result.rows[0];
+    client.release();
+    
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+    
+    // In a real app, you'd use bcrypt.compare here
+    if (user.password !== password) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+    
+    // Set user session
+    req.session.userId = user.id;
+    req.session.username = user.username;
+    req.session.role = user.role;
+    
+    res.json({
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      businessName: user.business_name,
+      role: user.role
+    });
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ error: 'Server error', message: err.message });
+  }
+});
+
+app.post('/api/auth/logout', (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      return res.status(500).json({ error: 'Logout failed', message: err.message });
+    }
+    res.json({ success: true });
+  });
+});
+
+app.get('/api/auth/me', isAuthenticated, async (req, res) => {
+  try {
+    const client = await pool.connect();
+    const result = await client.query(
+      'SELECT id, username, email, business_name, business_slug, custom_domain, role FROM users WHERE id = $1',
+      [req.session.userId]
+    );
+    client.release();
+    
+    const user = result.rows[0];
+    if (!user) {
+      req.session.destroy();
+      return res.status(401).json({ error: 'User not found' });
+    }
+    
+    res.json({
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      businessName: user.business_name,
+      businessSlug: user.business_slug,
+      customDomain: user.custom_domain,
+      role: user.role
+    });
+  } catch (err) {
+    console.error('Auth check error:', err);
+    res.status(500).json({ error: 'Server error', message: err.message });
+  }
+});
+
+// Themes API
+app.get('/api/themes', async (req, res) => {
+  try {
+    const client = await pool.connect();
+    const result = await client.query('SELECT * FROM themes LIMIT 100');
+    res.json(result.rows);
+    client.release();
+  } catch (err) {
+    console.error('Error querying themes:', err);
+    res.status(500).json({ error: 'Database error', message: err.message });
+  }
+});
+
+app.get('/api/themes/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const client = await pool.connect();
+    const result = await client.query('SELECT * FROM themes WHERE id = $1', [id]);
+    
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: 'Theme not found' });
+    } else {
+      res.json(result.rows[0]);
+    }
+    
+    client.release();
+  } catch (err) {
+    console.error('Error querying theme:', err);
+    res.status(500).json({ error: 'Database error', message: err.message });
+  }
+});
+
+// Services API
+app.get('/api/services', isAuthenticated, async (req, res) => {
+  try {
+    const client = await pool.connect();
+    const result = await client.query(
+      'SELECT * FROM services WHERE user_id = $1',
+      [req.session.userId]
+    );
+    res.json(result.rows);
+    client.release();
+  } catch (err) {
+    console.error('Error querying services:', err);
+    res.status(500).json({ error: 'Database error', message: err.message });
+  }
+});
+
+// Appointments API
+app.get('/api/appointments', isAuthenticated, async (req, res) => {
+  try {
+    const client = await pool.connect();
+    const result = await client.query(
+      'SELECT * FROM appointments WHERE user_id = $1',
+      [req.session.userId]
+    );
+    res.json(result.rows);
+    client.release();
+  } catch (err) {
+    console.error('Error querying appointments:', err);
+    res.status(500).json({ error: 'Database error', message: err.message });
+  }
+});
+
+// Default route for SPA
+app.get('*', (req, res) => {
+  // If API route not found, serve the index.html for SPA routing
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'API endpoint not found' });
+  }
+  
+  const indexPath = path.join(publicDir, 'index.html');
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    // Fallback to a simple HTML page
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>AppointEase</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+            h1 { color: #333; }
+            .container { max-width: 800px; margin: 0 auto; }
+            .status { padding: 20px; background: #f4f4f4; border-radius: 5px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h1>AppointEase</h1>
+            <div class="status">
+              <h2>Server Status</h2>
+              <p>The AppointEase server is running.</p>
+              <p>Environment: ${process.env.NODE_ENV || 'development'}</p>
+              <p>Frontend assets not found. Please build the frontend.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `);
+  }
+});
+
+// Start the server
+app.listen(port, '0.0.0.0', async () => {
+  console.log(`AppointEase server listening on port ${port}`);
+  
+  // Test database connection on startup
+  await testDbConnection();
+  
+  // Ensure session table exists
+  try {
+    const client = await pool.connect();
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS "session" (
+        "sid" varchar NOT NULL COLLATE "default" PRIMARY KEY,
+        "sess" json NOT NULL,
+        "expire" timestamp(6) NOT NULL
+      )
+    `);
+    client.release();
+    console.log('Session table check completed');
+  } catch (err) {
+    console.error('Error checking session table:', err);
+  }
+});
+EOF
+
+# Update package.json to include the new dependencies
+cat > package.json << 'EOF'
+{
+  "name": "appointease",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "connect-pg-simple": "^8.0.0",
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "pg": "^8.11.0"
+  }
+}
+EOF
+
+# Deploy the updated application
+gcloud run deploy appointease \
+  --source . \
+  --region=southamerica-west1 \
+  --platform=managed \
+  --allow-unauthenticated \
+  --set-env-vars="NODE_ENV=production,SESSION_SECRET=appointease-secret-key" \
+  --update-secrets="DATABASE_URL=database-url:latest"

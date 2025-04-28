@@ -1,0 +1,662 @@
+# Go to the main project directory
+cd ~/business-management-system
+
+# Make sure it's built with the production configuration
+npm run build
+
+# Check if the build was successful and the files exist
+ls -la dist/public
+
+# Go back to the simplified app directory
+cd ~/business-management-system/simplified-app
+
+# Create the directory structure and copy the assets
+mkdir -p dist/public
+cp -r ~/business-management-system/dist/public/* dist/public/
+
+# Let's enhance our server even more with additional API endpoints
+cat > index.js << 'EOF'
+const express = require('express');
+const fs = require('fs');
+const path = require('path');
+const { Pool } = require('pg');
+const session = require('express-session');
+const pgSession = require('connect-pg-simple')(session);
+const multer = require('multer');
+const app = express();
+const port = process.env.PORT || 8080;
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadDir = path.join(__dirname, 'uploads');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + '-' + file.originalname);
+  }
+});
+
+const upload = multer({ storage: storage });
+
+// Database connection
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL
+});
+
+// Test database connection
+async function testDbConnection() {
+  try {
+    const client = await pool.connect();
+    const result = await client.query('SELECT NOW()');
+    console.log('Database connection successful:', result.rows[0]);
+    client.release();
+    return true;
+  } catch (err) {
+    console.error('Database connection error:', err);
+    return false;
+  }
+}
+
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
+// Session middleware
+app.use(
+  session({
+    store: new pgSession({
+      pool,
+      tableName: 'session' // Make sure this table exists
+    }),
+    secret: process.env.SESSION_SECRET || 'appointease-session-secret',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      secure: process.env.NODE_ENV === 'production'
+    }
+  })
+);
+
+// Serve static files from the dist/public directory
+const publicDir = path.join(__dirname, 'dist/public');
+if (fs.existsSync(publicDir)) {
+  console.log('Serving static files from:', publicDir);
+  app.use(express.static(publicDir));
+} else {
+  console.log('Public directory not found:', publicDir);
+}
+
+// Serve uploaded files
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+app.use('/uploads', express.static(uploadsDir));
+
+// Authentication middleware
+function isAuthenticated(req, res, next) {
+  if (req.session && req.session.userId) {
+    return next();
+  }
+  res.status(401).json({ error: 'Not authenticated' });
+}
+
+// Basic API endpoints
+app.get('/api/status', async (req, res) => {
+  const dbConnected = await testDbConnection();
+  res.json({
+    status: 'online',
+    environment: process.env.NODE_ENV,
+    databaseConnected: dbConnected,
+    version: '1.0.0',
+    authenticated: req.session && req.session.userId ? true : false
+  });
+});
+
+// Authentication APIs
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password are required' });
+    }
+    
+    const client = await pool.connect();
+    const result = await client.query(
+      'SELECT * FROM users WHERE username = $1',
+      [username]
+    );
+    
+    const user = result.rows[0];
+    client.release();
+    
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+    
+    // In a real app, you'd use bcrypt.compare here
+    if (user.password !== password) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+    
+    // Set user session
+    req.session.userId = user.id;
+    req.session.username = user.username;
+    req.session.role = user.role;
+    
+    res.json({
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      businessName: user.business_name,
+      role: user.role
+    });
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ error: 'Server error', message: err.message });
+  }
+});
+
+app.post('/api/auth/logout', (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      return res.status(500).json({ error: 'Logout failed', message: err.message });
+    }
+    res.json({ success: true });
+  });
+});
+
+app.get('/api/auth/me', isAuthenticated, async (req, res) => {
+  try {
+    const client = await pool.connect();
+    const result = await client.query(
+      'SELECT id, username, email, business_name, business_slug, custom_domain, role FROM users WHERE id = $1',
+      [req.session.userId]
+    );
+    client.release();
+    
+    const user = result.rows[0];
+    if (!user) {
+      req.session.destroy();
+      return res.status(401).json({ error: 'User not found' });
+    }
+    
+    res.json({
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      businessName: user.business_name,
+      businessSlug: user.business_slug,
+      customDomain: user.custom_domain,
+      role: user.role
+    });
+  } catch (err) {
+    console.error('Auth check error:', err);
+    res.status(500).json({ error: 'Server error', message: err.message });
+  }
+});
+
+// Register endpoint
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { username, password, email, businessName } = req.body;
+    
+    if (!username || !password || !email || !businessName) {
+      return res.status(400).json({ 
+        error: 'Missing required fields',
+        details: 'Username, password, email, and business name are required'
+      });
+    }
+    
+    const client = await pool.connect();
+    
+    // Check if username already exists
+    const checkResult = await client.query(
+      'SELECT id FROM users WHERE username = $1 OR email = $2',
+      [username, email]
+    );
+    
+    if (checkResult.rows.length > 0) {
+      client.release();
+      return res.status(400).json({ error: 'Username or email already exists' });
+    }
+    
+    // Generate a business slug from the business name
+    const businessSlug = businessName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+    
+    // Create user
+    const insertResult = await client.query(
+      `INSERT INTO users 
+        (username, password, email, business_name, business_slug, role, created_at, updated_at)
+      VALUES 
+        ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+      RETURNING id, username, email, business_name, business_slug, role`,
+      [username, password, email, businessName, businessSlug, 'business_owner']
+    );
+    
+    client.release();
+    
+    // Set session
+    const user = insertResult.rows[0];
+    req.session.userId = user.id;
+    req.session.username = user.username;
+    req.session.role = user.role;
+    
+    res.status(201).json({
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      businessName: user.business_name,
+      businessSlug: user.business_slug,
+      role: user.role
+    });
+  } catch (err) {
+    console.error('Registration error:', err);
+    res.status(500).json({ error: 'Server error', message: err.message });
+  }
+});
+
+// Themes API
+app.get('/api/themes', async (req, res) => {
+  try {
+    const client = await pool.connect();
+    const result = await client.query('SELECT * FROM themes LIMIT 100');
+    res.json(result.rows);
+    client.release();
+  } catch (err) {
+    console.error('Error querying themes:', err);
+    res.status(500).json({ error: 'Database error', message: err.message });
+  }
+});
+
+app.get('/api/themes/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const client = await pool.connect();
+    const result = await client.query('SELECT * FROM themes WHERE id = $1', [id]);
+    
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: 'Theme not found' });
+    } else {
+      res.json(result.rows[0]);
+    }
+    
+    client.release();
+  } catch (err) {
+    console.error('Error querying theme:', err);
+    res.status(500).json({ error: 'Database error', message: err.message });
+  }
+});
+
+app.post('/api/themes', isAuthenticated, async (req, res) => {
+  try {
+    const { name, settings, colors, fonts, active } = req.body;
+    
+    if (!name || !settings) {
+      return res.status(400).json({ error: 'Name and settings are required' });
+    }
+    
+    const client = await pool.connect();
+    
+    // If setting a theme as active, deactivate all other themes first
+    if (active) {
+      await client.query(
+        'UPDATE themes SET active = false WHERE user_id = $1',
+        [req.session.userId]
+      );
+    }
+    
+    const result = await client.query(
+      `INSERT INTO themes 
+        (name, settings, colors, fonts, active, user_id, created_at, updated_at)
+      VALUES 
+        ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+      RETURNING *`,
+      [name, settings, colors, fonts, active || false, req.session.userId]
+    );
+    
+    client.release();
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Error creating theme:', err);
+    res.status(500).json({ error: 'Database error', message: err.message });
+  }
+});
+
+// Services API
+app.get('/api/services', isAuthenticated, async (req, res) => {
+  try {
+    const client = await pool.connect();
+    const result = await client.query(
+      'SELECT * FROM services WHERE user_id = $1',
+      [req.session.userId]
+    );
+    res.json(result.rows);
+    client.release();
+  } catch (err) {
+    console.error('Error querying services:', err);
+    res.status(500).json({ error: 'Database error', message: err.message });
+  }
+});
+
+app.post('/api/services', isAuthenticated, async (req, res) => {
+  try {
+    const { name, description, duration, price, category, image } = req.body;
+    
+    if (!name || !duration || price === undefined) {
+      return res.status(400).json({ error: 'Name, duration, and price are required' });
+    }
+    
+    const client = await pool.connect();
+    const result = await client.query(
+      `INSERT INTO services 
+        (name, description, duration, price, category, image, user_id, created_at, updated_at)
+      VALUES 
+        ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+      RETURNING *`,
+      [name, description, duration, price, category, image, req.session.userId]
+    );
+    
+    client.release();
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Error creating service:', err);
+    res.status(500).json({ error: 'Database error', message: err.message });
+  }
+});
+
+// File upload endpoint
+app.post('/api/upload', isAuthenticated, upload.single('file'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+  
+  // Return the file path that can be accessed via the /uploads route
+  const filePath = `/uploads/${req.file.filename}`;
+  res.json({ filePath });
+});
+
+// Appointments API
+app.get('/api/appointments', isAuthenticated, async (req, res) => {
+  try {
+    const { start, end } = req.query;
+    let query = 'SELECT * FROM appointments WHERE user_id = $1';
+    const params = [req.session.userId];
+    
+    if (start && end) {
+      query += ' AND start_time >= $2 AND end_time <= $3';
+      params.push(start, end);
+    }
+    
+    const client = await pool.connect();
+    const result = await client.query(query, params);
+    res.json(result.rows);
+    client.release();
+  } catch (err) {
+    console.error('Error querying appointments:', err);
+    res.status(500).json({ error: 'Database error', message: err.message });
+  }
+});
+
+app.post('/api/appointments', isAuthenticated, async (req, res) => {
+  try {
+    const { 
+      customerId, serviceId, startTime, endTime, 
+      status, notes, staffId 
+    } = req.body;
+    
+    if (!customerId || !serviceId || !startTime || !endTime) {
+      return res.status(400).json({ 
+        error: 'Missing required fields',
+        details: 'Customer ID, service ID, start time, and end time are required'
+      });
+    }
+    
+    const client = await pool.connect();
+    const result = await client.query(
+      `INSERT INTO appointments 
+        (customer_id, service_id, start_time, end_time, status, notes, user_id, staff_id, created_at, updated_at)
+      VALUES 
+        ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+      RETURNING *`,
+      [customerId, serviceId, startTime, endTime, status || 'scheduled', notes, req.session.userId, staffId]
+    );
+    
+    client.release();
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Error creating appointment:', err);
+    res.status(500).json({ error: 'Database error', message: err.message });
+  }
+});
+
+// Customers API
+app.get('/api/customers', isAuthenticated, async (req, res) => {
+  try {
+    const client = await pool.connect();
+    const result = await client.query(
+      'SELECT * FROM customers WHERE user_id = $1',
+      [req.session.userId]
+    );
+    res.json(result.rows);
+    client.release();
+  } catch (err) {
+    console.error('Error querying customers:', err);
+    res.status(500).json({ error: 'Database error', message: err.message });
+  }
+});
+
+app.post('/api/customers', isAuthenticated, async (req, res) => {
+  try {
+    const { name, email, phone, address, notes } = req.body;
+    
+    if (!name || !email) {
+      return res.status(400).json({ error: 'Name and email are required' });
+    }
+    
+    const client = await pool.connect();
+    const result = await client.query(
+      `INSERT INTO customers 
+        (name, email, phone, address, notes, user_id, created_at, updated_at)
+      VALUES 
+        ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+      RETURNING *`,
+      [name, email, phone, address, notes, req.session.userId]
+    );
+    
+    client.release();
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Error creating customer:', err);
+    res.status(500).json({ error: 'Database error', message: err.message });
+  }
+});
+
+// Products API
+app.get('/api/products', isAuthenticated, async (req, res) => {
+  try {
+    const client = await pool.connect();
+    const result = await client.query(
+      'SELECT * FROM products WHERE user_id = $1',
+      [req.session.userId]
+    );
+    res.json(result.rows);
+    client.release();
+  } catch (err) {
+    console.error('Error querying products:', err);
+    res.status(500).json({ error: 'Database error', message: err.message });
+  }
+});
+
+app.post('/api/products', isAuthenticated, async (req, res) => {
+  try {
+    const { 
+      name, description, price, category, 
+      image, inventory, sku 
+    } = req.body;
+    
+    if (!name || price === undefined) {
+      return res.status(400).json({ error: 'Name and price are required' });
+    }
+    
+    const client = await pool.connect();
+    const result = await client.query(
+      `INSERT INTO products 
+        (name, description, price, category, image, inventory, sku, user_id, created_at, updated_at)
+      VALUES 
+        ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+      RETURNING *`,
+      [name, description, price, category, image, inventory, sku, req.session.userId]
+    );
+    
+    client.release();
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Error creating product:', err);
+    res.status(500).json({ error: 'Database error', message: err.message });
+  }
+});
+
+// Staff API
+app.get('/api/staff', isAuthenticated, async (req, res) => {
+  try {
+    const client = await pool.connect();
+    
+    // Business owners can see all staff members for their business
+    const result = await client.query(
+      `SELECT id, username, email, role, created_at, updated_at 
+       FROM users 
+       WHERE (business_id = (
+         SELECT id FROM users WHERE id = $1
+       ) OR id = $1) AND role != 'customer'`,
+      [req.session.userId]
+    );
+    
+    res.json(result.rows);
+    client.release();
+  } catch (err) {
+    console.error('Error querying staff:', err);
+    res.status(500).json({ error: 'Database error', message: err.message });
+  }
+});
+
+// Default route for SPA
+app.get('*', (req, res) => {
+  // If API route not found, serve the index.html for SPA routing
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'API endpoint not found' });
+  }
+  
+  const indexPath = path.join(publicDir, 'index.html');
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    // Fallback to a simple HTML page
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>AppointEase</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+            h1 { color: #333; }
+            .container { max-width: 800px; margin: 0 auto; }
+            .status { padding: 20px; background: #f4f4f4; border-radius: 5px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h1>AppointEase</h1>
+            <div class="status">
+              <h2>Server Status</h2>
+              <p>The AppointEase server is running.</p>
+              <p>Environment: ${process.env.NODE_ENV || 'development'}</p>
+              <p>Frontend assets not found. Please build the frontend.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `);
+  }
+});
+
+// Ensure session table and necessary directories exist
+async function ensureDatabase() {
+  try {
+    const client = await pool.connect();
+    
+    // Create session table if it doesn't exist
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS "session" (
+        "sid" varchar NOT NULL COLLATE "default" PRIMARY KEY,
+        "sess" json NOT NULL,
+        "expire" timestamp(6) NOT NULL
+      )
+    `);
+    
+    console.log('Session table check completed');
+    client.release();
+  } catch (err) {
+    console.error('Error checking session table:', err);
+  }
+}
+
+// Start the server
+app.listen(port, '0.0.0.0', async () => {
+  console.log(`AppointEase server listening on port ${port}`);
+  
+  // Test database connection on startup
+  await testDbConnection();
+  
+  // Ensure database tables
+  await ensureDatabase();
+  
+  // Ensure uploads directory exists
+  const uploadsDir = path.join(__dirname, 'uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+    console.log('Created uploads directory');
+  }
+});
+EOF
+
+# Update package.json to include the new dependencies
+cat > package.json << 'EOF'
+{
+  "name": "appointease",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "connect-pg-simple": "^8.0.0",
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "multer": "^1.4.5-lts.1",
+    "pg": "^8.11.0"
+  }
+}
+EOF
+
+# Create the uploads directory
+mkdir -p uploads
+
+# Deploy the updated application
+gcloud run deploy appointease \
+  --source . \
+  --region=southamerica-west1 \
+  --platform=managed \
+  --allow-unauthenticated \
+  --set-env-vars="NODE_ENV=production,SESSION_SECRET=appointease-secret-key" \
+  --update-secrets="DATABASE_URL=database-url:latest"

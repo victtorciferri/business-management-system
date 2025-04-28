@@ -1,0 +1,98 @@
+saasb2c1@cloudshell:~ (appointease-prod-457922)$ # Create a backup of package.json
+cp package.json package.json.original
+
+# Create a simplified package.json that might work better with Cloud Run buildpacks
+cat > package.json << EOF
+{
+  "name": "appointease",
+  "type": "commonjs",
+  "version": "1.0.0",
+  "main": "dist/server/index.js",
+  "scripts": {
+    "start": "node dist/server/index.js",
+    "build": "vite build && npx tsc --project tsconfig.server.json && node esbuild-server.js",
+    "dev": "npm run build && node dist/server/index.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
+EOF
+
+# Create a simple esbuild script to bundle the server
+cat > esbuild-server.js << EOF
+const { build } = require('esbuild');
+
+build({
+  entryPoints: ['server/index.ts'],
+  bundle: true,
+  platform: 'node',
+  format: 'cjs',
+  outdir: 'dist/server',
+  external: ['pg-native', 'express', 'multer', '@neondatabase/serverless'],
+  minify: false,
+  sourcemap: false,
+}).catch(() => process.exit(1));
+EOF
+
+  --update-secrets="DATABASE_URL=database-url:latest"" \
+Service name (saasb2c1):  appointease-prod
+Please specify a region:
+ [1] africa-south1
+ [2] asia-east1
+ [3] asia-east2
+ [4] asia-northeast1
+ [5] asia-northeast2
+ [6] asia-northeast3
+ [7] asia-south1
+ [8] asia-south2
+ [9] asia-southeast1
+ [10] asia-southeast2
+ [11] australia-southeast1
+ [12] australia-southeast2
+ [13] europe-central2
+ [14] europe-north1
+ [15] europe-north2
+ [16] europe-southwest1
+ [17] europe-west1
+ [18] europe-west10
+ [19] europe-west12
+ [20] europe-west2
+ [21] europe-west3
+ [22] europe-west4
+ [23] europe-west6
+ [24] europe-west8
+ [25] europe-west9
+ [26] me-central1
+ [27] me-central2
+ [28] me-west1
+ [29] northamerica-northeast1
+ [30] northamerica-northeast2
+ [31] northamerica-south1
+ [32] southamerica-east1
+ [33] southamerica-west1
+ [34] us-central1
+ [35] us-east1
+ [36] us-east4
+ [37] us-east5
+ [38] us-south1
+ [39] us-west1
+ [40] us-west2
+ [41] us-west3
+ [42] us-west4
+ [43] cancel
+Please enter numeric choice or text value (must exactly match list item):  33
+
+To make this the default region, run `gcloud config set run/region southamerica-west1`.
+
+Building using Dockerfile and deploying container to Cloud Run service [appointease-prod] in project [appointease-prod-457922] region [southamerica-west1]
+\  Building and deploying new service... Uploading sources.                                                                                                                                 
+/  Building and deploying new service... Uploading sources.                                                                                                                                 
+X  Building and deploying new service... Building Container.                                                                                                                                
+  OK Uploading sources...                                                                                                                                                                   
+  -  Building Container... Logs are available at [https://console.cloud.google.com/cloud-build/builds;region=southamerica-west1/4fe2fd7d-3024-422e-bf83-f853ab884916?project=249754346416]. 
+  .  Setting IAM Policy...                                                                                                                                                                  
+Creating temporary archive of 32410 file(s) totalling 1.0 GiB before compression.
+Uploading zipfile of [.] to [gs://run-sources-appointease-prod-457922-southamerica-west1/services/appointease-prod/1745792668.784546-8324f3c15a1447a0967ef30baac564f9.zip]
+Deployment failed                                                                                                                                                                           
+ERROR: (gcloud.run.deploy) Build failed; check build logs for details

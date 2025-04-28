@@ -1,0 +1,55 @@
+saasb2c1@cloudshell:~/business-management-system/simplified-app (appointease-prod-457922)$ # Go to the simplified app directory
+cd ~/business-management-system/simplified-app
+
+# Grant permission directly to the compute service account that we know from the error message
+gcloud secrets add-iam-policy-binding new-database-url \
+  --member="serviceAccount:249754346416-compute@developer.gserviceaccount.com" \
+  --role="roles/secretmanager.secretAccessor"
+
+# Let's verify the permissions
+gcloud secrets get-iam-policy new-database-url
+
+# Now try a simpler approach where we update the database-url secret directly
+# instead of creating a new one
+DB_IP=$(gcloud sql instances describe appointease-db --format='value(ipAddresses[0].ipAddress)')
+echo "Database IP: $DB_IP"
+
+NEW_DB_URL="postgres://appointease:appointease-db-password@${DB_IP}:5432/appointease"
+echo -n "$NEW_DB_URL" | gcloud secrets versions add database-url --data-file=-
+
+# Deploy using the existing database-url secret that already has permissions
+gcloud run deploy appointease \
+  --source . \
+  --region=southamerica-west1 \
+  --platform=managed \
+  --allow-unauthenticated \
+  --set-env-vars="NODE_ENV=production,SESSION_SECRET=appointease-secret-key" \
+  --update-secrets="DATABASE_URL=database-url:latest"
+Updated IAM policy for secret [new-database-url].
+bindings:
+- members:
+  - serviceAccount:249754346416-compute@developer.gserviceaccount.com
+  role: roles/secretmanager.secretAccessor
+etag: BwYzzE70FTA=
+version: 1
+bindings:
+- members:
+  - serviceAccount:249754346416-compute@developer.gserviceaccount.com
+  role: roles/secretmanager.secretAccessor
+etag: BwYzzE70FTA=
+version: 1
+Database IP: 34.176.74.36
+Created version [3] of the secret [database-url].
+Building using Dockerfile and deploying container to Cloud Run service [appointease] in project [appointease-prod-457922] region [southamerica-west1]
+/  Building and deploying... Uploading sources.                                                                                                                                             
+/  Building and deploying... Uploading sources.                                                                                                                                             
+OK Building and deploying... Done.                                                                                                                                                          
+  OK Uploading sources...                                                                                                                                                                   
+  OK Building Container... Logs are available at [https://console.cloud.google.com/cloud-build/builds;region=southamerica-west1/0a1150cb-283d-48e8-b9b3-423f4f6df25b?project=249754346416]. 
+  OK Creating Revision...                                                                                                                                                                   
+  OK Routing traffic...                                                                                                                                                                     
+  OK Setting IAM Policy...                                                                                                                                                                  
+Done.                                                                                                                                                                                       
+Service [appointease] revision [appointease-00047-4mx] has been deployed and is serving 100 percent of traffic.
+Service URL: https://appointease-249754346416.southamerica-west1.run.app
+saasb2c1@cloudshell:~/business-management-system/simplified-app (appointease-prod-457922)$ 

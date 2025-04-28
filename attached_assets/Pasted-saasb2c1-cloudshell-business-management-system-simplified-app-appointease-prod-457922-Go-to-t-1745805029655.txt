@@ -1,0 +1,76 @@
+saasb2c1@cloudshell:~/business-management-system/simplified-app (appointease-prod-457922)$ # Go to the simplified app directory
+cd ~/business-management-system/simplified-app
+
+# Create a direct migration script that uses the known database URLs
+cat > direct-migrate.js << 'EOF'
+const { Pool } = require('pg');
+
+// Source (Neon) database connection string
+const SOURCE_DB_URL = 'postgresql://neondb_owner:npg_wrbc48eRdZmf@ep-divine-field-a42drrxe.us-east-1.aws.neon.tech/neondb?sslmode=require';
+
+async function migrateData() {
+  // Get the target database URL from environment variable
+  const targetDbUrl = process.env.DATABASE_URL;
+  if (!targetDbUrl) {
+    console.error('ERROR: Target database URL (DATABASE_URL) not found in environment variables');
+    process.exit(1);
+  }
+  
+  console.log('Source database: Neon PostgreSQL');
+  console.log('Target database: Google Cloud SQL');
+  
+  // Create database pool connections
+  const sourcePool = new Pool({
+    connectionString: SOURCE_DB_URL,
+    ssl: { rejectUnauthorized: false }
+  });
+  
+  const targetPool = new Pool({
+    connectionString: targetDbUrl,
+    ssl: { rejectUnauthorized: false }
+  });
+  
+  try {
+    // Test connections
+    console.log('Testing source database connection...');
+    try {
+      const sourceClient = await sourcePool.connect();
+  --update-secrets="DATABASE_URL=database-url:latest"appointease-secret-key" \r.business_name}, Slug: ${user.business_slug}`);
+[1]+  Done                    ./cloud_sql_proxy -instances=${PROJECT_ID}:southamerica-west1:${INSTANCE_NAME}=tcp:5432
+
+up to date, audited 97 packages in 707ms
+
+14 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+Source database: Neon PostgreSQL
+Target database: Google Cloud SQL
+Testing source database connection...
+Source database connected! Server time: 2025-04-28T01:43:28.254Z
+Testing target database connection...
+❌ Migration error: Target database connection failed: connect ETIMEDOUT 34.176.74.36:5432
+Checking for business slugs in users table...
+Error checking database: Error: connect ETIMEDOUT 34.176.74.36:5432
+    at /home/saasb2c1/business-management-system/simplified-app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async testDatabase (/home/saasb2c1/business-management-system/simplified-app/update-app.js:15:20) {
+  errno: -110,
+  code: 'ETIMEDOUT',
+  syscall: 'connect',
+  address: '34.176.74.36',
+  port: 5432
+}
+Building using Dockerfile and deploying container to Cloud Run service [appointease] in project [appointease-prod-457922] region [southamerica-west1]
+-  Building and deploying... Uploading sources.                                                                                                                                             
+\  Building and deploying... Uploading sources.                                                                                                                                             
+OK Building and deploying... Done.                                                                                                                                                          
+  OK Uploading sources...                                                                                                                                                                   
+  OK Building Container... Logs are available at [https://console.cloud.google.com/cloud-build/builds;region=southamerica-west1/750fbc90-da70-4c3c-889e-e952de43c59f?project=249754346416]. 
+  OK Creating Revision...                                                                                                                                                                   
+  OK Routing traffic...                                                                                                                                                                     
+  OK Setting IAM Policy...                                                                                                                                                                  
+Done.                                                                                                                                                                                       
+Service [appointease] revision [appointease-00050-dls] has been deployed and is serving 100 percent of traffic.
+Service URL: https://appointease-249754346416.southamerica-west1.run.app
+saasb2c1@cloudshell:~/business-management-system/simplified-app (appointease-prod-457922)$ 

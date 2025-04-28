@@ -1,0 +1,55 @@
+saasb2c1@cloudshell:~/appointease-deploy (appointease-prod-457922)$ # Go to the business-management-system directory
+cd ~/business-management-system
+
+# Create the necessary files for deployment
+# 1. Create a start.sh script for the Cloud SQL Auth Proxy
+cat > start.sh << 'EOF'
+#!/bin/bash
+echo "Starting Cloud SQL Auth Proxy..."
+cloud_sql_proxy -instances=$CLOUD_SQL_CONNECTION_NAME=tcp:5432 &
+echo "Waiting for proxy to initialize..."
+sleep 10
+echo "Starting AppointEase..."
+node server/index.js
+EOF
+chmod +x start.sh
+
+# 2. Create a Dockerfile
+cat > Dockerfile << 'EOF'
+FROM node:20-slim
+
+# Install the Cloud SQL Auth Proxy
+RUN apt-get update && apt-get install -y wget
+RUN wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O /usr/local/bin/cloud_sql_proxy
+RUN chmod +x /usr/local/bin/cloud_sql_proxy
+
+WORKDIR /app
+
+# Copy package files and install dependencies
+COPY package*.json ./
+RUN npm install
+
+# Copy the entire application
+COPY . .
+
+# Make the start script executable
+RUN chmod +x start.sh
+
+  --add-cloudsql-instances=${INSTANCE_CONNECTION_NAME}ppointease-secret-key,DATABASE_URL=postgresql://postgres:AppointEase123!@localhost:5432/postgres,CLOUD_SQL_CONNECTION_NAME=${INSTANCE_C
+Your active configuration is: [cloudshell-643]
+-bash: !@localhost: event not found
+Building using Dockerfile and deploying container to Cloud Run service [appointease] in project [appointease-prod-457922] region [southamerica-west1]
+-  Building and deploying... Uploading sources.                                                                                                                                             
+-  Building and deploying... Uploading sources.                                                                                                                                             
+X  Building and deploying... Building Container.                                                                                                                                            
+  OK Uploading sources...                                                                                                                                                                   
+  OK Building Container... Logs are available at [https://console.cloud.google.com/cloud-build/builds;region=southamerica-west1/af1fecb3-8b06-448a-854e-b279f0bb9cd9?project=249754346416]. 
+  -  Creating Revision...                                                                                                                                                                   
+Creating temporary archive of 371 file(s) totalling 35.0 MiB before compression.
+  OK Setting IAM Policy...                                                                                                                                                                  
+Deployment failed                                                                                                                                                                           
+ERROR: (gcloud.run.deploy) Revision 'appointease-00073-jrr' is not ready and cannot serve traffic. The user-provided container failed to start and listen on the port defined provided by the PORT=8080 environment variable within the allocated timeout. This can happen when the container port is misconfigured or if the timeout is too short. The health check timeout can be extended. Logs for this revision might contain more information.
+
+Logs URL: https://console.cloud.google.com/logs/viewer?project=appointease-prod-457922&resource=cloud_run_revision/service_name/appointease/revision_name/appointease-00073-jrr&advancedFilter=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22appointease%22%0Aresource.labels.revision_name%3D%22appointease-00073-jrr%22 
+For more troubleshooting guidance, see https://cloud.google.com/run/docs/troubleshooting#container-failed-to-start
+saasb2c1@cloudshell:~/business-management-system (appointease-prod-457922)$ 

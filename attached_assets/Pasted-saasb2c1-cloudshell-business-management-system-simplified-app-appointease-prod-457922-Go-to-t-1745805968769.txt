@@ -1,0 +1,184 @@
+saasb2c1@cloudshell:~/business-management-system/simplified-app (appointease-prod-457922)$ # Go to the simplified app directory
+cd ~/business-management-system/simplified-app
+
+# Reset the postgres user password to something we know
+gcloud sql users set-password postgres \
+  --instance=appointease-db \
+  --password=AppointEase123!
+
+# Create an updated migration script with the new password
+cat > migrate-neon-to-cloudsql.js << 'EOF'
+const { Pool } = require('pg');
+
+// Source (Neon) database connection string
+const SOURCE_DB_URL = 'postgresql://neondb_owner:npg_wrbc48eRdZmf@ep-divine-field-a42drrxe.us-east-1.aws.neon.tech/neondb?sslmode=require';
+
+// Target (Local Cloud SQL) database connection - with updated password
+const TARGET_DB_URL = 'postgresql://postgres:AppointEase123!@localhost/postgres';
+
+async function migrateData() {
+  console.log('Starting migration from Neon to Cloud SQL...');
+  console.log('Source database: Neon PostgreSQL');
+  console.log('Target database: Google Cloud SQL (via localhost proxy)');
+  
+  // Create database pool connections
+  const sourcePool = new Pool({
+    connectionString: SOURCE_DB_URL,
+    ssl: { rejectUnauthorized: false }
+  });
+  
+  const targetPool = new Pool({
+    connectionString: TARGET_DB_URL
+  });
+  
+  try {
+    // Test connections
+    console.log('\nTesting source database connection...');
+    try {
+  --add-cloudsql-instances=${INSTANCE_CONNECTION_NAME}\pointease-secret-key,CLOUD_SQL_CONNECTION_NAME=${INSTANCE_CONNECTION_NAME}" \
+Updating Cloud SQL user...done.                                                                                                                                                             
+Your active configuration is: [cloudshell-14847]
+[1] 3532
+2025/04/28 02:02:30 This is the Cloud SQL Proxy v1. It is no longer receiving active feature development. For the latest features and improvements, migrate to the v2 version of the Cloud SQL Proxy. For details, see: https://github.com/GoogleCloudPlatform/cloud-sql-proxy/blob/main/migration-guide.md
+2025/04/28 02:02:30 current FDs rlimit set to 1048575, wanted limit is 8500. Nothing to do here.
+2025/04/28 02:02:33 Listening on 127.0.0.1:5432 for appointease-prod-457922:southamerica-west1:appointease-db
+2025/04/28 02:02:33 Ready for new connections
+2025/04/28 02:02:33 Generated RSA key in 46.67627ms
+Starting migration from Neon to Cloud SQL...
+Source database: Neon PostgreSQL
+Target database: Google Cloud SQL (via localhost proxy)
+
+Testing source database connection...
+✅ Source database connected! Server time: 2025-04-28T02:02:38.149Z
+
+Testing target database connection...
+2025/04/28 02:02:38 New connection for "appointease-prod-457922:southamerica-west1:appointease-db"
+2025/04/28 02:02:38 refreshing ephemeral certificate for instance appointease-prod-457922:southamerica-west1:appointease-db
+2025/04/28 02:02:40 Scheduling refresh of ephemeral certificate in 54m59s
+✅ Target database connected! Server time: 2025-04-28T02:02:40.850Z
+
+Tables found in source database: customers, payments, appointments, ssl_domains, product_variants, products, carts, services, cart_items, staff_availability, customer_access_tokens, session, users, themes
+
+====== Processing table: customers ======
+Creating table customers in target database...
+Table customers created successfully
+Copying data for table customers...
+Found 6 rows in table customers
+Inserted 6 / 6 rows...
+Updated sequence customers_id_seq to next value: 7
+Successfully inserted 6 rows into customers
+
+====== Processing table: payments ======
+Creating table payments in target database...
+Table payments created successfully
+Copying data for table payments...
+No data found in table payments
+
+====== Processing table: appointments ======
+Creating table appointments in target database...
+Table appointments created successfully
+Copying data for table appointments...
+Found 109 rows in table appointments
+Inserted 50 / 109 rows...
+Inserted 100 / 109 rows...
+Inserted 109 / 109 rows...
+Updated sequence appointments_id_seq to next value: 110
+Successfully inserted 109 rows into appointments
+
+====== Processing table: ssl_domains ======
+Creating table ssl_domains in target database...
+Table ssl_domains created successfully
+Copying data for table ssl_domains...
+No data found in table ssl_domains
+
+====== Processing table: product_variants ======
+Creating table product_variants in target database...
+Table product_variants created successfully
+Copying data for table product_variants...
+No data found in table product_variants
+
+====== Processing table: products ======
+Creating table products in target database...
+Table products created successfully
+Copying data for table products...
+Found 2 rows in table products
+Inserted 2 / 2 rows...
+Updated sequence products_id_seq to next value: 3
+Successfully inserted 2 rows into products
+
+====== Processing table: carts ======
+Creating table carts in target database...
+Table carts created successfully
+Copying data for table carts...
+No data found in table carts
+
+====== Processing table: services ======
+Creating table services in target database...
+Table services created successfully
+Copying data for table services...
+Found 11 rows in table services
+Inserted 11 / 11 rows...
+Updated sequence services_id_seq to next value: 12
+Successfully inserted 11 rows into services
+
+====== Processing table: cart_items ======
+Creating table cart_items in target database...
+Table cart_items created successfully
+Copying data for table cart_items...
+No data found in table cart_items
+
+====== Processing table: staff_availability ======
+Creating table staff_availability in target database...
+Table staff_availability created successfully
+Copying data for table staff_availability...
+Found 9 rows in table staff_availability
+Inserted 9 / 9 rows...
+Updated sequence staff_availability_id_seq to next value: 10
+Successfully inserted 9 rows into staff_availability
+
+====== Processing table: customer_access_tokens ======
+Creating table customer_access_tokens in target database...
+Table customer_access_tokens created successfully
+Copying data for table customer_access_tokens...
+Found 6 rows in table customer_access_tokens
+Inserted 6 / 6 rows...
+Updated sequence customer_access_tokens_id_seq to next value: 7
+Successfully inserted 6 rows into customer_access_tokens
+Skipping session table
+
+====== Processing table: users ======
+Creating table users in target database...
+Table users created successfully
+Copying data for table users...
+Found 9 rows in table users
+Inserted 9 / 9 rows...
+Updated sequence users_id_seq to next value: 10
+Successfully inserted 9 rows into users
+
+====== Processing table: themes ======
+Creating table themes in target database...
+Table themes created successfully
+Copying data for table themes...
+Found 25 rows in table themes
+Error inserting row in themes: invalid input syntax for type json
+Transaction rolled back for table themes: invalid input syntax for type json
+
+✅ Data migration completed successfully!
+2025/04/28 02:03:07 Client closed local connection on 127.0.0.1:5432
+2025/04/28 02:03:07 Received TERM signal. Waiting up to 0s before terminating.
+[1]+  Done                    ./cloud_sql_proxy -instances=${INSTANCE_CONNECTION_NAME}=tcp:5432
+-bash: !@localhost/postgres: event not found
+Created version [5] of the secret [database-url].
+Building using Dockerfile and deploying container to Cloud Run service [appointease] in project [appointease-prod-457922] region [southamerica-west1]
+|  Building and deploying... Uploading sources.                                                                                                                                             
+-  Building and deploying... Uploading sources.                                                                                                                                             
+OK Building and deploying... Done.                                                                                                                                                          
+  OK Uploading sources...                                                                                                                                                                   
+  OK Building Container... Logs are available at [https://console.cloud.google.com/cloud-build/builds;region=southamerica-west1/06deb384-d7d0-4e3e-9c14-7145832c0542?project=249754346416]. 
+  OK Creating Revision...                                                                                                                                                                   
+  OK Routing traffic...                                                                                                                                                                     
+  OK Setting IAM Policy...                                                                                                                                                                  
+Done.                                                                                                                                                                                       
+Service [appointease] revision [appointease-00054-s27] has been deployed and is serving 100 percent of traffic.
+Service URL: https://appointease-249754346416.southamerica-west1.run.app
+saasb2c1@cloudshell:~/business-management-system/simplified-app (appointease-prod-457922)$ 

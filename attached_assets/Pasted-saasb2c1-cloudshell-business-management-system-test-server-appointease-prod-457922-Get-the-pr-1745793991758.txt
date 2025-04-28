@@ -1,0 +1,37 @@
+saasb2c1@cloudshell:~/business-management-system/test-server (appointease-prod-457922)$ # Get the project number
+export PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
+
+# Grant the Cloud Run service account access to the secret
+gcloud secrets add-iam-policy-binding database-url \
+  --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
+  --role="roles/secretmanager.secretAccessor"
+
+# Now let's try the test deployment again
+cd ~/business-management-system/test-server
+gcloud run deploy appointease-test \
+  --source . \
+  --region=$REGION \
+  --platform=managed \
+  --allow-unauthenticated \
+  --set-env-vars="NODE_ENV=production" \
+  --update-secrets="DATABASE_URL=database-url:latest"
+Updated IAM policy for secret [database-url].
+bindings:
+- members:
+  - serviceAccount:249754346416-compute@developer.gserviceaccount.com
+  role: roles/secretmanager.secretAccessor
+etag: BwYzyk-SOqI=
+version: 1
+Building using Dockerfile and deploying container to Cloud Run service [appointease-test] in project [appointease-prod-457922] region [southamerica-west1]
+-  Building and deploying... Uploading sources.                                                                                                                                             
+  -  Uploading sources...                                                                                                                                                                   
+OK Building and deploying... Done.                                                                                                                                                          
+  OK Uploading sources...                                                                                                                                                                   
+  OK Building Container... Logs are available at [https://console.cloud.google.com/cloud-build/builds;region=southamerica-west1/d84e6bd7-068a-4fdc-9920-f6b56deafd96?project=249754346416]. 
+  OK Creating Revision...                                                                                                                                                                   
+  OK Routing traffic...                                                                                                                                                                     
+  OK Setting IAM Policy...                                                                                                                                                                  
+Done.                                                                                                                                                                                       
+Service [appointease-test] revision [appointease-test-00002-856] has been deployed and is serving 100 percent of traffic.
+Service URL: https://appointease-test-249754346416.southamerica-west1.run.app
+saasb2c1@cloudshell:~/business-management-system/test-server (appointease-prod-457922)$ 

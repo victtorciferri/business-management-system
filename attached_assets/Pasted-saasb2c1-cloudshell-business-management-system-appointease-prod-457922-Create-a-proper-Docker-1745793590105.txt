@@ -1,0 +1,50 @@
+saasb2c1@cloudshell:~/business-management-system (appointease-prod-457922)$ # Create a proper Dockerfile for Cloud Run
+cat > Dockerfile << 'EOF'
+# Build stage
+FROM node:20 AS builder
+
+WORKDIR /app
+
+# Copy package files for installation
+COPY package*.json ./
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# Build the application
+RUN npm run build
+
+# Runtime stage
+FROM node:20-slim
+
+WORKDIR /app
+
+# Copy package files and install production dependencies
+COPY package*.json ./
+RUN npm ci --only=production
+
+# Copy built files from builder stage
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/uploads ./uploads
+COPY --from=builder /app/public ./public
+
+# Create uploads directory if it doesn't exist
+RUN mkdir -p uploads
+
+# Set environment variables
+ENV NODE_ENV=production
+  --update-secrets="DATABASE_URL=database-url:latest"
+Your active configuration is: [cloudshell-3401]
+Building using Dockerfile and deploying container to Cloud Run service [appointease] in project [appointease-prod-457922] region [southamerica-west1]
+|  Building and deploying... Uploading sources.                                                                                                                                             
+|  Building and deploying... Uploading sources.                                                                                                                                             
+X  Building and deploying... Building Container.                                                                                                                                            
+  OK Uploading sources...                                                                                                                                                                   
+  -  Building Container... Logs are available at [https://console.cloud.google.com/cloud-build/builds;region=southamerica-west1/245883a9-bd4d-405f-ae92-69fe63343a55?project=249754346416]. 
+  .  Setting IAM Policy...                                                                                                                                                                  
+Creating temporary archive of 350 file(s) totalling 10.1 MiB before compression.
+Uploading zipfile of [.] to [gs://run-sources-appointease-prod-457922-southamerica-west1/services/appointease/1745793480.977067-e853f415e8a84a8692a0f9c1a6c674ca.zip]
+Deployment failed                                                                                                                                                                           
+ERROR: (gcloud.run.deploy) Build failed; check build logs for details
+saasb2c1@cloudshell:~/business-management-system (appointease-prod-457922)$ 

@@ -1,0 +1,53 @@
+saasb2c1@cloudshell:~/business-management-system/simplified-app (appointease-prod-457922)$ # Go to the simplified app directory
+cd ~/business-management-system/simplified-app
+
+# First, let's update our Dockerfile to properly handle the Cloud SQL Auth Proxy
+cat > Dockerfile << 'EOF'
+FROM node:20-slim
+
+# Install the Cloud SQL Auth Proxy
+RUN apt-get update && apt-get install -y wget ca-certificates
+RUN wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O /usr/local/bin/cloud_sql_proxy
+RUN chmod +x /usr/local/bin/cloud_sql_proxy
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+
+# Create start script that waits for proxy to be ready
+RUN echo '#!/bin/bash \n\
+if [ -n "$CLOUD_SQL_CONNECTION_NAME" ]; then \n\
+  echo "Starting Cloud SQL Proxy..." \n\
+  /usr/local/bin/cloud_sql_proxy -instances=$CLOUD_SQL_CONNECTION_NAME=tcp:5432 & \n\
+  PROXY_PID=$! \n\
+  echo "Waiting for proxy to start..." \n\
+  for i in {1..30}; do \n\
+    if nc -z localhost 5432; then \n\
+      echo "Cloud SQL Proxy is ready!" \n\
+      break \n\
+    fi \n\
+    echo "Waiting for Cloud SQL Proxy to be ready... ($i/30)" \n\
+    sleep 1 \n\
+  done \n\
+  if ! nc -z localhost 5432; then \n\
+    echo "Cloud SQL Proxy failed to start in time" \n\
+    exit 1 \n\
+  fi \n\
+fi \n\
+  --add-cloudsql-instances=${INSTANCE_CONNECTION_NAME}\pointease-secret-key,CLOUD_SQL_CONNECTION_NAME=${INSTANCE_CONNECTION_NAME}" \
+-bash: !@localhost: event not found
+Your active configuration is: [cloudshell-14847]
+Building using Dockerfile and deploying container to Cloud Run service [appointease] in project [appointease-prod-457922] region [southamerica-west1]
+|  Building and deploying... Uploading sources.                                                                                                                                             
+/  Building and deploying... Uploading sources.                                                                                                                                             
+OK Building and deploying... Done.                                                                                                                                                          
+  OK Uploading sources...                                                                                                                                                                   
+  OK Building Container... Logs are available at [https://console.cloud.google.com/cloud-build/builds;region=southamerica-west1/a4be9118-a0b4-4743-a1f4-1fc2630a397f?project=249754346416]. 
+  OK Creating Revision...                                                                                                                                                                   
+  OK Routing traffic...                                                                                                                                                                     
+  OK Setting IAM Policy...                                                                                                                                                                  
+Done.                                                                                                                                                                                       
+Service [appointease] revision [appointease-00056-2z8] has been deployed and is serving 100 percent of traffic.
+Service URL: https://appointease-249754346416.southamerica-west1.run.app
+saasb2c1@cloudshell:~/business-management-system/simplified-app (appointease-prod-457922)$ 

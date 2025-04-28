@@ -1,0 +1,54 @@
+saasb2c1@cloudshell:~/business-management-system (appointease-prod-457922)$ # Go to the simplified app directory
+cd ~/business-management-system/simplified-app
+
+# Copy the built assets from your main project
+# First, check if they exist
+ls -la ~/business-management-system/dist/public
+
+# Create the directory structure and copy the assets
+mkdir -p dist/public
+cp -r ~/business-management-system/dist/public/* dist/public/ || echo "No assets found to copy"
+
+# Now update the server code to handle API routes
+cat > index.js << 'EOF'
+const express = require('express');
+const fs = require('fs');
+const path = require('path');
+const { Pool } = require('pg');
+const app = express();
+const port = process.env.PORT || 8080;
+
+// Database connection
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL
+});
+
+// Test database connection
+async function testDbConnection() {
+  try {
+    const client = await pool.connect();
+    const result = await client.query('SELECT NOW()');
+    console.log('Database connection successful:', result.rows[0]);
+    client.release();
+    return true;
+  } catch (err) {
+    console.error('Database connection error:', err);
+    return false;
+  }
+  --update-secrets="DATABASE_URL=database-url:latest"{port}`);rontend.</p>px; }.6; }
+total 16
+drwxrwxr-x 3 saasb2c1 saasb2c1 4096 Apr 28 00:06 .
+drwxrwxr-x 3 saasb2c1 saasb2c1 4096 Apr 27 14:15 ..
+drwxrwxr-x 2 saasb2c1 saasb2c1 4096 Apr 28 00:06 assets
+-rw-rw-r-- 1 saasb2c1 saasb2c1 2636 Apr 28 00:06 index.html
+Building using Dockerfile and deploying container to Cloud Run service [appointease] in project [appointease-prod-457922] region [southamerica-west1]
+-  Building and deploying... Uploading sources.                                                                                                                                             
+|  Building and deploying... Uploading sources.                                                                                                                                             
+X  Building and deploying... Building Container.                                                                                                                                            
+  OK Uploading sources...                                                                                                                                                                   
+  -  Building Container... Logs are available at [https://console.cloud.google.com/cloud-build/builds;region=southamerica-west1/b9ec934b-66ae-454d-95cb-291c7eb99300?project=249754346416]. 
+  .  Setting IAM Policy...                                                                                                                                                                  
+Creating temporary archive of 856 file(s) totalling 29.5 MiB before compression.
+Uploading zipfile of [.] to [gs://run-sources-appointease-prod-457922-southamerica-west1/services/appointease/1745851817.843731-60cf0484fec64535a4a50cf5c755fd42.zip]
+Deployment failed                                                                                                                                                                           
+ERROR: (gcloud.run.deploy) Build failed; check build logs for details

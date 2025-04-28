@@ -1,0 +1,222 @@
+saasb2c1@cloudshell:~/db-migration (appointease-prod-457922)$ # Make sure we're in the db-migration directory
+cd ~/db-migration
+
+# Ensure we still have the SOURCE_DB_URL set
+export SOURCE_DB_URL="postgresql://neondb_owner:npg_wrbc48eRdZmf@ep-divine-field-a42drrxe.us-east-1.aws.neon.tech/neondb?sslmode=require"
+
+# Run the fix script
+./fix-mismatches.sh
+Your active configuration is: [cloudshell-643]
+Starting Cloud SQL Auth Proxy...
+Waiting for proxy to initialize...
+2025/04/28 15:31:06 This is the Cloud SQL Proxy v1. It is no longer receiving active feature development. For the latest features and improvements, migrate to the v2 version of the Cloud SQL Proxy. For details, see: https://github.com/GoogleCloudPlatform/cloud-sql-proxy/blob/main/migration-guide.md
+2025/04/28 15:31:06 current FDs rlimit set to 1048575, wanted limit is 8500. Nothing to do here.
+2025/04/28 15:31:10 Listening on 127.0.0.1:5432 for appointease-prod-457922:southamerica-west1:appointease-db
+2025/04/28 15:31:10 Ready for new connections
+2025/04/28 15:31:10 Generated RSA key in 586.516685ms
+Starting mismatch fixer...
+================================================================================
+ DATABASE MISMATCH FIXER
+================================================================================
+
+Examining mismatches in detail...
+
+Table: appointments
+Source records: 109
+2025/04/28 15:31:19 New connection for "appointease-prod-457922:southamerica-west1:appointease-db"
+2025/04/28 15:31:19 refreshing ephemeral certificate for instance appointease-prod-457922:southamerica-west1:appointease-db
+2025/04/28 15:31:22 Scheduling refresh of ephemeral certificate in 54m58s
+Target records: 109
+
+Table: customer_access_tokens
+Source records: 6
+Target records: 7
+Primary key: id
+Extra records in target: 1
+Extra IDs: [ 1 ]
+
+Would you like to delete the 1 extra records in the target database? (y/n)
+Enter y or n: y
+Deleted record with id=1 from customer_access_tokens
+Successfully deleted 1 extra records from customer_access_tokens
+
+Table: services
+Source records: 11
+Target records: 11
+
+Table: staff_availability
+Source records: 9
+Target records: 9
+
+Table: users
+Source records: 9
+Target records: 9
+
+Table: themes
+Source records: 25
+Target records: 0
+
+Attempting to fix themes table...
+Themes table exists in target but there was an error. Truncating and re-populating...
+Found 25 themes in source
+Error fixing themes table: error: invalid input syntax for type json
+    at /home/saasb2c1/db-migration/node_modules/pg/lib/client.js:545:17
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fixThemesTable (/home/saasb2c1/db-migration/fix-mismatches.js:197:9)
+    at async fixMismatches (/home/saasb2c1/db-migration/fix-mismatches.js:50:9) {
+  length: 201,
+  severity: 'ERROR',
+  code: '22P02',
+  detail: 'Expected ":", but found ",".',
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: `JSON data, line 1: {"modern",...\nunnamed portal parameter $26 = '...'`,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'jsonfuncs.c',
+  line: '650',
+  routine: 'json_errsave_error'
+}
+
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+ VERIFICATION AFTER FIXES
+================================================================================
+2025/04/28 15:31:34 New connection for "appointease-prod-457922:southamerica-west1:appointease-db"
+✓ appointments: Source=109, Target=109 - MATCH
+✓ customer_access_tokens: Source=6, Target=6 - MATCH
+✓ services: Source=11, Target=11 - MATCH
+✓ staff_availability: Source=9, Target=9 - MATCH
+✓ users: Source=9, Target=9 - MATCH
+✗ themes: Source=25, Target=0 - MISMATCH
+2025/04/28 15:31:45 Client closed local connection on 127.0.0.1:5432
+node:events:496
+      throw er; // Unhandled 'error' event
+      ^
+
+error: terminating connection due to administrator command
+    at Parser.parseErrorMessage (/home/saasb2c1/db-migration/node_modules/pg-protocol/dist/parser.js:285:98)
+    at Parser.handlePacket (/home/saasb2c1/db-migration/node_modules/pg-protocol/dist/parser.js:122:29)
+    at Parser.parse (/home/saasb2c1/db-migration/node_modules/pg-protocol/dist/parser.js:35:38)
+    at TLSSocket.<anonymous> (/home/saasb2c1/db-migration/node_modules/pg-protocol/dist/index.js:11:42)
+    at TLSSocket.emit (node:events:518:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at TLSWrap.onStreamRead (node:internal/stream_base_commons:189:23)
+Emitted 'error' event on Client instance at:
+    at Client._handleErrorEvent (/home/saasb2c1/db-migration/node_modules/pg/lib/client.js:350:10)
+    at Client._handleErrorMessage (/home/saasb2c1/db-migration/node_modules/pg/lib/client.js:361:12)
+    at Connection.emit (node:events:518:28)
+    at /home/saasb2c1/db-migration/node_modules/pg/lib/connection.js:116:12
+    at Parser.parse (/home/saasb2c1/db-migration/node_modules/pg-protocol/dist/parser.js:36:17)
+    at TLSSocket.<anonymous> (/home/saasb2c1/db-migration/node_modules/pg-protocol/dist/index.js:11:42)
+    [... lines matching original stack trace ...]
+    at Readable.push (node:internal/streams/readable:392:5) {
+  length: 116,
+  severity: 'FATAL',
+  code: '57P01',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'postgres.c',
+  line: '3289',
+  routine: 'ProcessInterrupts'
+}
+
+Node.js v22.14.0
+2025/04/28 15:32:49 Client closed local connection on 127.0.0.1:5432
+Process completed. Stopping Cloud SQL Auth Proxy...
+2025/04/28 15:32:49 Received TERM signal. Waiting up to 0s before terminating.
+saasb2c1@cloudshell:~/db-migration (appointease-prod-457922)$ 
