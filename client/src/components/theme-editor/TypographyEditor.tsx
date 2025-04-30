@@ -651,13 +651,13 @@ export function TypographyEditor({
                     key={preset.name}
                     className={`border rounded-md p-4 cursor-pointer ${
                       selectedPreset === preset.name ? 'ring-2 ring-primary' : 'hover:bg-muted/20'
-                    }`}
+                    }`} 
                     onClick={() => applyPreset(preset.name)}
-                  >
+                  > 
                     <h3 className="text-lg font-semibold mb-1" style={{ fontFamily: `"${preset.headingFont.name}", ${preset.headingFont.fallbacks.join(", ")}` }}>
                       {preset.name}
                     </h3>
-                    <p className="text-sm text-muted-foreground mb-3" style={{ fontFamily: `"${preset.bodyFont.name}", ${preset.bodyFont.fallbacks.join(", ")}` }}>
+                    <p className="text-sm text-muted-foreground mb-3" style={{ fontFamily: `"${preset.bodyFont.name}", ${preset.bodyFont.fallbacks.join(", ")}`}}>
                       {preset.description}
                     </p>
                     <div className="flex gap-2 text-xs text-muted-foreground">
@@ -694,7 +694,7 @@ export function TypographyEditor({
                     <h3 className="text-lg font-semibold mb-1" 
                       style={{ fontFamily: `"${pair.heading.name}", ${pair.heading.fallbacks.join(", ")}` }}
                     >
-                      {pair.heading.name}
+                      {pair.heading.name} 
                     </h3>
                     <p className="text-sm mb-3" 
                       style={{ fontFamily: `"${pair.body.name}", ${pair.body.fallbacks.join(", ")}` }}

@@ -51,10 +51,8 @@ async function comparePasswords(supplied: string, stored: string) {
     return timingSafeEqual(hashedBuf, suppliedBuf);
   } 
   // Check if it's a bcrypt hash (starts with $2b$)
-  else if (stored.startsWith('$2b$')) {
-    // For bcrypt passwords created outside the application
-    // Since we don't have bcrypt installed, we'll fall back to direct comparison for admin123
-    return supplied === 'admin123' && stored === '$2b$10$SuDwvxQGPqRLtZ41uZcTWOC.9vVJLRGie9I6fbtx5IQum5Ib0Bqo.';
+  else if (stored.startsWith("$2b$")) {
+    return false;
   } 
   else {
     // For plain text passwords (during development/testing)

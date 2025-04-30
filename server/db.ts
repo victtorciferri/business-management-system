@@ -1,27 +1,25 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
+import { Pool } from 'pg'; // Correct import
+import { drizzle } from 'drizzle-orm/node-postgres'; // Correct import
 import * as schema from "@shared/schema";
 
-// Configure neon to use WebSockets
-neonConfig.webSocketConstructor = ws;
 
-// Verify DATABASE_URL exists
-if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
-  );
+// Ensure DATABASE_URL is set
+const databaseUrl = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/appointease?sslmode=disable';
+if (!databaseUrl) {
+  throw new Error("DATABASE_URL is not defined. ");
 }
 
+console.log("Database URL:", databaseUrl);
+
 // Create a singleton connection pool with optimized settings
-// These settings help prevent connection exhaustion issues
+// These settings help prevent connection exhaustion issues, and use the correct pool
 let _pool: Pool | null = null;
 
 export function getPool(): Pool {
   if (!_pool) {
     console.log("Creating new database connection pool");
-    _pool = new Pool({ 
-      connectionString: process.env.DATABASE_URL,
+      _pool = new Pool({
+        connectionString: databaseUrl,
       max: 5,                // Limit max connections to avoid exhaustion issues
       idleTimeoutMillis: 10000, // Return to pool after 10 seconds idle
       connectionTimeoutMillis: 3000, // Try to connect for 3 seconds
@@ -39,28 +37,9 @@ export const db = drizzle(pool, { schema });
 export function closePool(): Promise<void> {
   if (_pool) {
     console.log('Closing database pool connections...');
-    return _pool.end().then(() => {
+    return _pool.end().then(async () => {
       _pool = null;
     });
   }
   return Promise.resolve();
 }
-
-// Handle cleanup on process termination
-process.on('exit', () => {
-  if (_pool) {
-    console.log('Process exiting - closing database pool');
-    // On exit, we can only do synchronous operations
-    _pool.end().catch(err => console.error('Error closing pool on exit:', err));
-  }
-});
-
-process.on('SIGINT', () => {
-  console.log('Received SIGINT - Closing database pool');
-  closePool().then(() => process.exit(0));
-});
-
-process.on('SIGTERM', () => {
-  console.log('Received SIGTERM - Closing database pool');
-  closePool().then(() => process.exit(0));
-});

@@ -77,6 +77,7 @@ function AppContent() {
   const match = location.match(businessPortalRegex);
 
   // Define reserved paths that should not be treated as business slugs
+    
   const reservedPaths = [
     'api', 'auth', 'admin', 'checkout', 'preview', 'instructions',
     'products', 'services', 'dashboard', 'appointments', 'customers',
@@ -84,7 +85,7 @@ function AppContent() {
     'new-appointment', 'customer-portal', 'error-testing', 'payment',
     'theme-editor', 'theme-showcase', 'theme-marketplace', 'platform-admin',
     'business-profile', 'custom-domain'
-  ];
+    , 'src', '@fs'];
 
   const potentialBusinessSlug = match && 
     !reservedPaths.includes(match[1]) ? match[1] : null;

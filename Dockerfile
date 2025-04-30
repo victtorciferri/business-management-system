@@ -23,6 +23,9 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --omit=dev
 
+# Copy node modules from builder stage
+COPY --from=builder /app/node_modules ./node_modules
+
 # Create uploads directory
 RUN mkdir -p uploads
 
@@ -30,8 +33,8 @@ RUN mkdir -p uploads
 COPY --from=builder /app/dist ./dist
 
 # Set environment variables
+# Set environment variables
 ENV NODE_ENV=production
-ENV PORT=8080
 
 # Expose the port
 EXPOSE 8080

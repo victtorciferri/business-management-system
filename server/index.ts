@@ -1,3 +1,6 @@
+// set the database url if its not already set
+// process.env.DATABASE_URL = process.env.DATABASE_URL || "postgresql://postgres:password@localhost:5432/postgres";
+
 import express, { type Request, Response, NextFunction } from "express";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -8,7 +11,6 @@ import { businessDataInjector } from "./middleware/businessDataInjector";
 import { businessExtractor } from "./middleware/businessExtractor";
 import { setupSSL } from "./ssl";
 import { storage } from "./storage";
-import { setupAuth } from "./auth";
 import { registerThemeRoutes } from "./theme/registerThemeRoutes";
 
 // Get current file path and directory path
@@ -23,8 +25,8 @@ app.use(express.urlencoded({ extended: false }));
 const uploadsDir = path.join(__dirname, '../uploads');
 app.use('/uploads', express.static(uploadsDir));
 
-// Import multer for handling file uploads
-import multer from 'multer';
+import { setupAuth } from "./auth";
+import multer from "multer";
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -238,21 +240,22 @@ app.use((req, res, next) => {
 
 (async () => {
   // Seed the database with initial data
-  await seedDatabase();
+  // Commented to avoid database seeding errors.
+  // await seedDatabase();
   
-  // Set up authentication
-  setupAuth(app);
-  
-  // Add the business extractor middleware before routes
-  app.use(businessExtractor);
-  
-  // Register theme routes for the new theme engine
-  registerThemeRoutes(app);
-  
-  // Let the routes.ts define all routes
-  let server = await registerRoutes(app);
-  
-  // Set up SSL certificate handling with Greenlock
+    // Set up authentication
+    setupAuth(app);
+
+    // Add the business extractor middleware before routes
+    app.use(businessExtractor);
+
+    // Register theme routes for the new theme engine
+    registerThemeRoutes(app);
+
+    // Let the routes.ts define all routes
+    let server = await registerRoutes(app);
+
+    // Set up SSL certificate handling with Greenlock
   try {
     const sslServer = await setupSSL(app, storage);
     console.log("SSL setup completed successfully");
@@ -264,7 +267,7 @@ app.use((req, res, next) => {
   } catch (error) {
     console.error("Error setting up SSL:", error);
     // Continue with HTTP if SSL setup fails
-  }
+}
   
   // No need for businessDataInjector here as it's now handled in routes.ts
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -293,15 +296,15 @@ app.use((req, res, next) => {
   } else {
     serveStatic(app);
   }
+  // Get the port from the environment variable, or default to 9002
+  const port = parseInt(process.env.PORT || "9002", 10);
+  server.listen(
+    {
+      port,
+      host: "0.0.0.0",
+    },
+    () => log(`serving on port ${port}`)
+  );
+  
 
-  // Use the PORT environment variable for Cloud Run compatibility
-  // or default to 5000 for local development
-  const port = process.env.PORT ? parseInt(process.env.PORT) : 5000;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  });
 })();

@@ -1,14 +1,11 @@
 import { IStorage } from './storage';
 import { createServer as createHttpServer } from 'http';
-import path from 'path';
-import fs from 'fs';
 import type { Express } from 'express';
-import { pool, db } from './db';
+import { db } from './db';
 import { sql } from 'drizzle-orm';
 
-// For now, we'll implement a simpler SSL setup that works in the current environment
-// We'll track custom domains in the database for future SSL implementation
 
+// Simplified SSL tracking without database interaction
 // Set up simple SSL tracking
 const sslManager = {
   domains: new Set<string>(),
@@ -30,33 +27,8 @@ const sslManager = {
 
 // Function to initialize SSL with an Express app
 export async function setupSSL(app: Express, storage: IStorage) {
-  // Check if we need to ensure the ssl_domains table exists first
-  try {
-    await db.execute(sql`
-      CREATE TABLE IF NOT EXISTS ssl_domains (
-        id SERIAL PRIMARY KEY,
-        domain VARCHAR(255) NOT NULL UNIQUE,
-        user_id INTEGER NOT NULL REFERENCES users(id),
-        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-        renewed_at TIMESTAMP
-      )
-    `);
-    console.log('SSL domains table created or already exists');
-    
-    // Load existing domains from the database
-    const existingDomains = await db.execute(sql`
-      SELECT domain FROM ssl_domains
-    `);
-    
-    for (const row of existingDomains.rows) {
-      sslManager.add(row.domain);
-    }
-    
-  } catch (error) {
-    console.error('Error creating SSL domains table:', error);
-  }
-  
-  // Middleware to check for custom domains and register them for SSL
+  // Middleware to check for custom domains. It no longer registers domains in a database.
+  // It just checks if a user has the custom domain.
   app.use(async (req, res, next) => {
     try {
       const host = req.hostname;
@@ -75,9 +47,9 @@ export async function setupSSL(app: Express, storage: IStorage) {
       // Check if this is a custom domain
       const user = await storage.getUserByCustomDomain(host);
       
-      // If we found a user with this custom domain, register the domain for SSL
+      // If we found a user with this custom domain, register the domain in the SSL manager.
       if (user) {
-        await registerDomainForSSL(host, user.id);
+        await sslManager.add(host);
       }
     } catch (error) {
       console.error('Error in SSL check middleware:', error);
