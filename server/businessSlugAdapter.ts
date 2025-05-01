@@ -65,7 +65,7 @@ export class BusinessSlugAdapter implements IStorage {
     if (!businessSlug) return;
     
     // Try to extract a number from the end of a slug like "business-123"
-    const match = businessSlug.match(/business-(\\d+)$/);
+    const match = businessSlug.match(/business-(\d+)$/);
     if (match && match[1]) {
       return match[1];
     }
@@ -106,10 +106,22 @@ export class BusinessSlugAdapter implements IStorage {
   }
 
   async getUserByBusinessSlug(slug: string): Promise<User | undefined> {
-    const userId = this.extractBusinessId(slug)
-    if (!userId) return;
-    const user = await this.storage.getUser(parseInt(userId));
-    return this.addBusinessSlugToObject(user, user?.id!);
+    // First try to extract a business ID from the slug (for legacy "business-123" format)
+    const userId = this.extractBusinessId(slug);
+    if (userId) {
+      const user = await this.storage.getUser(parseInt(userId));
+      if (user) {
+        return this.addBusinessSlugToObject(user, user.id);
+      }
+    }
+    
+    // If that fails, try to find a business with the exact slug in the businessSlug column
+    const user = await this.storage.getUserByBusinessSlug(slug);
+    if (user) {
+      return this.addBusinessSlugToObject(user, user.id);
+    }
+    
+    return undefined;
   }
 
 
