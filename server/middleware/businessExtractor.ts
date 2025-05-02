@@ -133,7 +133,7 @@ export async function businessExtractor(req: Request, res: Response, next: NextF
                                   req.path.startsWith('/_next');
     
     if (!isStaticAssetOrDevPath) {
-      console.log(`Business extractor processing: ${req.path}`);
+      console.log(`Business extractor processing: ${req.path} (Host: ${req.headers.host})`);
     }
     
     // First check if the user is authenticated and has a business context
@@ -145,14 +145,17 @@ export async function businessExtractor(req: Request, res: Response, next: NextF
           const cacheKey = req.user.businessSlug;
           if (slugCache[cacheKey] && Date.now() - slugCache[cacheKey].timestamp < CACHE_DURATION) {
             if (slugCache[cacheKey].business) {
+              console.log(`Using cached business data for slug: ${cacheKey}`);
               req.business = slugCache[cacheKey].business;
               req.businessConfig = slugCache[cacheKey].config;
               return next();
             }
           }
           
+          console.log(`Looking up business by slug from authenticated user: ${req.user.businessSlug}`);
           const business = await storage.getUserByBusinessSlug(req.user.businessSlug);
           if (business) {
+            console.log(`Found business by slug: ${req.user.businessSlug}`);
             const { password, ...sanitizedBusiness } = business;
             req.business = sanitizedBusiness as any;
             await attachBusinessConfig(req);
@@ -165,6 +168,8 @@ export async function businessExtractor(req: Request, res: Response, next: NextF
             };
             
             return next();
+          } else {
+            console.log(`Business not found by slug: ${req.user.businessSlug}`);
           }
         } catch (err) {
           console.error('Error fetching authenticated user business:', err);
@@ -175,7 +180,10 @@ export async function businessExtractor(req: Request, res: Response, next: NextF
     // Check if we have a path parameter slug
     if (req.params.slug) {
       if (!RESERVED_PATHS.includes(req.params.slug)) {
+        console.log(`Found slug in params: ${req.params.slug}`);
         businessSlug = req.params.slug;
+      } else {
+        console.log(`Slug ${req.params.slug} is in reserved paths, skipping`);
       }
     }
     // Special handling for /api/business/:slug endpoint
@@ -183,7 +191,10 @@ export async function businessExtractor(req: Request, res: Response, next: NextF
       const pathSegments = req.path.split('/').filter(Boolean);
       if (pathSegments.length >= 3 && pathSegments[0] === 'api' && pathSegments[1] === 'business') {
         if (!RESERVED_PATHS.includes(pathSegments[2])) {
+          console.log(`Found slug in API business path: ${pathSegments[2]}`);
           businessSlug = pathSegments[2];
+        } else {
+          console.log(`API slug ${pathSegments[2]} is in reserved paths, skipping`);
         }
       }
     }
@@ -196,7 +207,10 @@ export async function businessExtractor(req: Request, res: Response, next: NextF
         if (!potentialSlug.startsWith('@') && 
             !potentialSlug.includes('.') && 
             !RESERVED_PATHS.includes(potentialSlug)) {
+          console.log(`Found potential slug in path: ${potentialSlug}`);
           businessSlug = potentialSlug;
+        } else if (RESERVED_PATHS.includes(potentialSlug)) {
+          console.log(`Path segment ${potentialSlug} is in reserved paths, skipping`);
         }
       }
     }
@@ -273,22 +287,28 @@ export async function businessExtractor(req: Request, res: Response, next: NextF
       }
     }
     
-    // If we found a potential business slug, look it up in the database
+    // Now try to find the business by the slug we identified
     if (businessSlug) {
       // Check the cache first
-      if (slugCache[businessSlug] && 
-          Date.now() - slugCache[businessSlug].timestamp < CACHE_DURATION) {
-        
+      if (slugCache[businessSlug] && Date.now() - slugCache[businessSlug].timestamp < CACHE_DURATION) {
+        console.log(`Using cached business data for slug: ${businessSlug}`);
         if (slugCache[businessSlug].business) {
           req.business = slugCache[businessSlug].business;
           req.businessConfig = slugCache[businessSlug].config;
+          if (!isStaticAssetOrDevPath) {
+            console.log(`Setting business from cache: ${req.business.businessName} (ID: ${req.business.id})`);
+          }
+          return next();
         }
-        
+        // Don't proceed with database lookup if we've cached a "not found" result
+        console.log(`Business not found in cache for slug: ${businessSlug}`);
         return next();
       }
       
-      // Not in cache, do the lookup
       try {
+        console.log(`Looking up business data for slug: ${businessSlug}`);
+        
+        // Look up the business by slug
         const business = await storage.getUserByBusinessSlug(businessSlug);
         
         if (business) {
@@ -296,25 +316,27 @@ export async function businessExtractor(req: Request, res: Response, next: NextF
           req.business = sanitizedBusiness as any;
           await attachBusinessConfig(req);
           
-          // Cache the result
+          console.log(`Found business for slug ${businessSlug}: ${business.businessName} (ID: ${business.id})`);
+          
+          // Cache the successful result
           slugCache[businessSlug] = {
-            business: sanitizedBusiness as any,
+            business: req.business,
             timestamp: Date.now(),
             config: req.businessConfig
           };
+          
+          return next();
         } else {
-          // Cache the negative result too
+          console.log(`No business found for slug: ${businessSlug}`);
+          
+          // Cache the "not found" result to avoid repeated lookups
           slugCache[businessSlug] = {
             business: null,
             timestamp: Date.now()
           };
-          
-          if (!isStaticAssetOrDevPath) {
-            console.log(`No business found for slug: ${businessSlug}`);
-          }
         }
-      } catch (err) {
-        console.error(`Error looking up business slug '${businessSlug}':`, err);
+      } catch (error) {
+        console.error(`Error looking up business by slug ${businessSlug}:`, error);
       }
     }
     
