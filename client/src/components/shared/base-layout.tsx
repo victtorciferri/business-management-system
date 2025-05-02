@@ -2,7 +2,7 @@ import { User } from "@shared/schema";
 import { ReactNode, useEffect } from "react";
 import BaseHeader, { NavigationItem } from "./base-header";
 import { useLocation } from "wouter";
-import { useTheme } from "@/contexts/ThemeContext";
+import { ThemeContext, useTheme } from "@/contexts/ThemeContext";
 import { Theme } from '@shared/config';
 
 export interface BaseLayoutProps {
@@ -30,13 +30,12 @@ export default function BaseLayout({
 }: BaseLayoutProps) {
   const [location] = useLocation();
   // Use theme context for styling
-  const { theme, getBackgroundColor, getTextColor, getPrimaryColor, updateTheme, isDarkMode } = useTheme();
+  const { theme, getBackgroundColor, getTextColor, getPrimaryColor, setTheme, isDarkMode } = useTheme();
   
   // Apply business theme configuration if provided
   useEffect(() => {
     if (themeConfig) {
       console.log('Applying theme config in BaseLayout:', themeConfig);
-      updateTheme(themeConfig);
       
       // Manually apply dark mode class for business profile
       if (themeConfig.appearance === 'dark' || 
@@ -50,7 +49,8 @@ export default function BaseLayout({
     } else if (business && business.theme) {
       // If no themeConfig but we have a business with theme, apply that theme
       console.log('Applying business.theme in BaseLayout:', business.theme);
-      updateTheme({
+      setTheme({
+        name: business.theme.name || "Business Theme",
         primaryColor: business.theme.primary || '#4f46e5',
         secondaryColor: business.theme.secondary || '#06b6d4',
         accentColor: business.theme.accent || '#f59e0b',
@@ -59,7 +59,10 @@ export default function BaseLayout({
         fontFamily: business.theme.font || 'Inter, sans-serif',
         borderRadius: typeof business.theme.borderRadius === 'string' ? business.theme.borderRadius : '8px',
         buttonStyle: business.theme.buttonStyle || 'default',
-        cardStyle: business.theme.cardStyle || 'default',
+        cardStyle: business.theme.cardStyle || 'default',        
+        variant: business.theme.variant || "professional",
+        colorPalette: business.theme.colorPalette || [],
+
         appearance: business.theme.appearance || 'system'
       });
       
@@ -73,7 +76,7 @@ export default function BaseLayout({
         document.documentElement.classList.remove('dark');
       }
     }
-  }, [themeConfig, business, updateTheme]);
+  }, [themeConfig, business, setTheme]);
   
   // Log current dark mode state
   useEffect(() => {

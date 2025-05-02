@@ -1,29 +1,47 @@
 import { User } from "@shared/schema";
 import { useLocation } from "wouter";
 import { useContext, useEffect } from "react"; 
+import { ReactNode } from "react";
 import BaseLayout from "@/components/shared/base-layout";
 import { NavigationItem } from "@/components/shared/base-header";
 import { ThemeContext } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { applyTheme } from "@/utils/applyTheme";
 import { 
   HomeIcon, 
   ShoppingBagIcon, 
   CalendarIcon, 
   ClipboardListIcon, 
   InfoIcon,
-  LayoutDashboard
+  LayoutDashboard,
 } from "lucide-react";
 
+// Define a proper Theme type (replace with actual type from shared/config if available)
+type Theme = {
+  // ... other properties
+  name?: string;
+  primary?: string;
+  secondary?: string;
+  accent?: string;
+  text?: string;
+  background?: string;
+  font?: string;
+  borderRadius?: string | number;
+  buttonStyle?: string;
+  cardStyle?: string;
+  appearance?: string;
+  variant?: string;
+  colorPalette?: string[];
+};
+
 interface BusinessLayoutProps {
-  children: React.ReactNode;
+  children: ReactNode;
   business: Omit<User, "password">;
   slug: string;
 }
 
 export default function BusinessLayout({ children, business, slug }: BusinessLayoutProps) {
   const [location] = useLocation();
-  const { theme, updateTheme } = useContext(ThemeContext);
+  const { theme, setTheme } = useContext(ThemeContext);
   const { t } = useLanguage();
   
   // Define business portal navigation items
@@ -100,7 +118,7 @@ export default function BusinessLayout({ children, business, slug }: BusinessLay
         };
         
         // Apply theme
-        updateTheme(themeFromSettings);
+        setTheme(themeFromSettings);
       }
       // Next try to use the theme object if it exists
       else if (business.theme) {
@@ -110,13 +128,15 @@ export default function BusinessLayout({ children, business, slug }: BusinessLay
         const properTheme = {
           name: business.theme.name || "Business Theme",
           primaryColor: business.theme.primaryColor || business.theme.primary || "#4F46E5",
-          secondaryColor: business.theme.secondaryColor || business.theme.secondary || "#9333EA",
-          accentColor: business.theme.accentColor || "#F59E0B",
+          secondaryColor:
+            business.theme.secondaryColor || business.theme.secondary || "#9333EA",
+          accentColor: business.theme.accentColor || business.theme.accent || "#F59E0B",
           backgroundColor: business.theme.backgroundColor || business.theme.background || "#FFFFFF",
           textColor: business.theme.textColor || business.theme.text || "#111827",
           fontFamily: business.theme.fontFamily || business.theme.font || "Inter, system-ui, sans-serif",
-          borderRadius: typeof business.theme.borderRadius === 'number' 
-            ? business.theme.borderRadius 
+          borderRadius:
+            typeof business.theme.borderRadius === "number"
+              ? business.theme.borderRadius
             : 8,
           spacing: typeof business.theme.spacing === 'number'
             ? business.theme.spacing
@@ -128,7 +148,7 @@ export default function BusinessLayout({ children, business, slug }: BusinessLay
           colorPalette: business.theme.colorPalette || []
         };
         
-        updateTheme(properTheme);
+        setTheme(properTheme);
       }
       // Fallback to legacy theme settings in older format
       else if (business.themeSettings) {
@@ -169,10 +189,10 @@ export default function BusinessLayout({ children, business, slug }: BusinessLay
         };
         
         // Apply theme
-        updateTheme(themeFromLegacy);
+        setTheme(themeFromLegacy);
       }
     }
-  }, [business, updateTheme]);
+  }, [business, setTheme]);
 
   return (
     <BaseLayout

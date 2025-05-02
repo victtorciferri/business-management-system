@@ -1,7 +1,5 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useLocation } from 'wouter';
-import { apiRequest } from '@/lib/queryClient';
-import { extractBusinessSlug } from '@/utils/tenant-router';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+
 import { User, Service } from '@shared/schema';
 
 // Define business type without sensitive information
@@ -13,13 +11,8 @@ export interface BusinessContextData {
   // Services offered by the business
   services: Service[];
   // Business configuration
-  config: BusinessConfig;
-  // Loading state
-  isLoading: boolean;
-  // Error state
-  error: Error | null;
-  // Refresh business data
-  refreshBusinessData: () => Promise<void>;
+    config: BusinessConfig;
+
 }
 
 export interface ThemeSettings {
@@ -145,19 +138,15 @@ const BusinessContext = createContext<BusinessContextData>({
   business: null,
   services: [],
   config: defaultConfig,
-  isLoading: false,
-  error: null,
-  refreshBusinessData: async () => {},
 });
 
 export const useBusinessContext = () => useContext(BusinessContext);
 
 export const BusinessProvider: React.FC<{
   children: React.ReactNode,
-  initialBusiness?: Business | null,
-  initialServices?: Service[],
-}> = ({ children, initialBusiness = null, initialServices = [] }) => {
-  const [location] = useLocation();
+  initialBusiness: Business | null,
+  initialServices: Service[],
+}> = ({ children, initialBusiness, initialServices }) => {
   const [business, setBusiness] = useState<Business | null>(initialBusiness);
   const [services, setServices] = useState<Service[]>(initialServices);
   const [config, setConfig] = useState<BusinessConfig>(defaultConfig);
@@ -165,176 +154,57 @@ export const BusinessProvider: React.FC<{
   const [error, setError] = useState<Error | null>(null);
 
   // Extract business slug from location or URL parameters
-  const extractedSlug = extractBusinessSlug(location);
   
-  // Check for business ID or slug in URL parameters (for customer portal)
-  const getBusinessFromUrlParams = () => {
-    if (typeof window === 'undefined') return null;
-    const params = new URLSearchParams(window.location.search);
-    const businessId = params.get('businessId');
-    const businessSlug = params.get('businessSlug');
-    return businessId || businessSlug || null;
-  };
-  
-  const urlParamBusiness = getBusinessFromUrlParams();
-
-  // Fetch business data based on slug or ID
-  const fetchBusinessData = async (slugOrId: string) => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      // Determine if we have an ID (numeric) or a slug
-      const isId = !isNaN(Number(slugOrId));
-      
-      // Check if we're in a customer portal context
-      const isCustomerPortal = window.location.pathname.includes('/customer-portal');
-      
-      // If we have a numeric ID and we're in customer portal, use the direct endpoint
-      // This bypasses middleware and authentication issues
-      const endpoint = isId && isCustomerPortal
-        ? `/direct-business-data/${slugOrId}`
-        : isId 
-          ? `/api/business/id/${slugOrId}` 
-          : `/api/business/${slugOrId}`;
-      
-      console.log(`BusinessContext: Fetching business data from ${endpoint}`);
-      // Fetch business data from API - adding cache-busting parameter to avoid caching
-      const response = await fetch(`${endpoint}?_t=${Date.now()}`);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to load business data: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      
-      if (!data || !data.business) {
-        throw new Error('Failed to load business data: No business returned');
-      }
-      
-      const business = data.business as Business;
-      const services = data.services as Service[] || [];
-      
-      // Update business and services
-      setBusiness(business);
-      setServices(services);
-      
-      // Construct business configuration from business data
-      // Extract theme settings if available or use defaults
-      const themeSettings = business.themeSettings 
-        ? { ...defaultConfig.themeSettings, ...business.themeSettings }
+  useEffect(() => {
+    if(initialBusiness) {
+        setBusiness(initialBusiness);
+        // Construct business configuration from business data
+        // Extract theme settings if available or use defaults
+        const themeSettings = initialBusiness.themeSettings 
+        ? { ...defaultConfig.themeSettings, ...initialBusiness.themeSettings }
         : defaultConfig.themeSettings;
       
-      // Create business config from business data and defaults
-      setConfig({
-        ...defaultConfig,
-        id: business.id,
-        name: business.businessName,
-        slug: business.businessSlug,
-        email: business.email,
-        phone: business.phone,
-        address: business.address || null,
-        city: business.city || null,
-        state: business.state || null,
-        postalCode: business.postalCode || null,
-        country: business.country || null,
-        latitude: business.latitude || null,
-        longitude: business.longitude || null,
-        description: business.description || null,
-        logoUrl: business.logoUrl || null,
-        coverImageUrl: business.coverImageUrl || null,
-        
-        // Use theme settings from business or defaults
-        themeSettings,
-        
-        // Business preferences or defaults
-        showMap: business.showMap !== undefined ? business.showMap : defaultConfig.showMap,
-        showTestimonials: business.showTestimonials !== undefined ? business.showTestimonials : defaultConfig.showTestimonials,
-        showServices: business.showServices !== undefined ? business.showServices : defaultConfig.showServices,
-        showPhone: business.showPhone !== undefined ? business.showPhone : defaultConfig.showPhone,
-        showAddress: business.showAddress !== undefined ? business.showAddress : defaultConfig.showAddress,
-        showEmail: business.showEmail !== undefined ? business.showEmail : defaultConfig.showEmail,
-        
-        // Industry type for template selection
-        industryType: business.industryType || defaultConfig.industryType,
-        
-        // Localization settings
-        locale: business.locale || defaultConfig.locale,
-        timeZone: business.businessTimeZone || defaultConfig.timeZone,
-        currencyCode: business.currencyCode || defaultConfig.currencyCode,
-        currencySymbol: business.currencySymbol || defaultConfig.currencySymbol,
-        
-        // Business operational settings
-        use24HourFormat: business.use24HourFormat !== undefined ? business.use24HourFormat : defaultConfig.use24HourFormat,
-        appointmentBuffer: business.appointmentBuffer || defaultConfig.appointmentBuffer,
-        allowSameTimeSlotForDifferentServices: business.allowSameTimeSlotForDifferentServices !== undefined 
-          ? business.allowSameTimeSlotForDifferentServices 
-          : defaultConfig.allowSameTimeSlotForDifferentServices,
-        cancellationWindowHours: business.cancellationWindowHours || defaultConfig.cancellationWindowHours,
-        
-        // Custom text overrides
-        customTexts: business.customTexts || defaultConfig.customTexts,
-      });
-      
-      // Set business data in window for external scripts
-      if (typeof window !== 'undefined') {
-        (window as any).BUSINESS_DATA = business;
-      }
-    } catch (err) {
-      console.error('Error fetching business data:', err);
-      setError(err instanceof Error ? err : new Error('Failed to load business data'));
-    } finally {
-      setIsLoading(false);
+        // Create business config from business data and defaults
+        setConfig({
+            ...defaultConfig,
+            id: initialBusiness.id,
+            name: initialBusiness.businessName,
+            slug: initialBusiness.businessSlug,
+            email: initialBusiness.email,
+            phone: initialBusiness.phone,
+            address: initialBusiness.address || null,
+            city: initialBusiness.city || null,
+            state: initialBusiness.state || null,
+            postalCode: initialBusiness.postalCode || null,
+            country: initialBusiness.country || null,
+            latitude: initialBusiness.latitude || null,
+            longitude: initialBusiness.longitude || null,
+            description: initialBusiness.description || null,
+            logoUrl: initialBusiness.logoUrl || null,
+            coverImageUrl: initialBusiness.coverImageUrl || null,
+            themeSettings,
+            showMap: initialBusiness.showMap !== undefined ? initialBusiness.showMap : defaultConfig.showMap,
+            showTestimonials: initialBusiness.showTestimonials !== undefined ? initialBusiness.showTestimonials : defaultConfig.showTestimonials,
+            showServices: initialBusiness.showServices !== undefined ? initialBusiness.showServices : defaultConfig.showServices,
+            showPhone: initialBusiness.showPhone !== undefined ? initialBusiness.showPhone : defaultConfig.showPhone,
+            showAddress: initialBusiness.showAddress !== undefined ? initialBusiness.showAddress : defaultConfig.showAddress,
+            showEmail: initialBusiness.showEmail !== undefined ? initialBusiness.showEmail : defaultConfig.showEmail,
+            industryType: initialBusiness.industryType || defaultConfig.industryType,
+            locale: initialBusiness.locale || defaultConfig.locale,
+            timeZone: initialBusiness.businessTimeZone || defaultConfig.timeZone,
+            currencyCode: initialBusiness.currencyCode || defaultConfig.currencyCode,
+            currencySymbol: initialBusiness.currencySymbol || defaultConfig.currencySymbol,
+            use24HourFormat: initialBusiness.use24HourFormat !== undefined ? initialBusiness.use24HourFormat : defaultConfig.use24HourFormat,
+            appointmentBuffer: initialBusiness.appointmentBuffer || defaultConfig.appointmentBuffer,
+            allowSameTimeSlotForDifferentServices: initialBusiness.allowSameTimeSlotForDifferentServices !== undefined 
+            ? initialBusiness.allowSameTimeSlotForDifferentServices 
+            : defaultConfig.allowSameTimeSlotForDifferentServices,
+            cancellationWindowHours: initialBusiness.cancellationWindowHours || defaultConfig.cancellationWindowHours,
+            customTexts: initialBusiness.customTexts || defaultConfig.customTexts,
+        });
     }
-  };
+  },[initialBusiness])
 
-  // Refresh business data
-  const refreshBusinessData = async () => {
-    if (business?.businessSlug) {
-      await fetchBusinessData(business.businessSlug);
-    } else if (extractedSlug) {
-      await fetchBusinessData(extractedSlug);
-    }
-  };
-
-  // Effect to load business data when slug or URL params change
-  useEffect(() => {
-    // Determine which business identifier to use
-    let businessIdentifier = null;
-    
-    if (extractedSlug) {
-      // First priority: Use slug from the URL path
-      businessIdentifier = extractedSlug;
-      console.log(`BusinessContext: Loading business from URL path: ${businessIdentifier}`);
-    } else if (urlParamBusiness) {
-      // Second priority: Use businessId or businessSlug from URL parameters
-      businessIdentifier = urlParamBusiness;
-      console.log(`BusinessContext: Loading business from URL parameter: ${businessIdentifier}`);
-    } else if (initialBusiness) {
-      // Third priority: Use the initial business if provided
-      console.log('BusinessContext: Using initial business data');
-      setBusiness(initialBusiness);
-      return; // Skip API call if we already have the data
-    } else {
-      // Try to get business ID from current URL search params
-      const params = new URLSearchParams(window.location.search);
-      const bizId = params.get('businessId');
-      
-      if (bizId) {
-        businessIdentifier = bizId;
-        console.log(`BusinessContext: Loading business from search parameter businessId: ${businessIdentifier}`);
-      } else {
-        // No business identifier found
-        console.log('BusinessContext: No business identifier found');
-        return;
-      }
-    }
-    
-    // Fetch business data if we have an identifier
-    if (businessIdentifier) {
-      fetchBusinessData(businessIdentifier);
-    }
-  }, [extractedSlug, urlParamBusiness, initialBusiness]);
 
   return (
     <BusinessContext.Provider
@@ -342,10 +212,7 @@ export const BusinessProvider: React.FC<{
         business,
         services,
         config,
-        isLoading,
-        error,
-        refreshBusinessData,
-      }}
+       }}
     >
       {children}
     </BusinessContext.Provider>

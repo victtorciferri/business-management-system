@@ -1,3 +1,4 @@
+import { storage } from '../storage';
 /**
  * Register Theme Routes - 2025 Edition
  * 
@@ -31,20 +32,32 @@ export function registerThemeRoutes(app: Express): void {
   });
   
   // Add route for retrieving all available themes
-  app.get('/api/themes', (_req, res) => {
-    const themes = Object.values(defaultThemes).map(theme => ({
-      id: theme.metadata.id,
-      name: theme.metadata.name,
-      description: theme.metadata.description,
-      author: theme.metadata.author,
-      version: theme.metadata.version,
-      thumbnail: theme.metadata.thumbnail,
-      tags: theme.metadata.tags,
-      industry: theme.metadata.industry,
-      featured: theme.metadata.featured,
-    }));
+  app.get('/api/themes', async (req, res) => {
+    try {
+      const { businessId, businessSlug } = req.query;
+      let themes;
+
+      if (businessId) {
+        const parsedBusinessId = parseInt(businessId as string, 10);
+        if (isNaN(parsedBusinessId)) {
+          return res.status(400).json({ error: 'Invalid businessId' });
+        }
+        themes = await storage.getThemesByUserId(parsedBusinessId);
+      } else if (businessSlug) {
+        const business = await storage.getBusinessBySlug(businessSlug as string);
+        if (!business) {
+          return res.status(404).json({ error: 'Business not found for the given slug' });
+        }
+        themes = await storage.getThemesByUserId(business.id);
+      } else {
+        themes = await storage.getAllThemes();
+      }
     
-    res.json(themes);
+      res.json(themes);
+    } catch (error) {
+      console.error('Error fetching themes:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
   });
   
   // Add route for serving theme CSS directly
