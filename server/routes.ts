@@ -4166,40 +4166,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Add debug endpoint for testing business slug lookup
+  app.get("/api/debug/business-lookup/:slug", async (req: Request, res: Response) => {
+    try {
+      const { slug } = req.params;
+      console.log(`Debug business lookup for slug: ${slug}`);
+      
+      // Directly test the storage method
+      const business = await storage.getUserByBusinessSlug(slug);
+      
+      if (business) {
+        // Return sanitized business data
+        const { password, ...sanitizedBusiness } = business;
+        console.log(`Debug lookup found business:`, sanitizedBusiness);
+        return res.json({
+          found: true,
+          business: sanitizedBusiness
+        });
+      } else {
+        console.log(`Debug lookup - no business found for slug: ${slug}`);
+        return res.json({
+          found: false,
+          message: "No business found with this slug"
+        });
+      }
+    } catch (error) {
+      console.error("Error in debug business lookup:", error);
+      return res.status(500).json({ 
+        error: "Error looking up business",
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   // Create the HTTP server
   const httpServer = createServer(app);
   return httpServer;
 }
-
-// Debug endpoint for checking business slug resolution 
-app.get("/api/debug/business-lookup/:slug", async (req, res) => {
-  try {
-    const { slug } = req.params;
-    console.log(`Debug business lookup for slug: ${slug}`);
-    
-    // Directly test the storage method
-    const business = await storage.getUserByBusinessSlug(slug);
-    
-    if (business) {
-      // Return sanitized business data
-      const { password, ...sanitizedBusiness } = business;
-      console.log(`Debug lookup found business:`, sanitizedBusiness);
-      return res.json({
-        found: true,
-        business: sanitizedBusiness
-      });
-    } else {
-      console.log(`Debug lookup - no business found for slug: ${slug}`);
-      return res.json({
-        found: false,
-        message: "No business found with this slug"
-      });
-    }
-  } catch (error) {
-    console.error("Error in debug business lookup:", error);
-    return res.status(500).json({ 
-      error: "Error looking up business",
-      message: error instanceof Error ? error.message : "Unknown error"
-    });
-  }
-});
