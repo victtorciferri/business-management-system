@@ -44,6 +44,7 @@ import nodemailer from "nodemailer";
 import crypto from "crypto";
 import { businessExtractor } from "./middleware/businessExtractor";
 import { manuallyRegisterDomain, getRegisteredDomains } from "./ssl";
+import session from "express-session";
 
 // Initialize Stripe if secret key is available
 let stripe: Stripe | undefined;
@@ -134,6 +135,19 @@ const sendTokenEmail = async (req: Request, token: string, customer: Customer, b
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Set up memory-backed session store for development
+  const sessionMiddleware = session({
+    secret: process.env.SESSION_SECRET || "appointease-secret-key",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: false, // set to true if using HTTPS
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
+  });
+
+  app.use(sessionMiddleware);
+
   // Setup and serve static files from the 'uploads' directory
   const uploadsDir = path.join(process.cwd(), 'uploads');
   console.log('======== STATIC FILES SETUP ========');
@@ -377,11 +391,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
    */
   /* REMOVED DUPLICATE ROUTE - Using async implementation below */
 
-  /**
-   * POST /api/business/theme
-   * Updates the theme for the authenticated business
-   * Requires authentication and business context
-   */
   /**
    * POST /api/business/theme
    * Updates the theme for the authenticated business
@@ -3363,20 +3372,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Support both Passport authentication (req.user) and session-based authentication (req.session?.user)
     const user = req.user || req.session?.user;
     
+    // Enhanced logging to debug authentication issues
+    console.log('Admin auth check:', { 
+      sessionExists: !!req.session, 
+      userInSession: !!req.session?.user,
+      userInRequest: !!req.user,
+      userRole: user?.role,
+      headers: {
+        cookie: req.headers.cookie
+      },
+      sessionID: req.sessionID
+    });
+    
     if (!user) {
       // Log the authentication failure for debugging
-      console.log('Authentication required - no user in session or request:', { 
-        sessionExists: !!req.session, 
-        userInSession: !!req.session?.user,
-        userInRequest: !!req.user
-      });
+      console.log('Authentication required - no user in session or request');
       return res.status(401).json({ message: "Authentication required" });
     }
     
     if (user.role === 'admin') {
+      console.log('Admin access granted for user:', user.username);
       return next();
     }
     
+    console.log('Admin access denied for user:', user.username, 'with role:', user.role);
     return res.status(403).json({ message: "Admin access required" });
   };
 
@@ -4151,3 +4170,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
   return httpServer;
 }
+
+// Debug endpoint for checking business slug resolution 
+app.get("/api/debug/business-lookup/:slug", async (req, res) => {
+  try {
+    const { slug } = req.params;
+    console.log(`Debug business lookup for slug: ${slug}`);
+    
+    // Directly test the storage method
+    const business = await storage.getUserByBusinessSlug(slug);
+    
+    if (business) {
+      // Return sanitized business data
+      const { password, ...sanitizedBusiness } = business;
+      console.log(`Debug lookup found business:`, sanitizedBusiness);
+      return res.json({
+        found: true,
+        business: sanitizedBusiness
+      });
+    } else {
+      console.log(`Debug lookup - no business found for slug: ${slug}`);
+      return res.json({
+        found: false,
+        message: "No business found with this slug"
+      });
+    }
+  } catch (error) {
+    console.error("Error in debug business lookup:", error);
+    return res.status(500).json({ 
+      error: "Error looking up business",
+      message: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
+});
