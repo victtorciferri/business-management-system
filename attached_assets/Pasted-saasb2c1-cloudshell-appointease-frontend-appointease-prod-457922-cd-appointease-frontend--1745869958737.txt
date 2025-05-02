@@ -1,0 +1,52 @@
+saasb2c1@cloudshell:~/appointease-frontend (appointease-prod-457922)$ cd ~/appointease-frontend
+
+# Update the server with a final fix for the businesses endpoint
+cat > server.js << 'EOF'
+const express = require('express');
+const path = require('path');
+const { Pool } = require('pg');
+
+const app = express();
+const port = process.env.PORT || 8080;
+
+// Database connection setup
+let pool;
+let dbConnected = false;
+
+function setupDatabaseConnection() {
+  if (!process.env.DATABASE_URL) {
+    console.error('DATABASE_URL environment variable not set');
+    return;
+  }
+
+  try {
+    console.log('Setting up database connection...');
+    pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    
+    pool.query('SELECT NOW()', (err, result) => {
+      if (err) {
+        console.error('Database connection error:', err.message);
+        dbConnected = false;
+      } else {
+        console.log('Database connected successfully at:', result.rows[0].now);
+        dbConnected = true;
+        
+        // Once connected, check the businesses table with correct column names
+        pool.query('SELECT COUNT(*) FROM users WHERE business_slug IS NOT NULL', (err, result) => {
+          if (err) {
+            console.error('Error checking businesses:', err.message);
+  --add-cloudsql-instances=$INSTANCE_CONNECTION_NAMECTION_NAME=$INSTANCE_CONNECTION_NAME \cmespa'];ers WHERE business_slug IS NOT NULL'
+Your active configuration is: [cloudshell-25906]
+Building using Dockerfile and deploying container to Cloud Run service [appointease] in project [appointease-prod-457922] region [southamerica-west1]
+\  Building and deploying... Uploading sources.                                                                                                                                             
+/  Building and deploying... Uploading sources.                                                                                                                                             
+OK Building and deploying... Done.                                                                                                                                                          
+  OK Uploading sources...                                                                                                                                                                   
+  OK Building Container... Logs are available at [https://console.cloud.google.com/cloud-build/builds;region=southamerica-west1/e148cc0b-e3a8-4491-9ae6-8372b4fde869?project=249754346416]. 
+  OK Creating Revision...                                                                                                                                                                   
+  OK Routing traffic...                                                                                                                                                                     
+  OK Setting IAM Policy...                                                                                                                                                                  
+Done.                                                                                                                                                                                       
+Service [appointease] revision [appointease-00086-kt9] has been deployed and is serving 100 percent of traffic.
+Service URL: https://appointease-249754346416.southamerica-west1.run.app
+saasb2c1@cloudshell:~/appointease-frontend (appointease-prod-457922)$ 

@@ -1,0 +1,27 @@
+saasb2c1@cloudshell:~/appointease-frontend (appointease-prod-457922)$ # Export variables first
+export PROJECT_ID=$(gcloud config get-value project)
+export INSTANCE_NAME=$(gcloud sql instances list --format="value(name)")
+export REGION=southamerica-west1
+export INSTANCE_CONNECTION_NAME="${PROJECT_ID}:${REGION}:${INSTANCE_NAME}"
+
+# Deploy with variables already expanded
+gcloud run deploy appointease \
+  --source . \
+  --region=${REGION} \
+  --platform=managed \
+  --allow-unauthenticated \
+  --set-env-vars=NODE_ENV=production,DATABASE_URL="postgresql://postgres:AppointEase123\!@localhost:5432/postgres",CLOUD_SQL_CONNECTION_NAME=${INSTANCE_CONNECTION_NAME} \
+  --add-cloudsql-instances=${INSTANCE_CONNECTION_NAME}
+Your active configuration is: [cloudshell-12772]
+Building using Dockerfile and deploying container to Cloud Run service [appointease] in project [appointease-prod-457922] region [southamerica-west1]
+|  Building and deploying... Uploading sources.                                                                                                                                             
+/  Building and deploying... Uploading sources.                                                                                                                                             
+X  Building and deploying... Building Container.                                                                                                                                            
+  OK Uploading sources...                                                                                                                                                                   
+  OK Building Container... Logs are available at [https://console.cloud.google.com/cloud-build/builds;region=southamerica-west1/48b32162-a441-4a00-b26b-c3f9e4c3cdeb?project=249754346416]. 
+  .  Setting IAM Policy...                                                                                                                                                                  
+Creating temporary archive of 7 file(s) totalling 1.3 MiB before compression.
+Uploading zipfile of [.] to [gs://run-sources-appointease-prod-457922-southamerica-west1/services/appointease/1745858732.075308-9bbdffb8c3b644a4b4184c81021de979.zip]
+Deployment failed                                                                                                                                                                           
+ERROR: (gcloud.run.deploy) Cannot update environment variable [DATABASE_URL] to string literal because it has already been set with a different type.
+saasb2c1@cloudshell:~/appointease-frontend (appointease-prod-457922)$ 

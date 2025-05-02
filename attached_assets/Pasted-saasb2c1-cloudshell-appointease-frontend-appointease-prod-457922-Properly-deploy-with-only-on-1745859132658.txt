@@ -1,0 +1,42 @@
+saasb2c1@cloudshell:~/appointease-frontend (appointease-prod-457922)$ # Properly deploy with only one env var flag
+cd ~/appointease-frontend
+
+# Deploy with only the CONNECTION_NAME and remove DATABASE_URL
+export PROJECT_ID=$(gcloud config get-value project)
+export INSTANCE_NAME=$(gcloud sql instances list --format="value(name)")
+export REGION=southamerica-west1
+export INSTANCE_CONNECTION_NAME="${PROJECT_ID}:${REGION}:${INSTANCE_NAME}"
+
+# First, update environment variables 
+gcloud run services update appointease \
+  --region=${REGION} \
+  --remove-env-vars=DATABASE_URL
+
+# Then deploy with the new configuration
+gcloud run deploy appointease \
+  --source . \
+  --region=${REGION} \
+  --platform=managed \
+  --allow-unauthenticated \
+  --set-env-vars=NODE_ENV=production,CLOUD_SQL_CONNECTION_NAME=${INSTANCE_CONNECTION_NAME} \
+  --add-cloudsql-instances=${INSTANCE_CONNECTION_NAME}
+Your active configuration is: [cloudshell-12772]
+OK Deploying... Done.                                                                                                                                                                       
+  OK Creating Revision...                                                                                                                                                                   
+  OK Routing traffic...                                                                                                                                                                     
+Done.                                                                                                                                                                                       
+Service [appointease] revision [appointease-00078-b2l] has been deployed and is serving 100 percent of traffic.
+Service URL: https://appointease-249754346416.southamerica-west1.run.app
+Building using Dockerfile and deploying container to Cloud Run service [appointease] in project [appointease-prod-457922] region [southamerica-west1]
+\  Building and deploying... Uploading sources.                                                                                                                                             
+|  Building and deploying... Uploading sources.                                                                                                                                             
+OK Building and deploying... Done.                                                                                                                                                          
+  OK Uploading sources...                                                                                                                                                                   
+  OK Building Container... Logs are available at [https://console.cloud.google.com/cloud-build/builds;region=southamerica-west1/e3987c44-e265-4099-92bc-76b804388038?project=249754346416]. 
+  OK Creating Revision...                                                                                                                                                                   
+  OK Routing traffic...                                                                                                                                                                     
+  OK Setting IAM Policy...                                                                                                                                                                  
+Done.                                                                                                                                                                                       
+Service [appointease] revision [appointease-00079-tdv] has been deployed and is serving 100 percent of traffic.
+Service URL: https://appointease-249754346416.southamerica-west1.run.app
+saasb2c1@cloudshell:~/appointease-frontend (appointease-prod-457922)$ 

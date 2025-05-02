@@ -1,0 +1,195 @@
+saasb2c1@cloudshell:~/appointease-frontend (appointease-prod-457922)$ const express = require('express');
+const { Pool } = require('pg');
+const app = express();
+const port = process.env.PORT || 8081;
+
+app.get('/', (req, res) => {
+  res.send(`
+    <html>
+      <head>
+        <title>AppointEase Diagnostics</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+          h1 { color: #0099ff; }
+          .card { border: 1px solid #ddd; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
+          .success { color: green; }
+          .error { color: red; }
+          pre { background-color: #f5f5f5; padding: 10px; border-radius: 5px; overflow-x: auto; }
+        </style>
+      </head>
+      <body>
+        <h1>AppointEase Diagnostics</h1>
+        <div class="card">
+          <h2>Environment Variables</h2>
+          <pre id="env-vars">Loading...</pre>
+        </div>
+        <div class="card">
+          <h2>Database Connection Test</h2>
+          <div id="db-test">Running test...</div>
+        </div>
+        <div class="card">
+          <h2>API Fetch Test</h2>
+          <button id="test-btn">Test API</button>
+          <div id="api-test-result"></div>
+        </div>
+        
+        <script>
+          // Test environment variables
+});onsole.log(`Diagnostic server running on port ${port}`);s_slug, custom_domain, phone, role FROM users WHERE business_slug IS NOT NULL'
+-bash: syntax error near unexpected token `('
+-bash: syntax error near unexpected token `('
+-bash: syntax error near unexpected token `('
+-bash: const: command not found
+-bash: 8081: command not found
+-bash: syntax error near unexpected token `'/','
+-bash: syntax error near unexpected token `$'`\n    <html>\n      <head>\n        <title>AppointEase Diagnostics</title>\n        <style>\n          body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }\n          h1 { color: #0099ff; }\n          .card { border: 1px solid #ddd; padding: 15px; margin-bottom: 20px; border-radius: 5px; }\n          .success { color: green; }\n          .error { color: red; }\n          pre { background-color: #f5f5f5; padding: 10px; border-radius: 5px; overflow-x: auto; }\n        </style>\n      </head>\n      <body>\n        <h1>AppointEase Diagnostics</h1>\n        <div class="card">\n          <h2>Environment Variables</h2>\n          <pre id="env-vars">Loading...</pre>\n        </div>\n        <div class="card">\n          <h2>Database Connection Test</h2>\n          <div id="db-test">Running test...</div>\n        </div>\n        <div class="card">\n          <h2>API Fetch Test</h2>\n          <button id="test-btn">Test API</button>\n          <div id="api-test-result"></div>\n        </div>\n        \n        <script>\n          // Test environment variables\n          fetch(\'/env\')\n            .then(res => res.json())\n            .then(data => {\n              document.getElementById(\'env-vars\').textContent = JSON.stringify(data, null, 2);\n            })\n            .catch(err => {\n              document.getElementById(\'env-vars\').textContent = \'Error: \' + err.message;\n            });\n            \n          // Test database connection\n          fetch(\'/test-db\')\n            .then(res => res.json())\n            .then(data => {\n              const el = document.getElementById(\'db-test\');\n              if (data.success) {\n                el.innerHTML = \'<p class="success">✅ Database connected successfully!</p>\' +\n                  \'<pre>\' + JSON.stringify(data, null, 2) + \'</pre>\';\n              } else {\n                el.innerHTML = \'<p class="error">❌ Database connection failed:</p>\' +\n                  \'<pre>\' + JSON.stringify(data, null, 2) + \'</pre>\';\n              }\n            })\n            .catch(err => {\n              document.getElementById(\'db-test\').innerHTML = \n                \'<p class="error">❌ Database test error: \' + err.message + \'</p>\';\n            });\n            \n          // Button to test API\n          document.getElementById(\'test-btn\').addEventListener(\'click\', function() {\n            const resultEl = document.getElementById(\'api-test-result\');\n            resultEl.innerHTML = \'Testing...\';\n            \n            fetch(\'/test-api\')\n              .then(res => res.json())\n              .then(data => {\n                resultEl.innerHTML = \'<pre>\' + JSON.stringify(data, null, 2) + \'</pre>\';\n              })\n              .catch(err => {\n                resultEl.innerHTML = \'<p class="error">Error: \' + err.message + \'</p>\';\n              });\n          });\n        </script>\n      </body>\n    </html>\n  `''
+-bash: syntax error near unexpected token `}'
+-bash: //: Is a directory
+-bash: syntax error near unexpected token `'/env','
+-bash: const: command not found
+-bash: syntax error near unexpected token `('
+-bash: syntax error near unexpected token `('
+-bash: //: Is a directory
+-bash: syntax error near unexpected token `.includes'
+-bash: syntax error near unexpected token `.includes'
+-bash: syntax error near unexpected token `.includes'
+-bash: syntax error near unexpected token `.includes'
+-bash: sanitizedEnv[key]: command not found
+-bash: syntax error near unexpected token `}'
+-bash: sanitizedEnv[key]: command not found
+-bash: syntax error near unexpected token `}'
+-bash: syntax error near unexpected token `}'
+-bash: syntax error near unexpected token `sanitizedEnv'
+-bash: syntax error near unexpected token `}'
+-bash: //: Is a directory
+-bash: syntax error near unexpected token `'/test-db','
+-bash: const: command not found
+-bash: success:: command not found
+-bash: connectionString:: command not found
+-bash: error:: command not found
+-bash: testQuery:: command not found
+-bash: syntax error near unexpected token `('
+-bash: syntax error near unexpected token `}'
+-bash: //: Is a directory
+-bash: !process.env.DATABASE_URL: event not found
+-bash: results.error: command not found
+-bash: syntax error near unexpected token `('
+-bash: syntax error near unexpected token `}'
+-bash: try: command not found
+-bash: //: Is a directory
+-bash: syntax error near unexpected token `('
+-bash: connectionString:: command not found
+-bash: connectionTimeoutMillis:: command not found
+-bash: syntax error near unexpected token `}'
+-bash: //: Is a directory
+-bash: syntax error near unexpected token `('
+-bash: results.success: command not found
+-bash: results.testQuery: command not found
+-bash: //: Is a directory
+-bash: try: command not found
+-bash: syntax error near unexpected token `('
+-bash: SELECT: command not found
+-bash: FROM: command not found
+-bash: WHERE: command not found
+-bash: ORDER: command not found
+-bash: command substitution: line 1: syntax error near unexpected token `)'
+-bash: command substitution: line 1: `);'
+-bash: SELECT: command not found
+-bash: FROM: command not found
+-bash: WHERE: command not found
+-bash: ORDER: command not found
+> ^C
+saasb2c1@cloudshell:~/appointease-frontend (appointease-prod-457922)$ #!/bin/bash
+
+# Create a simple package.json
+cat > package.json << 'EOF'
+{
+  "name": "appointease-diagnostics",
+  "version": "1.0.0",
+  "description": "Diagnostic tool for AppointEase",
+  "main": "diagnostic.js",
+  "scripts": {
+    "start": "node diagnostic.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "pg": "^8.11.3"
+  }
+}
+EOF
+
+# Create a simple Dockerfile
+cat > Dockerfile << 'EOF'
+FROM node:18-slim
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+
+EXPOSE 8080
+CMD [ "node", "diagnostic.js" ]
+EOF
+
+# Deploy the diagnostic tool
+export REGION="southamerica-west1"
+  --add-cloudsql-instances=$INSTANCE_CONNECTION_NAMECTION_NAME=$INSTANCE_CONNECTION_NAME,DATABASE_URL=postgres://postgres:AppointEase123!@localhost:5432/appointease \
+-bash: !@localhost: event not found
+Building using Dockerfile and deploying container to Cloud Run service [appointease-diagnostic] in project [appointease-prod-457922] region [southamerica-west1]
+-  Building and deploying... Uploading sources.                                                                                                                                             
+-  Building and deploying... Uploading sources.                                                                                                                                             
+X  Building and deploying... Building Container.                                                                                                                                            
+  OK Uploading sources...                                                                                                                                                                   
+  OK Building Container... Logs are available at [https://console.cloud.google.com/cloud-build/builds;region=southamerica-west1/6e453da9-a6f2-4bca-9f87-780bcb565f1d?project=249754346416]. 
+  -  Creating Revision...                                                                                                                                                                   
+Creating temporary archive of 781 file(s) totalling 3.9 MiB before compression.
+  OK Setting IAM Policy...                                                                                                                                                                  
+Deployment failed                                                                                                                                                                           
+ERROR: (gcloud.run.deploy) Revision 'appointease-diagnostic-00004-fmh' is not ready and cannot serve traffic. The user-provided container failed to start and listen on the port defined provided by the PORT=8080 environment variable within the allocated timeout. This can happen when the container port is misconfigured or if the timeout is too short. The health check timeout can be extended. Logs for this revision might contain more information.
+
+Logs URL: https://console.cloud.google.com/logs/viewer?project=appointease-prod-457922&resource=cloud_run_revision/service_name/appointease-diagnostic/revision_name/appointease-diagnostic-00004-fmh&advancedFilter=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22appointease-diagnostic%22%0Aresource.labels.revision_name%3D%22appointease-diagnostic-00004-fmh%22 
+For more troubleshooting guidance, see https://cloud.google.com/run/docs/troubleshooting#container-failed-to-start
+saasb2c1@cloudshell:~/appointease-frontend (appointease-prod-457922)$ #!/bin/bash
+
+cd ~/appointease-frontend
+
+# Update the server to include proper DATABASE_URL construction
+cat > server.js << 'EOF'
+const express = require('express');
+const path = require('path');
+const { Pool } = require('pg');
+
+const app = express();
+const port = process.env.PORT || 8080;
+
+// Database connection setup
+let pool;
+let dbConnected = false;
+
+function setupDatabaseConnection() {
+  // Use the explicit DATABASE_URL if provided
+  // If not, construct it from the Cloud SQL instance connection name
+  let databaseUrl = process.env.DATABASE_URL;
+  
+  if (!databaseUrl && process.env.CLOUD_SQL_CONNECTION_NAME) {
+    // Log information about the environment
+    console.log('Cloud SQL connection name:', process.env.CLOUD_SQL_CONNECTION_NAME);
+    console.log('Constructing DATABASE_URL from CLOUD_SQL_CONNECTION_NAME');
+    
+    // Set a default DATABASE_URL for Cloud SQL using the unix socket
+    // Replace username:password with your actual credentials
+    databaseUrl = `postgresql://postgres:YOUR_PASSWORD@localhost:5432/appointease`;
+  }
+  
+  if (!databaseUrl) {
+    console.error('Neither DATABASE_URL nor CLOUD_SQL_CONNECTION_NAME environment variables are set');
+    return;
+  }
+
+echo "2. Run ./deploy.sh to deploy the updated application"password in both scripts"NAME,DATABASE_URL=$DATABASE_URL \_slug IS NOT NULL'
+Files updated. Before running these scripts:
+1. Replace 'YOUR_PASSWORD' with your actual database password in both scripts
+2. Run ./deploy.sh to deploy the updated application
+saasb2c1@cloudshell:~/appointease-frontend (appointease-prod-457922)$ 

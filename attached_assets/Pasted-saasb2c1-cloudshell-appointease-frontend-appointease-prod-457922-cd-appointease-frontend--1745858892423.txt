@@ -1,0 +1,85 @@
+saasb2c1@cloudshell:~/appointease-frontend (appointease-prod-457922)$ cd ~/appointease-frontend
+
+# Create a better start-with-db.sh script that handles the DATABASE_URL more securely
+cat > start-with-db.sh << 'EOF'
+#!/bin/bash
+set -e
+
+echo "Starting AppointEase with database connection..."
+
+# Start Cloud SQL Auth Proxy
+if [ -n "$CLOUD_SQL_CONNECTION_NAME" ]; then
+  echo "Starting Cloud SQL Auth Proxy for $CLOUD_SQL_CONNECTION_NAME..."
+  cloud_sql_proxy -instances=$CLOUD_SQL_CONNECTION_NAME=tcp:5432 &
+  PROXY_PID=$!
+  echo "Cloud SQL Auth Proxy started with PID: $PROXY_PID"
+  
+  # Wait for proxy to initialize
+  echo "Waiting for proxy to initialize..."
+  sleep 10
+  echo "Proxy initialization wait completed"
+  
+  # Always construct the proper DATABASE_URL here in the container
+  export DATABASE_URL="postgresql://postgres:AppointEase123!@localhost:5432/postgres"
+  echo "DATABASE_URL constructed from credentials"
+fi
+
+# Print debug info
+echo "NODE_ENV: $NODE_ENV"
+echo "DATABASE_URL is configured"
+echo "Starting application server..."
+
+# Start the application
+node server.js
+EOF
+
+chmod +x start-with-db.sh
+
+  --remove-env-vars=DATABASE_URLTANCE_CONNECTION_NAME} \N_NAME=${INSTANCE_CONNECTION_NAME} \sql_proxy
+Your active configuration is: [cloudshell-12772]
+ERROR: (gcloud.run.deploy) argument --set-env-vars: At most one of --clear-env-vars | --env-vars-file | --set-env-vars | --remove-env-vars --update-env-vars can be specified.
+Usage: gcloud run deploy [[SERVICE] --namespace=NAMESPACE] [optional flags]
+  optional flags may be  --add-cloudsql-instances | --add-custom-audiences |
+                         --add-volume | --add-volume-mount |
+                         --allow-unauthenticated | --allow-unencrypted-build |
+                         --args | --async | --automatic-updates | --base-image |
+                         --binary-authorization | --breakglass |
+                         --build-env-vars-file | --build-service-account |
+                         --build-worker-pool | --clear-base-image |
+                         --clear-binary-authorization | --clear-build-env-vars |
+                         --clear-build-service-account |
+                         --clear-build-worker-pool |
+                         --clear-cloudsql-instances | --clear-custom-audiences |
+                         --clear-encryption-key-shutdown-hours |
+                         --clear-env-vars | --clear-key | --clear-labels |
+                         --clear-network | --clear-network-tags |
+                         --clear-post-key-revocation-action-type |
+                         --clear-secrets | --clear-volume-mounts |
+                         --clear-volumes | --clear-vpc-connector | --command |
+                         --concurrency | --container | --cpu | --cpu-boost |
+                         --cpu-throttling | --depends-on | --description |
+                         --encryption-key-shutdown-hours | --env-vars-file |
+                         --execution-environment | --function | --gpu |
+                         --gpu-type | --gpu-zonal-redundancy | --help |
+                         --image | --ingress | --invoker-iam-check | --key |
+                         --labels | --liveness-probe | --max-instances |
+                         --memory | --min | --min-instances | --namespace |
+                         --network | --network-tags | --port |
+                         --post-key-revocation-action-type | --region |
+                         --remove-build-env-vars | --remove-cloudsql-instances |
+                         --remove-containers | --remove-custom-audiences |
+                         --remove-env-vars | --remove-labels |
+                         --remove-secrets | --remove-volume |
+                         --remove-volume-mount | --revision-suffix |
+                         --service-account | --session-affinity |
+                         --set-build-env-vars | --set-cloudsql-instances |
+                         --set-custom-audiences | --set-env-vars |
+                         --set-secrets | --source | --startup-probe | --subnet |
+                         --tag | --timeout | --no-traffic |
+                         --update-build-env-vars | --update-env-vars |
+                         --update-labels | --update-secrets | --use-http2 |
+                         --vpc-connector | --vpc-egress
+
+For detailed information on this command and its flags, run:
+  gcloud run deploy --help
+saasb2c1@cloudshell:~/appointease-frontend (appointease-prod-457922)$ 

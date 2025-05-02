@@ -1,0 +1,1031 @@
+labels:
+    configuration_name: appointease
+    location: southamerica-west1
+    project_id: appointease-prod-457922
+    revision_name: appointease-00079-tdv
+    service_name: appointease
+  type: cloud_run_revision
+textPayload: DATABASE_URL is configured
+timestamp: '2025-04-28T16:51:24.896548Z'
+---
+insertId: 680fb20c000dae19fc3b5de1
+labels:
+  instanceId: 007f65c6d24435e216ef43588c73c759d8d2c44a69fed1fa04ab0ef74bd7eea33913d0e951a049e86cccd766b5cef15f1a0fe316aa2643e37d2a01448681e4d97b050310956f6dce4d672f2cac02
+logName: projects/appointease-prod-457922/logs/run.googleapis.com%2Fstdout
+receiveTimestamp: '2025-04-28T16:51:25.213885305Z'
+resource:
+  labels:
+    configuration_name: appointease
+    location: southamerica-west1
+    project_id: appointease-prod-457922
+    revision_name: appointease-00079-tdv
+    service_name: appointease
+  type: cloud_run_revision
+textPayload: 'NODE_ENV: production'
+timestamp: '2025-04-28T16:51:24.896537Z'
+---
+insertId: 680fb20c000daccae79f6742
+labels:
+  instanceId: 007f65c6d24435e216ef43588c73c759d8d2c44a69fed1fa04ab0ef74bd7eea33913d0e951a049e86cccd766b5cef15f1a0fe316aa2643e37d2a01448681e4d97b050310956f6dce4d672f2cac02
+logName: projects/appointease-prod-457922/logs/run.googleapis.com%2Fstdout
+receiveTimestamp: '2025-04-28T16:51:25.213885305Z'
+resource:
+  labels:
+    configuration_name: appointease
+    location: southamerica-west1
+    project_id: appointease-prod-457922
+    revision_name: appointease-00079-tdv
+    service_name: appointease
+  type: cloud_run_revision
+textPayload: DATABASE_URL constructed from credentials
+timestamp: '2025-04-28T16:51:24.896202Z'
+---
+insertId: 680fb20c000dacbecd228d94
+labels:
+  instanceId: 007f65c6d24435e216ef43588c73c759d8d2c44a69fed1fa04ab0ef74bd7eea33913d0e951a049e86cccd766b5cef15f1a0fe316aa2643e37d2a01448681e4d97b050310956f6dce4d672f2cac02
+logName: projects/appointease-prod-457922/logs/run.googleapis.com%2Fstdout
+receiveTimestamp: '2025-04-28T16:51:25.213885305Z'
+resource:
+  labels:
+    configuration_name: appointease
+    location: southamerica-west1
+    project_id: appointease-prod-457922
+    revision_name: appointease-00079-tdv
+    service_name: appointease
+  type: cloud_run_revision
+textPayload: Proxy initialization wait completed
+timestamp: '2025-04-28T16:51:24.896190Z'
+---
+insertId: 680fb203000624beead3fe3b
+labels:
+  instanceId: 007f65c6d24435e216ef43588c73c759d8d2c44a69fed1fa04ab0ef74bd7eea33913d0e951a049e86cccd766b5cef15f1a0fe316aa2643e37d2a01448681e4d97b050310956f6dce4d672f2cac02
+logName: projects/appointease-prod-457922/logs/run.googleapis.com%2Fstderr
+receiveTimestamp: '2025-04-28T16:51:15.680787020Z'
+resource:
+  labels:
+    configuration_name: appointease
+    location: southamerica-west1
+    project_id: appointease-prod-457922
+    revision_name: appointease-00079-tdv
+    service_name: appointease
+  type: cloud_run_revision
+textPayload: 2025/04/28 16:51:15 Generated RSA key in 181.777575ms
+timestamp: '2025-04-28T16:51:15.402622Z'
+---
+insertId: 680fb20300036028cbd30bfe
+labels:
+  instanceId: 007f65c6d24435e216ef43588c73c759d8d2c44a69fed1fa04ab0ef74bd7eea33913d0e951a049e86cccd766b5cef15f1a0fe316aa2643e37d2a01448681e4d97b050310956f6dce4d672f2cac02
+logName: projects/appointease-prod-457922/logs/run.googleapis.com%2Fstderr
+receiveTimestamp: '2025-04-28T16:51:15.348750400Z'
+resource:
+  labels:
+    configuration_name: appointease
+    location: southamerica-west1
+    project_id: appointease-prod-457922
+    revision_name: appointease-00079-tdv
+    service_name: appointease
+  type: cloud_run_revision
+textPayload: 2025/04/28 16:51:15 Ready for new connections
+timestamp: '2025-04-28T16:51:15.221224Z'
+---
+insertId: 680fb2030003601f4427ffed
+labels:
+  instanceId: 007f65c6d24435e216ef43588c73c759d8d2c44a69fed1fa04ab0ef74bd7eea33913d0e951a049e86cccd766b5cef15f1a0fe316aa2643e37d2a01448681e4d97b050310956f6dce4d672f2cac02
+logName: projects/appointease-prod-457922/logs/run.googleapis.com%2Fstderr
+receiveTimestamp: '2025-04-28T16:51:15.348750400Z'
+resource:
+  labels:
+    configuration_name: appointease
+    location: southamerica-west1
+    project_id: appointease-prod-457922
+    revision_name: appointease-00079-tdv
+    service_name: appointease
+  type: cloud_run_revision
+textPayload: 2025/04/28 16:51:15 Listening on 127.0.0.1:5432 for appointease-prod-457922:southamerica-west1:appointease-db
+timestamp: '2025-04-28T16:51:15.221215Z'
+---
+insertId: 680fb203000033c45eedeb32
+labels:
+  instanceId: 007f65c6d24435e216ef43588c73c759d8d2c44a69fed1fa04ab0ef74bd7eea33913d0e951a049e86cccd766b5cef15f1a0fe316aa2643e37d2a01448681e4d97b050310956f6dce4d672f2cac02
+logName: projects/appointease-prod-457922/logs/run.googleapis.com%2Fstderr
+receiveTimestamp: '2025-04-28T16:51:15.015463196Z'
+resource:
+  labels:
+    configuration_name: appointease
+    location: southamerica-west1
+    project_id: appointease-prod-457922
+    revision_name: appointease-00079-tdv
+    service_name: appointease
+  type: cloud_run_revision
+textPayload: 2025/04/28 16:51:15 current FDs rlimit set to 25000, wanted limit is
+  8500. Nothing to do here.
+timestamp: '2025-04-28T16:51:15.013252Z'
+---
+insertId: 680fb203000033ab024ad2fd
+labels:
+  instanceId: 007f65c6d24435e216ef43588c73c759d8d2c44a69fed1fa04ab0ef74bd7eea33913d0e951a049e86cccd766b5cef15f1a0fe316aa2643e37d2a01448681e4d97b050310956f6dce4d672f2cac02
+logName: projects/appointease-prod-457922/logs/run.googleapis.com%2Fstderr
+receiveTimestamp: '2025-04-28T16:51:15.015463196Z'
+resource:
+  labels:
+    configuration_name: appointease
+    location: southamerica-west1
+    project_id: appointease-prod-457922
+    revision_name: appointease-00079-tdv
+    service_name: appointease
+  type: cloud_run_revision
+textPayload: '2025/04/28 16:51:15 This is the Cloud SQL Proxy v1. It is no longer
+  receiving active feature development. For the latest features and improvements,
+  migrate to the v2 version of the Cloud SQL Proxy. For details, see: https://github.com/GoogleCloudPlatform/cloud-sql-proxy/blob/main/migration-guide.md'
+timestamp: '2025-04-28T16:51:15.013227Z'
+---
+insertId: 680fb202000d9042966ba71b
+labels:
+  instanceId: 007f65c6d24435e216ef43588c73c759d8d2c44a69fed1fa04ab0ef74bd7eea33913d0e951a049e86cccd766b5cef15f1a0fe316aa2643e37d2a01448681e4d97b050310956f6dce4d672f2cac02
+logName: projects/appointease-prod-457922/logs/run.googleapis.com%2Fstdout
+receiveTimestamp: '2025-04-28T16:51:15.223119337Z'
+resource:
+  labels:
+    configuration_name: appointease
+    location: southamerica-west1
+    project_id: appointease-prod-457922
+    revision_name: appointease-00079-tdv
+    service_name: appointease
+  type: cloud_run_revision
+textPayload: Waiting for proxy to initialize...
+timestamp: '2025-04-28T16:51:14.888898Z'
+---
+insertId: 680fb202000d903ebd3abaea
+labels:
+  instanceId: 007f65c6d24435e216ef43588c73c759d8d2c44a69fed1fa04ab0ef74bd7eea33913d0e951a049e86cccd766b5cef15f1a0fe316aa2643e37d2a01448681e4d97b050310956f6dce4d672f2cac02
+logName: projects/appointease-prod-457922/logs/run.googleapis.com%2Fstdout
+receiveTimestamp: '2025-04-28T16:51:15.223119337Z'
+resource:
+  labels:
+    configuration_name: appointease
+    location: southamerica-west1
+    project_id: appointease-prod-457922
+    revision_name: appointease-00079-tdv
+    service_name: appointease
+  type: cloud_run_revision
+textPayload: 'Cloud SQL Auth Proxy started with PID: 3'
+timestamp: '2025-04-28T16:51:14.888894Z'
+---
+insertId: 680fb202000d8d32fdaf89c7
+labels:
+  instanceId: 007f65c6d24435e216ef43588c73c759d8d2c44a69fed1fa04ab0ef74bd7eea33913d0e951a049e86cccd766b5cef15f1a0fe316aa2643e37d2a01448681e4d97b050310956f6dce4d672f2cac02
+logName: projects/appointease-prod-457922/logs/run.googleapis.com%2Fstdout
+receiveTimestamp: '2025-04-28T16:51:14.890103195Z'
+resource:
+  labels:
+    configuration_name: appointease
+    location: southamerica-west1
+    project_id: appointease-prod-457922
+    revision_name: appointease-00079-tdv
+    service_name: appointease
+  type: cloud_run_revision
+textPayload: Starting Cloud SQL Auth Proxy for appointease-prod-457922:southamerica-west1:appointease-db...
+timestamp: '2025-04-28T16:51:14.888114Z'
+---
+insertId: 680fb202000d8d0e0992f3b2
+labels:
+  instanceId: 007f65c6d24435e216ef43588c73c759d8d2c44a69fed1fa04ab0ef74bd7eea33913d0e951a049e86cccd766b5cef15f1a0fe316aa2643e37d2a01448681e4d97b050310956f6dce4d672f2cac02
+logName: projects/appointease-prod-457922/logs/run.googleapis.com%2Fstdout
+receiveTimestamp: '2025-04-28T16:51:14.890103195Z'
+resource:
+  labels:
+    configuration_name: appointease
+    location: southamerica-west1
+    project_id: appointease-prod-457922
+    revision_name: appointease-00079-tdv
+    service_name: appointease
+  type: cloud_run_revision
+textPayload: Starting AppointEase with database connection...
+timestamp: '2025-04-28T16:51:14.888078Z'
+---
+insertId: fulztdd2cen
+logName: projects/appointease-prod-457922/logs/cloudaudit.googleapis.com%2Factivity
+protoPayload:
+  '@type': type.googleapis.com/google.cloud.audit.AuditLog
+  authenticationInfo:
+    principalEmail: saasb2c1@gmail.com
+    principalSubject: user:saasb2c1@gmail.com
+  authorizationInfo:
+  - granted: true
+    permission: run.services.update
+    permissionType: ADMIN_WRITE
+    resource: namespaces/appointease-prod-457922/services/appointease
+    resourceAttributes: {}
+  - granted: true
+    permission: run.services.update
+    permissionType: ADMIN_WRITE
+    resource: namespaces/appointease-prod-457922/services/appointease
+    resourceAttributes:
+      name: namespaces/appointease-prod-457922/services/appointease
+      service: run.googleapis.com/
+      type: run.googleapis.com/Service
+  methodName: google.cloud.run.v1.Services.ReplaceService
+  request:
+    '@type': type.googleapis.com/google.cloud.run.v1.ReplaceServiceRequest
+    name: namespaces/appointease-prod-457922/services/appointease
+    service:
+      apiVersion: serving.knative.dev/v1
+      kind: Service
+      metadata:
+        annotations:
+          run.googleapis.com/build-enable-automatic-updates: 'false'
+          run.googleapis.com/build-id: e3987c44-e265-4099-92bc-76b804388038
+          run.googleapis.com/build-image-uri: southamerica-west1-docker.pkg.dev/appointease-prod-457922/cloud-run-source-deploy/appointease
+          run.googleapis.com/build-name: projects/249754346416/locations/southamerica-west1/builds/e3987c44-e265-4099-92bc-76b804388038
+          run.googleapis.com/build-source-location: gs://run-sources-appointease-prod-457922-southamerica-west1/services/appointease/1745859006.208015-7886d05bc7824e8082a3530b62393866.zip#1745859007522992
+          run.googleapis.com/client-name: gcloud
+          run.googleapis.com/client-version: 518.0.0
+          run.googleapis.com/ingress: all
+          run.googleapis.com/ingress-status: all
+          run.googleapis.com/operation-id: c3c7cf07-04db-409d-9d24-73e31c9752e4
+          run.googleapis.com/urls: '["https://appointease-249754346416.southamerica-west1.run.app","https://appointease-lfbtbh6oha-tl.a.run.app"]'
+          serving.knative.dev/creator: saasb2c1@gmail.com
+          serving.knative.dev/lastModifier: saasb2c1@gmail.com
+        creationTimestamp: '2025-04-25T23:04:23.868584Z'
+        generation: 78
+        labels:
+          cloud.googleapis.com/location: southamerica-west1
+        name: appointease
+        namespace: '249754346416'
+        resourceVersion: AAYz2XlokFE
+        selfLink: /apis/serving.knative.dev/v1/namespaces/249754346416/services/appointease
+        uid: b305aeb7-01b6-4447-a085-cfe6d7f4da26
+      spec:
+        template:
+          metadata:
+            annotations:
+              autoscaling.knative.dev/maxScale: '3'
+              run.googleapis.com/client-name: gcloud
+              run.googleapis.com/client-version: 518.0.0
+              run.googleapis.com/cloudsql-instances: appointease-prod-457922:southamerica-west1:appointease-db
+              run.googleapis.com/startup-cpu-boost: 'true'
+            labels:
+              client.knative.dev/nonce: xducewgeuj
+              run.googleapis.com/startupProbeType: Default
+          spec:
+            containerConcurrency: 80
+            containers:
+            - image: southamerica-west1-docker.pkg.dev/appointease-prod-457922/cloud-run-source-deploy/appointease@sha256:b349edabda38aafa5ba9ac32a8c4d0908c5f6a80ffc4406fd7fc37991f66f03c
+              name: appointease-1
+              resources:
+                limits:
+                  cpu: 1000m
+                  memory: 512Mi
+            serviceAccountName: 249754346416-compute@developer.gserviceaccount.com
+            timeoutSeconds: 600
+        traffic:
+        - latestRevision: true
+          percent: 100
+      status:
+        conditions:
+        - lastTransitionTime: '2025-04-28T16:49:58.079569Z'
+          status: 'True'
+          type: Ready
+        - lastTransitionTime: '2025-04-28T16:49:56.842644Z'
+          status: 'True'
+          type: ConfigurationsReady
+        - lastTransitionTime: '2025-04-28T16:49:58.051282Z'
+          status: 'True'
+          type: RoutesReady
+        latestCreatedRevisionName: appointease-00078-b2l
+        latestReadyRevisionName: appointease-00078-b2l
+        observedGeneration: 78
+        traffic:
+        - latestRevision: true
+          percent: 100
+          revisionName: appointease-00078-b2l
+        url: https://appointease-lfbtbh6oha-tl.a.run.app
+  requestMetadata:
+    callerIp: 35.196.133.100
+    callerSuppliedUserAgent: google-cloud-sdk gcloud/518.0.0 command/gcloud.run.deploy
+      invocation-id/adb42e1d35564b96aa8661a633ee4cfe environment/devshell environment-version/None
+      client-os/LINUX client-os-ver/6.6.72 client-pltf-arch/x86_64 interactive/True
+      from-script/False python/3.12.8 term/screen (Linux 6.6.72+),gzip(gfe)
+    destinationAttributes: {}
+    requestAttributes:
+      auth: {}
+      time: '2025-04-28T16:51:07.427148Z'
+  resourceLocation:
+    currentLocations:
+    - southamerica-west1
+  resourceName: namespaces/appointease-prod-457922/services/appointease
+  serviceName: run.googleapis.com
+receiveTimestamp: '2025-04-28T16:51:07.998657011Z'
+resource:
+  labels:
+    configuration_name: ''
+    location: southamerica-west1
+    project_id: appointease-prod-457922
+    revision_name: ''
+    service_name: appointease
+  type: cloud_run_revision
+severity: NOTICE
+timestamp: '2025-04-28T16:51:05.996784Z'
+---
+insertId: 680fb1b70004dfd6a0e3a3f0
+labels:
+  instanceId: 007f65c6d28db4e2801282afa0811795250c9c25dae2eb8730c3f5d73bde65d6beb3d24342ac3c0fcc20e29ee9a07892073a5167adf7ccfa1944abd64e05121e6f2b6e8c2bbd92e610a4649c5ea7
+logName: projects/appointease-prod-457922/logs/run.googleapis.com%2Fvarlog%2Fsystem
+receiveTimestamp: '2025-04-28T16:49:59.321860353Z'
+resource:
+  labels:
+    configuration_name: appointease
+    location: southamerica-west1
+    project_id: appointease-prod-457922
+    revision_name: appointease-00078-b2l
+    service_name: appointease
+  type: cloud_run_revision
+severity: INFO
+textPayload: Default STARTUP TCP probe succeeded after 1 attempt for container "appointease-1"
+  on port 8080.
+timestamp: '2025-04-28T16:49:59.319446Z'
+---
+insertId: 680fb1b70004db872088f6a3
+labels:
+  instanceId: 007f65c6d28db4e2801282afa0811795250c9c25dae2eb8730c3f5d73bde65d6beb3d24342ac3c0fcc20e29ee9a07892073a5167adf7ccfa1944abd64e05121e6f2b6e8c2bbd92e610a4649c5ea7
+logName: projects/appointease-prod-457922/logs/run.googleapis.com%2Fstdout
+receiveTimestamp: '2025-04-28T16:49:59.332506997Z'
+resource:
+  labels:
+    configuration_name: appointease
+    location: southamerica-west1
+    project_id: appointease-prod-457922
+    revision_name: appointease-00078-b2l
+    service_name: appointease
+  type: cloud_run_revision
+textPayload: AppointEase frontend server listening on port 8080
+timestamp: '2025-04-28T16:49:59.318343Z'
+---
+insertId: 680fb1b6000a23f01e6b3ee8
+labels:
+  instanceId: 007f65c6d28db4e2801282afa0811795250c9c25dae2eb8730c3f5d73bde65d6beb3d24342ac3c0fcc20e29ee9a07892073a5167adf7ccfa1944abd64e05121e6f2b6e8c2bbd92e610a4649c5ea7
+logName: projects/appointease-prod-457922/logs/run.googleapis.com%2Fstdout
+receiveTimestamp: '2025-04-28T16:49:58.667976102Z'
+resource:
+  labels:
+    configuration_name: appointease
+    location: southamerica-west1
+    project_id: appointease-prod-457922
+    revision_name: appointease-00078-b2l
+    service_name: appointease
+  type: cloud_run_revision
+textPayload: Starting application server...
+timestamp: '2025-04-28T16:49:58.664560Z'
+---
+insertId: 680fb1b6000a23e106b62262
+labels:
+  instanceId: 007f65c6d28db4e2801282afa0811795250c9c25dae2eb8730c3f5d73bde65d6beb3d24342ac3c0fcc20e29ee9a07892073a5167adf7ccfa1944abd64e05121e6f2b6e8c2bbd92e610a4649c5ea7
+logName: projects/appointease-prod-457922/logs/run.googleapis.com%2Fstdout
+receiveTimestamp: '2025-04-28T16:49:58.667976102Z'
+resource:
+  labels:
+    configuration_name: appointease
+    location: southamerica-west1
+    project_id: appointease-prod-457922
+    revision_name: appointease-00078-b2l
+    service_name: appointease
+  type: cloud_run_revision
+textPayload: DATABASE_URL is configured (value hidden for security)
+timestamp: '2025-04-28T16:49:58.664545Z'
+---
+insertId: 680fb1b6000a23ddab5949e3
+labels:
+  instanceId: 007f65c6d28db4e2801282afa0811795250c9c25dae2eb8730c3f5d73bde65d6beb3d24342ac3c0fcc20e29ee9a07892073a5167adf7ccfa1944abd64e05121e6f2b6e8c2bbd92e610a4649c5ea7
+logName: projects/appointease-prod-457922/logs/run.googleapis.com%2Fstdout
+receiveTimestamp: '2025-04-28T16:49:58.667976102Z'
+resource:
+  labels:
+    configuration_name: appointease
+    location: southamerica-west1
+    project_id: appointease-prod-457922
+    revision_name: appointease-00078-b2l
+    service_name: appointease
+  type: cloud_run_revision
+textPayload: 'NODE_ENV: production'
+timestamp: '2025-04-28T16:49:58.664541Z'
+---
+insertId: 680fb1b6000a23d8856dfcba
+labels:
+  instanceId: 007f65c6d28db4e2801282afa0811795250c9c25dae2eb8730c3f5d73bde65d6beb3d24342ac3c0fcc20e29ee9a07892073a5167adf7ccfa1944abd64e05121e6f2b6e8c2bbd92e610a4649c5ea7
+logName: projects/appointease-prod-457922/logs/run.googleapis.com%2Fstdout
+receiveTimestamp: '2025-04-28T16:49:58.667976102Z'
+resource:
+  labels:
+    configuration_name: appointease
+    location: southamerica-west1
+    project_id: appointease-prod-457922
+    revision_name: appointease-00078-b2l
+    service_name: appointease
+  type: cloud_run_revision
+textPayload: Using provided DATABASE_URL
+timestamp: '2025-04-28T16:49:58.664536Z'
+---
+insertId: 680fb1b6000a23b9d4def0d1
+labels:
+  instanceId: 007f65c6d28db4e2801282afa0811795250c9c25dae2eb8730c3f5d73bde65d6beb3d24342ac3c0fcc20e29ee9a07892073a5167adf7ccfa1944abd64e05121e6f2b6e8c2bbd92e610a4649c5ea7
+logName: projects/appointease-prod-457922/logs/run.googleapis.com%2Fstdout
+receiveTimestamp: '2025-04-28T16:49:58.667976102Z'
+resource:
+  labels:
+    configuration_name: appointease
+    location: southamerica-west1
+    project_id: appointease-prod-457922
+    revision_name: appointease-00078-b2l
+    service_name: appointease
+  type: cloud_run_revision
+textPayload: Starting AppointEase with database connection...
+timestamp: '2025-04-28T16:49:58.664505Z'
+---
+insertId: -ianuf6cj8y
+logName: projects/appointease-prod-457922/logs/cloudaudit.googleapis.com%2Fsystem_event
+protoPayload:
+  '@type': type.googleapis.com/google.cloud.audit.AuditLog
+  methodName: /Services.ReplaceService
+  resourceName: namespaces/appointease-prod-457922/services/appointease
+  response:
+    '@type': type.googleapis.com/google.cloud.run.v1.Service
+    apiVersion: serving.knative.dev/v1
+    kind: Service
+    metadata:
+      annotations:
+        run.googleapis.com/build-enable-automatic-updates: 'false'
+        run.googleapis.com/build-id: 375d30e8-af7b-4dd5-8e90-2b3f55bd06e7
+        run.googleapis.com/build-image-uri: southamerica-west1-docker.pkg.dev/appointease-prod-457922/cloud-run-source-deploy/appointease
+        run.googleapis.com/build-name: projects/249754346416/locations/southamerica-west1/builds/375d30e8-af7b-4dd5-8e90-2b3f55bd06e7
+        run.googleapis.com/build-source-location: gs://run-sources-appointease-prod-457922-southamerica-west1/services/appointease/1745858464.181326-5f22d0e8e70d425b9d6636916523a26c.zip#1745858465581214
+        run.googleapis.com/client-name: gcloud
+        run.googleapis.com/client-version: 518.0.0
+        run.googleapis.com/ingress: all
+        run.googleapis.com/ingress-status: all
+        run.googleapis.com/operation-id: c3c7cf07-04db-409d-9d24-73e31c9752e4
+        run.googleapis.com/urls: '["https://appointease-249754346416.southamerica-west1.run.app","https://appointease-lfbtbh6oha-tl.a.run.app"]'
+        serving.knative.dev/creator: saasb2c1@gmail.com
+        serving.knative.dev/lastModifier: saasb2c1@gmail.com
+      creationTimestamp: '2025-04-25T23:04:23.868584Z'
+      generation: 78
+      labels:
+        cloud.googleapis.com/location: southamerica-west1
+      name: appointease
+      namespace: '249754346416'
+      resourceVersion: AAYz2XlokFE
+      selfLink: /apis/serving.knative.dev/v1/namespaces/249754346416/services/appointease
+      uid: b305aeb7-01b6-4447-a085-cfe6d7f4da26
+    spec:
+      template:
+        metadata:
+          annotations:
+            autoscaling.knative.dev/maxScale: '3'
+            run.googleapis.com/client-name: gcloud
+            run.googleapis.com/client-version: 518.0.0
+            run.googleapis.com/cloudsql-instances: appointease-prod-457922:southamerica-west1:appointease-db
+            run.googleapis.com/startup-cpu-boost: 'true'
+          labels:
+            client.knative.dev/nonce: vfnoujalzh
+            run.googleapis.com/startupProbeType: Default
+        spec:
+          containerConcurrency: 80
+          containers:
+          - env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  key: latest
+                  name: database-url
+            - name: NODE_ENV
+              value: production
+            image: southamerica-west1-docker.pkg.dev/appointease-prod-457922/cloud-run-source-deploy/appointease@sha256:b1ba91ce519f1b0f5517f43ee939c9263b9a00a66b06b4cd62b44e3683323cbb
+            name: appointease-1
+            ports:
+            - containerPort: 8080
+              name: http1
+            resources:
+              limits:
+                cpu: 1000m
+                memory: 512Mi
+            startupProbe:
+              failureThreshold: 1
+              periodSeconds: 240
+              tcpSocket:
+                port: 8080
+              timeoutSeconds: 240
+          serviceAccountName: 249754346416-compute@developer.gserviceaccount.com
+          timeoutSeconds: 600
+      traffic:
+      - latestRevision: true
+        percent: 100
+    status:
+      address:
+        url: https://appointease-lfbtbh6oha-tl.a.run.app
+      conditions:
+      - lastTransitionTime: '2025-04-28T16:49:58.079569Z'
+        status: 'True'
+        type: Ready
+      - lastTransitionTime: '2025-04-28T16:49:56.842644Z'
+        status: 'True'
+        type: ConfigurationsReady
+      - lastTransitionTime: '2025-04-28T16:49:58.051282Z'
+        status: 'True'
+        type: RoutesReady
+      latestCreatedRevisionName: appointease-00078-b2l
+      latestReadyRevisionName: appointease-00078-b2l
+      observedGeneration: 78
+      traffic:
+      - latestRevision: true
+        percent: 100
+        revisionName: appointease-00078-b2l
+      url: https://appointease-lfbtbh6oha-tl.a.run.app
+  serviceName: run.googleapis.com
+  status:
+    message: Ready condition status changed to True for Service appointease.
+receiveTimestamp: '2025-04-28T16:49:59.122764742Z'
+resource:
+  labels:
+    configuration_name: ''
+    location: southamerica-west1
+    project_id: appointease-prod-457922
+    revision_name: ''
+    service_name: appointease
+  type: cloud_run_revision
+severity: INFO
+timestamp: '2025-04-28T16:49:58.089531Z'
+---
+insertId: r88mr4ci6g
+logName: projects/appointease-prod-457922/logs/cloudaudit.googleapis.com%2Fsystem_event
+protoPayload:
+  '@type': type.googleapis.com/google.cloud.audit.AuditLog
+  methodName: /Services.ReplaceService
+  resourceName: namespaces/appointease-prod-457922/revisions/appointease-00078-b2l
+  response:
+    '@type': type.googleapis.com/google.cloud.run.v1.Revision
+    apiVersion: serving.knative.dev/v1
+    kind: Revision
+    metadata:
+      annotations:
+        autoscaling.knative.dev/maxScale: '3'
+        run.googleapis.com/build-source-location: '{"appointease-1":"gs://run-sources-appointease-prod-457922-southamerica-west1/services/appointease/1745858464.181326-5f22d0e8e70d425b9d6636916523a26c.zip#1745858465581214"}'
+        run.googleapis.com/client-name: gcloud
+        run.googleapis.com/client-version: 518.0.0
+        run.googleapis.com/cloudsql-instances: appointease-prod-457922:southamerica-west1:appointease-db
+        run.googleapis.com/operation-id: c3c7cf07-04db-409d-9d24-73e31c9752e4
+        run.googleapis.com/startup-cpu-boost: 'true'
+        serving.knative.dev/creator: saasb2c1@gmail.com
+      creationTimestamp: '2025-04-28T16:49:52.146217Z'
+      generation: 1
+      labels:
+        client.knative.dev/nonce: vfnoujalzh
+        cloud.googleapis.com/location: southamerica-west1
+        run.googleapis.com/startupProbeType: Default
+        serving.knative.dev/configuration: appointease
+        serving.knative.dev/configurationGeneration: '78'
+        serving.knative.dev/route: appointease
+        serving.knative.dev/service: appointease
+        serving.knative.dev/serviceUid: b305aeb7-01b6-4447-a085-cfe6d7f4da26
+      name: appointease-00078-b2l
+      namespace: '249754346416'
+      ownerReferences:
+      - apiVersion: serving.knative.dev/v1
+        blockOwnerDeletion: true
+        controller: true
+        kind: Configuration
+        name: appointease
+        uid: 081ecb5d-79e0-4bad-a841-b98635a7c0ac
+      resourceVersion: AAYz2XlVLxc
+      selfLink: /apis/serving.knative.dev/v1/namespaces/249754346416/revisions/appointease-00078-b2l
+      uid: 0813930d-e825-4b3c-8ffc-311c1a9702f8
+    spec:
+      containerConcurrency: 80
+      containers:
+      - env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: database-url
+        - name: NODE_ENV
+          value: production
+        image: southamerica-west1-docker.pkg.dev/appointease-prod-457922/cloud-run-source-deploy/appointease@sha256:b1ba91ce519f1b0f5517f43ee939c9263b9a00a66b06b4cd62b44e3683323cbb
+        name: appointease-1
+        ports:
+        - containerPort: 8080
+          name: http1
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 512Mi
+        startupProbe:
+          failureThreshold: 1
+          periodSeconds: 240
+          tcpSocket:
+            port: 8080
+          timeoutSeconds: 240
+      serviceAccountName: 249754346416-compute@developer.gserviceaccount.com
+      timeoutSeconds: 600
+    status:
+      conditions:
+      - lastTransitionTime: '2025-04-28T16:49:56.809495Z'
+        message: Deploying revision succeeded in 4.66s.
+        status: 'True'
+        type: Ready
+      - lastTransitionTime: '2025-04-28T16:49:56.757717Z'
+        message: Containers became healthy.
+        status: 'True'
+        type: ContainerHealthy
+      - lastTransitionTime: '2025-04-28T16:49:52.684301Z'
+        message: Container image import completed.
+        status: 'True'
+        type: ContainerReady
+      - lastTransitionTime: '2025-04-28T16:49:55.684034Z'
+        message: Provisioning imported containers completed in 3s. Checking container
+          health.
+        status: 'True'
+        type: ResourcesAvailable
+      containerStatuses:
+      - imageDigest: southamerica-west1-docker.pkg.dev/appointease-prod-457922/cloud-run-source-deploy/appointease@sha256:b1ba91ce519f1b0f5517f43ee939c9263b9a00a66b06b4cd62b44e3683323cbb
+        name: appointease-1
+      imageDigest: southamerica-west1-docker.pkg.dev/appointease-prod-457922/cloud-run-source-deploy/appointease@sha256:b1ba91ce519f1b0f5517f43ee939c9263b9a00a66b06b4cd62b44e3683323cbb
+      logUrl: https://console.cloud.google.com/logs/viewer?project=appointease-prod-457922&resource=cloud_run_revision/service_name/appointease/revision_name/appointease-00078-b2l&advancedFilter=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22appointease%22%0Aresource.labels.revision_name%3D%22appointease-00078-b2l%22
+      observedGeneration: 1
+  serviceName: run.googleapis.com
+  status:
+    message: 'Ready condition status changed to True for Revision appointease-00078-b2l
+      with message: Deploying revision succeeded in 4.66s.'
+receiveTimestamp: '2025-04-28T16:49:56.963073719Z'
+resource:
+  labels:
+    configuration_name: appointease
+    location: southamerica-west1
+    project_id: appointease-prod-457922
+    revision_name: appointease-00078-b2l
+    service_name: appointease
+  type: cloud_run_revision
+severity: INFO
+timestamp: '2025-04-28T16:49:56.819426Z'
+---
+insertId: 680fb1b4000b6d71802670d3
+labels:
+  instanceId: 007f65c6d2513812396252464d1dcbe9787b154dc62fb5285db1229c9f3513a3631a6128da0c13838a1fd0e11e3fe4d876a66e43ae64047ee2a152d59d4f3b959e311ad52e791380d537416839dc
+logName: projects/appointease-prod-457922/logs/run.googleapis.com%2Fstdout
+receiveTimestamp: '2025-04-28T16:49:56.987974152Z'
+resource:
+  labels:
+    configuration_name: appointease
+    location: southamerica-west1
+    project_id: appointease-prod-457922
+    revision_name: appointease-00078-b2l
+    service_name: appointease
+  type: cloud_run_revision
+textPayload: AppointEase frontend server listening on port 8080
+timestamp: '2025-04-28T16:49:56.748913Z'
+---
+insertId: 680fb1b4000b64fd38886a6c
+labels:
+  instanceId: 007f65c6d2513812396252464d1dcbe9787b154dc62fb5285db1229c9f3513a3631a6128da0c13838a1fd0e11e3fe4d876a66e43ae64047ee2a152d59d4f3b959e311ad52e791380d537416839dc
+logName: projects/appointease-prod-457922/logs/run.googleapis.com%2Fvarlog%2Fsystem
+receiveTimestamp: '2025-04-28T16:49:56.750158588Z'
+resource:
+  labels:
+    configuration_name: appointease
+    location: southamerica-west1
+    project_id: appointease-prod-457922
+    revision_name: appointease-00078-b2l
+    service_name: appointease
+  type: cloud_run_revision
+severity: INFO
+textPayload: Default STARTUP TCP probe succeeded after 1 attempt for container "appointease-1"
+  on port 8080.
+timestamp: '2025-04-28T16:49:56.746749Z'
+---
+insertId: 680fb1b40004d80c03c7a5e8
+labels:
+  instanceId: 007f65c6d2513812396252464d1dcbe9787b154dc62fb5285db1229c9f3513a3631a6128da0c13838a1fd0e11e3fe4d876a66e43ae64047ee2a152d59d4f3b959e311ad52e791380d537416839dc
+logName: projects/appointease-prod-457922/logs/run.googleapis.com%2Fstdout
+receiveTimestamp: '2025-04-28T16:49:56.320426785Z'
+resource:
+  labels:
+    configuration_name: appointease
+    location: southamerica-west1
+    project_id: appointease-prod-457922
+    revision_name: appointease-00078-b2l
+    service_name: appointease
+  type: cloud_run_revision
+textPayload: Starting application server...
+timestamp: '2025-04-28T16:49:56.317452Z'
+---
+insertId: 680fb1b40004d809a89a97d5
+labels:
+  instanceId: 007f65c6d2513812396252464d1dcbe9787b154dc62fb5285db1229c9f3513a3631a6128da0c13838a1fd0e11e3fe4d876a66e43ae64047ee2a152d59d4f3b959e311ad52e791380d537416839dc
+logName: projects/appointease-prod-457922/logs/run.googleapis.com%2Fstdout
+receiveTimestamp: '2025-04-28T16:49:56.320426785Z'
+resource:
+  labels:
+    configuration_name: appointease
+    location: southamerica-west1
+    project_id: appointease-prod-457922
+    revision_name: appointease-00078-b2l
+    service_name: appointease
+  type: cloud_run_revision
+textPayload: DATABASE_URL is configured (value hidden for security)
+timestamp: '2025-04-28T16:49:56.317449Z'
+---
+insertId: 680fb1b40004d8054d3f6bcc
+labels:
+  instanceId: 007f65c6d2513812396252464d1dcbe9787b154dc62fb5285db1229c9f3513a3631a6128da0c13838a1fd0e11e3fe4d876a66e43ae64047ee2a152d59d4f3b959e311ad52e791380d537416839dc
+logName: projects/appointease-prod-457922/logs/run.googleapis.com%2Fstdout
+receiveTimestamp: '2025-04-28T16:49:56.320426785Z'
+resource:
+  labels:
+    configuration_name: appointease
+    location: southamerica-west1
+    project_id: appointease-prod-457922
+    revision_name: appointease-00078-b2l
+    service_name: appointease
+  type: cloud_run_revision
+textPayload: 'NODE_ENV: production'
+timestamp: '2025-04-28T16:49:56.317445Z'
+---
+insertId: 680fb1b40004d802c19916be
+labels:
+  instanceId: 007f65c6d2513812396252464d1dcbe9787b154dc62fb5285db1229c9f3513a3631a6128da0c13838a1fd0e11e3fe4d876a66e43ae64047ee2a152d59d4f3b959e311ad52e791380d537416839dc
+logName: projects/appointease-prod-457922/logs/run.googleapis.com%2Fstdout
+receiveTimestamp: '2025-04-28T16:49:56.320426785Z'
+resource:
+  labels:
+    configuration_name: appointease
+    location: southamerica-west1
+    project_id: appointease-prod-457922
+    revision_name: appointease-00078-b2l
+    service_name: appointease
+  type: cloud_run_revision
+textPayload: Using provided DATABASE_URL
+timestamp: '2025-04-28T16:49:56.317442Z'
+---
+insertId: 680fb1b40004d7eabc787547
+labels:
+  instanceId: 007f65c6d2513812396252464d1dcbe9787b154dc62fb5285db1229c9f3513a3631a6128da0c13838a1fd0e11e3fe4d876a66e43ae64047ee2a152d59d4f3b959e311ad52e791380d537416839dc
+logName: projects/appointease-prod-457922/logs/run.googleapis.com%2Fstdout
+receiveTimestamp: '2025-04-28T16:49:56.320426785Z'
+resource:
+  labels:
+    configuration_name: appointease
+    location: southamerica-west1
+    project_id: appointease-prod-457922
+    revision_name: appointease-00078-b2l
+    service_name: appointease
+  type: cloud_run_revision
+textPayload: Starting AppointEase with database connection...
+timestamp: '2025-04-28T16:49:56.317418Z'
+---
+insertId: pt3cxxd2axd
+logName: projects/appointease-prod-457922/logs/cloudaudit.googleapis.com%2Factivity
+protoPayload:
+  '@type': type.googleapis.com/google.cloud.audit.AuditLog
+  authenticationInfo:
+    principalEmail: saasb2c1@gmail.com
+    principalSubject: user:saasb2c1@gmail.com
+  authorizationInfo:
+  - granted: true
+    permission: run.services.update
+    permissionType: ADMIN_WRITE
+    resource: namespaces/appointease-prod-457922/services/appointease
+    resourceAttributes: {}
+  - granted: true
+    permission: run.services.update
+    permissionType: ADMIN_WRITE
+    resource: namespaces/appointease-prod-457922/services/appointease
+    resourceAttributes:
+      name: namespaces/appointease-prod-457922/services/appointease
+      service: run.googleapis.com/
+      type: run.googleapis.com/Service
+  methodName: google.cloud.run.v1.Services.ReplaceService
+  request:
+    '@type': type.googleapis.com/google.cloud.run.v1.ReplaceServiceRequest
+    name: namespaces/appointease-prod-457922/services/appointease
+    service:
+      apiVersion: serving.knative.dev/v1
+      kind: Service
+      metadata:
+        annotations:
+          run.googleapis.com/build-enable-automatic-updates: 'false'
+          run.googleapis.com/build-id: 375d30e8-af7b-4dd5-8e90-2b3f55bd06e7
+          run.googleapis.com/build-image-uri: southamerica-west1-docker.pkg.dev/appointease-prod-457922/cloud-run-source-deploy/appointease
+          run.googleapis.com/build-name: projects/249754346416/locations/southamerica-west1/builds/375d30e8-af7b-4dd5-8e90-2b3f55bd06e7
+          run.googleapis.com/build-source-location: gs://run-sources-appointease-prod-457922-southamerica-west1/services/appointease/1745858464.181326-5f22d0e8e70d425b9d6636916523a26c.zip#1745858465581214
+          run.googleapis.com/client-name: gcloud
+          run.googleapis.com/client-version: 518.0.0
+          run.googleapis.com/ingress: all
+          run.googleapis.com/ingress-status: all
+          run.googleapis.com/operation-id: 6b35f60f-6b1f-43f8-836b-4a49626dbea6
+          run.googleapis.com/urls: '["https://appointease-249754346416.southamerica-west1.run.app","https://appointease-lfbtbh6oha-tl.a.run.app"]'
+          serving.knative.dev/creator: saasb2c1@gmail.com
+          serving.knative.dev/lastModifier: saasb2c1@gmail.com
+        creationTimestamp: '2025-04-25T23:04:23.868584Z'
+        generation: 77
+        labels:
+          cloud.googleapis.com/location: southamerica-west1
+        name: appointease
+        namespace: '249754346416'
+        resourceVersion: AAYz2V3Ym8g
+        selfLink: /apis/serving.knative.dev/v1/namespaces/249754346416/services/appointease
+        uid: b305aeb7-01b6-4447-a085-cfe6d7f4da26
+      spec:
+        template:
+          metadata:
+            annotations:
+              autoscaling.knative.dev/maxScale: '3'
+              run.googleapis.com/client-name: gcloud
+              run.googleapis.com/client-version: 518.0.0
+              run.googleapis.com/cloudsql-instances: appointease-prod-457922:southamerica-west1:appointease-db
+              run.googleapis.com/startup-cpu-boost: 'true'
+            labels:
+              client.knative.dev/nonce: vfnoujalzh
+              run.googleapis.com/startupProbeType: Default
+          spec:
+            containerConcurrency: 80
+            containers:
+            - image: southamerica-west1-docker.pkg.dev/appointease-prod-457922/cloud-run-source-deploy/appointease@sha256:b1ba91ce519f1b0f5517f43ee939c9263b9a00a66b06b4cd62b44e3683323cbb
+              name: appointease-1
+              resources:
+                limits:
+                  cpu: 1000m
+                  memory: 512Mi
+            serviceAccountName: 249754346416-compute@developer.gserviceaccount.com
+            timeoutSeconds: 600
+        traffic:
+        - latestRevision: true
+          percent: 100
+      status:
+        conditions:
+        - lastTransitionTime: '2025-04-28T16:42:15.660488Z'
+          status: 'True'
+          type: Ready
+        - lastTransitionTime: '2025-04-28T16:42:14.407654Z'
+          status: 'True'
+          type: ConfigurationsReady
+        - lastTransitionTime: '2025-04-28T16:42:15.627805Z'
+          status: 'True'
+          type: RoutesReady
+        latestCreatedRevisionName: appointease-00077-chq
+        latestReadyRevisionName: appointease-00077-chq
+        observedGeneration: 77
+        traffic:
+        - latestRevision: true
+          percent: 100
+          revisionName: appointease-00077-chq
+        url: https://appointease-lfbtbh6oha-tl.a.run.app
+  requestMetadata:
+    callerIp: 35.196.133.100
+    callerSuppliedUserAgent: google-cloud-sdk gcloud/518.0.0 command/gcloud.run.services.update
+      invocation-id/b476167d9d3941d4a87150f33c0ea91d environment/devshell environment-version/None
+      client-os/LINUX client-os-ver/6.6.72 client-pltf-arch/x86_64 interactive/True
+      from-script/False python/3.12.8 term/screen (Linux 6.6.72+),gzip(gfe)
+    destinationAttributes: {}
+    requestAttributes:
+      auth: {}
+      time: '2025-04-28T16:49:52.109787Z'
+  resourceLocation:
+    currentLocations:
+    - southamerica-west1
+  resourceName: namespaces/appointease-prod-457922/services/appointease
+  serviceName: run.googleapis.com
+receiveTimestamp: '2025-04-28T16:49:52.220444735Z'
+resource:
+  labels:
+    configuration_name: ''
+    location: southamerica-west1
+    project_id: appointease-prod-457922
+    revision_name: ''
+    service_name: appointease
+  type: cloud_run_revision
+severity: NOTICE
+timestamp: '2025-04-28T16:49:51.169412Z'
+---
+httpRequest:
+  latency: 0.002254422s
+  protocol: HTTP/1.1
+  referer: https://appointease-249754346416.southamerica-west1.run.app/auth
+  remoteIp: 181.42.18.250
+  requestMethod: POST
+  requestSize: '1266'
+  requestUrl: https://appointease-249754346416.southamerica-west1.run.app/api/login
+  responseSize: '280'
+  serverIp: 216.239.32.53
+  status: 503
+  userAgent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
+    like Gecko) Chrome/135.0.0.0 Safari/537.36
+insertId: 680fb046000eb113014ff3ec
+labels:
+  instanceId: 007f65c6d255010ffc908f2508cedf9ed0cd186f2d31aaf383a93671b5b56fb837dd86d50554660f268e25892e5bcfef4e43ac3f18ee272bec106c9d2db4b20edca831bee3faf572f651508567ba
+logName: projects/appointease-prod-457922/logs/run.googleapis.com%2Frequests
+receiveTimestamp: '2025-04-28T16:43:51.088729051Z'
+resource:
+  labels:
+    configuration_name: appointease
+    location: southamerica-west1
+    project_id: appointease-prod-457922
+    revision_name: appointease-00077-chq
+    service_name: appointease
+  type: cloud_run_revision
+severity: ERROR
+spanId: fc30167ca5a88a12
+timestamp: '2025-04-28T16:43:50.959117Z'
+trace: projects/appointease-prod-457922/traces/aac00a8a3c29b41489e3251ec41344e9
+---
+httpRequest:
+  latency: 0.002061052s
+  protocol: HTTP/1.1
+  referer: https://appointease-249754346416.southamerica-west1.run.app/auth
+  remoteIp: 181.42.18.250
+  requestMethod: GET
+  requestSize: '1221'
+  requestUrl: https://appointease-249754346416.southamerica-west1.run.app/api/auth-debug
+  responseSize: '214'
+  serverIp: 216.239.32.53
+  status: 304
+  userAgent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
+    like Gecko) Chrome/135.0.0.0 Safari/537.36
+insertId: 680fb046000e50c5ecf8fe81
+labels:
+  instanceId: 007f65c6d255010ffc908f2508cedf9ed0cd186f2d31aaf383a93671b5b56fb837dd86d50554660f268e25892e5bcfef4e43ac3f18ee272bec106c9d2db4b20edca831bee3faf572f651508567ba
+logName: projects/appointease-prod-457922/logs/run.googleapis.com%2Frequests
+receiveTimestamp: '2025-04-28T16:43:51.088729051Z'
+resource:
+  labels:
+    configuration_name: appointease
+    location: southamerica-west1
+    project_id: appointease-prod-457922
+    revision_name: appointease-00077-chq
+    service_name: appointease
+  type: cloud_run_revision
+severity: INFO
+spanId: b0ab2ec42712da2f
+timestamp: '2025-04-28T16:43:50.934753Z'
+trace: projects/appointease-prod-457922/traces/91b77f6d90e35a2589e3251ec4134650
+traceSampled: true
+---
+httpRequest:
+  latency: 0.002085727s
+  protocol: HTTP/1.1
+  referer: https://appointease-249754346416.southamerica-west1.run.app/
+  remoteIp: 181.42.18.250
+  requestMethod: GET
+  requestSize: '1214'
+  requestUrl: https://appointease-249754346416.southamerica-west1.run.app/api/themes
+  responseSize: '214'
+  serverIp: 216.239.32.53
+  status: 304
+  userAgent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
+    like Gecko) Chrome/135.0.0.0 Safari/537.36
+insertId: 680fb040000882ea7f4c4814
+labels:
+  instanceId: 007f65c6d255010ffc908f2508cedf9ed0cd186f2d31aaf383a93671b5b56fb837dd86d50554660f268e25892e5bcfef4e43ac3f18ee272bec106c9d2db4b20edca831bee3faf572f651508567ba
+logName: projects/appointease-prod-457922/logs/run.googleapis.com%2Frequests
+receiveTimestamp: '2025-04-28T16:43:44.760283979Z'
+resource:
+  labels:
+    configuration_name: appointease
+    location: southamerica-west1
+    project_id: appointease-prod-457922
+    revision_name: appointease-00077-chq
+    service_name: appointease
+  type: cloud_run_revision
+severity: INFO
+spanId: 5ede5504d6747705
+timestamp: '2025-04-28T16:43:44.554357Z'
+trace: projects/appointease-prod-457922/traces/5ee980bec456d12789e3251ec4134d61
+---
+httpRequest:
+  latency: 0.002456222s
+  protocol: HTTP/1.1
+  referer: https://appointease-249754346416.southamerica-west1.run.app/
+  remoteIp: 181.42.18.250
+  requestMethod: GET
+  requestSize: '1144'
+  requestUrl: https://appointease-249754346416.southamerica-west1.run.app/api/user
+  responseSize: '227'
+  serverIp: 216.239.32.53
+  status: 401
+  userAgent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
+    like Gecko) Chrome/135.0.0.0 Safari/537.36
+insertId: 680fb0400006b5601ad4e1a3
+labels:
+  instanceId: 007f65c6d255010ffc908f2508cedf9ed0cd186f2d31aaf383a93671b5b56fb837dd86d50554660f268e25892e5bcfef4e43ac3f18ee272bec106c9d2db4b20edca831bee3faf572f651508567ba
+logName: projects/appointease-prod-457922/logs/run.googleapis.com%2Frequests
+receiveTimestamp: '2025-04-28T16:43:44.760283979Z'
+resource:
+  labels:
+    configuration_name: appointease
+    location: southamerica-west1
+    project_id: appointease-prod-457922
+    revision_name: appointease-00077-chq
+    service_name: appointease
+  type: cloud_run_revision
+severity: WARNING
+spanId: f46f333008c0f188
+timestamp: '2025-04-28T16:43:44.435986Z'
+trace: projects/appointease-prod-457922/traces/925399e9fcc4077d89e3251ec4134e97
+saasb2c1@cloudshell:~/appointease-frontend (appointease-prod-457922)$ 

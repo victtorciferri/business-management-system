@@ -1,0 +1,60 @@
+saasb2c1@cloudshell:~ (appointease-prod-457922)$ # Cancel the current command with Ctrl+C if it's still waiting for a password
+
+# Let's run a simplified debugging script
+cd ~/appointease-frontend
+
+# Create a direct test file
+cat > test-businesses.js << 'EOF'
+const { Pool } = require('pg');
+const https = require('https');
+
+// Test database connection directly
+async function testDatabase() {
+  console.log('=== TESTING DATABASE CONNECTION ===');
+node test-businesses.jsTION_NAME="appointease-prod-457922:southamerica-west1:appointease-db"S NOT NULL'));
+
+up to date, audited 84 packages in 851ms
+
+14 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+Starting Cloud SQL Auth Proxy...
+Proxy stderr: 2025/04/28 17:24:52 This is the Cloud SQL Proxy v1. It is no longer receiving active feature development. For the latest features and improvements, migrate to the v2 version of the Cloud SQL Proxy. For details, see: https://github.com/GoogleCloudPlatform/cloud-sql-proxy/blob/main/migration-guide.md
+2025/04/28 17:24:52 current FDs rlimit set to 1048576, wanted limit is 8500. Nothing to do here.
+
+Proxy stderr: 2025/04/28 17:24:55 Listening on 127.0.0.1:5432 for appointease-prod-457922:southamerica-west1:appointease-db
+2025/04/28 17:24:55 Ready for new connections
+
+Proxy stderr: 2025/04/28 17:24:55 Generated RSA key in 175.973757ms
+
+Proxy should be initialized, running tests...
+=== TESTING DATABASE CONNECTION ===
+Using connection string (without password): postgresql:***@localhost:5432/postgres
+Proxy stderr: 2025/04/28 17:25:02 New connection for "appointease-prod-457922:southamerica-west1:appointease-db"
+2025/04/28 17:25:02 refreshing ephemeral certificate for instance appointease-prod-457922:southamerica-west1:appointease-db
+
+Proxy stderr: 2025/04/28 17:25:04 Scheduling refresh of ephemeral certificate in 54m59s
+
+Database connection successful: 2025-04-28T17:25:04.993Z
+
+Checking users table...
+Total users: 9
+
+Checking businesses...
+Database test error: column "businessName" does not exist
+
+=== TESTING FRONTEND URL ===
+Making request to: https://appointease-249754346416.southamerica-west1.run.app/api/businesses
+Proxy stderr: 2025/04/28 17:25:05 Client closed local connection on 127.0.0.1:5432
+
+Status code: 500
+Headers: {"x-powered-by":"Express","content-type":"application/json; charset=utf-8","etag":"W/\"4b-nFNRwAylXaI0uRVl+75G900o61k\"","x-cloud-trace-context":"594ebd44e629a8db5689c61890a62c5c;o=1","date":"Mon, 28 Apr 2025 17:25:05 GMT","server":"Google Frontend","content-length":"75"}
+Response preview (first 200 chars):
+{"error":"Server error","message":"column \"businessName\" does not exist"}
+Parsed JSON response: {
+  "error": "Server error",
+  "message": "column \"businessName\" does not exist"
+}
+Tests complete, killing proxy...
+saasb2c1@cloudshell:~/appointease-frontend (appointease-prod-457922)$ 

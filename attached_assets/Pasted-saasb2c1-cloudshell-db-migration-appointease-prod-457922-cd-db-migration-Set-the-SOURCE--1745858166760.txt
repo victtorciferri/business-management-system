@@ -1,0 +1,318 @@
+saasb2c1@cloudshell:~/db-migration (appointease-prod-457922)$ cd ~/db-migration
+
+# Set the SOURCE_DB_URL environment variable
+export SOURCE_DB_URL="postgresql://neondb_owner:npg_wrbc48eRdZmf@ep-divine-field-a42drrxe.us-east-1.aws.neon.tech/neondb?sslmode=require"
+
+# Run the raw migration script
+./raw-db-migration.sh
+===== RAW DATABASE MIGRATION TOOL =====
+AWS Neon → Google Cloud SQL
+=====================================
+
+Your active configuration is: [cloudshell-12772]
+Source database information:
+Host: ep-divine-field-a42drrxe.us-east-1.aws.neon.tech
+Database: neondb
+User: neondb_owner
+
+Starting Cloud SQL Auth Proxy...
+Waiting for proxy to initialize...
+2025/04/28 16:34:50 This is the Cloud SQL Proxy v1. It is no longer receiving active feature development. For the latest features and improvements, migrate to the v2 version of the Cloud SQL Proxy. For details, see: https://github.com/GoogleCloudPlatform/cloud-sql-proxy/blob/main/migration-guide.md
+2025/04/28 16:34:50 current FDs rlimit set to 1048575, wanted limit is 8500. Nothing to do here.
+2025/04/28 16:34:53 Listening on 127.0.0.1:5432 for appointease-prod-457922:southamerica-west1:appointease-db
+2025/04/28 16:34:53 Ready for new connections
+2025/04/28 16:34:53 Generated RSA key in 373.884919ms
+Temporary directory for dumps: /tmp/tmp.eCgQ4dmu4i
+Step 1: Dumping schema from source database...
+Step 2: Dumping data from source database...
+pg_dump: warning: there are circular foreign-key constraints on this table:
+pg_dump: detail: users
+pg_dump: hint: You might not be able to restore the dump without using --disable-triggers or temporarily dropping the constraints.
+pg_dump: hint: Consider using a full dump instead of a --data-only dump to avoid this problem.
+Step 3: Combining schema and data dumps...
+Step 4: Counting tables and records in source database...
+Source database has     14 tables and approximately    0 records.
+Step 5: Cleaning target database...
+2025/04/28 16:35:08 New connection for "appointease-prod-457922:southamerica-west1:appointease-db"
+2025/04/28 16:35:08 refreshing ephemeral certificate for instance appointease-prod-457922:southamerica-west1:appointease-db
+2025/04/28 16:35:11 Scheduling refresh of ephemeral certificate in 54m58s
+NOTICE:  drop cascades to 15 other objects
+DETAIL:  drop cascades to table customers
+drop cascades to table payments
+drop cascades to table appointments
+drop cascades to table ssl_domains
+drop cascades to table product_variants
+drop cascades to table products
+drop cascades to table carts
+drop cascades to table services
+drop cascades to table cart_items
+drop cascades to table staff_availability
+drop cascades to table customer_access_tokens
+drop cascades to table users
+drop cascades to table session
+drop cascades to sequence themes_id_seq
+drop cascades to table themes
+DROP SCHEMA
+CREATE SCHEMA
+GRANT
+GRANT
+2025/04/28 16:35:12 Client closed local connection on 127.0.0.1:5432
+Step 6: Restoring to target database...
+2025/04/28 16:35:12 New connection for "appointease-prod-457922:southamerica-west1:appointease-db"
+SET
+SET
+SET
+SET
+SET
+ set_config 
+------------
+ 
+(1 row)
+
+SET
+SET
+SET
+SET
+SET
+SET
+CREATE TABLE
+CREATE SEQUENCE
+ALTER SEQUENCE
+CREATE TABLE
+CREATE SEQUENCE
+ALTER SEQUENCE
+CREATE TABLE
+CREATE SEQUENCE
+ALTER SEQUENCE
+CREATE TABLE
+CREATE SEQUENCE
+ALTER SEQUENCE
+CREATE TABLE
+CREATE SEQUENCE
+ALTER SEQUENCE
+CREATE TABLE
+CREATE SEQUENCE
+ALTER SEQUENCE
+CREATE TABLE
+CREATE SEQUENCE
+ALTER SEQUENCE
+CREATE TABLE
+CREATE SEQUENCE
+ALTER SEQUENCE
+CREATE TABLE
+CREATE SEQUENCE
+ALTER SEQUENCE
+CREATE TABLE
+CREATE TABLE
+CREATE SEQUENCE
+ALTER SEQUENCE
+CREATE TABLE
+CREATE SEQUENCE
+ALTER SEQUENCE
+CREATE TABLE
+CREATE SEQUENCE
+ALTER SEQUENCE
+CREATE TABLE
+CREATE SEQUENCE
+ALTER SEQUENCE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+SET
+SET
+SET
+SET
+SET
+ set_config 
+------------
+ 
+(1 row)
+
+SET
+SET
+SET
+SET
+SET
+psql:/tmp/tmp.eCgQ4dmu4i/full_dump.sql:1067: ERROR:  permission denied: "RI_ConstraintTrigger_a_17017" is a system trigger
+COPY 9
+psql:/tmp/tmp.eCgQ4dmu4i/full_dump.sql:1082: ERROR:  permission denied: "RI_ConstraintTrigger_a_17017" is a system trigger
+psql:/tmp/tmp.eCgQ4dmu4i/full_dump.sql:1088: ERROR:  permission denied: "RI_ConstraintTrigger_c_17019" is a system trigger
+COPY 109
+psql:/tmp/tmp.eCgQ4dmu4i/full_dump.sql:1203: ERROR:  permission denied: "RI_ConstraintTrigger_c_17019" is a system trigger
+psql:/tmp/tmp.eCgQ4dmu4i/full_dump.sql:1209: ERROR:  permission denied: "RI_ConstraintTrigger_a_17037" is a system trigger
+COPY 6
+psql:/tmp/tmp.eCgQ4dmu4i/full_dump.sql:1221: ERROR:  permission denied: "RI_ConstraintTrigger_a_17037" is a system trigger
+psql:/tmp/tmp.eCgQ4dmu4i/full_dump.sql:1227: ERROR:  permission denied: "RI_ConstraintTrigger_a_17022" is a system trigger
+COPY 0
+psql:/tmp/tmp.eCgQ4dmu4i/full_dump.sql:1233: ERROR:  permission denied: "RI_ConstraintTrigger_a_17022" is a system trigger
+psql:/tmp/tmp.eCgQ4dmu4i/full_dump.sql:1239: ERROR:  permission denied: "RI_ConstraintTrigger_a_17027" is a system trigger
+COPY 2
+psql:/tmp/tmp.eCgQ4dmu4i/full_dump.sql:1247: ERROR:  permission denied: "RI_ConstraintTrigger_a_17027" is a system trigger
+psql:/tmp/tmp.eCgQ4dmu4i/full_dump.sql:1253: ERROR:  permission denied: "RI_ConstraintTrigger_a_17032" is a system trigger
+COPY 0
+psql:/tmp/tmp.eCgQ4dmu4i/full_dump.sql:1259: ERROR:  permission denied: "RI_ConstraintTrigger_a_17032" is a system trigger
+psql:/tmp/tmp.eCgQ4dmu4i/full_dump.sql:1265: ERROR:  permission denied: "RI_ConstraintTrigger_c_17024" is a system trigger
+COPY 0
+psql:/tmp/tmp.eCgQ4dmu4i/full_dump.sql:1271: ERROR:  permission denied: "RI_ConstraintTrigger_c_17024" is a system trigger
+psql:/tmp/tmp.eCgQ4dmu4i/full_dump.sql:1277: ERROR:  permission denied: "RI_ConstraintTrigger_c_17049" is a system trigger
+COPY 6
+psql:/tmp/tmp.eCgQ4dmu4i/full_dump.sql:1289: ERROR:  permission denied: "RI_ConstraintTrigger_c_17049" is a system trigger
+ALTER TABLE
+COPY 0
+ALTER TABLE
+ALTER TABLE
+COPY 11
+ALTER TABLE
+ALTER TABLE
+COPY 1
+ALTER TABLE
+psql:/tmp/tmp.eCgQ4dmu4i/full_dump.sql:1343: ERROR:  permission denied: "RI_ConstraintTrigger_c_17069" is a system trigger
+COPY 0
+psql:/tmp/tmp.eCgQ4dmu4i/full_dump.sql:1349: ERROR:  permission denied: "RI_ConstraintTrigger_c_17069" is a system trigger
+psql:/tmp/tmp.eCgQ4dmu4i/full_dump.sql:1355: ERROR:  permission denied: "RI_ConstraintTrigger_c_17074" is a system trigger
+COPY 9
+psql:/tmp/tmp.eCgQ4dmu4i/full_dump.sql:1370: ERROR:  permission denied: "RI_ConstraintTrigger_c_17074" is a system trigger
+psql:/tmp/tmp.eCgQ4dmu4i/full_dump.sql:1376: ERROR:  permission denied: "RI_ConstraintTrigger_c_17079" is a system trigger
+COPY 25
+psql:/tmp/tmp.eCgQ4dmu4i/full_dump.sql:1407: ERROR:  permission denied: "RI_ConstraintTrigger_c_17079" is a system trigger
+ setval 
+--------
+    127
+(1 row)
+
+ setval 
+--------
+      1
+(1 row)
+
+ setval 
+--------
+      1
+(1 row)
+
+ setval 
+--------
+      7
+(1 row)
+
+ setval 
+--------
+      6
+(1 row)
+
+ setval 
+--------
+      1
+(1 row)
+
+ setval 
+--------
+      1
+(1 row)
+
+ setval 
+--------
+      2
+(1 row)
+
+ setval 
+--------
+     15
+(1 row)
+
+ setval 
+--------
+      1
+(1 row)
+
+ setval 
+--------
+     11
+(1 row)
+
+ setval 
+--------
+     25
+(1 row)
+
+ setval 
+--------
+     11
+(1 row)
+
+2025/04/28 16:35:33 Client closed local connection on 127.0.0.1:5432
+Step 7: Counting tables and records in target database...
+2025/04/28 16:35:33 New connection for "appointease-prod-457922:southamerica-west1:appointease-db"
+2025/04/28 16:35:34 Client closed local connection on 127.0.0.1:5432
+2025/04/28 16:35:34 New connection for "appointease-prod-457922:southamerica-west1:appointease-db"
+2025/04/28 16:35:35 Client closed local connection on 127.0.0.1:5432
+Target database has     14 tables and approximately  178 records.
+Step 8: Verifying migration...
+✅ Table count matches:     14
+❌ Record count mismatch: Source=   0, Target= 178
+Step 9: Cleaning up...
+
+===== MIGRATION COMPLETE =====
+Check the verification results above to ensure the migration was successful.
+
+2025/04/28 16:35:35 Received TERM signal. Waiting up to 0s before terminating.
+saasb2c1@cloudshell:~/db-migration (appointease-prod-457922)$ 

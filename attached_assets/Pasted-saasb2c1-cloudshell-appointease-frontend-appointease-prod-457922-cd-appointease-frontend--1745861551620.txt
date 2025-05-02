@@ -1,0 +1,38 @@
+saasb2c1@cloudshell:~/appointease-frontend (appointease-prod-457922)$ cd ~/appointease-frontend
+
+# First, let's check the actual column names in the users table
+cat > check-columns.sh << 'EOF'
+#!/bin/bash
+
+# Start Cloud SQL Auth Proxy
+echo "Starting Cloud SQL Auth Proxy..."
+cloud_sql_proxy -instances="appointease-prod-457922:southamerica-west1:appointease-db"=tcp:5432 &
+PROXY_PID=$!
+
+# Wait for the proxy to start
+echo "Waiting for proxy to initialize..."
+  --add-cloudsql-instances=$INSTANCE_CONNECTION_NAMECTION_NAME=$INSTANCE_CONNECTION_NAME \cmespa'];ers WHERE business_slug IS NOT NULL'
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                                                                                                                    Table "public.users"
+             Column              |            Type             | Collation | Nullable |                                                                                                                               Default                                                                                                                               
+---------------------------------+-----------------------------+-----------+----------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ id                              | integer                     |           | not null | nextval('users_id_seq'::regcl2025/04/28 17:32:14 Received TERM signal. Waiting up to 0s before terminating.
+ass)
+ username                        | text                        |           | not null | 
+ password                        | text                        |           | not null | 
+ email                           | text                        |           | not null | 
+ business_name                   | text                        |           |          | 
+ phone                           | text                        |           |          | 
+ created_at                      | timestamp without time zone |           | not null | now()
+:2025/04/28 17:32:14 Error during SIGTERM shutdown: 1 active connections still exist after waiting for 0s

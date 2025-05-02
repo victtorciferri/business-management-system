@@ -1,0 +1,96 @@
+saasb2c1@cloudshell:~/appointease-frontend (appointease-prod-457922)$ cd ~/appointease-frontend
+
+# 1. First, let's examine the server.js file to understand how it connects to the database
+cat server.js
+
+# 2. Create an improved start-with-db.sh with enhanced debugging and connection testing
+cat > start-with-db.sh << 'EOF'
+#!/bin/bash
+set -e
+
+echo "=== AppointEase Database Connection Debug ==="
+echo "Starting timestamp: $(date)"
+echo "Environment variables:"
+echo "- NODE_ENV: $NODE_ENV"
+echo "- CLOUD_SQL_CONNECTION_NAME: $CLOUD_SQL_CONNECTION_NAME"
+echo "- DATABASE_URL exists: $(if [ -n "$DATABASE_URL" ]; then echo 'yes'; else echo 'no'; fi)"
+
+# Start Cloud SQL Auth Proxy with better logging
+if [ -n "$CLOUD_SQL_CONNECTION_NAME" ]; then
+  echo "[$(date)] Starting Cloud SQL Auth Proxy for $CLOUD_SQL_CONNECTION_NAME..."
+  cloud_sql_proxy -instances=$CLOUD_SQL_CONNECTION_NAME=tcp:5432 -verbose=true &
+  PROXY_PID=$!
+  echo "[$(date)] Cloud SQL Auth Proxy started with PID: $PROXY_PID"
+  
+  # Wait longer for proxy to initialize
+  echo "[$(date)] Waiting for proxy to initialize (20 seconds)..."
+  sleep 20
+  echo "[$(date)] Proxy initialization wait completed"
+  
+  # Always construct the proper DATABASE_URL here in the container
+  export DATABASE_URL="postgresql://postgres:AppointEase123!@localhost:5432/postgres"
+  echo "[$(date)] DATABASE_URL constructed: $DATABASE_URL"
+  
+  # Test the database connection before starting the app
+  echo "[$(date)] Testing database connection..."
+  node << 'ENDOFSCRIPT'
+  const { Pool } = require('pg');
+gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=appointease" --limit=50ail)")
+const express = require('express');
+const path = require('path');
+
+const app = express();
+const port = process.env.PORT || 8080;
+
+// Middleware
+app.use(express.json());
+
+// Serve static files from the public directory
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Simple API endpoints that return empty data
+app.get('/api/status', (req, res) => {
+  res.json({
+    status: 'online',
+    databaseConnected: false,
+    message: 'Frontend only deployment - database connection will be added later'
+  });
+});
+
+app.post('/api/login', (req, res) => {
+  res.status(503).json({ 
+    error: 'Service unavailable', 
+    message: 'Database connection not configured yet' 
+  });
+});
+
+app.get('/api/user', (req, res) => {
+  res.status(401).json({ error: 'Not authenticated' });
+});
+
+// All other routes should serve the index.html for SPA routing
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Start the server
+app.listen(port, '0.0.0.0', () => {
+  console.log(`AppointEase frontend server listening on port ${port}`);
+});
+Checking Cloud SQL access permissions...
+Updating service account permissions...
+ERROR: Policy modification failed. For a binding with condition, run "gcloud alpha iam policies lint-condition" to identify issues in condition.
+ERROR: (gcloud.projects.add-iam-policy-binding) INVALID_ARGUMENT: Invalid service account ().
+Your active configuration is: [cloudshell-12772]
+Building using Dockerfile and deploying container to Cloud Run service [appointease] in project [appointease-prod-457922] region [southamerica-west1]
+\  Building and deploying... Uploading sources.                                                                                                                                             
+|  Building and deploying... Uploading sources.                                                                                                                                             
+X  Building and deploying... Building Container.                                                                                                                                            
+  OK Uploading sources...                                                                                                                                                                   
+  -  Building Container... Logs are available at [https://console.cloud.google.com/cloud-build/builds;region=southamerica-west1/2efa90e2-3653-4832-8fdb-699e25d60e4b?project=249754346416]. 
+  .  Setting IAM Policy...                                                                                                                                                                  
+Creating temporary archive of 7 file(s) totalling 1.3 MiB before compression.
+Uploading zipfile of [.] to [gs://run-sources-appointease-prod-457922-southamerica-west1/services/appointease/1745859539.104385-47de620bc9ce4f78a1d3443928c63051.zip]
+Deployment failed                                                                                                                                                                           
+ERROR: (gcloud.run.deploy) Build failed; check build logs for details
+Waiting for deployment to complete and checking logs...
