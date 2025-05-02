@@ -138,11 +138,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Set up memory-backed session store for development
   const sessionMiddleware = session({
     secret: process.env.SESSION_SECRET || "appointease-secret-key",
-    resave: false,
-    saveUninitialized: false,
+    resave: true,
+    saveUninitialized: true,
     cookie: {
       secure: false, // set to true if using HTTPS
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      httpOnly: true,
+      sameSite: 'lax'
     }
   });
 
@@ -1077,10 +1079,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Store user in session for authentication
       req.session.user = user;
       
-      // Remove sensitive data before sending to client
-      const { password: _, ...userWithoutPassword } = user;
-      
-      res.json(userWithoutPassword);
+      // Ensure session is saved before sending response
+      req.session.save(err => {
+        if (err) {
+          console.error("Session save error:", err);
+          return res.status(500).json({ message: "Session save failed" });
+        }
+        
+        // Also set in req.user for passport compatibility
+        req.user = user;
+        
+        // Remove sensitive data before sending to client
+        const { password: _, ...userWithoutPassword } = user;
+        
+        console.log("Login successful for user:", user.username);
+        res.json(userWithoutPassword);
+      });
     } catch (error) {
       console.error("Login error:", error);
       res.status(500).json({ message: "Login failed" });
@@ -3385,6 +3399,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!user) {
       console.log('Authentication required - no user in session or request. Session cookie:', req.headers.cookie);
       console.log('Session content:', req.session);
+      
+      // Check if session exists but user is missing - try to refresh from passport
+      if (req.session && req.sessionID && !req.session.user && !req.user) {
+        console.log('Session exists but no user found - this may be a session synchronization issue');
+        return res.status(401).json({ 
+          message: "Authentication required", 
+          sessionError: "Session exists but user data is missing"
+        });
+      }
+      
       return res.status(401).json({ message: "Authentication required" });
     }
     
@@ -3396,32 +3420,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     // User is authenticated and has admin role
     console.log('Admin access granted for user:', user.username);
+    
+    // Ensure user is available in both places
+    req.user = user;
+    if (req.session) {
+      req.session.user = user;
+    }
+    
     return next();
   };
 
-  app.get("/api/admin/businesses", async (req: Request, res: Response) => {
+  app.get("/api/admin/businesses", requireAdmin, async (req: Request, res: Response) => {
     try {
-      // Manual authentication check to bypass middleware issues
-      const user = req.user || req.session?.user;
-      
-      console.log('Admin businesses direct auth check:', {
-        sessionExists: !!req.session,
-        user: user ? { id: user.id, username: user.username, role: user.role } : null,
-        sessionID: req.sessionID
-      });
-      
-      if (!user) {
-        console.log('No user found in session or req.user');
-        return res.status(401).json({ message: "Authentication required" });
-      }
-      
-      if (user.role !== 'admin') {
-        console.log(`User ${user.username} is not an admin (role: ${user.role})`);
-        return res.status(403).json({ message: "Admin access required" });
-      }
-      
-      console.log(`Authenticated admin user: ${user.username}`);
-      
+      // Authentication already checked in requireAdmin middleware
       // Get only business users (not admin users)
       const businessesResult = await db.execute(sql`
         SELECT 
