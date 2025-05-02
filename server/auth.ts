@@ -82,6 +82,21 @@ export function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
+  // Add middleware to sync passport and custom session
+  app.use((req, res, next) => {
+    // If passport has authenticated user but our custom session doesn't, sync them
+    if (req.isAuthenticated() && req.user && (!req.session?.user || req.user.id !== req.session?.user?.id)) {
+      console.log('Syncing passport user to session');
+      req.session.user = req.user;
+    }
+    // If we have a user in our custom session but not in passport, try to sync that too
+    else if (!req.user && req.session?.user) {
+      console.log('User found in custom session but not in passport');
+      req.user = req.session.user;
+    }
+    next();
+  });
+
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
