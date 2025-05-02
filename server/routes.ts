@@ -3373,30 +3373,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const user = req.user || req.session?.user;
     
     // Enhanced logging to debug authentication issues
-    console.log('Admin auth check:', { 
+    console.log('Admin auth check details:', { 
       sessionExists: !!req.session, 
       userInSession: !!req.session?.user,
       userInRequest: !!req.user,
       userRole: user?.role,
-      headers: {
-        cookie: req.headers.cookie
-      },
       sessionID: req.sessionID
     });
     
+    // For debugging, also log the session and cookies
     if (!user) {
-      // Log the authentication failure for debugging
-      console.log('Authentication required - no user in session or request');
+      console.log('Authentication required - no user in session or request. Session cookie:', req.headers.cookie);
+      console.log('Session content:', req.session);
       return res.status(401).json({ message: "Authentication required" });
     }
     
-    if (user.role === 'admin') {
-      console.log('Admin access granted for user:', user.username);
-      return next();
+    // If user exists but doesn't have admin role
+    if (user.role !== 'admin') {
+      console.log('Admin access denied for user:', user.username, 'with role:', user.role);
+      return res.status(403).json({ message: "Admin access required" });
     }
     
-    console.log('Admin access denied for user:', user.username, 'with role:', user.role);
-    return res.status(403).json({ message: "Admin access required" });
+    // User is authenticated and has admin role
+    console.log('Admin access granted for user:', user.username);
+    return next();
   };
 
   app.get("/api/admin/businesses", requireAdmin, async (req: Request, res: Response) => {
@@ -4195,6 +4195,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(500).json({ 
         error: "Error looking up business",
         message: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Add debug endpoint for testing admin businesses API
+  app.get("/api/debug/admin-businesses", async (req: Request, res: Response) => {
+    try {
+      console.log('Admin businesses debug endpoint called');
+      console.log('Session:', {
+        id: req.sessionID,
+        user: req.session?.user?.username,
+        role: req.session?.user?.role
+      });
+      
+      // If user is not authenticated, return 401
+      if (!req.session?.user) {
+        console.log('Not authenticated in admin-businesses debug endpoint');
+        return res.status(401).json({
+          error: 'Not authenticated',
+          message: 'You must be logged in as admin'
+        });
+      }
+      
+      // If user is not admin, return 403
+      if (req.session.user.role !== 'admin') {
+        console.log('Not admin in admin-businesses debug endpoint');
+        return res.status(403).json({
+          error: 'Not admin',
+          message: 'You must be an admin to access this endpoint',
+          role: req.session.user.role
+        });
+      }
+      
+      // Get all businesses - directly run SQL query
+      const businessesResult = await db.execute(sql`
+        SELECT 
+          id, 
+          email, 
+          business_name, 
+          business_slug, 
+          custom_domain, 
+          subscription_status,
+          created_at
+        FROM users 
+        WHERE role = 'business'
+        ORDER BY id DESC
+      `);
+      
+      // Map the businesses data
+      const businesses = businessesResult.rows.map(row => ({
+        id: row.id,
+        name: row.business_name,
+        slug: row.business_slug,
+        email: row.email,
+        createdAt: row.created_at
+      }));
+      
+      console.log(`Found ${businesses.length} businesses in debug endpoint`);
+      
+      return res.json({
+        authenticated: true,
+        isAdmin: true,
+        userInfo: {
+          id: req.session.user.id,
+          username: req.session.user.username,
+          role: req.session.user.role
+        },
+        businesses
+      });
+    } catch (error) {
+      console.error('Error in admin-businesses debug endpoint:', error);
+      return res.status(500).json({
+        error: 'Server error',
+        message: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   });
