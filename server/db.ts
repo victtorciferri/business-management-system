@@ -4,7 +4,7 @@ import * as schema from "@shared/schema";
 
 
 // Ensure DATABASE_URL is set
-const databaseUrl = process.env.DATABASE_URL || 'postgresql://postgres:AppointEase123!@34.176.74.36:5432/postgres?sslmode=disable';
+const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) {
   throw new Error("DATABASE_URL is not defined. ");
 }

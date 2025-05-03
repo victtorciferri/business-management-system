@@ -32,63 +32,40 @@ export class BusinessSlugAdapter implements IStorage {
   /**
    * Helper method to transform stored objects by adding business slug 
    */
-  private addBusinessSlugToObject(obj: any, businessId: number, businessSlug?: string): any {
-    // If the object is already properly formed or null/undefined, return it as is
-    if (!obj || obj.businessSlug) return obj;
+  private addBusinessSlugToObject(obj: any, businessId?: number, businessSlug?: string): any {
+    if (!obj) return obj;
     
-    // For objects that need business slug, add it based on userId
-    if (obj.userId && !obj.businessSlug) {
-      return {
-        ...obj,
-        businessSlug: businessSlug || `business-${businessId}` // Fallback to a generated slug
-      };
+    if (!obj.businessSlug) {
+      obj.businessSlug = businessSlug;
+    }
+    if (businessId && !obj.businessId) {
+      obj.businessId = businessId;
     }
     
     return obj;
   }
 
-  /**
-   * Helper method to add business slug to arrays of objects
-   */
+  
   private addBusinessSlugToArray(arr: any[], businessId?: number, businessSlug?: string): any[] {
     if (!arr || !Array.isArray(arr)) return arr;
     return arr.map(item => {
       const itemBusinessId = businessId || item.userId;
       return this.addBusinessSlugToObject(item, itemBusinessId, businessSlug);
-    });
+    })
   }
-
-  /**
-   * Helper method to extract the business ID from the business slug
-   */
-  private extractBusinessId(businessSlug?: string): string | undefined {
-    if (!businessSlug) return;
-    
-    // Try to extract a number from the end of a slug like "business-123"
-    const match = businessSlug.match(/business-(\d+)$/);
-    if (match && match[1]) {
-      return match[1];
-    }
-    
-    return undefined;
-  }
-
-  /**
-   * Helper method to strip businessSlug from insert objects
-   * This ensures we don't try to insert into non-existent columns
-   */
+  
   private stripBusinessSlug<T>(obj: T): Omit<T, 'businessSlug'> {
-    if (!obj) return obj as Omit<T, 'businessSlug'>;
-    
-    const result = { ...obj };
-    // @ts-ignore - need to delete potentially non-existent property
+    if(!obj) return obj as Omit<T, 'businessSlug'>;
+    const result = {...obj};
     delete result.businessSlug;
     return result as Omit<T, 'businessSlug'>;
+
+
   }
 
   // User methods
   async getUser(id: number): Promise<User | undefined> {
-    const user = await this.storage.getUser(id);
+    const user = await this.storage.getUser(id)
     if (user) {
         return this.addBusinessSlugToObject(user, user.id);
     }
@@ -106,24 +83,13 @@ export class BusinessSlugAdapter implements IStorage {
   }
 
   async getUserByBusinessSlug(slug: string): Promise<User | undefined> {
-    // First try to extract a business ID from the slug (for legacy "business-123" format)
-    const userId = this.extractBusinessId(slug);
-    if (userId) {
-      const user = await this.storage.getUser(parseInt(userId));
-      if (user) {
-        return this.addBusinessSlugToObject(user, user.id);
-      }
-    }
-    
-    // If that fails, try to find a business with the exact slug in the businessSlug column
     const user = await this.storage.getUserByBusinessSlug(slug);
     if (user) {
       return this.addBusinessSlugToObject(user, user.id);
     }
-    
     return undefined;
   }
-
+  
 
   async getUserByCustomDomain(domain: string): Promise<User | undefined> {
     return this.storage.getUserByCustomDomain(domain);
@@ -167,7 +133,7 @@ export class BusinessSlugAdapter implements IStorage {
     const createdService = await this.storage.createService(serviceWithoutSlug as InsertService);
     
     // Add the businessSlug property to the returned object
-    return this.addBusinessSlugToObject(createdService, createdService.userId, `business-${createdService.userId}`);
+    return this.addBusinessSlugToObject(createdService, createdService.userId)
   }
 
   async updateService(id: number, serviceUpdate: Partial<InsertService>): Promise<Service | undefined> {
@@ -176,7 +142,7 @@ export class BusinessSlugAdapter implements IStorage {
     const updatedService = await this.storage.updateService(id, updateWithoutSlug as Partial<InsertService>);
     
     if (updatedService) {
-      return this.addBusinessSlugToObject(updatedService, updatedService.userId, `business-${updatedService.userId}`);
+      return this.addBusinessSlugToObject(updatedService, updatedService.userId);
     }
     return undefined;
   }
@@ -205,9 +171,7 @@ export class BusinessSlugAdapter implements IStorage {
     
     // Create the customer in the database
     const createdCustomer = await this.storage.createCustomer(customerWithoutSlug as InsertCustomer);
-    return this.addBusinessSlugToObject(createdCustomer, createdCustomer.userId, `business-${createdCustomer.userId}`);
-
-    
+    return this.addBusinessSlugToObject(createdCustomer, createdCustomer.userId);
   }
 
   async updateCustomer(id: number, customerUpdate: Partial<InsertCustomer>): Promise<Customer | undefined> {
@@ -216,16 +180,12 @@ export class BusinessSlugAdapter implements IStorage {
       const updateWithoutSlug = this.stripBusinessSlug(customerUpdate);
       // Update the customer in the database
       const updatedCustomer = await this.storage.updateCustomer(id, updateWithoutSlug as Partial<InsertCustomer>);
-      return updatedCustomer ? this.addBusinessSlugToObject(updatedCustomer, updatedCustomer.userId, `business-${updatedCustomer.userId}`) : undefined;
+      return updatedCustomer ? this.addBusinessSlugToObject(updatedCustomer, updatedCustomer.userId) : undefined;
     } catch (error) {
       console.error("Error updating customer:", error);
       return undefined;
     }
   }
-
-  
-
-
 
     async deleteCustomer(id: number): Promise<boolean> {
     return this.storage.deleteCustomer(id);
@@ -261,7 +221,7 @@ export class BusinessSlugAdapter implements IStorage {
     // Create the appointment in the database
     const createdAppointment = await this.storage.createAppointment(appointmentWithoutSlug as InsertAppointment);
     
-    return this.addBusinessSlugToObject(createdAppointment, createdAppointment.userId, `business-${createdAppointment.userId}`);
+    return this.addBusinessSlugToObject(createdAppointment, createdAppointment.userId);
   }
 
 
@@ -271,8 +231,8 @@ export class BusinessSlugAdapter implements IStorage {
     
     // Update the appointment in the database
     const updatedAppointment = await this.storage.updateAppointment(id, updateWithoutSlug as Partial<InsertAppointment>);
-    if(updatedAppointment){
-      return this.addBusinessSlugToObject(updatedAppointment, updatedAppointment.userId, `business-${updatedAppointment.userId}`);
+    if (updatedAppointment) {
+      return this.addBusinessSlugToObject(updatedAppointment, updatedAppointment.userId)
     }
       return undefined;
   }
@@ -320,7 +280,7 @@ export class BusinessSlugAdapter implements IStorage {
   async createProduct(product: InsertProduct): Promise<Product> {
     const productWithoutSlug = this.stripBusinessSlug(product);
     const createdProduct = await this.storage.createProduct(productWithoutSlug as InsertProduct);
-    return this.addBusinessSlugToObject(createdProduct, createdProduct.userId, `business-${createdProduct.userId}`);
+    return this.addBusinessSlugToObject(createdProduct, createdProduct.userId);
   }
 
   async updateProduct(id: number, productUpdate: Partial<InsertProduct>): Promise<Product | undefined> {
@@ -328,7 +288,7 @@ export class BusinessSlugAdapter implements IStorage {
     const updatedProduct = await this.storage.updateProduct(id, updateWithoutSlug as Partial<InsertProduct>);
     
     if (updatedProduct) {
-      return this.addBusinessSlugToObject(updatedProduct, updatedProduct.userId, `business-${updatedProduct.userId}`);
+      return this.addBusinessSlugToObject(updatedProduct, updatedProduct.userId)
     }
     return undefined;
   }
@@ -394,7 +354,7 @@ export class BusinessSlugAdapter implements IStorage {
   async createCart(cart: InsertCart): Promise<Cart> {
     const cartWithoutSlug = this.stripBusinessSlug(cart);
     const createdCart = await this.storage.createCart(cartWithoutSlug as InsertCart);
-    return this.addBusinessSlugToObject(createdCart, createdCart.userId!, `business-${createdCart.userId}`);
+    return this.addBusinessSlugToObject(createdCart, createdCart.userId!);
   }
 
   async updateCart(id: number, cartUpdate: Partial<InsertCart>): Promise<Cart | undefined> {
@@ -402,7 +362,7 @@ export class BusinessSlugAdapter implements IStorage {
     const updatedCart = await this.storage.updateCart(id, updateWithoutSlug as Partial<InsertCart>);
     
     if (updatedCart) {
-      return this.addBusinessSlugToObject(updatedCart, updatedCart.userId!, `business-${updatedCart.userId}`);
+      return this.addBusinessSlugToObject(updatedCart, updatedCart.userId!);
     }
     return undefined;
   }
@@ -458,7 +418,7 @@ export class BusinessSlugAdapter implements IStorage {
   async createStaffAvailability(availability: InsertStaffAvailability): Promise<StaffAvailability> {
     const availabilityWithoutSlug = this.stripBusinessSlug(availability);
     const createdAvailability = await this.storage.createStaffAvailability(availabilityWithoutSlug as InsertStaffAvailability);
-    return this.addBusinessSlugToObject(createdAvailability, createdAvailability.staffId, `business-${createdAvailability.staffId}`);
+    return this.addBusinessSlugToObject(createdAvailability, createdAvailability.staffId);
   }
 
   async updateStaffAvailability(id: number, availabilityUpdate: Partial<InsertStaffAvailability>): Promise<StaffAvailability | undefined> {
@@ -466,7 +426,7 @@ export class BusinessSlugAdapter implements IStorage {
     const updatedAvailability = await this.storage.updateStaffAvailability(id, updateWithoutSlug as Partial<InsertStaffAvailability>);
     
     if (updatedAvailability) {
-      return this.addBusinessSlugToObject(updatedAvailability, updatedAvailability.staffId, `business-${updatedAvailability.staffId}`);
+      return this.addBusinessSlugToObject(updatedAvailability, updatedAvailability.staffId)
     }
     return undefined;
   }
@@ -493,18 +453,16 @@ export class BusinessSlugAdapter implements IStorage {
 
   async getCustomerByAccessToken(token: string): Promise<Customer | undefined> {
     const customer = await this.storage.getCustomerByAccessToken(token);
-    return this.addBusinessSlugToObject(customer, customer?.userId, `business-${customer?.userId}`);
+    return this.addBusinessSlugToObject(customer, customer?.userId);
   }
 
   async deleteCustomerAccessToken(token: string): Promise<boolean> {
     return this.storage.deleteCustomerAccessToken(token);
   }
 
-  async getCustomerByEmailAndBusinessId(email: string, businessSlug: string): Promise<Customer | undefined> {
-    const businessId = this.extractBusinessId(businessSlug)
-    if (!businessId) return;
-    const customer = await this.storage.getCustomerByEmailAndBusinessId(email, parseInt(businessId));
-    return this.addBusinessSlugToObject(customer, customer?.userId, `business-${customer?.userId}`);
+  async getCustomerByEmailAndBusinessId(email: string, businessId: string): Promise<Customer | undefined> {
+    const customer = await this.storage.getCustomerByEmailAndBusinessId(email, parseInt(businessId, 10));
+    return this.addBusinessSlugToObject(customer, customer?.userId);
   }
 
   // Theme methods
@@ -516,9 +474,8 @@ export class BusinessSlugAdapter implements IStorage {
     return this.storage.getThemesByBusinessId(businessId);
   }
   async getThemesByBusinessSlug(businessSlug: string): Promise<ThemeEntity[]> {
-      const businessId = this.extractBusinessId(businessSlug)
-      return this.storage.getThemesByBusinessId(parseInt(businessId!));
-    }
+    return this.storage.getThemesByBusinessSlug(businessSlug);
+  }
 
 
   async getActiveTheme(businessId: number): Promise<ThemeEntity | undefined> {
