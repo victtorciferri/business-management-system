@@ -3834,6 +3834,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Get staff for this business with limited fields for public view
         const staffMembers = await storage.getStaffByBusinessId(businessId);
+
+        if(!staffMembers){
+          return res.json([])
+        }
         // Filter out sensitive information for public view
         const publicStaffInfo = staffMembers.map(staff => ({
           id: staff.id,
