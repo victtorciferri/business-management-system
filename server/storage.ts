@@ -1,6 +1,7 @@
 import {
   User, InsertUser,
-  Service, InsertService,
+  Service,
+  InsertService,
   Customer, InsertCustomer,
   Appointment, InsertAppointment,
   Payment, InsertPayment,
@@ -12,6 +13,8 @@ import {
   CustomerAccessToken, InsertCustomerAccessToken,
   ThemeEntity, InsertThemeEntity
 } from "@shared/schema";
+import { db } from "./db";
+import { users } from "./db/schema";
 import { BusinessSlugAdapter } from "./businessSlugAdapter";
 
 export interface IStorage {
@@ -23,7 +26,7 @@ export interface IStorage {
   getUserByCustomDomain(domain: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined>;
-  
+
   // Theme methods
   getThemeById(id: number): Promise<ThemeEntity | undefined>;
   getThemesByBusinessId(businessId: number): Promise<ThemeEntity[]>;
@@ -34,7 +37,7 @@ export interface IStorage {
   updateTheme(id: number, theme: Partial<InsertThemeEntity>): Promise<ThemeEntity | undefined>;
   deleteTheme(id: number): Promise<boolean>;
   activateTheme(id: number): Promise<ThemeEntity | undefined>;
-  
+
   // Service methods
   getService(id: number): Promise<Service | undefined>;
   getServicesByUserId(userId: number): Promise<Service[]>;
@@ -42,9 +45,10 @@ export interface IStorage {
   updateService(id: number, service: Partial<InsertService>): Promise<Service | undefined>;
   deleteService(id: number): Promise<boolean>;
   
-  // Customer methods
+// Customer methods
   getCustomer(id: number): Promise<Customer | undefined>;
   getCustomersByUserId(userId: number): Promise<Customer[]>;
+  getCustomerByEmailAndBusinessId(email: string, businessId: number): Promise<Customer | undefined>;
   createCustomer(customer: InsertCustomer): Promise<Customer>;
   updateCustomer(id: number, customer: Partial<InsertCustomer>): Promise<Customer | undefined>;
   deleteCustomer(id: number): Promise<boolean>;
@@ -114,8 +118,16 @@ export interface IStorage {
   getCustomerAccessToken(token: string): Promise<CustomerAccessToken | undefined>;
   getCustomerByAccessToken(token: string): Promise<Customer | undefined>;
   deleteCustomerAccessToken(token: string): Promise<boolean>;
-  getCustomerByEmailAndBusinessId(email: string, businessId: number): Promise<Customer | undefined>;
+}
+
+class BusinessSlugAdapterImpl extends BusinessSlugAdapter implements IStorage {
+  async getStaffByBusinessId(businessId: number): Promise<User[]> {
+    const staffs = await db.query.users.findMany({
+      where: (users, { eq }) => eq(users.businessId, businessId),
+    });
+    return staffs;
+  }
 }
 
 // Use our adapter to handle the business_slug mismatch
-export const storage = new BusinessSlugAdapter();
+export const storage: IStorage = new BusinessSlugAdapterImpl();

@@ -101,9 +101,11 @@ export default function NewAppointment() {
   const { data: staff } = useQuery({
     queryKey: ['/api/staff', businessId],
     queryFn: async () => {
-      const response = await fetch(`/api/staff?businessId=${businessId}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch staff members');
+      if (selectedService) {
+        const response = await fetch(`/api/staff?businessId=${businessId}&serviceId=${selectedService.id}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch staff members');
+        }
       }
       return response.json();
     },
@@ -123,7 +125,7 @@ export default function NewAppointment() {
       if (!selectedService) {
         setSelectedService(services[0]);
         appointmentForm.setValue('serviceId', services[0].id.toString());
-      }
+      } 
     }
   }, [services, selectedService, appointmentForm]);
   
