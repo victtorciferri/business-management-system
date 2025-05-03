@@ -12,6 +12,21 @@ import { businessExtractor } from "./middleware/businessExtractor";
 import { setupSSL } from "./ssl";
 import { storage } from "./storage";
 import { registerThemeRoutes } from "./theme/registerThemeRoutes";
+import { setupAuth } from "./auth";
+import multer from "multer";
+import fs from 'fs';
+import { v4 as uuidv4 } from 'uuid';
+
+// Import new modular route modules
+import appointmentRoutes from "./routes/appointmentRoutes";
+import authRoutes from "./routes/authRoutes";
+import customerRoutes from "./routes/customerRoutes";
+import paymentRoutes from "./routes/paymentRoutes";
+import productRoutes from "./routes/productRoutes";
+import staffRoutes from "./routes/staffRoutes";
+import adminRoutes from "./routes/adminRoutes";
+import htmlRoutes from "./routes/htmlRoutes";
+// Add additional imports as necessary (e.g., businessRoutes, serviceRoutes, etc.)
 
 // Get current file path and directory path
 const __filename = fileURLToPath(import.meta.url);
@@ -24,11 +39,6 @@ app.use(express.urlencoded({ extended: false }));
 // Serve uploaded files from the uploads directory
 const uploadsDir = path.join(__dirname, '../uploads');
 app.use('/uploads', express.static(uploadsDir));
-
-import { setupAuth } from "./auth";
-import multer from "multer";
-import fs from 'fs';
-import { v4 as uuidv4 } from 'uuid';
 
 // Setup multer storage for memory buffer (will process before saving)
 const upload = multer({
@@ -252,8 +262,18 @@ app.use((req, res, next) => {
     // Register theme routes for the new theme engine
     registerThemeRoutes(app);
 
-    // Let the routes.ts define all routes
-    let server = await registerRoutes(app);
+    // Mount new modular API route files
+    app.use(appointmentRoutes);
+    app.use(authRoutes);
+    app.use(customerRoutes);
+    app.use(paymentRoutes);
+    app.use(productRoutes);
+    app.use(staffRoutes);
+    app.use(adminRoutes);
+    // Include additional route mounts here as needed
+
+    // Finally, mount HTML routes as a catch-all for frontend assets and dynamic HTML pages
+    app.use(htmlRoutes);
 
     // Set up SSL certificate handling with Greenlock
   try {
