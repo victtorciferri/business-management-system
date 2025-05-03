@@ -16,11 +16,10 @@ import {
 import { DatabaseStorage } from "./databaseStorage";
 
 /**
- * BusinessSlugAdapter - Adapts storage operations to handle missing business_slug column
+ * BusinessSlugAdapter - Adds the businessSlug property to the output objects and removes it from the input objects.
  * 
- * This adapter wraps the DatabaseStorage class and provides compatibility methods to 
- * handle the schema mismatch between the code (which expects business_slug columns) and
- * the database (which does not have these columns).
+ * This adapter wraps the DatabaseStorage class. It adds the businessSlug property
+ * to the output objects and removes it from the input objects to maintain data consistency.
  */
 export class BusinessSlugAdapter implements IStorage {
   private storage: DatabaseStorage;
@@ -191,15 +190,14 @@ export class BusinessSlugAdapter implements IStorage {
     return this.storage.deleteCustomer(id);
   }
 
-  // Appointment methods 
-  async getAppointment(id: number): Promise<Appointment | undefined> {
-    const appointment = await this.storage.getAppointment(id);
-    if (appointment) {
-      return this.addBusinessSlugToObject(appointment, appointment.userId);
-    }
-    return undefined;
+  async getCustomerByEmailAndBusinessId(email: string, businessId: number): Promise<Customer | undefined> {
+      const customer = await this.storage.getCustomerByEmailAndBusinessId(email, businessId);
+      if (customer) {
+        return this.addBusinessSlugToObject(customer, customer.userId);
+      }
+      return undefined;
   }
-
+  
   async getAppointmentsByUserId(userId: number): Promise<Appointment[]> {
     const appointments = await this.storage.getAppointmentsByUserId(userId);
     return this.addBusinessSlugToArray(appointments, userId);

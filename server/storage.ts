@@ -45,6 +45,7 @@ export interface IStorage {
   // Customer methods
   getCustomer(id: number): Promise<Customer | undefined>;
   getCustomersByUserId(userId: number): Promise<Customer[]>;
+  getCustomerByEmailAndBusinessId(email: string, businessId: number): Promise<Customer | undefined>;
   createCustomer(customer: InsertCustomer): Promise<Customer>;
   updateCustomer(id: number, customer: Partial<InsertCustomer>): Promise<Customer | undefined>;
   deleteCustomer(id: number): Promise<boolean>;
@@ -114,7 +115,6 @@ export interface IStorage {
   getCustomerAccessToken(token: string): Promise<CustomerAccessToken | undefined>;
   getCustomerByAccessToken(token: string): Promise<Customer | undefined>;
   deleteCustomerAccessToken(token: string): Promise<boolean>;
-  getCustomerByEmailAndBusinessId(email: string, businessId: number): Promise<Customer | undefined>;
 }
 
 // Use our adapter to handle the business_slug mismatch
