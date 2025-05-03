@@ -11,5 +11,5 @@ steps:
       - '.'
       - '--region=southamerica-west1'
       - '--platform=managed'
-      - '--allow-unauthenticated'
+      - '--allow-unauthenticated'      
       - '--set-env-vars=NODE_ENV=production,DEBUG=express:*'

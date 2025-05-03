@@ -2,15 +2,10 @@ import { Pool } from 'pg'; // Correct import
 import { drizzle } from 'drizzle-orm/node-postgres'; // Correct import
 import * as schema from "@shared/schema";
 
-
-// Ensure DATABASE_URL is set
-const databaseUrl = process.env.DATABASE_URL;
-if (!databaseUrl) {
-  throw new Error("DATABASE_URL is not defined. ");
-}
+// Hardcoded DATABASE_URL for MVP
+const databaseUrl = "postgresql://postgres:AppointEase123!@34.176.74.36:5432/postgres";
 
 console.log("Database URL:", databaseUrl);
-
 // Create a singleton connection pool with optimized settings
 // These settings help prevent connection exhaustion issues, and use the correct pool
 let _pool: Pool | null = null;
@@ -32,14 +27,3 @@ export function getPool(): Pool {
 // Create a Drizzle ORM instance with our schema
 export const pool = getPool();
 export const db = drizzle(pool, { schema });
-
-// Cache management utility
-export function closePool(): Promise<void> {
-  if (_pool) {
-    console.log('Closing database pool connections...');
-    return _pool.end().then(async () => {
-      _pool = null;
-    });
-  }
-  return Promise.resolve();
-}
