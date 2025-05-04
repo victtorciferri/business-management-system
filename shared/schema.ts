@@ -1,6 +1,8 @@
-import { pgTable, text, serial, integer, timestamp, boolean, numeric, primaryKey, index, foreignKey, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, boolean, numeric, index, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+export enum UserRole {ADMIN = "admin",BUSINESS = "business",STAFF = "staff",CUSTOMER = "customer",}
 import { relations, sql } from "drizzle-orm";
 import { defaultTheme, Theme } from "./config";
 
@@ -584,6 +586,8 @@ export const insertCustomerAccessTokenSchema = createInsertSchema(customerAccess
 
 export type CustomerAccessToken = typeof customerAccessTokens.$inferSelect;
 export type InsertCustomerAccessToken = z.infer<typeof insertCustomerAccessTokenSchema>;
+
+
 
 // Import our design token type
 import { DesignTokens } from './designTokens';

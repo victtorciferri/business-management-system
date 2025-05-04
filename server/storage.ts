@@ -14,7 +14,6 @@ import {
   ThemeEntity, InsertThemeEntity
 } from "@shared/schema";
 import { db } from "./db";
-import { users } from "./db/schema";
 import { BusinessSlugAdapter } from "./businessSlugAdapter";
 
 export interface IStorage {

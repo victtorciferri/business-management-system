@@ -388,7 +388,8 @@ export class BusinessSlugAdapter implements IStorage {
 
   // Staff methods
   async getStaffByBusinessId(businessId: number): Promise<User[]> {
-    return this.storage.getStaffByBusinessId(businessId);
+    const staff = await this.storage.getStaffByBusinessId(businessId);
+    return this.addBusinessSlugToArray(staff, businessId)
   }
 
   async createStaffMember(staffData: InsertUser, businessId: number): Promise<User> {
