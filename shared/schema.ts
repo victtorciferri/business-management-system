@@ -1,6 +1,8 @@
-import { pgTable, text, serial, integer, timestamp, boolean, numeric, primaryKey, index, foreignKey, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, boolean, numeric, index, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+export enum UserRole {ADMIN = "admin",BUSINESS = "business",STAFF = "staff",CUSTOMER = "customer",}
 import { relations, sql } from "drizzle-orm";
 import { defaultTheme, Theme } from "./config";
 
@@ -46,8 +48,7 @@ export const users = pgTable("users", {
     cardStyle?: "elevated" | "flat" | "bordered";
     appearance?: "light" | "dark" | "system";
   }>(),
-  // New theme configuration - used for the new theming system
-  theme: jsonb("theme").$type<Theme>().default(sql`${JSON.stringify(defaultTheme)}::jsonb`),
+  // New theme configuration - used for the new theming system\n  theme: jsonb("theme").$type<Theme>(),
   // Payment processing and marketplace configuration
   platformFeePercentage: numeric("platform_fee_percentage").default("2.00"), // Default platform fee percentage (can be adjusted per business)
   // MercadoPago integration fields for marketplace payment split
@@ -584,6 +585,8 @@ export const insertCustomerAccessTokenSchema = createInsertSchema(customerAccess
 
 export type CustomerAccessToken = typeof customerAccessTokens.$inferSelect;
 export type InsertCustomerAccessToken = z.infer<typeof insertCustomerAccessTokenSchema>;
+
+
 
 // Import our design token type
 import { DesignTokens } from './designTokens';

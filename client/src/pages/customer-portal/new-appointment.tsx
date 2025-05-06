@@ -106,8 +106,10 @@ export default function NewAppointment() {
         if (!response.ok) {
           throw new Error('Failed to fetch staff members');
         }
+        const data = await response.json();
+        return data;
       }
-      return response.json();
+      return [];
     },
     enabled: currentStep === 'appointment-details'
   });

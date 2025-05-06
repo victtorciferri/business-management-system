@@ -5,10 +5,11 @@ import {
   Customer, InsertCustomer,
   Appointment, InsertAppointment,
   Payment, InsertPayment,
-  users, services, customers, appointments, payments,
+  users, services, customers, appointments, payments, UserRole, customerAccessTokens, insertCustomerAccessTokenSchema,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte } from "drizzle-orm";
+import { z } from "zod";
 
 export class DatabaseStorage implements IStorage {
   // User methods
@@ -53,7 +54,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createService(service: InsertService): Promise<Service> {
-    const [newService] = await db.insert(services).values(service).returning();    
+    const [newService] = await db.insert(services).values(service).returning();
     return newService;
   }
 
@@ -81,13 +82,13 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(customers).where(eq(customers.userId, userId));
   }
 
-  async getCustomerByEmailAndBusinessId(email: string, businessId: number): Promise<Customer | undefined> {
-    const [customer] = await db.select().from(customers).where(and(eq(customers.email, email), eq(customers.userId, businessId)));
+  async getCustomerByEmailAndBusinessId(email: string, businessId: string): Promise<Customer | undefined> {
+    const [customer] = await db.select().from(customers).where(and(eq(customers.email, email), eq(customers.userId, parseInt(businessId, 10))));
     return customer || undefined;
   }
 
   async createCustomer(customer: InsertCustomer): Promise<Customer> {
-    const [newCustomer] = await db.insert(customers).values(customer).returning();    
+    const [newCustomer] = await db.insert(customers).values(customer).returning();
     return newCustomer;
   }
 
@@ -164,7 +165,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createPayment(payment: InsertPayment): Promise<Payment> {
-    const [newPayment] = await db.insert(payments).values(payment).returning();    
+    const [newPayment] = await db.insert(payments).values(payment).returning();
     return newPayment;
   }
 
@@ -175,5 +176,51 @@ export class DatabaseStorage implements IStorage {
       .where(eq(payments.id, id))
       .returning();
     return updatedPayment || undefined;
+  }
+
+  // Staff methods
+  async getStaffByBusinessId(businessId: number): Promise<User[]> {
+    return db.select().from(users).where(
+      and(
+        eq(users.businessId, businessId),
+        eq(users.role, UserRole.STAFF)
+      )
+    );
+  }
+
+  async createStaffMember(staffData: InsertUser, businessId: number): Promise<User> {
+    const [newStaff] = await db.insert(users).values({
+      ...staffData,
+      businessId,
+      role: UserRole.STAFF
+    }).returning();
+    return newStaff;
+  }
+
+  async deleteStaffMember(staffId: number): Promise<boolean> {
+    const result = await db.delete(users).where(eq(users.id, staffId));
+    return !!result;
+  }
+
+  // Customer access token methods
+  async createCustomerAccessToken(token: typeof insertCustomerAccessTokenSchema._input): Promise<typeof customerAccessTokens.$inferSelect> {
+    const [newCustomerAccessToken] = await db
+      .insert(customerAccessTokens)
+      .values(token)
+      .returning();
+    return newCustomerAccessToken;
+  }
+  async getCustomerAccessToken(token: string): Promise<typeof customerAccessTokens.$inferSelect | undefined> {
+    const [customerAccessToken] = await db
+      .select()
+      .from(customerAccessTokens)
+      .where(eq(customerAccessTokens.token, token));
+    return customerAccessToken || undefined;
+  }
+  async deleteCustomerAccessToken(token: string): Promise<boolean> {
+    const result = await db
+      .delete(customerAccessTokens)
+      .where(eq(customerAccessTokens.token, token));
+    return !!result;
   }
 }

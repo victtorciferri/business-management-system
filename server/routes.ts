@@ -3820,71 +3820,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Staff Management Routes
   app.get("/api/staff", async (req: Request, res: Response) => {
     try {
-      // For customer portal case - access via businessId query parameter (doesn't require authentication)
       if (req.query.businessId) {
+        // Public access for customer portal
         const businessId = parseInt(req.query.businessId as string);
-        if (isNaN(businessId)) {
-          return res.status(400).json({ message: "Invalid business ID" });
-        }
-        // Find the business to validate it exists
-        const business = await storage.getUser(businessId);
-        if (!business || business.role !== "business") {
-          return res.status(404).json({ message: "Business not found" });
-        }
-        
-        // Get staff for this business with limited fields for public view
+        // Get staff for this business with limited fields
         const staffMembers = await storage.getStaffByBusinessId(businessId);
-
-        if(!staffMembers){
+        if(!staffMembers) {
           return res.json([])
         }
-        // Filter out sensitive information for public view
-        const publicStaffInfo = staffMembers.map(staff => ({
-          id: staff.id,
-          username: staff.username,
-          email: staff.email,
-          phone: staff.phone,
-          role: staff.role
-        }));
+        // Return filtered public info
+        const publicStaffInfo = staffMembers
+          .filter((staff) => staff.role === "staff")
+          .map(staff => ({
+            id: staff.id,
+            username: staff.username,
+            email: staff.email,
+            phone: staff.phone,
+            role: staff.role
+          }));
         return res.json(publicStaffInfo);
       }
-      
-      // For authenticated access (admin/business owner/staff)
+  
+      // For authenticated access
       if (!!!req.session?.user) {
         return res.status(401).json({ message: "Authentication required" });
       }
-      
-      // If user is a staff member, they can only see themselves
-      if (req.session.user.role === "staff") {
-        const staffMember = await storage.getUser(req.session.user.id);
-        if (staffMember) {
-          return res.json([staffMember]);
-        } else {
-          return res.status(404).json({ message: "Staff member not found" });
-        }
-      }
-      
-      // For business owners and admins, get all staff
-      if (req.session.user.role !== "business" && req.session.user.role !== "admin") {
-        return res.status(403).json({ message: "Not authorized to view all staff" });
-      }
-      
+  
       const businessId = req.session.user.role === "business" ? req.session.user.id : undefined;
       const staffMembers = await storage.getStaffByBusinessId(businessId || req.session.user.id);
       
-      // Get appointment counts for each staff member
+      // Get appointment counts and availability for each staff member
       const staffWithCounts = await Promise.all(
-        staffMembers.map(async (staff) => {
-          const appointments = await storage.getStaffAppointments(staff.id);
-          return {
-            ...staff,
-            appointmentsCount: appointments.length,
-            availability: await storage.getStaffAvailability(staff.id)
-          };
-        })
+        staffMembers
+          .filter((staff) => staff.role === "staff")
+          .map(async (staff) => {
+            const appointments = await storage.getStaffAppointments(staff.id);
+            return {
+              ...staff,
+              appointmentsCount: appointments.length,
+              availability: await storage.getStaffAvailability(staff.id)
+            };
+          })
       );
-      
+  
       res.json(staffWithCounts);
+  
     } catch (error) {
       console.error("Error fetching staff:", error);
       res.status(500).json({ message: "Failed to fetch staff members" });

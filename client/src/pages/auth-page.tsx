@@ -22,7 +22,7 @@ export default function AuthPage() {
       if (user.role === "admin") {
         setLocation("/admin");
       } else {
-        setLocation("/");
+        setLocation("/dashboard");
       }
     }
   }, [user, setLocation]);

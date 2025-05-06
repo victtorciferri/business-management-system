@@ -20,6 +20,7 @@ export const RESERVED_PATHS = [
   'login',
   'register',
   'logout',
+  'thegourmetplace', // Added thegourmetplace to reserved paths
   'profile',
   'theme-editor', // Added theme-editor to reserved paths
 ];
