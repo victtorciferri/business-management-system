@@ -375,6 +375,47 @@ const themeBlueprints = [
         }
       }
     }
+  },
+  {
+    name: 'Gourmet Delight',
+    description: 'A warm and elegant theme perfect for restaurants',
+    primaryColor: '#8B0000', // Deep Red
+    secondaryColor: '#FFD700', // Gold
+    accentColor: '#f59e0b', // Existing accent or choose a new one
+    backgroundColor: '#ffffff',
+    textColor: '#111827',
+    fontFamily: 'Georgia, serif',
+    borderRadius: 8,
+    variant: 'elegant',
+    appearance: 'system',
+    category: 'restaurant',
+    tags: ['restaurant', 'elegant', 'warm'],
+    businessSlug: 'thegourmetplace', // Assign to the new business
+    tokens: {
+      ...modernTokens,
+      colors: {
+        ...modernTokens.colors,
+        primary: {
+          base: '#8B0000',
+          50: '#fffafa', // Lightest shade of red
+          100: '#ffeaea',
+          200: '#ffcccc',
+          300: '#ffaaaa',
+          400: '#ff8888',
+          500: '#ff6666',
+          600: '#cd5c5c',
+          700: '#b22222', // A darker red
+          800: '#8b0000', // Deep Red
+          900: '#550000',
+          950: '#220000',
+          foreground: '#ffffff'
+        },
+        secondary: {
+          ...modernTokens.colors.secondary, // Keep other shades if needed or define new ones for gold
+          base: '#FFD700', // Gold
+        }
+      },
+    }
   }
 ];
 

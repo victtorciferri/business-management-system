@@ -52,6 +52,14 @@ export async function seedDatabase() {
           business_slug: "downtownbarber",
           phone: "+56 9 3333 4444",
           role: "business",
+        },
+        {
+          username: "gourmetplaceowner",
+          email: "gourmet@example.com",
+          password: "password123",
+          business_name: "The Gourmet Place",
+          business_slug: "thegourmetplace",
+          phone: "+56 9 5555 6666",
         }
       ]);
     }
