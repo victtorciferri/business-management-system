@@ -49,6 +49,7 @@ import adminRoutes from "./routes/adminRoutes";
 import staffRoutes from "./routes/staffRoutes";
 import debugRoutes from "./routes/debugRoutes";
 import productRoutes from "./routes/productRoutes";
+import shoppingCartRoutes from "./routes/shoppingCartRoutes";
 
 // Initialize Stripe if secret key is available
 let stripe: Stripe | undefined;
@@ -367,12 +368,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register product routes
   app.use("/api/products", productRoutes);
   
+  // Register shopping cart routes
+  app.use("/api/cart", shoppingCartRoutes);
+  
   // Endpoint to update business logo
   app.patch('/api/business/logo', async (req: Request, res: Response) => {
-    try {
-      if (!req.user || !req.user.id) {
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
       
       const { logoUrl } = req.body;
       
