@@ -1,0 +1,223 @@
+[33mcommit aa64c6cb1e8c479df5cee844e8b629868a4eaf12[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mDevelopment[m[33m)[m
+Author: victtorciferri <95662932+victtorciferri@users.noreply.github.com>
+Date:   Mon May 5 18:15:19 2025 -0400
+
+    First attempt at refactoring routes.ts
+
+[33mcommit 345702e9fe4e9caa6115af102928576ac350cfce[m
+Author: saasb2c1 <saasb2c1@gmail.com>
+Date:   Mon May 5 21:46:39 2025 +0000
+
+    add .idx for firebase needs
+
+[33mcommit d8a35cd23c4f15f2a0d3bf3c2a06e6cc0110deaa[m
+Author: saasb2c1 <saasb2c1@gmail.com>
+Date:   Sun May 4 16:56:50 2025 +0000
+
+    fixed error when saving appointment
+
+[33mcommit f2b3bad2ec12c3ce93b9c4e3ff6e55b0ad4b1e42[m[33m ([m[1;32mVSCode[m[33m)[m
+Merge: 40e9f72 fb4200e
+Author: victtorciferri <95662932+victtorciferri@users.noreply.github.com>
+Date:   Sat May 3 15:39:04 2025 -0400
+
+    Merge pull request #6 from victtorciferri/development
+    
+    test
+
+[33mcommit fb4200e9504be65820d429498fd2fdeacdb77c87[m
+Author: victtorciferri <95662932+victtorciferri@users.noreply.github.com>
+Date:   Sat May 3 15:37:29 2025 -0400
+
+    test
+
+[33mcommit 40e9f726e1b4fe83ab418f84c4c72884f126c0d1[m
+Author: saasb2c1 <saasb2c1@gmail.com>
+Date:   Sat May 3 19:36:09 2025 +0000
+
+    testing
+
+[33mcommit 89bf289722045612cb968d4395b1e9e7b17de8c5[m
+Author: saasb2c1 <saasb2c1@gmail.com>
+Date:   Sat May 3 19:14:47 2025 +0000
+
+    Fix customer email retrieval
+
+[33mcommit 90b46d528f8611827fdc27aabb5971574df7dc43[m
+Author: saasb2c1 <saasb2c1@gmail.com>
+Date:   Sat May 3 18:05:32 2025 +0000
+
+    Fix database connection issue
+
+[33mcommit 94d87d617cf051eddd223f58899332e6d05c8810[m
+Author: saasb2c1 <saasb2c1@gmail.com>
+Date:   Sat May 3 14:53:35 2025 +0000
+
+    Fixed business slug and db connection issue
+
+[33mcommit 1d5198e64266397b526c57609624b138d55b0173[m
+Author: saasb2c1 <saasb2c1@gmail.com>
+Date:   Fri May 2 17:39:43 2025 +0000
+
+    Fix business not found issue
+
+[33mcommit 9fff7638c452f84f697a7f7b1bbf00d02782eee8[m
+Author: victtorciferri <95662932+victtorciferri@users.noreply.github.com>
+Date:   Thu May 1 20:36:36 2025 -0400
+
+    bugs
+
+[33mcommit 0638f2f55446d71099644c30089815b5a7de6504[m
+Author: victtorciferri <95662932+victtorciferri@users.noreply.github.com>
+Date:   Thu May 1 20:31:18 2025 -0400
+
+    bug fixes
+
+[33mcommit 422dc36f3abc03ef4a8ad868b704c441a4a05f4b[m
+Author: victtorciferri <95662932+victtorciferri@users.noreply.github.com>
+Date:   Thu May 1 20:31:00 2025 -0400
+
+    Fix business slug lookup and admin authentication
+
+[33mcommit e7bb76e33e3e34d5b4b3d9b3454f673672117e3a[m
+Author: victtorciferri <95662932+victtorciferri@users.noreply.github.com>
+Date:   Thu May 1 20:20:01 2025 -0400
+
+    Fix business slug lookup and admin authentication
+
+[33mcommit ac4ca8265da9ad94a9f010a210062e19f91db763[m
+Author: victtorciferri <95662932+victtorciferri@users.noreply.github.com>
+Date:   Thu May 1 20:11:47 2025 -0400
+
+    Enhance admin authentication debugging and add debug endpoints
+
+[33mcommit 3afda118bed36d19b8223e998d2aaa8e60dc1a5a[m
+Author: victtorciferri <95662932+victtorciferri@users.noreply.github.com>
+Date:   Thu May 1 20:07:31 2025 -0400
+
+    Fix position of debug endpoint in routes.ts
+
+[33mcommit d912c3dd88f00ace1ba25f1f7fceaa75dce40d5e[m
+Merge: 7b14963 87eec39
+Author: victtorciferri <95662932+victtorciferri@users.noreply.github.com>
+Date:   Thu May 1 20:02:18 2025 -0400
+
+    Merge branch 'Development' of https://github.com/victtorciferri/business-management-system into Development
+
+[33mcommit 7b1496350cd366e08075865b83cebcccb0052b75[m
+Author: victtorciferri <95662932+victtorciferri@users.noreply.github.com>
+Date:   Thu May 1 20:00:36 2025 -0400
+
+    Fix business slug lookup to support both business-ID pattern and custom slugs
+
+[33mcommit 87eec39b6b33cf8484db4b8f059ae6c932c38473[m
+Merge: 46bfa17 c2abcdc
+Author: victtorciferri <95662932+victtorciferri@users.noreply.github.com>
+Date:   Thu May 1 19:47:18 2025 -0400
+
+    Merge pull request #3 from victtorciferri/main
+    
+    Merge pull request #1 from victtorciferri/Development
+
+[33mcommit 46bfa17e63bbb05064da219579ab04e455a53efd[m
+Author: victtorciferri <95662932+victtorciferri@users.noreply.github.com>
+Date:   Thu May 1 19:30:00 2025 -0400
+
+    Fix business slug lookup to support custom slugs
+
+[33mcommit f0f796017732bb94f0478af5cb541dc021095325[m
+Author: victtorciferri <95662932+victtorciferri@users.noreply.github.com>
+Date:   Thu May 1 19:30:00 2025 -0400
+
+    Fix business slug lookup to support custom slugs
+
+[33mcommit 438468cc2d1addb3e4d967a72d64b898d945613c[m
+Author: saasb2c1 <saasb2c1@gmail.com>
+Date:   Thu May 1 22:14:35 2025 +0000
+
+    Fix database connection issue, connected to the right database named "postgres" instead of "appointease"
+
+[33mcommit f646e9d63ffc386c4e317c4f34a3fb104a9ec0a8[m
+Author: saasb2c1 <saasb2c1@gmail.com>
+Date:   Thu May 1 00:39:20 2025 +0000
+
+    Deployed changes in the landing
+
+[33mcommit c2abcdc91636b4d631e21a5b40f12b2406050504[m
+Merge: be3c766 c32e9dc
+Author: victtorciferri <95662932+victtorciferri@users.noreply.github.com>
+Date:   Wed Apr 30 20:31:03 2025 -0400
+
+    Merge pull request #1 from victtorciferri/Development
+    
+    Changed value of plans on landing
+
+[33mcommit c32e9dcdfd10bfc2df3e13a1d9a90cbd45a64645[m
+Author: saasb2c1 <saasb2c1@gmail.com>
+Date:   Thu May 1 00:29:12 2025 +0000
+
+    Changed value of plans on landing
+
+[33mcommit be3c766610dd7963a4a5ba16abda72f843311c74[m
+Author: saasb2c1 <saasb2c1@gmail.com>
+Date:   Wed Apr 30 23:47:09 2025 +0000
+
+    First GCP Deploy
+
+[33mcommit cf266b15e60748e2656fc2a5709538abf05ac05d[m
+Author: victtorn3 <41374951-victtorn3@users.noreply.replit.com>
+Date:   Sun Apr 27 20:39:11 2025 +0000
+
+    Finalize initial setup instructions for local development environment
+    
+    Adds a placeholder for database connection details in the README file.
+    
+    Replit-Commit-Author: Agent
+    Replit-Commit-Session-Id: ddc39d5d-a8fe-4f3c-8e10-d3cdfd689cb0
+    Replit-Commit-Screenshot-Url: https://storage.googleapis.com/screenshot-production-us-central1/f608b252-bee6-4fe4-aa8e-1842504ca5e8/748da5c5-f64e-469e-ab77-7b8815b2ea04.jpg
+
+[33mcommit f5c8cb260a9e9f5182f83facb902687030d1f341[m
+Author: victtorn3 <41374951-victtorn3@users.noreply.replit.com>
+Date:   Sun Apr 27 20:31:39 2025 +0000
+
+    Ensure the application properly deploys and is accessible for all users
+    
+    Updates the build process to resolve deployment issues related to ES module format, sets the correct port, and adds environment variables.
+    
+    Replit-Commit-Author: Agent
+    Replit-Commit-Session-Id: ddc39d5d-a8fe-4f3c-8e10-d3cdfd689cb0
+    Replit-Commit-Screenshot-Url: https://storage.googleapis.com/screenshot-production-us-central1/f608b252-bee6-4fe4-aa8e-1842504ca5e8/748da5c5-f64e-469e-ab77-7b8815b2ea04.jpg
+
+[33mcommit a73d894b8c52a6bb92efdd0abbea2708999bcaa9[m
+Author: victtorn3 <41374951-victtorn3@users.noreply.replit.com>
+Date:   Sun Apr 27 14:23:59 2025 +0000
+
+    Enable automated deployment of the application to Google Cloud Platform
+    
+    Adds Dockerfile, .dockerignore, cloudbuild.yaml, deploy-gcp.sh and updates server port configuration for GCP Cloud Run deployment.
+    
+    Replit-Commit-Author: Agent
+    Replit-Commit-Session-Id: ddc39d5d-a8fe-4f3c-8e10-d3cdfd689cb0
+    Replit-Commit-Screenshot-Url: https://storage.googleapis.com/screenshot-production-us-central1/f608b252-bee6-4fe4-aa8e-1842504ca5e8/c5428a7a-1690-44b1-a3ef-f96eec2f8472.jpg
+
+[33mcommit ec0084de5c215fccd2735101afa76c61152f3c8d[m
+Author: victtorn3 <41374951-victtorn3@users.noreply.replit.com>
+Date:   Sun Apr 27 14:21:49 2025 +0000
+
+    Initial checkpoint
+    
+    Replit-Commit-Author: Agent
+    Replit-Commit-Session-Id: ddc39d5d-a8fe-4f3c-8e10-d3cdfd689cb0
+
+[33mcommit 5efa817085e75993de763f30a59c4ed486510a69[m
+Author: victtorn3 <41374951-victtorn3@users.noreply.replit.com>
+Date:   Fri Apr 25 22:09:02 2025 +0000
+
+    Initial checkpoint
+    
+    Replit-Commit-Author: Agent
+    Replit-Commit-Session-Id: 76dda5ac-e768-412f-86b0-33368e8d5e32
+
+[33mcommit 8dae4836f431b633a28d73eb89dfa588f7a4e372[m
+Author: victtorn3 <41374951-victtorn3@users.noreply.replit.com>
+Date:   Fri Apr 25 22:06:06 2025 +00
