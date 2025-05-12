@@ -522,9 +522,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           user: result.rows[0],
           connectionString: process.env.DATABASE_URL ? "Database URL is set" : "No Database URL found"
         });
-        });
       }
     } catch (error) {
+      console.error('Database test error:', error);
       console.error('Database test error:', error);
       res.status(500).json({ 
         message: "Database test failed", 
