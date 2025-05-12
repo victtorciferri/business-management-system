@@ -50,6 +50,7 @@ import staffRoutes from "./routes/staffRoutes";
 import debugRoutes from "./routes/debugRoutes";
 import productRoutes from "./routes/productRoutes";
 import shoppingCartRoutes from "./routes/shoppingCartRoutes";
+import paymentRoutes from "./paymentRoutes";
 
 // Initialize Stripe if secret key is available
 let stripe: Stripe | undefined;
@@ -371,6 +372,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register shopping cart routes
   app.use("/api/cart", shoppingCartRoutes);
   
+  // Register payment routes
+  app.use("/api", paymentRoutes);
+  
   // Endpoint to update business logo
   app.patch('/api/business/logo', async (req: Request, res: Response) => {
     try {
@@ -518,10 +522,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           user: result.rows[0],
           connectionString: process.env.DATABASE_URL ? "Database URL is set" : "No Database URL found"
         });
-      } else {
-        res.json({ 
-          message: "No business found with slug 'salonelegante'",
-          connectionString: process.env.DATABASE_URL ? "Database URL is set" : "No Database URL found"
         });
       }
     } catch (error) {
