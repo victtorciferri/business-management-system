@@ -47,6 +47,7 @@ import { manuallyRegisterDomain, getRegisteredDomains } from "./ssl";
 import session from "express-session";
 import adminRoutes from "./routes/adminRoutes";
 import staffRoutes from "./routes/staffRoutes";
+import debugRoutes from "./routes/debugRoutes";
 
 // Initialize Stripe if secret key is available
 let stripe: Stripe | undefined;
@@ -358,6 +359,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register staff routes
   app.use("/api/staff", staffRoutes);
+  
+  // Register debug routes
+  app.use(debugRoutes);
   
   // Endpoint to update business logo
   app.patch('/api/business/logo', async (req: Request, res: Response) => {
