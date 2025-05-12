@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { useState } from "react";
 import { AppointmentForm } from "@/components/appointments/appointment-form";
 import { format } from "date-fns";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function Dashboard() {
   const [isNewAppointmentOpen, setIsNewAppointmentOpen] = useState(false);
@@ -15,6 +16,8 @@ export default function Dashboard() {
   
   // In a real app, this would come from an auth context
   const userId = 1;
+
+  const { logoutMutation } = useAuth();
   
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date);

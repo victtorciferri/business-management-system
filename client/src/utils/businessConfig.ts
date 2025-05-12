@@ -85,6 +85,28 @@ function getDefaultBusinessConfig(): BusinessConfig {
 }
 
 /**
+ * Specific configuration for "The Gourmet Place" business
+ */
+function getGourmetPlaceConfig(): BusinessConfig {
+  return {
+    ...getDefaultBusinessConfig(), // Start with defaults
+    id: 101, // Example ID, should be a real ID in a real app
+    name: "The Gourmet Place",
+    slug: "the-gourmet-place",
+    email: "info@thegourmetplace.com",
+    themeSettings: {
+      primaryColor: "#8B0000", // Deep Red
+      secondaryColor: "#FFD700", // Gold
+      accentColor: "#A0522D", // Sienna for warmth
+      textColor: "#36454F", // Charcoal for readability
+      backgroundColor: "#F5F5DC", // Beige for earthy feel
+      fontFamily: "Georgia, serif",
+      ...getDefaultBusinessConfig().themeSettings, // Include other default theme settings
+    },
+  };
+}
+
+/**
  * Get business configuration based on business data
  * Merges default configuration with business-specific settings
  * 
@@ -99,7 +121,14 @@ export function getBusinessConfig(
   // Start with default config
   const defaultConfig = getDefaultBusinessConfig();
   
-  // If no business data, return default config
+  // Check for specific business configurations by slug or ID
+  if (business?.businessSlug === "the-gourmet-place") {
+    const gourmetPlaceConfig = getGourmetPlaceConfig();
+    // Merge specific config with provided business data
+ return { ...gourmetPlaceConfig, ...business, themeSettings: { ...gourmetPlaceConfig.themeSettings, ...business.themeSettings } };
+  }
+
+  // If no specific business config and no business data, return default config
   if (!business) {
     return defaultConfig;
   }

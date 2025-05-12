@@ -48,8 +48,7 @@ export const users = pgTable("users", {
     cardStyle?: "elevated" | "flat" | "bordered";
     appearance?: "light" | "dark" | "system";
   }>(),
-  // New theme configuration - used for the new theming system
-  theme: jsonb("theme").$type<Theme>().default(sql`${JSON.stringify(defaultTheme)}::jsonb`),
+  // New theme configuration - used for the new theming system\n  theme: jsonb("theme").$type<Theme>(),
   // Payment processing and marketplace configuration
   platformFeePercentage: numeric("platform_fee_percentage").default("2.00"), // Default platform fee percentage (can be adjusted per business)
   // MercadoPago integration fields for marketplace payment split
