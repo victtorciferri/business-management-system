@@ -46,6 +46,7 @@ import { businessExtractor } from "./middleware/businessExtractor";
 import { manuallyRegisterDomain, getRegisteredDomains } from "./ssl";
 import session from "express-session";
 import adminRoutes from "./routes/adminRoutes";
+import staffRoutes from "./routes/staffRoutes";
 
 // Initialize Stripe if secret key is available
 let stripe: Stripe | undefined;
@@ -354,6 +355,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Mount admin routes
   app.use(adminRoutes);
+  
+  // Register staff routes
+  app.use("/api/staff", staffRoutes);
   
   // Endpoint to update business logo
   app.patch('/api/business/logo', async (req: Request, res: Response) => {
