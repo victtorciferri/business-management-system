@@ -1067,43 +1067,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { username, password } = req.body;
       const user = await storage.getUserByUsername(username);
       
-      // Import password comparison function from auth.ts
       const { comparePasswords } = await import('./auth');
       
       if (!user) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
-      // Check if password matches using secure comparison
       const passwordMatches = await comparePasswords(password, user.password);
       if (!passwordMatches) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
       
-      // Store user in session for authentication
-      req.session.user = user;
+      // Store a plain object in session for serialization (only the fields you need)
+      req.session.user = {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        businessName: user.businessName || null,
+        customDomain: user.customDomain || null
+      };
       
-      // Ensure session is saved before sending response
       req.session.save(err => {
         if (err) {
           console.error("Session save error:", err);
           return res.status(500).json({ message: "Session save failed" });
         }
         
-        // Also set in req.user for passport compatibility
-        req.user = user;
+        // Also set in req.user for Passport compatibility, if needed
+        req.user = req.session.user;
         
-        // Remove sensitive data before sending to client
-        const { password: _, ...userWithoutPassword } = user;
-        
-        console.log("Login successful for user:", user.username);
-        res.json(userWithoutPassword);
+        // Return the sanitized user object
+        return res.json(req.session.user);
       });
     } catch (error) {
       console.error("Login error:", error);
       res.status(500).json({ message: "Login failed" });
     }
-  });
+});
   
   /**
    * Get the currently authenticated user
