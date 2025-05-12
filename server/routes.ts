@@ -373,7 +373,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Endpoint to update business logo
   app.patch('/api/business/logo', async (req: Request, res: Response) => {
-      
+    try {
       const { logoUrl } = req.body;
       
       // Update the user's logo_url in the database
