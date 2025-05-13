@@ -1,5 +1,6 @@
 import express, { Request, Response, NextFunction } from "express";
 import { storage } from "../storage";
+import bcrypt from "bcryptjs";  // Changed from bcrypt to bcryptjs
 const router = express.Router();
 
 /*********************************
@@ -90,7 +91,6 @@ router.post("/", async (req: Request, res: Response) => {
     if (existingUser) return res.status(400).json({ message: "Username already exists" });
     const existingEmail = await storage.getUserByEmail(email);
     if (existingEmail) return res.status(400).json({ message: "Email already exists" });
-    const bcrypt = require("bcrypt");
     const hashedPassword = await bcrypt.hash(password, 10);
     const businessId = req.session.user.role === "business" ? req.session.user.id : req.body.businessId;
     const staffMember = await storage.createStaffMember({
