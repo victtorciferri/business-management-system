@@ -3,9 +3,14 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from "@shared/schema";
 
 // Initialize database URL
-const databaseUrl = process.env.DATABASE_URL || "postgresql://postgres:AppointEase123!@34.176.74.36:5432/postgres";
+const databaseUrl = process.env.DATABASE_URL;
 
-console.log("Database URL:", databaseUrl);
+if (!databaseUrl) {
+  console.error('DATABASE_URL environment variable is not set');
+  process.exit(1);
+}
+
+console.log(`Connecting to database in ${process.env.NODE_ENV} mode`);
 
 // Create a singleton connection pool
 let _pool: Pool | null = null;
@@ -18,17 +23,31 @@ export function getPool(): Pool {
       max: 20,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 10000,
-      ssl: process.env.NODE_ENV === 'production' ? {
-        rejectUnauthorized: false
-      } : undefined,
+      ssl: {
+        rejectUnauthorized: false // Required for Google Cloud SQL
+      },
       allowExitOnIdle: true
     });
 
     // Add error handler
     _pool.on('error', (err) => {
-      console.error('Unexpected error on idle database client', err);
-      process.exit(-1);
+      console.error('Unexpected error on idle database client:', err);
+      // Don't exit in production, try to recover
+      if (process.env.NODE_ENV !== 'production') {
+        process.exit(-1);
+      }
     });
+
+    // Test the connection
+    _pool.connect()
+      .then(client => {
+        console.log('Successfully connected to database');
+        client.release();
+      })
+      .catch(err => {
+        console.error('Error connecting to database:', err);
+        _pool = null; // Reset pool on connection failure
+      });
   }
   return _pool;
 }
@@ -39,19 +58,42 @@ export const pool = getPool();
 // Create drizzle instance
 export const db = drizzle(pool, { schema });
 
-// Export query helper function
+// Export query helper function with better error handling
 export const query = async (text: string, params?: any[]) => {
   const start = Date.now();
-  const client = await pool.connect();
+  let client;
+  
+  try {
+    client = await pool.connect();
+  } catch (error) {
+    console.error('Failed to get database connection:', error);
+    throw new Error('Database connection failed');
+  }
+
   try {
     const result = await client.query(text, params);
     const duration = Date.now() - start;
-    console.log('Executed query', { text, duration, rows: result.rowCount });
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Executed query', { 
+        text, 
+        duration, 
+        rows: result.rowCount 
+      });
+    }
+    
     return result;
   } catch (error) {
-    console.error('Error executing query:', error);
+    console.error('Error executing query:', {
+      text,
+      params,
+      error: error.message,
+      stack: error.stack
+    });
     throw error;
   } finally {
-    client.release();
+    if (client) {
+      client.release();
+    }
   }
 };
