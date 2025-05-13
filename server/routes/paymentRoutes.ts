@@ -2,6 +2,14 @@ import express, { Request, Response } from "express";
 import { storage } from "../storage";
 import { sql } from "drizzle-orm";
 import { createPreference, processWebhook } from "../mercadopago";
+import Stripe from "stripe";
+
+// Initialize Stripe if secret key is available
+export const stripe = process.env.STRIPE_SECRET_KEY 
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: "2025-03-31.basil",
+    })
+  : undefined;
 
 const router = express.Router();
 

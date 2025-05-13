@@ -216,6 +216,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }, express.static(uploadsDir));
 
   // API Routes
+  app.use("/api/admin", adminRoutes);
+  app.use("/api/staff", staffRoutes);
   app.use("/api/auth", authRoutes);
   app.use("/api/business", businessRoutes);
   app.use("/api/themes", themeRoutes);
