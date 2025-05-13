@@ -12,6 +12,10 @@ import { Theme } from '../../shared/designTokens';
 import { db } from '../db';
 import { eq } from 'drizzle-orm';
 import { themes } from '../../shared/schema';
+import express from "express";
+import { sql } from "drizzle-orm";
+import { requireAuth } from "../middleware/auth";
+import { defaultThemeSettings } from "@shared/config";
 
 const router = Router();
 
@@ -302,6 +306,67 @@ router.get('/defaults/:themeId', (req: Request, res: Response) => {
   }
   
   res.json(theme);
+});
+
+// GET /api/themes
+router.get("/", async (req: Request, res: Response) => {
+  try {
+    const themes = await storage.getAllThemes();
+    res.json(themes);
+  } catch (error) {
+    console.error("Error fetching themes:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// PUT /api/themes/:businessId
+router.put("/:businessId", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const { 
+      primaryColor,
+      secondaryColor,
+      accentColor,
+      variant, 
+      appearance, 
+      radius,
+      fontFamily,
+      textColor,
+      backgroundColor,
+      buttonStyle,
+      cardStyle
+    } = req.body;
+    
+    const themeSettings = {
+      name: "Custom Theme",
+      primaryColor: primaryColor || '#4f46e5',
+      secondaryColor: secondaryColor || '#06b6d4',
+      accentColor: accentColor || '#f59e0b',
+      textColor: textColor || '#111827',
+      backgroundColor: backgroundColor || '#ffffff',
+      fontFamily: fontFamily || 'Inter, sans-serif',
+      borderRadius: radius || 6,
+      buttonStyle: buttonStyle || 'default',
+      cardStyle: cardStyle || 'default',
+      variant: variant || 'professional',
+      appearance: appearance || 'system'
+    };
+
+    const result = await db.execute(sql`
+      UPDATE users 
+      SET theme_settings = ${JSON.stringify(themeSettings)}
+      WHERE id = ${parseInt(req.params.businessId)}
+      RETURNING *
+    `);
+
+    if (!result || result.length === 0) {
+      return res.status(404).json({ message: "Business not found" });
+    }
+
+    res.json({ themeSettings });
+  } catch (error) {
+    console.error("Error updating theme:", error);
+    res.status(500).json({ message: "Failed to update theme" });
+  }
 });
 
 export default router;
