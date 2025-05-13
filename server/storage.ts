@@ -130,3 +130,31 @@ class BusinessSlugAdapterImpl extends BusinessSlugAdapter implements IStorage {
 
 // Use our adapter to handle the business_slug mismatch
 export const storage: IStorage = new BusinessSlugAdapterImpl();
+
+export const getAllThemes = async (): Promise<Theme[]> => {
+  try {
+    const result = await db.execute(sql`
+      SELECT * FROM themes 
+      ORDER BY created_at DESC
+    `);
+    
+    return result.rows.map(row => ({
+      id: row.id,
+      name: row.name,
+      primaryColor: row.primary_color,
+      secondaryColor: row.secondary_color,
+      accentColor: row.accent_color,
+      textColor: row.text_color,
+      backgroundColor: row.background_color,
+      fontFamily: row.font_family,
+      borderRadius: row.border_radius,
+      buttonStyle: row.button_style,
+      cardStyle: row.card_style,
+      appearance: row.appearance,
+      createdAt: new Date(row.created_at)
+    }));
+  } catch (error) {
+    console.error('Error getting all themes:', error);
+    return [];
+  }
+};
