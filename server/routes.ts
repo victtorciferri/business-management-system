@@ -52,6 +52,7 @@ import productRoutes from "./routes/productRoutes";
 import shoppingCartRoutes from "./routes/shoppingCartRoutes";
 import paymentRoutes from "./routes/paymentRoutes";
 import appointmentRoutes from "./routes/appointmentRoutes";
+import customerRoutes from "./routes/customerRoutes";
 
 // Initialize Stripe if secret key is available
 let stripe: Stripe | undefined;
@@ -379,13 +380,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register appointment routes
   app.use("/api", appointmentRoutes);
   
+  // Mount customer routes
+  app.use("/api", customerRoutes);
+  
   // Endpoint to update business logo
   app.patch('/api/business/logo', async (req: Request, res: Response) => {
     try {
-      const { logoUrl } = req.body;
-      
-      // Update the user's logo_url in the database
-      const result = await db.update(users)
         .set({ logoUrl })
         .where(eq(users.id, req.user.id))
         .returning();
@@ -3708,7 +3708,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fontFamily: fontFamily || 'Inter, sans-serif',
         borderRadius: radius || 6,
         buttonStyle: buttonStyle || 'default',
-        cardStyle: cardStyle || 'default',
+        cardStyle: buttonStyle || 'default',
         variant: variant || 'professional',
         appearance: appearance || 'system'
       };
