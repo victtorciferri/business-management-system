@@ -123,5 +123,13 @@
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"
+  },
+  "ts-node": {
+    "require": ["tsconfig-paths/register"]
+  },
+  "compilerOptions": {
+    "paths": {
+      "@shared/*": ["./shared/*"]
+    }
   }
 }

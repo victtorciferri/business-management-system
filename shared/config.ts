@@ -54,6 +54,21 @@ export const defaultTheme: Theme = {
   colorPalette: [],
 };
 
+export const defaultThemeSettings = {
+  name: "Default Theme",
+  primaryColor: "#4f46e5",
+  secondaryColor: "#06b6d4",
+  accentColor: "#f59e0b",
+  textColor: "#111827",
+  backgroundColor: "#ffffff",
+  fontFamily: "Inter, sans-serif",
+  borderRadius: 6,
+  buttonStyle: "default",
+  cardStyle: "default",
+  variant: "professional",
+  appearance: "system"
+};
+
 /**
  * Validates a theme object
  * @param theme The theme to validate
