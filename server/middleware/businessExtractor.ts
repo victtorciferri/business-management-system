@@ -131,25 +131,39 @@ export const businessExtractor = async (req: Request, res: Response, next: NextF
 
     // Get business from subdomain or path
     const host = req.get('host') || '';
-    const domain = host.split(':')[0]; // Remove port if present
-    
-    console.log(`Business extractor processing domain: ${domain}, path: ${req.path}`);
+    const domain = host.replace(/:\d+$/, ''); // Remove port number
 
-    // Try custom domain first
-    let business = await storage.getUserByCustomDomain(domain);
-    
-    if (!business) {
-      // Try business slug from path
-      const pathSegments = req.path.split('/').filter(Boolean);
-      if (pathSegments.length > 0) {
-        const possibleSlug = pathSegments[0];
-        business = await storage.getUserByBusinessSlug(possibleSlug);
+    // Skip localhost and IP addresses in development
+    if (process.env.NODE_ENV === 'development' && 
+        (domain === 'localhost' || domain === '127.0.0.1')) {
+      console.log('Development mode - skipping localhost business extraction');
+      return next();
+    }
+
+    // Handle production domains
+    if (process.env.NODE_ENV === 'production') {
+      // Check for appointease.cl domain
+      if (domain.endsWith('appointease.cl')) {
+        const subdomain = domain.replace('.appointease.cl', '');
+        if (subdomain !== 'www' && subdomain !== '') {
+          const business = await storage.getUserByBusinessSlug(subdomain);
+          if (business) {
+            req.business = business;
+          }
+        }
       }
     }
 
-    if (business) {
-      console.log(`Found business: ${business.businessName}`);
-      req.business = business;
+    // If no business found by domain, try path
+    if (!req.business) {
+      const pathSegments = req.path.split('/').filter(Boolean);
+      if (pathSegments.length > 0) {
+        const possibleSlug = pathSegments[0];
+        const business = await storage.getUserByBusinessSlug(possibleSlug);
+        if (business) {
+          req.business = business;
+        }
+      }
     }
 
     next();

@@ -147,19 +147,27 @@ const sendTokenEmail = async (req: Request, token: string, customer: Customer, b
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Basic middleware setup
-  app.use(cors({
-    origin: process.env.NODE_ENV === 'production' 
+  // CORS configuration
+  const corsOptions = {
+    origin: process.env.NODE_ENV === 'production'
       ? [
-          'https://appointease.cl', 
-          /\.appointease\.cl$/, // Matches subdomains like business.appointease.cl
-          process.env.ADMIN_DOMAIN || 'https://admin.appointease.cl' // Admin panel domain
+          'https://appointease.cl',
+          /\.appointease\.cl$/,
+          process.env.ADMIN_DOMAIN || 'https://admin.appointease.cl'
         ]
-      : ['http://localhost:3000', 'http://localhost:5173'], // Both Next.js and Vite dev servers
+      : [
+          'http://localhost:3000',
+          'http://localhost:5173',
+          'http://127.0.0.1:3000',
+          'http://127.0.0.1:5173'
+        ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Business-Slug']
-  }));
+  };
+
+  app.use(cors(corsOptions));
+
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
