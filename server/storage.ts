@@ -133,26 +133,23 @@ export const storage: IStorage = new BusinessSlugAdapterImpl();
 
 export const getAllThemes = async (): Promise<Theme[]> => {
   try {
-    const result = await db.execute(sql`
-      SELECT * FROM themes 
-      ORDER BY created_at DESC
-    `);
+    const result = await db.select().from(themes).orderBy(desc(themes.createdAt));
     
-    return result.rows.map(row => ({
-      id: row.id,
-      name: row.name,
-      primaryColor: row.primary_color,
-      secondaryColor: row.secondary_color,
-      accentColor: row.accent_color,
-      textColor: row.text_color,
-      backgroundColor: row.background_color,
-      fontFamily: row.font_family,
-      borderRadius: row.border_radius,
-      buttonStyle: row.button_style,
-      cardStyle: row.card_style,
-      appearance: row.appearance,
-      variant: row.variant,
-      createdAt: new Date(row.created_at)
+    return result.map(theme => ({
+      id: theme.id,
+      name: theme.name,
+      primaryColor: theme.primaryColor,
+      secondaryColor: theme.secondaryColor,
+      accentColor: theme.accentColor,
+      textColor: theme.textColor,
+      backgroundColor: theme.backgroundColor,
+      fontFamily: theme.fontFamily,
+      borderRadius: theme.borderRadius,
+      buttonStyle: theme.buttonStyle,
+      cardStyle: theme.cardStyle,
+      variant: theme.variant,
+      appearance: theme.appearance,
+      createdAt: theme.createdAt
     }));
   } catch (error) {
     console.error('Error getting all themes:', error);

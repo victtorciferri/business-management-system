@@ -237,7 +237,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/:slug/*", async (req: Request, res: Response) => {
     try {
       const { slug } = req.params;
-      console.log(`Processing /:slug/* route for ${slug}`);
+      
+      // Skip development asset paths
+      if (process.env.NODE_ENV === 'development' && 
+          (slug === 'src' || slug === '@fs' || slug.startsWith('@'))) {
+        return res.status(404).json({ message: "Not found" });
+      }
 
       // Skip reserved paths
       const reservedPaths = ['api', 'uploads', 'static', 'health'];
@@ -245,15 +250,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Not found" });
       }
 
-      // Try to find business by slug or custom domain
       const business = await req.business;
-      
       if (!business) {
-        console.log(`No business found for slug ${slug}, passing to next handler`);
+        console.log(`No business found for slug ${slug}`);
         return res.status(404).json({ message: "Business not found" });
       }
 
-      // Return business data for client-side rendering
       res.json({ business });
     } catch (error) {
       console.error('Error in catch-all route:', error);
