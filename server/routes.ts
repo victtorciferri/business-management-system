@@ -539,7 +539,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/business/:slug", async (req: Request, res: Response) => {
     try {
       const { slug } = req.params;
-      const result = await query('SELECT * FROM users WHERE business_slug = $1', [slug]);
       
       // Skip reserved words for API endpoints
       const reservedWords = [
@@ -554,17 +553,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`API request for business with slug: ${slug}`);
       
-      // Use the verified working approach from our test endpoint
-      const { Pool } = await import('@neondatabase/serverless');
-      const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-      
       // First try to find by slug
-      let result = await pool.query('SELECT * FROM users WHERE business_slug = $1', [slug]);
+      let result = await query('SELECT * FROM users WHERE business_slug = $1', [slug]);
       
       // If not found by slug, try by custom domain
       if (!result.rows || result.rows.length === 0) {
         console.log(`Business with slug ${slug} not found, trying by custom domain...`);
-        result = await pool.query('SELECT * FROM users WHERE custom_domain = $1', [slug]);
+        result = await query('SELECT * FROM users WHERE custom_domain = $1', [slug]);
       }
       
       console.log(`Raw SQL business data for '${slug}':`, result.rows);
