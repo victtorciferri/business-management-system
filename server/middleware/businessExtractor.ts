@@ -122,232 +122,42 @@ setInterval(() => {
  * 
  * Attaches the business object to req.business for use in subsequent routes
  */
-export async function businessExtractor(req: Request, res: Response, next: NextFunction) {
+export const businessExtractor = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    let businessSlug: string | undefined;
-    
-    // Skip verbose logging for static assets and development URLs
-    const isStaticAssetOrDevPath = req.path.includes('.') || 
-                                  req.path.startsWith('/src/') || 
-                                  req.path.startsWith('/@') ||
-                                  req.path.startsWith('/_next');
-    
-    if (!isStaticAssetOrDevPath) {
-      console.log(`Business extractor processing: ${req.path} (Host: ${req.headers.host})`);
+    // Skip if path starts with /api
+    if (req.path.startsWith('/api/')) {
+      return next();
     }
+
+    // Get business from subdomain or path
+    const host = req.get('host') || '';
+    const domain = host.split(':')[0]; // Remove port if present
     
-    // First check if the user is authenticated and has a business context
-    if (req.isAuthenticated && req.isAuthenticated() && req.user) {
-      // For authenticated users, we may already have a business context from their session
-      if (req.user.businessSlug && req.user.role !== 'admin') {
-        try {
-          // Check the slug cache first
-          const cacheKey = req.user.businessSlug;
-          if (slugCache[cacheKey] && Date.now() - slugCache[cacheKey].timestamp < CACHE_DURATION) {
-            if (slugCache[cacheKey].business) {
-              console.log(`Using cached business data for slug: ${cacheKey}`);
-              req.business = slugCache[cacheKey].business;
-              req.businessConfig = slugCache[cacheKey].config;
-              return next();
-            }
-          }
-          
-          console.log(`Looking up business by slug from authenticated user: ${req.user.businessSlug}`);
-          const business = await storage.getUserByBusinessSlug(req.user.businessSlug);
-          if (business) {
-            console.log(`Found business by slug: ${req.user.businessSlug}`);
-            const { password, ...sanitizedBusiness } = business;
-            req.business = sanitizedBusiness as any;
-            await attachBusinessConfig(req);
-            
-            // Cache the business data
-            slugCache[cacheKey] = {
-              business: sanitizedBusiness as any,
-              timestamp: Date.now(),
-              config: req.businessConfig
-            };
-            
-            return next();
-          } else {
-            console.log(`Business not found by slug: ${req.user.businessSlug}`);
-          }
-        } catch (err) {
-          console.error('Error fetching authenticated user business:', err);
-        }
-      }
-    }
+    console.log(`Business extractor processing domain: ${domain}, path: ${req.path}`);
+
+    // Try custom domain first
+    let business = await storage.getUserByCustomDomain(domain);
     
-    // Check if we have a path parameter slug
-    if (req.params.slug) {
-      if (!RESERVED_PATHS.includes(req.params.slug)) {
-        console.log(`Found slug in params: ${req.params.slug}`);
-        businessSlug = req.params.slug;
-      } else {
-        console.log(`Slug ${req.params.slug} is in reserved paths, skipping`);
-      }
-    }
-    // Special handling for /api/business/:slug endpoint
-    else if (req.path.startsWith('/api/business/')) {
-      const pathSegments = req.path.split('/').filter(Boolean);
-      if (pathSegments.length >= 3 && pathSegments[0] === 'api' && pathSegments[1] === 'business') {
-        if (!RESERVED_PATHS.includes(pathSegments[2])) {
-          console.log(`Found slug in API business path: ${pathSegments[2]}`);
-          businessSlug = pathSegments[2];
-        } else {
-          console.log(`API slug ${pathSegments[2]} is in reserved paths, skipping`);
-        }
-      }
-    }
-    // Check if the URL path starts with a potential business slug
-    else if (req.path !== '/' && req.path !== '/business-portal' && !isStaticAssetOrDevPath) {
+    if (!business) {
+      // Try business slug from path
       const pathSegments = req.path.split('/').filter(Boolean);
       if (pathSegments.length > 0) {
-        const potentialSlug = pathSegments[0];
-        
-        if (!potentialSlug.startsWith('@') && 
-            !potentialSlug.includes('.') && 
-            !RESERVED_PATHS.includes(potentialSlug)) {
-          console.log(`Found potential slug in path: ${potentialSlug}`);
-          businessSlug = potentialSlug;
-        } else if (RESERVED_PATHS.includes(potentialSlug)) {
-          console.log(`Path segment ${potentialSlug} is in reserved paths, skipping`);
-        }
+        const possibleSlug = pathSegments[0];
+        business = await storage.getUserByBusinessSlug(possibleSlug);
       }
     }
-    
-    // Check for custom domain if we didn't find a slug in the path
-    if (!businessSlug && req.headers.host) {
-      const host = req.headers.host.toLowerCase();
-      
-      // Skip localhost and IP addresses
-      if (!host.includes('localhost') && 
-          !host.includes('127.0.0.1') && 
-          !host.match(/^\d+\.\d+\.\d+\.\d+/)) {
-          
-        // Remove port if present
-        const cleanedHost = host.split(':')[0];
-        
-        // Check cache for this domain
-        if (domainCache[cleanedHost] && 
-            Date.now() - domainCache[cleanedHost].timestamp < CACHE_DURATION) {
-          
-          if (domainCache[cleanedHost].business) {
-            req.business = domainCache[cleanedHost].business;
-            req.businessConfig = domainCache[cleanedHost].config;
-            return next();
-          }
-          // If the domain was cached as not found, skip the db query
-          else if (domainCache[cleanedHost].business === null) {
-            // Skip to subdomain check
-          }
-        } 
-        else {
-          // Not in cache, do the lookup
-          try {
-            const businessByDomain = await storage.getUserByCustomDomain(cleanedHost);
-            
-            if (businessByDomain) {
-              const { password, ...sanitizedBusiness } = businessByDomain;
-              req.business = sanitizedBusiness as any;
-              await attachBusinessConfig(req);
-              
-              // Cache the successful result
-              domainCache[cleanedHost] = {
-                business: sanitizedBusiness as any,
-                timestamp: Date.now(),
-                config: req.businessConfig
-              };
-              
-              return next();
-            } 
-            else {
-              // Cache the "not found" result to avoid repeated lookups
-              domainCache[cleanedHost] = {
-                business: null,
-                timestamp: Date.now()
-              };
-            }
-          } catch (err) {
-            console.error(`Error looking up domain '${cleanedHost}':`, err);
-          }
-        }
-        
-        // Fallback to subdomain logic if custom domain lookup fails
-        if (!host.includes('appointease.com')) {
-          const domainParts = host.split('.');
-          
-          if (domainParts.length >= 1) {
-            const potentialSubdomainSlug = domainParts[0];
-            
-            if (!RESERVED_PATHS.includes(potentialSubdomainSlug)) {
-              businessSlug = potentialSubdomainSlug;
-            }
-          }
-        }
-      }
+
+    if (business) {
+      console.log(`Found business: ${business.businessName}`);
+      req.business = business;
     }
-    
-    // Now try to find the business by the slug we identified
-    if (businessSlug) {
-      // Check the cache first
-      if (slugCache[businessSlug] && Date.now() - slugCache[businessSlug].timestamp < CACHE_DURATION) {
-        console.log(`Using cached business data for slug: ${businessSlug}`);
-        if (slugCache[businessSlug].business) {
-          req.business = slugCache[businessSlug].business;
-          req.businessConfig = slugCache[businessSlug].config;
-          if (!isStaticAssetOrDevPath) {
-            console.log(`Setting business from cache: ${req.business.businessName} (ID: ${req.business.id})`);
-          }
-          return next();
-        }
-        // Don't proceed with database lookup if we've cached a "not found" result
-        console.log(`Business not found in cache for slug: ${businessSlug}`);
-        return next();
-      }
-      
-      try {
-        console.log(`Looking up business data for slug: ${businessSlug}`);
-        
-        // Look up the business by slug
-        const business = await storage.getUserByBusinessSlug(businessSlug);
-        
-        if (business) {
-          const { password, ...sanitizedBusiness } = business;
-          req.business = sanitizedBusiness as any;
-          await attachBusinessConfig(req);
-          
-          console.log(`Found business for slug ${businessSlug}: ${business.businessName} (ID: ${business.id})`);
-          
-          // Cache the successful result
-          slugCache[businessSlug] = {
-            business: req.business,
-            timestamp: Date.now(),
-            config: req.businessConfig
-          };
-          
-          return next();
-        } else {
-          console.log(`No business found for slug: ${businessSlug}`);
-          
-          // Cache the "not found" result to avoid repeated lookups
-          slugCache[businessSlug] = {
-            business: null,
-            timestamp: Date.now()
-          };
-        }
-      } catch (error) {
-        console.error(`Error looking up business by slug ${businessSlug}:`, error);
-      }
-    }
-    
-    // Continue to the next middleware/route handler
+
     next();
   } catch (error) {
-    console.error("Error in business extractor middleware:", error);
-    // Continue even if there's an error, just without req.business
-    next();
+    console.error('Error in business extractor:', error);
+    next(error);
   }
-}
+};
 
 /**
  * Helper function to attach business configuration to the request

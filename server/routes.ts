@@ -215,6 +215,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   }, express.static(uploadsDir));
 
+  // Root path handler
+  app.get("/", async (req: Request, res: Response) => {
+    if (req.business) {
+      return res.json({ business: req.business });
+    }
+    
+    // If no business found, redirect to main site or show landing
+    if (process.env.NODE_ENV === 'production') {
+      res.redirect('https://appointease.cl');
+    } else {
+      res.json({ 
+        message: "AppointEase Development Server",
+        endpoints: {
+          api: "/api",
+          health: "/health",
+          business: "/:businessSlug/*"
+        }
+      });
+    }
+  });
+
   // API Routes
   app.use("/api/admin", adminRoutes);
   app.use("/api/staff", staffRoutes);
@@ -235,27 +256,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ status: "healthy" });
   });
 
-  // Catch-all route for business subdomains/slugs
+  // Updated catch-all route
   app.get("/:slug/*", async (req: Request, res: Response) => {
     try {
       const { slug } = req.params;
       
-      // Skip development asset paths
       if (process.env.NODE_ENV === 'development' && 
           (slug === 'src' || slug === '@fs' || slug.startsWith('@'))) {
-        return res.status(404).json({ message: "Not found" });
+        return next();
       }
 
-      // Skip reserved paths
-      const reservedPaths = ['api', 'uploads', 'static', 'health'];
-      if (reservedPaths.includes(slug)) {
-        return res.status(404).json({ message: "Not found" });
+      if (['api', 'uploads', 'static', 'health'].includes(slug)) {
+        return next();
       }
 
       const business = await req.business;
       if (!business) {
-        console.log(`No business found for slug ${slug}`);
-        return res.status(404).json({ message: "Business not found" });
+        return res.status(404).json({ 
+          message: "Business not found",
+          slug,
+          path: req.path 
+        });
       }
 
       res.json({ business });
@@ -263,6 +284,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Error in catch-all route:', error);
       res.status(500).json({ message: "Server error" });
     }
+  });
+
+  // Error handling
+  app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+    console.error('Unhandled error:', err);
+    res.status(500).json({ 
+      message: "Internal server error",
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   });
 
   // Create and return HTTP server
