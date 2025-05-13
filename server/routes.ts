@@ -541,49 +541,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { slug } = req.params;
       const result = await query('SELECT * FROM users WHERE business_slug = $1', [slug]);
       
-      import { pool, query, db } from './db';
-      
-      // ...existing imports...
-      
-      export async function registerRoutes(app: Express): Promise<Server> {
-        // Replace the db-test endpoint
-        app.get("/api/db-test", async (req: Request, res: Response) => {
-          try {
-            // Use our existing query helper instead of creating new pool
-            const result = await query('SELECT * FROM users WHERE business_slug = $1', ['salonelegante']);
-            
-            console.log('Direct database query result:', result.rows);
-            
-            if (result.rows.length > 0) {
-              res.json({ 
-                message: "Database connection successful", 
-                user: result.rows[0],
-                connectionString: process.env.DATABASE_URL ? "Database URL is set" : "No Database URL found"
-              });
-            }
-          } catch (error) {
-            console.error('Database test error:', error);
-            res.status(500).json({ 
-              message: "Database test failed", 
-              error: error.message,
-              connectionString: process.env.DATABASE_URL ? "Database URL is set" : "No Database URL found"
-            });
-          }
-        });
-      
-        // Replace other @neondatabase/serverless instances with query helper
-        app.get("/api/business/:slug", async (req: Request, res: Response) => {
-          try {
-            const { slug } = req.params;
-            const result = await query('SELECT * FROM users WHERE business_slug = $1', [slug]);
-            // ...rest of the endpoint code
-          } catch (error) {
-            // ...error handling
-          }
-        });
-      
-        // ...rest of routes...
-      }      // Skip reserved words for API endpoints
+      // Skip reserved words for API endpoints
       const reservedWords = [
         'products', 'services', 'dashboard', 'appointments', 
         'customers', 'admin', 'auth', 'checkout'
