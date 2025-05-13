@@ -47,3 +47,34 @@ export const query = async (text: string, params?: any[]) => {
 
 // Export pool for direct use if needed
 export { pool };
+
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { Pool } from 'pg';
+
+export const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  max: 20, // Maximum number of clients
+  idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
+  connectionTimeoutMillis: 10000, // Give up after 10 seconds trying to connect
+  ssl: process.env.NODE_ENV === 'production' ? {
+    rejectUnauthorized: false
+  } : undefined
+});
+
+// Add error handler
+pool.on('error', (err) => {
+  console.error('Unexpected error on idle database client', err);
+  process.exit(-1);
+});
+
+export const db = drizzle(pool);
+
+// Helper function for raw queries
+export const query = async (text: string, params?: any[]) => {
+  const client = await pool.connect();
+  try {
+    return await client.query(text, params);
+  } finally {
+    client.release();
+  }
+};

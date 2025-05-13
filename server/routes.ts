@@ -257,15 +257,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Updated catch-all route
-  app.get("/:slug/*", async (req: Request, res: Response) => {
+  app.get("/:slug/*", async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { slug } = req.params;
       
+      // Skip development paths
       if (process.env.NODE_ENV === 'development' && 
           (slug === 'src' || slug === '@fs' || slug.startsWith('@'))) {
         return next();
       }
 
+      // Skip reserved paths
       if (['api', 'uploads', 'static', 'health'].includes(slug)) {
         return next();
       }
@@ -281,8 +283,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ business });
     } catch (error) {
-      console.error('Error in catch-all route:', error);
-      res.status(500).json({ message: "Server error" });
+      next(error); // Pass errors to error handling middleware
     }
   });
 
