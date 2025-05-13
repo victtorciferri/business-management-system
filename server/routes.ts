@@ -50,7 +50,7 @@ import staffRoutes from "./routes/staffRoutes";
 import debugRoutes from "./routes/debugRoutes";
 import productRoutes from "./routes/productRoutes";
 import shoppingCartRoutes from "./routes/shoppingCartRoutes";
-import paymentRoutes from "./paymentRoutes";
+import paymentRoutes from "./routes/paymentRoutes";
 
 // Initialize Stripe if secret key is available
 let stripe: Stripe | undefined;
