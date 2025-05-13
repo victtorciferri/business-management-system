@@ -386,7 +386,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Endpoint to update business logo
   app.patch('/api/business/logo', async (req: Request, res: Response) => {
     try {
-      await db.execute(sql`
+       await db.execute(sql`
         UPDATE users 
         SET logo_url = ${logoUrl}
         WHERE id = ${req.user.id}
