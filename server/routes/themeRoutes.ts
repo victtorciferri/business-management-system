@@ -369,4 +369,15 @@ router.put("/:businessId", requireAuth, async (req: Request, res: Response) => {
   }
 });
 
+// POST /api/themes
+router.post("/", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const theme = await storage.createTheme(req.body);
+    res.status(201).json(theme);
+  } catch (error) {
+    console.error("Error creating theme:", error);
+    res.status(500).json({ error: "Failed to create theme" });
+  }
+});
+
 export default router;

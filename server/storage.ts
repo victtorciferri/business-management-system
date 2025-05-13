@@ -151,6 +151,7 @@ export const getAllThemes = async (): Promise<Theme[]> => {
       buttonStyle: row.button_style,
       cardStyle: row.card_style,
       appearance: row.appearance,
+      variant: row.variant,
       createdAt: new Date(row.created_at)
     }));
   } catch (error) {
