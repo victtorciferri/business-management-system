@@ -554,98 +554,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`API request for business with slug: ${slug}`);
       
       // First try to find by slug
-      let result = await query('SELECT * FROM users WHERE business_slug = $1', [slug]);
+      const result = await query('SELECT * FROM users WHERE business_slug = $1', [slug]);
       
       // If not found by slug, try by custom domain
       if (!result.rows || result.rows.length === 0) {
         console.log(`Business with slug ${slug} not found, trying by custom domain...`);
-        result = await query('SELECT * FROM users WHERE custom_domain = $1', [slug]);
+        const domainResult = await query('SELECT * FROM users WHERE custom_domain = $1', [slug]);
+        
+        if (!domainResult.rows || domainResult.rows.length === 0) {
+          console.log(`Business with slug or domain ${slug} not found in database`);
+          return res.status(404).json({ message: "Business not found" });
+        }
+        
+        // Use the domain result
+        return processBusinessResult(domainResult, res);
       }
       
-      console.log(`Raw SQL business data for '${slug}':`, result.rows);
+      // Use the slug result
+      return processBusinessResult(result, res);
       
-      if (!result.rows || result.rows.length === 0) {
-        console.log(`Business with slug or domain ${slug} not found in database`);
-        return res.status(404).json({ message: "Business not found" });
-      }
-      
-      // Convert snake_case to camelCase
-      const business = {
-        id: result.rows[0].id,
-        username: result.rows[0].username,
-        password: result.rows[0].password,
-        email: result.rows[0].email,
-        businessName: result.rows[0].business_name,
-        businessSlug: result.rows[0].business_slug,
-        customDomain: result.rows[0].custom_domain,
-        phone: result.rows[0].phone,
-        // Add address fields
-        address: result.rows[0].address,
-        city: result.rows[0].city,
-        state: result.rows[0].state,
-        postalCode: result.rows[0].postal_code,
-        country: result.rows[0].country,
-        latitude: result.rows[0].latitude,
-        longitude: result.rows[0].longitude,
-        // Add logo URL
-        logoUrl: result.rows[0].logo_url,
-        coverImageUrl: result.rows[0].cover_image_url,
-        // Add theme settings from JSONB column
-        themeSettings: result.rows[0].theme_settings || {
-          primaryColor: '#4f46e5',
-          secondaryColor: '#06b6d4',
-          accentColor: '#f59e0b',
-          variant: 'professional',
-          appearance: 'system',
-          borderRadius: 8,
-          fontFamily: 'Inter, sans-serif',
-          textColor: '#111827',
-          backgroundColor: '#ffffff',
-          buttonStyle: 'default',
-          cardStyle: 'default'
-        },
-        industryType: result.rows[0].industry_type || 'general',
-        createdAt: new Date(result.rows[0].created_at)
-      };
-      
-      console.log(`Mapped business object:`, business);
-      
-      // Get services for this business using parameterized query
-      const servicesResult = await pool.query(
-        'SELECT * FROM services WHERE user_id = $1 AND active = true',
-        [business.id]
-      );
-      
-      console.log(`Raw SQL services for business:`, servicesResult.rows);
-      
-      // Map service rows to camelCase properties
-      const services = servicesResult.rows.map(row => ({
-        id: row.id,
-        userId: row.user_id,
-        name: row.name,
-        description: row.description,
-        duration: row.duration,
-        price: row.price,
-        color: row.color,
-        active: row.active
-      }));
-      
-      // Return business data excluding sensitive information
-      const { password: _, ...businessData } = business;
-      
-      // Return JSON response
-      const response = {
-        business: businessData,
-        services: services
-      };
-      
-      console.log(`Returning business response: ${JSON.stringify(response, null, 2)}`);
-      res.json(response);
     } catch (error) {
       console.error(`Error fetching business data: ${error}`);
       res.status(500).json({ message: "Failed to fetch business data" });
     }
   });
+  
+  // Helper function to process business result
+  async function processBusinessResult(result: any, res: Response) {
+    const business = {
+      id: result.rows[0].id,
+      username: result.rows[0].username,
+      email: result.rows[0].email,
+      businessName: result.rows[0].business_name,
+      businessSlug: result.rows[0].business_slug,
+      customDomain: result.rows[0].custom_domain,
+      phone: result.rows[0].phone,
+      address: result.rows[0].address,
+      city: result.rows[0].city,
+      state: result.rows[0].state,
+      postalCode: result.rows[0].postal_code,
+      country: result.rows[0].country,
+      latitude: result.rows[0].latitude,
+      longitude: result.rows[0].longitude,
+      logoUrl: result.rows[0].logo_url,
+      coverImageUrl: result.rows[0].cover_image_url,
+      themeSettings: result.rows[0].theme_settings || defaultThemeSettings,
+      industryType: result.rows[0].industry_type || 'general',
+      createdAt: new Date(result.rows[0].created_at)
+    };
+  
+    // Get services for this business
+    const servicesResult = await query(
+      'SELECT * FROM services WHERE user_id = $1 AND active = true',
+      [business.id]
+    );
+  
+    // Map service rows to camelCase properties
+    const services = servicesResult.rows.map(row => ({
+      id: row.id,
+      userId: row.user_id,
+      name: row.name,
+      description: row.description,
+      duration: row.duration,
+      price: row.price,
+      color: row.color,
+      active: row.active
+    }));
+  
+    // Return business data excluding sensitive information
+    const { password: _, ...businessData } = business;
+  
+    return res.json({
+      business: businessData,
+      services: services
+    });
+  }
   
   /**
    * GET /api/business/id/:id
