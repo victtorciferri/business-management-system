@@ -51,6 +51,7 @@ import debugRoutes from "./routes/debugRoutes";
 import productRoutes from "./routes/productRoutes";
 import shoppingCartRoutes from "./routes/shoppingCartRoutes";
 import paymentRoutes from "./routes/paymentRoutes";
+import appointmentRoutes from "./routes/appointmentRoutes";
 
 // Initialize Stripe if secret key is available
 let stripe: Stripe | undefined;
@@ -374,6 +375,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register payment routes
   app.use("/api", paymentRoutes);
+  
+  // Register appointment routes
+  app.use("/api", appointmentRoutes);
   
   // Endpoint to update business logo
   app.patch('/api/business/logo', async (req: Request, res: Response) => {
