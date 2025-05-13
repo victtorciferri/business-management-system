@@ -386,9 +386,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Endpoint to update business logo
   app.patch('/api/business/logo', async (req: Request, res: Response) => {
     try {
-        .set({ logoUrl })
-        .where(eq(users.id, req.user.id))
-        .returning();
+      await db.execute(sql`
+        UPDATE users 
+        SET logo_url = ${logoUrl}
+        WHERE id = ${req.user.id}
+        RETURNING *
+      `);
         
       if (!result || result.length === 0) {
         return res.status(404).json({ error: 'User not found' });
