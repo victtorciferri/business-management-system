@@ -124,45 +124,33 @@ setInterval(() => {
  */
 export const businessExtractor = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // Skip if path starts with /api
+    // Skip API routes
     if (req.path.startsWith('/api/')) {
       return next();
     }
 
-    // Get business from subdomain or path
     const host = req.get('host') || '';
     const domain = host.replace(/:\d+$/, ''); // Remove port number
-
-    // Skip localhost and IP addresses in development
-    if (process.env.NODE_ENV === 'development' && 
-        (domain === 'localhost' || domain === '127.0.0.1')) {
-      console.log('Development mode - skipping localhost business extraction');
-      return next();
-    }
-
-    // Handle production domains
-    if (process.env.NODE_ENV === 'production') {
-      // Check for appointease.cl domain
-      if (domain.endsWith('appointease.cl')) {
-        const subdomain = domain.replace('.appointease.cl', '');
-        if (subdomain !== 'www' && subdomain !== '') {
-          const business = await storage.getUserByBusinessSlug(subdomain);
-          if (business) {
-            req.business = business;
-          }
+    
+    // Try getting business from subdomain
+    if (domain.endsWith('appointease.cl')) {
+      const subdomain = domain.replace('.appointease.cl', '');
+      if (subdomain !== 'www' && subdomain !== '') {
+        const business = await storage.getUserByBusinessSlug(subdomain);
+        if (business) {
+          req.business = business;
+          return next();
         }
       }
     }
 
-    // If no business found by domain, try path
-    if (!req.business) {
-      const pathSegments = req.path.split('/').filter(Boolean);
-      if (pathSegments.length > 0) {
-        const possibleSlug = pathSegments[0];
-        const business = await storage.getUserByBusinessSlug(possibleSlug);
-        if (business) {
-          req.business = business;
-        }
+    // Try getting business from path
+    const pathSegments = req.path.split('/').filter(Boolean);
+    if (pathSegments.length > 0) {
+      const possibleSlug = pathSegments[0];
+      const business = await storage.getUserByBusinessSlug(possibleSlug);
+      if (business) {
+        req.business = business;
       }
     }
 

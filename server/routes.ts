@@ -147,26 +147,20 @@ const sendTokenEmail = async (req: Request, token: string, customer: Customer, b
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // CORS configuration
-  const corsOptions = {
-    origin: process.env.NODE_ENV === 'production'
-      ? [
-          'https://appointease.cl',
-          /\.appointease\.cl$/,
-          process.env.ADMIN_DOMAIN || 'https://admin.appointease.cl'
-        ]
-      : [
-          'http://localhost:3000',
-          'http://localhost:5173',
-          'http://127.0.0.1:3000',
-          'http://127.0.0.1:5173'
-        ],
+  // CORS configuration - simplified but secure
+  app.use(cors({
+    origin: [
+      'https://appointease.cl',
+      /\.appointease\.cl$/,
+      'http://localhost:3000',
+      'http://localhost:5173',
+      'http://127.0.0.1:3000',
+      'http://127.0.0.1:5173'
+    ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Business-Slug']
-  };
-
-  app.use(cors(corsOptions));
+  }));
 
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
@@ -223,25 +217,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   }, express.static(uploadsDir));
 
-  // Root path handler
+  // Root path handler - simplified
   app.get("/", async (req: Request, res: Response) => {
     if (req.business) {
       return res.json({ business: req.business });
     }
-    
-    // If no business found, redirect to main site or show landing
-    if (process.env.NODE_ENV === 'production') {
-      res.redirect('https://appointease.cl');
-    } else {
-      res.json({ 
-        message: "AppointEase Development Server",
-        endpoints: {
-          api: "/api",
-          health: "/health",
-          business: "/:businessSlug/*"
-        }
-      });
-    }
+    res.redirect('https://appointease.cl');
   });
 
   // API Routes
@@ -264,19 +245,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ status: "healthy" });
   });
 
-  // Updated catch-all route
+  // Catch-all route for business subdomains/slugs
   app.get("/:slug/*", async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { slug } = req.params;
       
-      // Skip development paths
-      if (process.env.NODE_ENV === 'development' && 
-          (slug === 'src' || slug === '@fs' || slug.startsWith('@'))) {
-        return next();
-      }
-
-      // Skip reserved paths
-      if (['api', 'uploads', 'static', 'health'].includes(slug)) {
+      // Skip asset paths and API routes
+      if (slug.startsWith('@') || 
+          slug === 'src' || 
+          slug === 'api' || 
+          slug === 'uploads' || 
+          slug === 'static' || 
+          slug === 'health') {
         return next();
       }
 
@@ -291,7 +271,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ business });
     } catch (error) {
-      next(error); // Pass errors to error handling middleware
+      next(error);
     }
   });
 
@@ -299,12 +279,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     console.error('Unhandled error:', err);
     res.status(500).json({ 
-      message: "Internal server error",
-      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+      message: "Internal server error"
     });
   });
 
-  // Create and return HTTP server
-  const httpServer = createServer(app);
-  return httpServer;
+  return createServer(app);
 }
