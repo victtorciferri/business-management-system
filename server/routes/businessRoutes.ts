@@ -11,39 +11,14 @@ const router = express.Router();
 router.get("/:slug", async (req: Request, res: Response) => {
   try {
     const { slug } = req.params;
-    
-    const reservedWords = [
-      'products', 'services', 'dashboard', 'appointments', 
-      'customers', 'admin', 'auth', 'checkout'
-    ];
-    
-    if (reservedWords.includes(slug)) {
-      console.log(`Skipping business lookup for reserved word: ${slug}`);
-      return res.status(404).json({ message: "Not a valid business slug" });
+    const business = await storage.getUserByBusinessSlug(slug);
+    if (!business) {
+      return res.status(404).json({ message: "Business not found" });
     }
-    
-    console.log(`API request for business with slug: ${slug}`);
-    
-    let result = await query('SELECT * FROM users WHERE business_slug = $1', [slug]);
-    
-    if (!result.rows || result.rows.length === 0) {
-      result = await query('SELECT * FROM users WHERE custom_domain = $1', [slug]);
-      
-      if (!result.rows || result.rows.length === 0) {
-        return res.status(404).json({ message: "Business not found" });
-      }
-    }
-
-    const business = await storage.processBusinessResult(result.rows[0]);
-    const services = await storage.getServicesByUserId(business.id);
-
-    return res.json({
-      business,
-      services
-    });
+    res.json({ business });
   } catch (error) {
-    console.error(`Error fetching business data:`, error);
-    res.status(500).json({ message: "Failed to fetch business data" });
+    console.error("Error fetching business:", error);
+    res.status(500).json({ message: "Failed to fetch business" });
   }
 });
 

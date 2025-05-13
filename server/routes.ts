@@ -54,6 +54,7 @@ import paymentRoutes from "./routes/paymentRoutes";
 import appointmentRoutes from "./routes/appointmentRoutes";
 import customerRoutes from "./routes/customerRoutes";
 import authRoutes from "./routes/authRoutes";
+import businessRoutes from "./routes/businessRoutes";
 
 // Initialize Stripe if secret key is available
 let stripe: Stripe | undefined;

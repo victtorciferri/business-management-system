@@ -67,7 +67,18 @@ export const defaultThemeSettings = {
   cardStyle: "default",
   variant: "professional",
   appearance: "system"
-};
+} as const;
+
+export interface Business {
+  id: number;
+  email: string;
+  password?: string;
+  businessName: string;
+  businessSlug: string;
+  customDomain?: string;
+  role: string;
+  themeSettings?: typeof defaultThemeSettings;
+}
 
 /**
  * Validates a theme object
