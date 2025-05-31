@@ -179,12 +179,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication setup
   app.use(passport.initialize());
   app.use(passport.session());
-
   // Core middleware
   app.use(businessExtractor);
   app.use(themeMiddleware);
 
-  // Static file serving
+  // Static file serving for client assets
+  app.use(express.static(path.join(process.cwd(), 'dist', 'public')));
+
+  // Static file serving for uploads
   const uploadsDir = path.join(process.cwd(), 'uploads');
   console.log('======== STATIC FILES SETUP ========');
   console.log('Uploads directory path:', uploadsDir);
@@ -207,8 +209,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   } catch (err) {
     console.error('ERROR: Uploads directory is not writable:', err);
   }
-  
-  // Serve static files with enhanced logging
+    // Serve static files with enhanced logging
   app.use('/uploads', (req, res, next) => {
     console.log(`Static file request for: ${req.path}`);
     const fullPath = path.join(uploadsDir, req.path);
@@ -216,13 +217,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log(`File exists: ${fs.existsSync(fullPath)}`);
     next();
   }, express.static(uploadsDir));
-  // Root path handler - simplified
+    // Root path handler - serve index content
   app.get("/", async (req: Request, res: Response) => {
     if (req.business) {
+      // Continue returning business data if it's available
       return res.json({ business: req.business });
+    } else {
+      // Serve the SPA index.html for client-side routing
+      res.sendFile(path.join(process.cwd(), 'dist', 'public', 'index.html'));
     }
-    // Redirect to auth page instead of external site
-    res.redirect('/auth');
   });
 
   // API Routes
@@ -273,6 +276,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       next(error);
     }
+  });  // Catch-all route for SPA navigation - should be placed after all API routes
+  app.get('*', (req: Request, res: Response) => {
+    // Skip API routes and asset files
+    if (req.path.startsWith('/api/') || 
+        req.path.startsWith('/uploads/') || 
+        req.path.includes('.')) {
+      return res.status(404).send('Not found');
+    }
+    
+    // Otherwise serve the SPA main HTML file to support client-side routing
+    res.sendFile(path.join(process.cwd(), 'dist', 'public', 'index.html'));
   });
 
   // Error handling
