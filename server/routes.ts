@@ -216,13 +216,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log(`File exists: ${fs.existsSync(fullPath)}`);
     next();
   }, express.static(uploadsDir));
-
   // Root path handler - simplified
   app.get("/", async (req: Request, res: Response) => {
     if (req.business) {
       return res.json({ business: req.business });
     }
-    res.redirect('https://appointease.cl');
+    // Redirect to auth page instead of external site
+    res.redirect('/auth');
   });
 
   // API Routes
