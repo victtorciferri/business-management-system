@@ -3,8 +3,60 @@ import { sql } from "drizzle-orm";
 import { db, pool } from "../db";
 import { storage } from "../storage";
 import { updateThemeForBusiness, convertLegacyThemeToTheme } from "../utils/themeUtils";
+import bcrypt from "bcryptjs";
 
 const router = express.Router();
+
+// Admin Login Route
+router.post("/login", async (req: Request, res: Response) => {
+    try {
+        const { email, password } = req.body;
+        
+        if (!email || !password) {
+            return res.status(400).json({ message: "Email and password are required" });
+        }
+
+        // Find user by email (or username for backwards compatibility)
+        let user = await storage.getUserByEmail(email);
+        if (!user) {
+            user = await storage.getUserByUsername(email);
+        }
+
+        if (!user) {
+            return res.status(401).json({ message: "Invalid credentials" });
+        }
+
+        // Check if user is admin
+        if (user.role !== "admin") {
+            return res.status(403).json({ message: "Admin access required" });
+        }
+
+        // Verify password
+        const isValidPassword = await bcrypt.compare(password, user.password);
+        if (!isValidPassword) {
+            return res.status(401).json({ message: "Invalid credentials" });
+        }
+
+        // Remove password from user object
+        const { password: _, ...safeUser } = user;
+
+        // Set user in session
+        req.session.user = safeUser;
+
+        // Also set in req.user for compatibility with passport
+        req.user = safeUser;
+
+        console.log("Admin login successful:", { userId: user.id, username: user.username, role: user.role });
+
+        res.json({ 
+            message: "Login successful",
+            user: safeUser 
+        });
+    } catch (error) {
+        console.error("Admin login error:", error);
+        res.status(500).json({ message: "Login failed" });
+    }
+});
 
 // Middleware: Admin check
 const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
