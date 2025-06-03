@@ -217,6 +217,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   }, express.static(uploadsDir));
   // Root path handler - simplified
+
+  // Serve static assets from the built client
+  const publicDir = path.join(process.cwd(), 'dist', 'public');
+  console.log('======== PUBLIC STATIC FILES SETUP ========');
+  console.log('Public directory path:', publicDir);
+
+  if (!fs.existsSync(publicDir)) {
+    console.error('ERROR: Public directory does not exist. Have you run npm run build?');
+  } else {
+    console.log('Public directory exists');
+  }
+  app.use(express.static(publicDir));
+
+  // Root path handler - simplified
   app.get("/", async (req: Request, res: Response) => {
     if (req.business) {
       return res.json({ business: req.business });
