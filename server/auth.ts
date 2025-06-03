@@ -164,13 +164,20 @@ export function setupAuth(app: Express) {
       res.sendStatus(200);
     });
   });
-
   app.get("/api/user", (req, res) => {
-    if (!req.isAuthenticated()) {
+    // Check both passport authentication and session-based authentication
+    const user = req.user || req.session?.user;
+    if (!user && !req.isAuthenticated()) {
       return res.status(401).json({ message: "Not authenticated" });
     }
+    
+    const currentUser = user || req.user;
+    if (!currentUser) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    
     // We omit the password field from the user object for security
-    const { password, ...safeUser } = req.user as User;
+    const { password, ...safeUser } = currentUser as User;
     res.json(safeUser);
   });
   

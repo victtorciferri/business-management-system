@@ -79,6 +79,12 @@ router.post("/register", async (req: Request, res: Response) => {
 router.post("/login", passport.authenticate("local"), (req: Request, res: Response) => {
   if (req.user) {
     const { password: _, ...userData } = req.user as Business;
+    
+    // Set session data for compatibility with admin routes
+    if (req.session) {
+      req.session.user = userData;
+    }
+    
     res.json({ user: userData });
   } else {
     res.status(401).json({ message: "Authentication failed" });
