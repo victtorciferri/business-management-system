@@ -173,12 +173,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     cookie: {
       secure: process.env.NODE_ENV === 'production',
       maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    }
-  }));
-
-  // Authentication setup
-  app.use(passport.initialize());
-  app.use(passport.session());
+    }  }));
 
   // Core middleware
   app.use(businessExtractor);
