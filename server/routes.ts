@@ -146,8 +146,7 @@ const sendTokenEmail = async (req: Request, token: string, customer: Customer, b
   }
 };
 
-export async function registerRoutes(app: Express): Promise<Server> {
-  // CORS configuration - simplified but secure
+export async function registerRoutes(app: Express): Promise<Server> {  // CORS configuration - simplified but secure
   app.use(cors({
     origin: [
       'https://appointease.cl',
@@ -155,7 +154,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       'http://localhost:3000',
       'http://localhost:5173',
       'http://127.0.0.1:3000',
-      'http://127.0.0.1:5173'
+      'http://127.0.0.1:5173',
+      /\.cloudworkstations\.dev$/  // Allow cloud workstations domains
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -164,16 +164,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
-
   // Session configuration
   app.use(session({
     secret: process.env.SESSION_SECRET || 'dev-secret-123',
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    }  }));
+      secure: false, // Allow HTTP and HTTPS for development
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      sameSite: 'lax', // Allow cross-site requests in development
+      httpOnly: true
+    }
+  }));
 
   // Core middleware
   app.use(businessExtractor);
