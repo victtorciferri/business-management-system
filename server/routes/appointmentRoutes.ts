@@ -7,15 +7,15 @@ const router = express.Router();
  * Service Routes
  *********************************/
 
-// GET /api/services
+// GET /api/services - Public endpoint for browsing services
 router.get("/services", async (req: Request, res: Response) => {
   try {
-    const user = req.user || req.session?.user;
-    if (!user) {
-      return res.status(401).json({ message: "Authentication required" });
+    // For public access, we need to get services by business
+    const business = req.business;
+    if (!business) {
+      return res.status(404).json({ message: "Business not found" });
     }
-    const userId = user.id;
-    const services = await storage.getServicesByUserId(userId);
+    const services = await storage.getServicesByUserId(business.id);
     return res.json(services);
   } catch (error: any) {
     console.error("Error fetching services:", error);
