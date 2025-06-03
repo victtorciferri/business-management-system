@@ -232,17 +232,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     // Redirect to auth page instead of external site
     res.redirect('/auth');
-  });
-
-  // API Routes
+  });  // API Routes
   app.use("/api/admin", adminRoutes);
   app.use("/api/staff", staffRoutes);
   app.use("/api/auth", authRoutes);
   app.use("/api/business", businessRoutes);
   app.use("/api/themes", themeRoutes);
-  app.use("/api/appointments", appointmentRoutes);
+  app.use("/api/theme-api", themeApiRoutes);
+  app.use("/api", appointmentRoutes); // Register at /api for both /services and /appointments endpoints
   app.use("/api/customers", customerRoutes);
   app.use("/api/products", productRoutes);
+  app.use("/api/cart", shoppingCartRoutes);
   app.use("/api/payments", paymentRoutes);
 
   if (process.env.NODE_ENV === 'development') {

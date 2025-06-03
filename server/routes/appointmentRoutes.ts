@@ -10,10 +10,11 @@ const router = express.Router();
 // GET /api/services
 router.get("/services", async (req: Request, res: Response) => {
   try {
-    if (!req.session?.user) {
+    const user = req.user || req.session?.user;
+    if (!user) {
       return res.status(401).json({ message: "Authentication required" });
     }
-    const userId = req.session.user.id;
+    const userId = user.id;
     const services = await storage.getServicesByUserId(userId);
     return res.json(services);
   } catch (error: any) {
@@ -25,10 +26,11 @@ router.get("/services", async (req: Request, res: Response) => {
 // POST /api/services
 router.post("/services", async (req: Request, res: Response) => {
   try {
-    if (!req.session?.user) {
+    const user = req.user || req.session?.user;
+    if (!user) {
       return res.status(401).json({ message: "Authentication required" });
     }
-    const userId = req.session.user.id;
+    const userId = user.id;
     const serviceData = { ...req.body, userId };
     const service = await storage.createService(serviceData);
     return res.status(201).json(service);
@@ -45,16 +47,17 @@ router.post("/services", async (req: Request, res: Response) => {
 // GET /api/appointments
 router.get("/appointments", async (req: Request, res: Response) => {
   try {
-    if (!req.session?.user) {
+    const user = req.user || req.session?.user;
+    if (!user) {
       return res.status(401).json({ message: "Authentication required" });
     }
     let appointments;
     // Assuming business users see appointments for their business,
     // while customers see their own.
-    if (req.session.user.role === "business") {
-      appointments = await storage.getAppointmentsByBusinessId(req.session.user.id);
+    if (user.role === "business") {
+      appointments = await storage.getAppointmentsByBusinessId(user.id);
     } else {
-      appointments = await storage.getAppointmentsByCustomerId(req.session.user.id);
+      appointments = await storage.getAppointmentsByCustomerId(user.id);
     }
     return res.json(appointments);
   } catch (error: any) {
@@ -66,7 +69,8 @@ router.get("/appointments", async (req: Request, res: Response) => {
 // POST /api/appointments
 router.post("/appointments", async (req: Request, res: Response) => {
   try {
-    if (!req.session?.user) {
+    const user = req.user || req.session?.user;
+    if (!user) {
       return res.status(401).json({ message: "Authentication required" });
     }
     // Validate and extract appointment data as necessary
