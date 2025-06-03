@@ -24,7 +24,7 @@ const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
 };
 
 // GET /api/admin/businesses
-router.get("/admin/businesses", requireAdmin, async (req: Request, res: Response) => {
+router.get("/businesses", requireAdmin, async (req: Request, res: Response) => {
     try {
         const businessesResult = await db.execute(sql`
             SELECT 
@@ -57,7 +57,7 @@ router.get("/admin/businesses", requireAdmin, async (req: Request, res: Response
 });
 
 // PUT /api/admin/business/:id
-router.put("/admin/business/:id", requireAdmin, async (req: Request, res: Response) => {
+router.put("/business/:id", requireAdmin, async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const { name, slug, customDomain, ownerEmail, platformFeePercentage } = req.body;
@@ -103,7 +103,7 @@ router.put("/admin/business/:id", requireAdmin, async (req: Request, res: Respon
 });
 
 // GET /api/admin/business/:id/theme
-router.get("/admin/business/:id/theme", requireAdmin, async (req: Request, res: Response) => {
+router.get("/business/:id/theme", requireAdmin, async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         if (!id || isNaN(parseInt(id, 10))) {
@@ -138,7 +138,7 @@ router.get("/admin/business/:id/theme", requireAdmin, async (req: Request, res: 
 });
 
 // POST /api/admin/business/:id/theme
-router.post("/admin/business/:id/theme", requireAdmin, async (req: Request, res: Response) => {
+router.post("/business/:id/theme", requireAdmin, async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const { theme } = req.body;
@@ -163,7 +163,7 @@ router.post("/admin/business/:id/theme", requireAdmin, async (req: Request, res:
 });
 
 // PUT /api/admin/business/:id/theme (Legacy endpoint)
-router.put("/admin/business/:id/theme", requireAdmin, async (req: Request, res: Response) => {
+router.put("/business/:id/theme", requireAdmin, async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const {
@@ -220,7 +220,7 @@ router.put("/admin/business/:id/theme", requireAdmin, async (req: Request, res: 
 });
 
 // GET /api/admin/customers
-router.get("/admin/customers", requireAdmin, async (req: Request, res: Response) => {
+router.get("/customers", requireAdmin, async (req: Request, res: Response) => {
     try {
         const { businessId } = req.query;
         if (!businessId) {
@@ -235,7 +235,7 @@ router.get("/admin/customers", requireAdmin, async (req: Request, res: Response)
 });
 
 // GET /api/admin/appointments
-router.get("/admin/appointments", requireAdmin, async (req: Request, res: Response) => {
+router.get("/appointments", requireAdmin, async (req: Request, res: Response) => {
     try {
         const { businessId } = req.query;
         if (!businessId) {
@@ -250,7 +250,7 @@ router.get("/admin/appointments", requireAdmin, async (req: Request, res: Respon
 });
 
 // GET /api/admin/payments
-router.get("/admin/payments", requireAdmin, async (req: Request, res: Response) => {
+router.get("/payments", requireAdmin, async (req: Request, res: Response) => {
     try {
         const { businessId } = req.query;
         if (!businessId) {

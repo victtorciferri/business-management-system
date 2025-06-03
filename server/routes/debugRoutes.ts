@@ -5,7 +5,7 @@ import { db } from "../db";
 const router = express.Router();
 
 // GET /api/test-error
-router.get("/api/test-error", (_req: Request, res: Response) => {
+router.get("/test-error", (_req: Request, res: Response) => {
     try {
         throw new Error("This is a test error with a detailed stack trace.");
     } catch (error) {
@@ -29,7 +29,7 @@ router.get("/api/test-error", (_req: Request, res: Response) => {
 });
 
 // GET /api/test-error/:code
-router.get("/api/test-error/:code", (req: Request, res: Response) => {
+router.get("/test-error/:code", (req: Request, res: Response) => {
     const code = parseInt(req.params.code, 10);
     if (isNaN(code) || code < 100 || code > 599) {
         return res.status(400).json({ message: "Invalid HTTP status code. Please provide a code between 100-599." });
@@ -59,7 +59,7 @@ router.get("/api/test-error/:code", (req: Request, res: Response) => {
 });
 
 // GET /api/debug/business-lookup/:slug
-router.get("/api/debug/business-lookup/:slug", async (req: Request, res: Response) => {
+router.get("/business-lookup/:slug", async (req: Request, res: Response) => {
     try {
         const { slug } = req.params;
         // Import storage dynamically from ../storage
@@ -80,7 +80,7 @@ router.get("/api/debug/business-lookup/:slug", async (req: Request, res: Respons
 });
 
 // GET /api/debug/admin-businesses
-router.get("/api/debug/admin-businesses", async (req: Request, res: Response) => {
+router.get("/admin-businesses", async (req: Request, res: Response) => {
     try {
         const user = req.session?.user;
         if (!user) {
@@ -134,7 +134,7 @@ router.get("/api/debug/admin-businesses", async (req: Request, res: Response) =>
 });
   
 // GET /api/debug/check-admin-session
-router.get("/api/debug/check-admin-session", (req: Request, res: Response) => {
+router.get("/check-admin-session", (req: Request, res: Response) => {
     try {
         const user = req.session?.user;
         if (!user) {
