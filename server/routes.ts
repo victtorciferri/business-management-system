@@ -253,6 +253,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/health", (_req: Request, res: Response) => {
     res.json({ status: "healthy" });
   });
+  // Business-specific API routes - must come before catch-all
+  app.use("/:slug/api", businessExtractor, appointmentRoutes);
 
   // Catch-all route for business subdomains/slugs
   app.get("/:slug/*", async (req: Request, res: Response, next: NextFunction) => {
@@ -266,6 +268,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           slug === 'uploads' || 
           slug === 'static' || 
           slug === 'health') {
+        return next();
+      }
+
+      // Skip if this is an API call to avoid conflicts
+      if (req.path.includes('/api/')) {
         return next();
       }
 
