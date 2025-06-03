@@ -5,10 +5,19 @@ import {
   Customer, InsertCustomer,
   Appointment, InsertAppointment,
   Payment, InsertPayment,
-  users, services, customers, appointments, payments, UserRole, customerAccessTokens, insertCustomerAccessTokenSchema,
+  Product, InsertProduct,
+  ProductVariant, InsertProductVariant,
+  Cart, InsertCart,
+  CartItem, InsertCartItem,
+  StaffAvailability, InsertStaffAvailability,
+  CustomerAccessToken, InsertCustomerAccessToken,
+  ThemeEntity, InsertThemeEntity,
+  users, services, customers, appointments, payments, products, productVariants, carts, cartItems, staffAvailability, customerAccessTokens, themes,
+  UserRole, insertCustomerAccessTokenSchema,
 } from "@shared/schema";
+import { Theme } from "@shared/config";
 import { db } from "./db";
-import { eq, and, gte, lte } from "drizzle-orm";
+import { eq, and, gte, lte, desc } from "drizzle-orm";
 import { z } from "zod";
 
 export class DatabaseStorage implements IStorage {
@@ -81,9 +90,8 @@ export class DatabaseStorage implements IStorage {
   async getCustomersByUserId(userId: number): Promise<Customer[]> {
     return db.select().from(customers).where(eq(customers.userId, userId));
   }
-
-  async getCustomerByEmailAndBusinessId(email: string, businessId: string): Promise<Customer | undefined> {
-    const [customer] = await db.select().from(customers).where(and(eq(customers.email, email), eq(customers.userId, parseInt(businessId, 10))));
+  async getCustomerByEmailAndBusinessId(email: string, businessId: number): Promise<Customer | undefined> {
+    const [customer] = await db.select().from(customers).where(and(eq(customers.email, email), eq(customers.userId, businessId)));
     return customer || undefined;
   }
 
@@ -216,11 +224,230 @@ export class DatabaseStorage implements IStorage {
       .from(customerAccessTokens)
       .where(eq(customerAccessTokens.token, token));
     return customerAccessToken || undefined;
-  }
-  async deleteCustomerAccessToken(token: string): Promise<boolean> {
+  }  async deleteCustomerAccessToken(token: string): Promise<boolean> {
     const result = await db
       .delete(customerAccessTokens)
       .where(eq(customerAccessTokens.token, token));
     return !!result;
+  }
+
+  // Theme methods
+  async getAllThemes(): Promise<Theme[]> {
+    try {
+      const result = await db.select().from(themes).orderBy(desc(themes.createdAt));
+      
+      return result.map(theme => ({
+        name: theme.name,
+        primaryColor: theme.primaryColor || '#4f46e5',
+        secondaryColor: theme.secondaryColor || '#06b6d4',
+        accentColor: theme.accentColor || '#f59e0b',
+        textColor: theme.textColor || '#111827',
+        backgroundColor: theme.backgroundColor || '#ffffff',
+        fontFamily: theme.fontFamily || 'Inter, system-ui, sans-serif',
+        borderRadius: theme.borderRadius || 8,
+        spacing: theme.spacing || 16,
+        buttonStyle: (theme.buttonStyle as 'default' | 'rounded' | 'square' | 'pill') || 'default',
+        cardStyle: (theme.cardStyle as 'default' | 'elevated' | 'flat' | 'bordered') || 'default',
+        variant: (theme.variant as 'professional' | 'tint' | 'vibrant' | 'custom') || 'professional',
+        appearance: (theme.appearance as 'light' | 'dark' | 'system') || 'light',
+        colorPalette: []
+      }));
+    } catch (error) {
+      console.error('Error getting all themes:', error);
+      return [];
+    }
+  }
+
+  async getThemeById(id: number): Promise<ThemeEntity | undefined> {
+    const [theme] = await db.select().from(themes).where(eq(themes.id, id));
+    return theme || undefined;
+  }
+
+  async getThemesByBusinessId(businessId: number): Promise<ThemeEntity[]> {
+    return db.select().from(themes).where(eq(themes.businessId, businessId));
+  }
+
+  async getThemesByBusinessSlug(businessSlug: string): Promise<ThemeEntity[]> {
+    return db.select().from(themes).where(eq(themes.businessSlug, businessSlug));
+  }
+
+  async getActiveTheme(businessId: number): Promise<ThemeEntity | undefined> {
+    const [theme] = await db.select().from(themes).where(
+      and(eq(themes.businessId, businessId), eq(themes.isActive, true))
+    );
+    return theme || undefined;
+  }
+
+  async getDefaultTheme(businessId: number): Promise<ThemeEntity | undefined> {
+    const [theme] = await db.select().from(themes).where(
+      and(eq(themes.businessId, businessId), eq(themes.isDefault, true))
+    );
+    return theme || undefined;
+  }
+
+  async createTheme(theme: InsertThemeEntity): Promise<ThemeEntity> {
+    const [newTheme] = await db.insert(themes).values(theme).returning();
+    return newTheme;
+  }
+
+  async updateTheme(id: number, themeUpdate: Partial<InsertThemeEntity>): Promise<ThemeEntity | undefined> {
+    const [updatedTheme] = await db
+      .update(themes)
+      .set(themeUpdate)
+      .where(eq(themes.id, id))
+      .returning();
+    return updatedTheme || undefined;
+  }
+
+  async deleteTheme(id: number): Promise<boolean> {
+    const result = await db.delete(themes).where(eq(themes.id, id));
+    return !!result;
+  }
+
+  async activateTheme(id: number): Promise<ThemeEntity | undefined> {
+    const [updatedTheme] = await db
+      .update(themes)
+      .set({ isActive: true })
+      .where(eq(themes.id, id))
+      .returning();
+    return updatedTheme || undefined;
+  }
+
+  // Product methods (placeholder implementations)
+  async getProduct(id: number): Promise<Product | undefined> {
+    // TODO: Implement when products table is available
+    return undefined;
+  }
+
+  async getProductsByUserId(userId: number): Promise<Product[]> {
+    // TODO: Implement when products table is available  
+    return [];
+  }
+
+  async getProductsByCategory(userId: number, category: string): Promise<Product[]> {
+    // TODO: Implement when products table is available
+    return [];
+  }
+
+  async createProduct(product: InsertProduct): Promise<Product> {
+    // TODO: Implement when products table is available
+    throw new Error("Products not implemented yet");
+  }
+
+  async updateProduct(id: number, product: Partial<InsertProduct>): Promise<Product | undefined> {
+    // TODO: Implement when products table is available
+    return undefined;
+  }
+
+  async deleteProduct(id: number): Promise<boolean> {
+    // TODO: Implement when products table is available
+    return false;
+  }
+
+  // Product Variant methods (placeholder implementations)
+  async getProductVariant(id: number): Promise<ProductVariant | undefined> {
+    return undefined;
+  }
+
+  async getProductVariantsByProductId(productId: number): Promise<ProductVariant[]> {
+    return [];
+  }
+
+  async createProductVariant(variant: InsertProductVariant): Promise<ProductVariant> {
+    throw new Error("Product variants not implemented yet");
+  }
+
+  async updateProductVariant(id: number, variant: Partial<InsertProductVariant>): Promise<ProductVariant | undefined> {
+    return undefined;
+  }
+
+  async deleteProductVariant(id: number): Promise<boolean> {
+    return false;
+  }
+
+  // Cart methods (placeholder implementations)
+  async getCart(id: number): Promise<Cart | undefined> {
+    return undefined;
+  }
+
+  async getCartByUserId(userId: number): Promise<Cart | undefined> {
+    return undefined;
+  }
+
+  async getCartByCustomerId(customerId: number): Promise<Cart | undefined> {
+    return undefined;
+  }
+
+  async getCartByGuestId(guestId: string): Promise<Cart | undefined> {
+    return undefined;
+  }
+
+  async createCart(cart: InsertCart): Promise<Cart> {
+    throw new Error("Carts not implemented yet");
+  }
+
+  async updateCart(id: number, cart: Partial<InsertCart>): Promise<Cart | undefined> {
+    return undefined;
+  }
+
+  // Cart Item methods (placeholder implementations)
+  async getCartItem(id: number): Promise<CartItem | undefined> {
+    return undefined;
+  }
+
+  async getCartItemsByCartId(cartId: number): Promise<CartItem[]> {
+    return [];
+  }
+
+  async addCartItem(item: InsertCartItem): Promise<CartItem> {
+    throw new Error("Cart items not implemented yet");
+  }
+
+  async updateCartItem(id: number, item: Partial<InsertCartItem>): Promise<CartItem | undefined> {
+    return undefined;
+  }
+
+  async removeCartItem(id: number): Promise<boolean> {
+    return false;
+  }
+
+  // Staff Availability methods (placeholder implementations)
+  async getStaffAvailability(staffId: number): Promise<StaffAvailability[]> {
+    return [];
+  }
+
+  async getStaffAvailabilityById(id: number): Promise<StaffAvailability | undefined> {
+    return undefined;
+  }
+
+  async createStaffAvailability(availability: InsertStaffAvailability): Promise<StaffAvailability> {
+    throw new Error("Staff availability not implemented yet");
+  }
+
+  async updateStaffAvailability(id: number, availability: Partial<InsertStaffAvailability>): Promise<StaffAvailability | undefined> {
+    return undefined;
+  }
+
+  async deleteStaffAvailability(id: number): Promise<boolean> {
+    return false;
+  }
+
+  // Staff Appointments
+  async getStaffAppointments(staffId: number): Promise<Appointment[]> {
+    return db.select().from(appointments).where(eq(appointments.staffId, staffId));
+  }
+
+  async getCustomerByAccessToken(token: string): Promise<Customer | undefined> {
+    // TODO: Implement proper join query
+    return undefined;
+  }
+
+  async updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set(userData)
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser || undefined;
   }
 }

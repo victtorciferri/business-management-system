@@ -13,6 +13,7 @@ import {
   CustomerAccessToken, InsertCustomerAccessToken,
   ThemeEntity, InsertThemeEntity
 } from "@shared/schema";
+import { Theme } from "@shared/config";
 import { DatabaseStorage } from "./databaseStorage";
 
 /**
@@ -193,9 +194,16 @@ export class BusinessSlugAdapter implements IStorage {
   async getCustomerByEmailAndBusinessId(email: string, businessId: number): Promise<Customer | undefined> {
       const customer = await this.storage.getCustomerByEmailAndBusinessId(email, businessId);
       if (customer) {
-        return this.addBusinessSlugToObject(customer, customer.userId);
-      }
+        return this.addBusinessSlugToObject(customer, customer.userId);      }
       return undefined;
+  }
+  
+  async getAppointment(id: number): Promise<Appointment | undefined> {
+    const appointment = await this.storage.getAppointment(id);
+    if (appointment) {
+      return this.addBusinessSlugToObject(appointment, appointment.userId);
+    }
+    return undefined;
   }
   
   async getAppointmentsByUserId(userId: number): Promise<Appointment[]> {
@@ -496,8 +504,11 @@ export class BusinessSlugAdapter implements IStorage {
   async deleteTheme(id: number): Promise<boolean> {
     return this.storage.deleteTheme(id);
   }
-
   async activateTheme(id: number): Promise<ThemeEntity | undefined> {
     return this.storage.activateTheme(id);
+  }
+
+  async getAllThemes(): Promise<Theme[]> {
+    return this.storage.getAllThemes();
   }
 }

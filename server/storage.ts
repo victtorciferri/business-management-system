@@ -11,10 +11,13 @@ import {
   CartItem, InsertCartItem,
   StaffAvailability, InsertStaffAvailability,
   CustomerAccessToken, InsertCustomerAccessToken,
-  ThemeEntity, InsertThemeEntity
+  ThemeEntity, InsertThemeEntity,
+  themes
 } from "@shared/schema";
 import { db } from "./db";
 import { BusinessSlugAdapter } from "./businessSlugAdapter";
+import { desc } from "drizzle-orm";
+import { Theme } from "@shared/config";
 
 export interface IStorage {
   // User methods
@@ -25,8 +28,8 @@ export interface IStorage {
   getUserByCustomDomain(domain: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined>;
-
   // Theme methods
+  getAllThemes(): Promise<Theme[]>;
   getThemeById(id: number): Promise<ThemeEntity | undefined>;
   getThemesByBusinessId(businessId: number): Promise<ThemeEntity[]>;
   getThemesByBusinessSlug(businessSlug: string): Promise<ThemeEntity[]>;
@@ -119,40 +122,5 @@ export interface IStorage {
   deleteCustomerAccessToken(token: string): Promise<boolean>;
 }
 
-class BusinessSlugAdapterImpl extends BusinessSlugAdapter implements IStorage {
-  async getStaffByBusinessId(businessId: number): Promise<User[]> {
-    const staffs = await db.query.users.findMany({
-      where: (users, { eq }) => eq(users.businessId, businessId),
-    });
-    return staffs;
-  }
-}
-
-// Use our adapter to handle the business_slug mismatch
-export const storage: IStorage = new BusinessSlugAdapterImpl();
-
-export const getAllThemes = async (): Promise<Theme[]> => {
-  try {
-    const result = await db.select().from(themes).orderBy(desc(themes.createdAt));
-    
-    return result.map(theme => ({
-      id: theme.id,
-      name: theme.name,
-      primaryColor: theme.primaryColor,
-      secondaryColor: theme.secondaryColor,
-      accentColor: theme.accentColor,
-      textColor: theme.textColor,
-      backgroundColor: theme.backgroundColor,
-      fontFamily: theme.fontFamily,
-      borderRadius: theme.borderRadius,
-      buttonStyle: theme.buttonStyle,
-      cardStyle: theme.cardStyle,
-      variant: theme.variant,
-      appearance: theme.appearance,
-      createdAt: theme.createdAt
-    }));
-  } catch (error) {
-    console.error('Error getting all themes:', error);
-    return [];
-  }
-};
+// Use the BusinessSlugAdapter which already implements all IStorage methods
+export const storage: IStorage = new BusinessSlugAdapter();
