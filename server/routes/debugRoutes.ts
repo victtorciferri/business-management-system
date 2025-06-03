@@ -95,8 +95,7 @@ router.get("/api/debug/admin-businesses", async (req: Request, res: Response) =>
                 message: "You must be an admin to access this endpoint",
                 role: user.role
             });
-        }
-        const businessesResult = await db.execute(sql`
+        }        const businessesResult = await db.execute(sql`
             SELECT 
                 id, 
                 email, 
@@ -106,7 +105,7 @@ router.get("/api/debug/admin-businesses", async (req: Request, res: Response) =>
                 subscription_status,
                 created_at
             FROM users 
-            WHERE role = 'business'
+            WHERE role IN ('business', 'owner') AND business_name IS NOT NULL
             ORDER BY id DESC
         `);
         const businesses = businessesResult.rows.map(row => ({

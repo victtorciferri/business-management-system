@@ -36,7 +36,7 @@ router.get("/admin/businesses", requireAdmin, async (req: Request, res: Response
               subscription_status,
               created_at
             FROM users 
-            WHERE role = 'business'
+            WHERE role IN ('business', 'owner') AND business_name IS NOT NULL
             ORDER BY id DESC
         `);
         const businessRows = businessesResult.rows || [];
@@ -293,8 +293,7 @@ router.get("/debug/admin-businesses", requireAdmin, async (req: Request, res: Re
                 message: "You must be an admin to access this endpoint",
                 role: req.session.user.role,
             });
-        }
-        const businessesResult = await db.execute(sql`
+        }        const businessesResult = await db.execute(sql`
             SELECT 
               id, 
               email, 
@@ -304,7 +303,7 @@ router.get("/debug/admin-businesses", requireAdmin, async (req: Request, res: Re
               subscription_status,
               created_at
             FROM users 
-            WHERE role = 'business'
+            WHERE role IN ('business', 'owner') AND business_name IS NOT NULL
             ORDER BY id DESC
         `);
         const businesses = businessesResult.rows.map((row) => ({
