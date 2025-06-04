@@ -146,7 +146,7 @@ const sendTokenEmail = async (req: Request, token: string, customer: Customer, b
   }
 };
 
-export async function registerRoutes(app: Express): Promise<Server> {  // CORS configuration - simplified but secure
+export async function registerRoutes(app: Express): Promise<Server> {  // CORS configuration - simplified
   app.use(cors({
     origin: [
       'https://appointease.cl',
@@ -181,6 +181,31 @@ export async function registerRoutes(app: Express): Promise<Server> {  // CORS c
   // Core middleware
   app.use(businessExtractor);
   app.use(themeMiddleware);
+
+  // Add current business endpoint - must come after businessExtractor
+  app.get("/api/current-business", async (req: Request, res: Response) => {
+    try {
+      // Check if there's a business in the request context (from businessExtractor middleware)
+      if (req.business) {
+        // Get services for this business
+        const services = await storage.getServicesByUserId(req.business.id);
+        
+        return res.json({ 
+          business: req.business,
+          services: services || []
+        });
+      }
+      
+      // No business context found
+      return res.json({ 
+        business: null,
+        services: []
+      });
+    } catch (error) {
+      console.error("Error fetching current business:", error);
+      res.status(500).json({ message: "Failed to fetch current business" });
+    }
+  });
 
   // Static file serving
   const uploadsDir = path.join(process.cwd(), 'uploads');
