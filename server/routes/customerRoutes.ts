@@ -312,7 +312,7 @@ router.post("/book-appointment", async (req: Request, res: Response) => {
     
     // Create the appointment
     const appointment = await storage.createAppointment({
-      businessId: appointmentData.businessId,
+      userId: appointmentData.businessId, // businessId maps to userId in the appointments table
       serviceId: appointmentData.serviceId,
       staffId: appointmentData.staffId,
       customerId: appointmentData.customerId,
