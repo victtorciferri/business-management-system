@@ -80,7 +80,8 @@ const RESERVED_PATHS = [
   'profile', 'settings', 'theme', 'templates',
   'images', 'css', 'js', 'fonts', 'favicon.ico',
   'robots.txt', 'sitemap.xml', 'manifest.json',
-  '@react-refresh', '@fs', '@id', '@vite'
+  '@react-refresh', '@fs', '@id', '@vite',
+  'customer-portal'
 ];
 
 // Simple in-memory cache for business lookups
@@ -142,12 +143,16 @@ export const businessExtractor = async (req: Request, res: Response, next: NextF
           return next();
         }
       }
-    }
-
-    // Try getting business from path
+    }    // Try getting business from path
     const pathSegments = req.path.split('/').filter(Boolean);
     if (pathSegments.length > 0) {
       const possibleSlug = pathSegments[0];
+      
+      // Skip reserved paths - don't treat them as business slugs
+      if (RESERVED_PATHS.includes(possibleSlug)) {
+        return next();
+      }
+      
       const business = await storage.getUserByBusinessSlug(possibleSlug);
       if (business) {
         req.business = business;
