@@ -287,13 +287,13 @@ router.post("/book-appointment", async (req: Request, res: Response) => {
     }
     
     // Verify the service exists and belongs to the business
-    const service = await storage.getServiceById(appointmentData.serviceId);
+    const service = await storage.getService(appointmentData.serviceId);
     if (!service || service.userId !== appointmentData.businessId) {
       return res.status(404).json({ message: "Service not found or doesn't belong to this business" });
     }
     
     // Verify the customer exists
-    const customer = await storage.getCustomerById(appointmentData.customerId);
+    const customer = await storage.getCustomer(appointmentData.customerId);
     if (!customer) {
       return res.status(404).json({ message: "Customer not found" });
     }
