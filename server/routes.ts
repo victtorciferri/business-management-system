@@ -281,15 +281,15 @@ export async function registerRoutes(app: Express): Promise<Server> {  // CORS c
     }
     // Redirect to auth page instead of external site
     res.redirect('/auth');  });
-
   // Business-specific API routes - must come after main API routes but before catch-all
   app.use("/:slug/api", businessExtractor, appointmentRoutes);
+  
   // Catch-all route for business subdomains/slugs
   app.get("/:slug/*", async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { slug } = req.params;
       
-      // Skip asset paths and API routes
+      // Skip asset paths and API routes - don't treat them as business slugs
       if (slug.startsWith('@') || 
           slug === 'src' || 
           slug === 'api' || 
@@ -321,6 +321,16 @@ export async function registerRoutes(app: Express): Promise<Server> {  // CORS c
       res.json({ business });
     } catch (error) {
       next(error);
+    }
+  });
+
+  // Fallback route - serve React app for all non-API requests
+  app.get("*", (req: Request, res: Response) => {
+    const indexPath = path.join(process.cwd(), 'dist', 'public', 'index.html');
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      res.status(404).json({ message: "Application not found. Please run npm run build." });
     }
   });
 

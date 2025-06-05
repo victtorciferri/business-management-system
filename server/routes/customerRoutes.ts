@@ -106,6 +106,48 @@ router.post("/customers", async (req: Request, res: Response) => {
   }
 });
 
+// POST /api/check-customer-exists
+router.post("/check-customer-exists", async (req: Request, res: Response) => {
+  try {
+    const schema = z.object({
+      email: z.string().email(),
+      businessId: z.number().int().positive()
+    });
+    
+    const { email, businessId } = schema.parse(req.body);
+    
+    console.log(`Checking if customer exists: ${email} for business ID: ${businessId}`);
+    
+    const customer = await storage.getCustomerByEmailAndBusinessId(email, businessId);
+    
+    if (customer) {
+      return res.json({
+        exists: true,
+        customer: {
+          id: customer.id,
+          firstName: customer.firstName,
+          lastName: customer.lastName,
+          email: customer.email,
+          phone: customer.phone
+        }
+      });
+    } else {
+      return res.json({
+        exists: false
+      });
+    }
+  } catch (error) {
+    console.error("Error checking customer existence:", error);
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ 
+        message: "Invalid input data", 
+        errors: error.errors 
+      });
+    }
+    res.status(500).json({ message: "Failed to check customer existence" });
+  }
+});
+
 /*********************************
  * Customer Access Token Routes
  *********************************/
