@@ -298,14 +298,26 @@ router.post("/book-appointment", async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Customer not found" });
     }
     
+    // Parse the date string into a Date object
+    // The frontend sends date as ISO string from appointmentDate.toISOString()
+    // This already includes the correct date and time, so we can use it directly
+    const appointmentDate = new Date(appointmentData.date);
+    
+    // Validate that we have a valid date
+    if (isNaN(appointmentDate.getTime())) {
+      return res.status(400).json({ message: "Invalid date format" });
+    }
+    
+    console.log("Creating appointment with date:", appointmentDate.toISOString());
+    
     // Create the appointment
     const appointment = await storage.createAppointment({
       businessId: appointmentData.businessId,
       serviceId: appointmentData.serviceId,
       staffId: appointmentData.staffId,
       customerId: appointmentData.customerId,
-      date: appointmentData.date,
-      time: appointmentData.time,
+      date: appointmentDate, // Pass Date object
+      duration: service.duration, // Include service duration
       notes: appointmentData.notes || '',
       status: 'scheduled' // Default status for new appointments
     });
