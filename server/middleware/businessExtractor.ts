@@ -72,7 +72,7 @@ export interface BusinessConfig {
 }
 
 // Comprehensive list of reserved paths that shouldn't be treated as business slugs
-const RESERVED_PATHS = [
+export const RESERVED_PATHS = [
   'api', 'assets', 'src', 'components', 
   'products', 'services', 'dashboard', 'appointments', 
   'customers', 'admin', 'auth', 'checkout',

@@ -42,7 +42,7 @@ import { z } from "zod";
 import Stripe from "stripe";
 import nodemailer from "nodemailer";
 import crypto from "crypto";
-import { businessExtractor } from "./middleware/businessExtractor";
+import { businessExtractor, RESERVED_PATHS } from "./middleware/businessExtractor";
 import { manuallyRegisterDomain, getRegisteredDomains } from "./ssl";
 import session from "express-session";
 import adminRoutes from "./routes/adminRoutes";
@@ -284,7 +284,6 @@ export async function registerRoutes(app: Express): Promise<Server> {  // CORS c
 
   // Business-specific API routes - must come after main API routes but before catch-all
   app.use("/:slug/api", businessExtractor, appointmentRoutes);
-
   // Catch-all route for business subdomains/slugs
   app.get("/:slug/*", async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -297,6 +296,11 @@ export async function registerRoutes(app: Express): Promise<Server> {  // CORS c
           slug === 'uploads' || 
           slug === 'static' || 
           slug === 'health') {
+        return next();
+      }
+
+      // Skip reserved paths - don't treat them as business slugs
+      if (RESERVED_PATHS.includes(slug)) {
         return next();
       }
 
