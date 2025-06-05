@@ -197,8 +197,7 @@ export default function NewAppointment() {
   // Handle email submission to check if customer exists
   const onSubmitEmail = async (data: z.infer<typeof emailSchema>) => {
     setIsCheckingEmail(true);
-    try {
-      const response = await apiRequest("POST", "/api/check-customer-exists", {
+    try {      const response = await apiRequest("POST", "/api/customers/check-customer-exists", {
         email: data.email,
         businessId: businessId
       });

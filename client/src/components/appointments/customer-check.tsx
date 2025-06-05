@@ -60,8 +60,7 @@ export function CustomerCheck({ businessId, onExistingCustomer, onNewCustomer }:
   // Handle email check submission
   const onCheckEmail = async (values: EmailFormValues) => {
     setIsChecking(true);
-    try {
-      const response = await apiRequest("POST", "/api/check-customer-exists", {
+    try {      const response = await apiRequest("POST", "/api/customers/check-customer-exists", {
         email: values.email,
         businessId
       });

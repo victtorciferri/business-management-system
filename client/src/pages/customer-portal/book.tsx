@@ -118,8 +118,7 @@ export default function BookAppointment() {
         setCustomerData(customer);
         setStep('booking-details');
       } else {
-        // Look up customer by email
-        const response = await apiRequest("POST", "/api/check-customer-exists", {
+        // Look up customer by email        const response = await apiRequest("POST", "/api/customers/check-customer-exists", {
           email: customer.email,
           businessId: contextBusiness?.id || businessId
         });
