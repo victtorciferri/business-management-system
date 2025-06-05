@@ -111,7 +111,7 @@ router.post("/check-customer-exists", async (req: Request, res: Response) => {
   try {
     const schema = z.object({
       email: z.string().email(),
-      businessId: z.number().int().positive()
+      businessId: z.coerce.number().int().positive()
     });
     
     const { email, businessId } = schema.parse(req.body);
