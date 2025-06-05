@@ -90,10 +90,17 @@ export default function NewAppointment() {
       notes: ""
     }
   });
-
   // Query to fetch services
   const { data: services } = useQuery({
-    queryKey: ['/api/services'],
+    queryKey: ['/api/services', businessId],
+    queryFn: async () => {
+      const response = await fetch(`/api/services?businessId=${businessId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch services');
+      }
+      const data = await response.json();
+      return data;
+    },
     enabled: true
   });
   

@@ -11,10 +11,19 @@ const router = express.Router();
 router.get("/services", async (req: Request, res: Response) => {
   try {
     // For public access, we need to get services by business
-    const business = req.business;
+    // Check if businessId is provided as query parameter (for customer portal)
+    const businessId = req.query.businessId || req.body.businessId;
+    let business = req.business;
+    
+    if (!business && businessId) {
+      // If business context not set but businessId provided, fetch business directly
+      business = await storage.getUser(parseInt(businessId as string));
+    }
+    
     if (!business) {
       return res.status(404).json({ message: "Business not found" });
     }
+    
     const services = await storage.getServicesByUserId(business.id);
     return res.json(services);
   } catch (error: any) {
