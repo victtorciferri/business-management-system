@@ -261,4 +261,69 @@ router.get("/customer-profile", async (req: Request, res: Response) => {
   }
 });
 
+/*********************************
+ * Public Appointment Booking
+ *********************************/
+
+// POST /api/customers/book-appointment - Public endpoint for customer appointment booking
+router.post("/book-appointment", async (req: Request, res: Response) => {
+  try {
+    const appointmentSchema = z.object({
+      businessId: z.coerce.number(),
+      serviceId: z.coerce.number(),
+      staffId: z.coerce.number(),
+      customerId: z.coerce.number(),
+      date: z.string(),
+      time: z.string(),
+      notes: z.string().optional()
+    });
+
+    const appointmentData = appointmentSchema.parse(req.body);
+    
+    // Verify the business exists
+    const business = await storage.getUser(appointmentData.businessId);
+    if (!business) {
+      return res.status(404).json({ message: "Business not found" });
+    }
+    
+    // Verify the service exists and belongs to the business
+    const service = await storage.getServiceById(appointmentData.serviceId);
+    if (!service || service.userId !== appointmentData.businessId) {
+      return res.status(404).json({ message: "Service not found or doesn't belong to this business" });
+    }
+    
+    // Verify the customer exists
+    const customer = await storage.getCustomerById(appointmentData.customerId);
+    if (!customer) {
+      return res.status(404).json({ message: "Customer not found" });
+    }
+    
+    // Create the appointment
+    const appointment = await storage.createAppointment({
+      businessId: appointmentData.businessId,
+      serviceId: appointmentData.serviceId,
+      staffId: appointmentData.staffId,
+      customerId: appointmentData.customerId,
+      date: appointmentData.date,
+      time: appointmentData.time,
+      notes: appointmentData.notes || '',
+      status: 'scheduled' // Default status for new appointments
+    });
+    
+    return res.status(201).json(appointment);
+  } catch (error: any) {
+    console.error("Error creating customer appointment:", error);
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ 
+        message: "Invalid appointment data", 
+        errors: error.errors 
+      });
+    }
+    return res.status(500).json({ 
+      message: "Failed to create appointment", 
+      error: error.message 
+    });
+  }
+});
+
 export default router;

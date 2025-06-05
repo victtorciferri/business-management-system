@@ -303,19 +303,15 @@ export default function NewAppointment() {
       const appointmentDate = new Date(data.date);
       appointmentDate.setHours(hour);
       appointmentDate.setMinutes(parseInt(minutes || "0"));
-      
-      // Create appointment
-      const appointmentResponse = await apiRequest("POST", "/api/appointments", {
-        userId: businessId,
+        // Create appointment using the public booking endpoint
+      const appointmentResponse = await apiRequest("POST", "/api/customers/book-appointment", {
+        businessId: businessId,
         customerId: customer.id,
         serviceId: parseInt(data.serviceId),
         staffId: parseInt(data.staffId),
         date: appointmentDate.toISOString(),
-        duration: service.duration,
-        status: "pending", // Changed to pending since it requires payment
-        notes: data.notes || "",
-        reminderSent: false,
-        paymentStatus: "pending"
+        time: data.time,
+        notes: data.notes || ""
       });
       
       const appointment = await appointmentResponse.json();
