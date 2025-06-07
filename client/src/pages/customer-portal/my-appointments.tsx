@@ -23,7 +23,7 @@ import {
   MailIcon
 } from "lucide-react";
 import { type Appointment, type Service, type Customer } from "@shared/schema";
-import { useBusinessContext, Service as BusinessService } from "@/contexts/BusinessContext";
+import { useBusinessContext } from "@/contexts/BusinessContext";
 import { format } from "date-fns";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -67,14 +67,13 @@ export default function MyAppointments() {
       email: urlEmail || ""
     }
   });
-  
-  // Customer profile query using the access token
+    // Customer profile query using the access token
   const { 
     data: customerProfile,
     isLoading: profileLoading,
     error: profileError,
     refetch: refetchProfile
-  } = useQuery({
+  } = useQuery<{customer: Customer, appointments: Appointment[]}>({
     queryKey: ['/api/customer-profile', accessToken],
     queryFn: async () => {
       if (!accessToken) return null;
@@ -87,53 +86,29 @@ export default function MyAppointments() {
     enabled: !!accessToken,
     retry: false
   });
-  
-  // Fall back to regular queries if no token is present
-  const { data: customers, isLoading: customersLoading } = useQuery({
-    queryKey: ['/api/customers'],
-    enabled: !accessToken
-  });
-  
-  const { data: appointments, isLoading: appointmentsLoading } = useQuery({
-    queryKey: ['/api/appointments'],
-    enabled: !accessToken
-  });
-  
-  const { data: services, isLoading: servicesLoading } = useQuery({
+  // Services query for service names
+  const { data: services, isLoading: servicesLoading } = useQuery<Service[]>({
     queryKey: ['/api/services'],
     enabled: true
   });
   
-  const isLoading = (accessToken ? profileLoading : (customersLoading || appointmentsLoading)) || servicesLoading;
-  
-  // When using email search, send an access link
+  const isLoading = accessToken ? profileLoading : servicesLoading;
+    // When using email search, send an access link
   const sendAccessLink = async (email: string) => {
     try {
       setIsLoadingToken(true);
       
-      // Find the customer with this email first to verify they exist
-      const customer = customers?.find((c: Customer) => c.email === email);
-      
-      if (!customer) {
-        toast({
-          title: "Customer not found",
-          description: "No customer found with that email address.",
-          variant: "destructive"
-        });
-        setIsLoadingToken(false);
-        return;
-      }
-      
-      // Send access link
-      const response = await apiRequest("POST", "/api/send-customer-access-link", {
+      // Send access link directly - the server will check if customer exists
+      const response = await apiRequest("POST", "/api/customer-access-token", {
         email,
-        businessId: 1 // Using the default business ID
+        businessId: 1, // Using the default business ID
+        sendEmail: true
       });
       
       if (response.ok) {
         toast({
           title: "Access link sent",
-          description: "We've sent an access link to your email address.",
+          description: "We've sent an access link to your email address. Please check your email.",
         });
       } else {
         throw new Error("Failed to send access link");
@@ -149,19 +124,12 @@ export default function MyAppointments() {
       setIsLoadingToken(false);
     }
   };
-  
-  const onSubmit = (values: z.infer<typeof emailSchema>) => {
+    const onSubmit = (values: z.infer<typeof emailSchema>) => {
     setEmail(values.email);
     setHasSearched(true);
+    // For email-based lookup, we need to send an access link
+    sendAccessLink(values.email);
   };
-  
-  // Find the customer by email
-  const customer = customers?.find((c: Customer) => c.email === email);
-  
-  // Find all appointments for this customer
-  const customerAppointments = appointments?.filter(
-    (a: Appointment) => customer && a.customerId === customer.id
-  );
   
   // Function to display readable status
   const getStatusBadge = (status: string) => {
@@ -176,15 +144,15 @@ export default function MyAppointments() {
         return <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs font-medium">{status}</span>;
     }
   };
-  
-  // Function to get service name by ID
+    // Function to get service name by ID
   const getServiceName = (serviceId: number) => {
-    const service = services?.find((s: Service) => s.id === serviceId);
+    if (!services || !Array.isArray(services)) return "Unknown service";
+    const service = services.find((s: Service) => s.id === serviceId);
     return service?.name || "Unknown service";
   };
   
   // Get business data from context
-  const { business, loading: businessLoading } = useBusinessContext();
+  const { business } = useBusinessContext();
   
   // Get the business ID from the URL or from context
   const businessId = searchParams.get("businessId");
@@ -346,116 +314,46 @@ export default function MyAppointments() {
                 Book an Appointment
               </Button>
             </div>
-          )
-        ) : (
-          // Email-based customer lookup (legacy method)
-          customerAppointments && customerAppointments.length > 0 ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>Your Scheduled Appointments</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Service</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Time</TableHead>
-                      <TableHead>Duration</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {customerAppointments.map((appointment: Appointment) => {
-                      const appointmentDate = new Date(appointment.date);
-                      return (
-                        <TableRow key={appointment.id}>
-                          <TableCell className="font-medium">{getServiceName(appointment.serviceId)}</TableCell>
-                          <TableCell>{format(appointmentDate, 'MMM dd, yyyy')}</TableCell>
-                          <TableCell>{format(appointmentDate, 'h:mm a')}</TableCell>
-                          <TableCell>{appointment.duration} mins</TableCell>
-                          <TableCell>{getStatusBadge(appointment.status)}</TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-                
-                <div className="mt-6 flex justify-center">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => sendAccessLink(email)}
-                    disabled={isLoadingToken}
-                    className="flex items-center gap-2"
-                  >
-                    {isLoadingToken ? (
-                      <>
-                        <RefreshCwIcon className="h-4 w-4 animate-spin" />
-                        Sending...
-                      </>
-                    ) : (
-                      <>
-                        <MailIcon className="h-4 w-4" />
-                        Send Access Link to My Email
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ) : email && !customer ? (
+          )        ) : (
+          // Email-based access - show success message after sending link
+          email ? (
             <div className="text-center py-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
-                <SendIcon className="h-8 w-8 text-muted-foreground" />
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-4">
+                <MailIcon className="h-8 w-8 text-green-600" />
               </div>
-              <h3 className="text-xl font-medium mb-2">No Customer Found</h3>
+              <h3 className="text-xl font-medium mb-2">Access Link Sent</h3>
               <p className="text-muted-foreground mb-4">
-                We couldn't find a customer with the email address <span className="font-medium">{email}</span>.
+                We've sent an access link to <span className="font-medium">{email}</span>. 
+                Please check your email and click the link to view your appointments.
               </p>
-              <Button onClick={() => navigate(
-                accessToken 
-                  ? `/customer-portal/book?token=${accessToken}` 
-                  : "/customer-portal/book"
-              )}>
-                Book Your First Appointment
+              <Button 
+                variant="outline" 
+                onClick={() => sendAccessLink(email)}
+                disabled={isLoadingToken}
+                className="flex items-center gap-2"
+              >
+                {isLoadingToken ? (
+                  <>
+                    <RefreshCwIcon className="h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <MailIcon className="h-4 w-4" />
+                    Resend Access Link
+                  </>
+                )}
               </Button>
             </div>
           ) : (
             <div className="text-center py-8">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
-                <CalendarIcon className="h-8 w-8 text-muted-foreground" />
+                <CheckCircleIcon className="h-8 w-8 text-muted-foreground" />
               </div>
-              <h3 className="text-xl font-medium mb-2">No Appointments Found</h3>
+              <h3 className="text-xl font-medium mb-2">Find Your Appointments</h3>
               <p className="text-muted-foreground mb-4">
-                You don't have any appointments scheduled with us.
+                Enter your email address above to receive an access link.
               </p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Button onClick={() => navigate(
-                  accessToken 
-                    ? `/customer-portal/book?token=${accessToken}` 
-                    : "/customer-portal/book"
-                )}>
-                  Book an Appointment
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => sendAccessLink(email)}
-                  disabled={isLoadingToken}
-                  className="flex items-center gap-2"
-                >
-                  {isLoadingToken ? (
-                    <>
-                      <RefreshCwIcon className="h-4 w-4 animate-spin" />
-                      Sending...
-                    </>
-                  ) : (
-                    <>
-                      <MailIcon className="h-4 w-4" />
-                      Send Access Link
-                    </>
-                  )}
-                </Button>
-              </div>
             </div>
           )
         )

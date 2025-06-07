@@ -22,10 +22,10 @@ import {
   insertProductSchema,
   insertProductVariantSchema,
   insertCartSchema,
-  insertCartItemSchema,
-  insertCustomerAccessTokenSchema,
+  insertCartItemSchema,  insertCustomerAccessTokenSchema,
   users,
   User,
+  Customer,
   themes
 } from "@shared/schema";
 import { defaultTheme, Theme } from "@shared/config";
@@ -62,7 +62,7 @@ import passport from "passport";
 let stripe: Stripe | undefined;
 if (process.env.STRIPE_SECRET_KEY) {
   stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: "2025-03-31.basil",
+    apiVersion: "2025-04-30.basil",
   });
 }
 
@@ -229,8 +229,60 @@ export async function registerRoutes(app: Express): Promise<Server> {  // CORS c
     console.log('Uploads directory is writable');
   } catch (err) {
     console.error('ERROR: Uploads directory is not writable:', err);
+  }  // Business slug API routes - handle API calls within business context
+  // MUST come before static file serving to prevent conflicts
+  const businessApiRouter = express.Router();
+    // Set up business context for all business API routes
+  businessApiRouter.use(async (req: Request, res: Response, next: NextFunction) => {
+    // Get slug from the original request params (set by Express router)
+    const slug = req.originalUrl.split('/')[1]; // Extract from URL path
+    console.log(`🔧 Business API router for slug: ${slug}, path: ${req.path}, url: ${req.url}`);
+    
+    // Skip reserved paths
+    if (RESERVED_PATHS.includes(slug)) {
+      console.log(`⏭️ Skipping reserved path: ${slug}`);
+      return next('route');
+    }
+    
+    try {
+      if (!req.business) {
+        console.log(`🔍 Looking up business for slug: ${slug}`);
+        const business = await storage.getUserBySlug(slug);
+        if (business) {
+          req.business = business;
+          console.log(`✅ Found business: ${business.businessName} (ID: ${business.id})`);
+        } else {
+          console.log(`❌ No business found for slug: ${slug}`);
+          return res.status(404).json({ message: "Business not found" });
+        }
+      }
+      next();
+    } catch (error) {
+      console.error('❌ Error setting business context for API:', error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+  
+  // Mount the API routes within the business context
+  businessApiRouter.use("/admin", adminRoutes);
+  businessApiRouter.use("/staff", staffRoutes);
+  businessApiRouter.use("/auth", authRoutes);
+  businessApiRouter.use("/business", businessRoutes);
+  businessApiRouter.use("/themes", themeRoutes);
+  businessApiRouter.use("/theme-api", themeApiRoutes);
+  businessApiRouter.use("/", appointmentRoutes); // For /services and /appointments endpoints
+  businessApiRouter.use("/customers", customerRoutes);
+  businessApiRouter.use("/products", productRoutes);
+  businessApiRouter.use("/cart", shoppingCartRoutes);
+  businessApiRouter.use("/payments", paymentRoutes);
+  
+  if (process.env.NODE_ENV === 'development') {
+    businessApiRouter.use("/debug", debugRoutes);
   }
   
+  // Mount the business API router
+  app.use("/:slug/api", businessApiRouter);
+
   // Serve static files with enhanced logging
   app.use('/uploads', (req, res, next) => {
     console.log(`Static file request for: ${req.path}`);
@@ -240,7 +292,7 @@ export async function registerRoutes(app: Express): Promise<Server> {  // CORS c
     next();
   }, express.static(uploadsDir));
 
-  // API Routes - MUST come before static file serving
+  // API Routes - MUST come after business slug API middleware
   app.use("/api/admin", adminRoutes);
   app.use("/api/staff", staffRoutes);
   app.use("/api/auth", authRoutes);
@@ -273,17 +325,14 @@ export async function registerRoutes(app: Express): Promise<Server> {  // CORS c
     console.log('Public directory exists');
   }
   app.use(express.static(publicDir));
-
   // Root path handler - simplified
   app.get("/", async (req: Request, res: Response) => {
     if (req.business) {
       return res.json({ business: req.business });
     }
     // Redirect to auth page instead of external site
-    res.redirect('/auth');  });
-  // Business-specific API routes - must come after main API routes but before catch-all
-  app.use("/:slug/api", businessExtractor, appointmentRoutes);
-  
+    res.redirect('/auth');
+  });
   // Catch-all route for business subdomains/slugs
   app.get("/:slug/*", async (req: Request, res: Response, next: NextFunction) => {
     try {

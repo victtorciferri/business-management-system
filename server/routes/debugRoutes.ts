@@ -172,4 +172,80 @@ router.get("/check-admin-session", (req: Request, res: Response) => {
     }
 });
   
+// GET /api/debug/customer-tokens
+router.get("/customer-tokens", async (req: Request, res: Response) => {
+    try {
+        const tokens = await db.execute(sql`
+            SELECT 
+                cat.id,
+                cat.token,
+                cat.customer_id,
+                cat.business_id,
+                cat.expires_at,
+                cat.created_at,
+                c.email,
+                c.first_name,
+                c.last_name
+            FROM customer_access_tokens cat
+            JOIN customers c ON cat.customer_id = c.id
+            ORDER BY cat.created_at DESC
+            LIMIT 10
+        `);
+        res.json(tokens);
+    } catch (error) {
+        console.error("Error fetching customer tokens:", error);
+        res.status(500).json({ message: "Failed to fetch customer tokens", error: error.message });
+    }
+});
+
+// GET /api/debug/test-token/:token
+router.get("/test-token/:token", async (req: Request, res: Response) => {
+    try {
+        const { token } = req.params;
+        const result = await db.execute(sql`
+            SELECT 
+                cat.id,
+                cat.token,
+                cat.customer_id,
+                cat.business_id,
+                cat.expires_at,
+                cat.created_at,
+                c.email,
+                c.first_name,
+                c.last_name,
+                (cat.expires_at > NOW()) as is_valid
+            FROM customer_access_tokens cat
+            JOIN customers c ON cat.customer_id = c.id
+            WHERE cat.token = ${token}
+        `);
+        res.json({ token, result });
+    } catch (error) {
+        console.error("Error testing token:", error);
+        res.status(500).json({ message: "Failed to test token", error: error.message });
+    }
+});
+
+// GET /api/debug/staff-list
+router.get("/staff-list", async (req: Request, res: Response) => {
+    try {
+        const staff = await db.execute(sql`
+            SELECT 
+                id,
+                user_id,
+                name,
+                email,
+                role,
+                is_active,
+                created_at
+            FROM staff
+            ORDER BY created_at DESC
+            LIMIT 10
+        `);
+        res.json(staff);
+    } catch (error) {
+        console.error("Error fetching staff:", error);
+        res.status(500).json({ message: "Failed to fetch staff", error: error.message });
+    }
+});
+
 export default router;

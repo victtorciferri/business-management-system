@@ -12,7 +12,7 @@ const router = express.Router();
  * Customer Routes
  *********************************/
 
-router.get("/customers", async (req: Request, res: Response) => {
+router.get("/", async (req: Request, res: Response) => {
   try {
     let userId: number;
     
@@ -34,7 +34,7 @@ router.get("/customers", async (req: Request, res: Response) => {
   }
 });
 
-router.post("/customers", async (req: Request, res: Response) => {
+router.post("/", async (req: Request, res: Response) => {
   try {
     const business = req.business;
     let customerData;
@@ -156,11 +156,18 @@ router.post("/customer-access-token", async (req: Request, res: Response) => {
   try {
     const schema = z.object({
       email: z.string().email(),
-      businessId: z.number().int().positive(),
+      businessId: z.number().int().positive().optional(),
       sendEmail: z.boolean().optional().default(false)
     });
     
-    const { email, businessId, sendEmail } = schema.parse(req.body);
+    const { email, sendEmail } = schema.parse(req.body);
+    
+    // Use business context from middleware if available, otherwise use provided businessId
+    const businessId = req.business?.id || req.body.businessId;
+    
+    if (!businessId) {
+      return res.status(400).json({ message: "Business ID is required" });
+    }
     
     console.log(`Creating customer access token for: ${email}, business ID: ${businessId}`);
     

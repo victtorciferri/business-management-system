@@ -435,11 +435,20 @@ export class DatabaseStorage implements IStorage {
   // Staff Appointments
   async getStaffAppointments(staffId: number): Promise<Appointment[]> {
     return db.select().from(appointments).where(eq(appointments.staffId, staffId));
-  }
+  }  async getCustomerByAccessToken(token: string): Promise<Customer | undefined> {
+    const result = await db
+      .select()
+      .from(customers)
+      .innerJoin(customerAccessTokens, eq(customerAccessTokens.customerId, customers.id))
+      .where(
+        and(
+          eq(customerAccessTokens.token, token),
+          gte(customerAccessTokens.expiresAt, new Date())
+        )
+      )
+      .limit(1);
 
-  async getCustomerByAccessToken(token: string): Promise<Customer | undefined> {
-    // TODO: Implement proper join query
-    return undefined;
+    return result[0]?.customers || undefined;
   }
 
   async updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined> {

@@ -18,14 +18,17 @@ let _pool: Pool | null = null;
 export function getPool(): Pool {
   if (!_pool) {
     console.log("Creating new database connection pool");
+    
+    // Determine SSL settings based on database URL
+    const isLocalDB = databaseUrl.includes('localhost') || databaseUrl.includes('127.0.0.1');
+    const sslConfig = isLocalDB ? false : { rejectUnauthorized: false };
+    
     _pool = new Pool({
       connectionString: databaseUrl,
       max: 20,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 10000,
-      ssl: {
-        rejectUnauthorized: false // Required for Google Cloud SQL
-      },
+      ssl: sslConfig,
       allowExitOnIdle: true
     });
 
