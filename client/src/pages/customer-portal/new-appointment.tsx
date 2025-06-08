@@ -89,12 +89,13 @@ export default function NewAppointment() {
       staffId: "",
       notes: ""
     }
-  });
-  // Query to fetch services
+  });  // Query to fetch services
   const { data: services } = useQuery({
     queryKey: ['/api/services', businessId],
     queryFn: async () => {
-      const response = await fetch(`/api/services?businessId=${businessId}`);
+      const response = await fetch(`/api/services?businessId=${businessId}`, {
+        credentials: "include",
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch services');
       }
@@ -103,13 +104,14 @@ export default function NewAppointment() {
     },
     enabled: true
   });
-  
-  // Query to fetch staff members for this business
+    // Query to fetch staff members for this business
   const { data: staff } = useQuery({
     queryKey: ['/api/staff', businessId],
     queryFn: async () => {
       if (selectedService) {
-        const response = await fetch(`/api/staff?businessId=${businessId}&serviceId=${selectedService.id}`);
+        const response = await fetch(`/api/staff?businessId=${businessId}&serviceId=${selectedService.id}`, {
+          credentials: "include",
+        });
         if (!response.ok) {
           throw new Error('Failed to fetch staff members');
         }

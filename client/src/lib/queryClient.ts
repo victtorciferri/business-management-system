@@ -1,4 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { extractBusinessSlug } from "@/utils/tenant-router";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -7,12 +8,41 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+/**
+ * Get the business slug from the current URL path
+ */
+function getBusinessSlugFromPath(): string | null {
+  return extractBusinessSlug(window.location.pathname);
+}
+
+/**
+ * Build API URL with business slug if applicable
+ */
+function buildApiUrl(url: string): string {
+  // If the URL already contains a business slug pattern, return as is
+  if (url.includes('/api/') && !url.startsWith('/api/')) {
+    return url;
+  }
+  
+  const businessSlug = getBusinessSlugFromPath();
+  
+  // If no business slug or URL doesn't start with /api/, return as is
+  if (!businessSlug || !url.startsWith('/api/')) {
+    return url;
+  }
+  
+  // Replace /api/ with /{businessSlug}/api/
+  return url.replace('/api/', `/${businessSlug}/api/`);
+}
+
 export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const res = await fetch(url, {
+  const finalUrl = buildApiUrl(url);
+  
+  const res = await fetch(finalUrl, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
     body: data ? JSON.stringify(data) : undefined,
@@ -29,7 +59,9 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, {
+    const finalUrl = buildApiUrl(queryKey[0] as string);
+    
+    const res = await fetch(finalUrl, {
       credentials: "include",
     });
 
