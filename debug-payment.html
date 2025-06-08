@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Payment Page</title>
+</head>
+<body>
+    <h1>Debug Payment API Calls</h1>
+    <div id="results"></div>
+    
+    <script>
+        async function testApis() {
+            const results = document.getElementById('results');
+            
+            try {
+                console.log('🔍 Testing appointment API...');
+                
+                // Test appointment API
+                const appointmentResponse = await fetch('/salonelegante/api/appointments/154');
+                console.log('Appointment Response Status:', appointmentResponse.status);
+                console.log('Appointment Response Headers:', appointmentResponse.headers);
+                
+                if (appointmentResponse.ok) {
+                    const appointmentData = await appointmentResponse.json();
+                    console.log('✅ Appointment Data:', appointmentData);
+                    results.innerHTML += `<h3>Appointment Data:</h3><pre>${JSON.stringify(appointmentData, null, 2)}</pre>`;
+                } else {
+                    const errorText = await appointmentResponse.text();
+                    console.error('❌ Appointment API Error:', errorText);
+                    results.innerHTML += `<h3>Appointment Error:</h3><pre>${errorText}</pre>`;
+                }
+                
+                // Test services API
+                console.log('🔍 Testing services API...');
+                const servicesResponse = await fetch('/salonelegante/api/services?businessId=1');
+                console.log('Services Response Status:', servicesResponse.status);
+                
+                if (servicesResponse.ok) {
+                    const servicesData = await servicesResponse.json();
+                    console.log('✅ Services Data:', servicesData);
+                    results.innerHTML += `<h3>Services Data:</h3><pre>${JSON.stringify(servicesData, null, 2)}</pre>`;
+                } else {
+                    const errorText = await servicesResponse.text();
+                    console.error('❌ Services API Error:', errorText);
+                    results.innerHTML += `<h3>Services Error:</h3><pre>${errorText}</pre>`;
+                }
+                
+            } catch (error) {
+                console.error('❌ Network Error:', error);
+                results.innerHTML += `<h3>Network Error:</h3><pre>${error.message}</pre>`;
+            }
+        }
+        
+        // Run tests on page load
+        window.onload = testApis;
+    </script>
+</body>
+</html>

@@ -35,6 +35,7 @@ import PaymentSuccess from "@/pages/payment/success";
 import PaymentFailure from "@/pages/payment/failure";
 import PaymentPending from "@/pages/payment/pending";
 import MockPayment from "@/pages/payment/mock";
+import TestMockPayment from "@/pages/payment/test-mock";
 
 import NewAppointment from "@/pages/customer-portal/new-appointment";
 import CustomerPortal from "@/pages/customer-portal/index";
@@ -546,8 +547,7 @@ function AppContent() {
                 </BusinessContextProvider>
               );
             }}
-          </Route>
-          <Route path="/payment/mock">
+          </Route>          <Route path="/payment/mock">
             {() => {
               // Get businessId from URL params for context initialization
               const searchParams = new URLSearchParams(window.location.search);
@@ -562,6 +562,8 @@ function AppContent() {
                 </BusinessContextProvider>
               );
             }}
+          </Route>          <Route path="/payment/test-mock">
+            <TestMockPayment />
           </Route>
 
           <Route path="/error-testing" component={ErrorTestingPage} />

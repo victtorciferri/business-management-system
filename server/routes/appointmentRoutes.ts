@@ -59,12 +59,11 @@ router.get("/appointments", async (req: Request, res: Response) => {
     const user = req.user || req.session?.user;
     if (!user) {
       return res.status(401).json({ message: "Authentication required" });
-    }
-    let appointments;
+    }    let appointments;
     // Assuming business users see appointments for their business,
     // while customers see their own.
     if (user.role === "business") {
-      appointments = await storage.getAppointmentsByBusinessId(user.id);
+      appointments = await storage.getAppointmentsByUserId(user.id);
     } else {
       appointments = await storage.getAppointmentsByCustomerId(user.id);
     }
@@ -89,6 +88,33 @@ router.post("/appointments", async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error("Error creating appointment:", error);
     return res.status(500).json({ message: "Failed to create appointment", error: error.message });
+  }
+});
+
+// GET /api/appointments/:id - Get a specific appointment (for payment flow)
+router.get("/appointments/:id", async (req: Request, res: Response) => {
+  try {
+    console.log("🎯 GET /appointments/:id route handler executed - ID:", req.params.id);
+    
+    const appointmentId = parseInt(req.params.id, 10);
+    if (isNaN(appointmentId)) {
+      console.log("❌ Invalid appointment ID:", req.params.id);
+      return res.status(400).json({ message: "Invalid appointment ID" });
+    }
+    
+    console.log("🔍 Fetching appointment with ID:", appointmentId);
+    const appointment = await storage.getAppointment(appointmentId);
+    
+    if (!appointment) {
+      console.log("❌ Appointment not found:", appointmentId);
+      return res.status(404).json({ message: "Appointment not found" });
+    }
+    
+    console.log("✅ Appointment found:", appointment);
+    return res.json(appointment);
+  } catch (error: any) {
+    console.error("❌ Error fetching appointment:", error);
+    return res.status(500).json({ message: "Failed to fetch appointment", error: error.message });
   }
 });
 

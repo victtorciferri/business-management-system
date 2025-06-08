@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button";
 import { XCircle, ArrowLeftIcon, AlertTriangle, RefreshCw } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 interface AppointmentDetails {
   id: number;
@@ -37,9 +38,8 @@ export default function PaymentFailure() {
           
           const appointments = await response.json();
           const appt = appointments.find((a: any) => a.id === parseInt(appointmentId as string));
-          
-          if (appt) {
-            const serviceResponse = await fetch(`/api/services?businessId=${businessId}`);
+            if (appt) {
+            const serviceResponse = await apiRequest("GET", `/api/services?businessId=${businessId}`);
             const services = await serviceResponse.json();
             const service = services.find((s: any) => s.id === appt.serviceId);
             
@@ -54,12 +54,12 @@ export default function PaymentFailure() {
           }
           return appointments;
         } else {
-          const response = await fetch(`/api/appointments/${appointmentId}`);
+          const response = await apiRequest("GET", `/api/appointments/${appointmentId}`);
           if (!response.ok) throw new Error("Failed to fetch appointment");
           
           const appt = await response.json();
           
-          const serviceResponse = await fetch(`/api/services/${appt.serviceId}`);
+          const serviceResponse = await apiRequest("GET", `/api/services/${appt.serviceId}`);
           const service = await serviceResponse.json();
           
           setAppointment({

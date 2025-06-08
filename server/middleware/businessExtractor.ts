@@ -75,7 +75,7 @@ export interface BusinessConfig {
 export const RESERVED_PATHS = [
   'api', 'assets', 'src', 'components', 
   'products', 'services', 'dashboard', 'appointments', 
-  'customers', 'admin', 'auth', 'checkout',
+  'customers', 'admin', 'auth', 'checkout', 'payment',
   'login', 'register', 'logout', 'signup',
   'profile', 'settings', 'theme', 'templates',
   'images', 'css', 'js', 'fonts', 'favicon.ico',

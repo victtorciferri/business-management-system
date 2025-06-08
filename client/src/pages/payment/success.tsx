@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle, ArrowLeftIcon, Calendar } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { apiRequest } from "@/lib/queryClient";
 
 interface AppointmentDetails {
   id: number;
@@ -36,12 +37,11 @@ export default function PaymentSuccess() {
         if (token) {
           const response = await fetch(`/api/appointments?token=${token}&businessId=${businessId}`);
           if (!response.ok) throw new Error("Failed to fetch appointments");
-          
-          const appointments = await response.json();
+            const appointments = await response.json();
           const appt = appointments.find((a: any) => a.id === parseInt(appointmentId as string));
           
           if (appt) {
-            const serviceResponse = await fetch(`/api/services?businessId=${businessId}`);
+            const serviceResponse = await apiRequest("GET", `/api/services?businessId=${businessId}`);
             const services = await serviceResponse.json();
             const service = services.find((s: any) => s.id === appt.serviceId);
             
@@ -56,12 +56,12 @@ export default function PaymentSuccess() {
           }
           return appointments;
         } else {
-          const response = await fetch(`/api/appointments/${appointmentId}`);
+          const response = await apiRequest("GET", `/api/appointments/${appointmentId}`);
           if (!response.ok) throw new Error("Failed to fetch appointment");
           
           const appt = await response.json();
           
-          const serviceResponse = await fetch(`/api/services/${appt.serviceId}`);
+          const serviceResponse = await apiRequest("GET", `/api/services/${appt.serviceId}`);
           const service = await serviceResponse.json();
           
           setAppointment({
@@ -82,19 +82,12 @@ export default function PaymentSuccess() {
     },
     enabled: !!appointmentId
   });
-  
-  // Also update the appointment status to confirmed via API
+    // Also update the appointment status to confirmed via API
   useEffect(() => {
     if (appointmentId) {
-      fetch(`/api/appointments/${appointmentId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          status: 'scheduled',
-          paymentStatus: 'paid'
-        }),
+      apiRequest("PUT", `/api/appointments/${appointmentId}`, {
+        status: 'scheduled',
+        paymentStatus: 'paid'
       })
       .then(response => {
         if (!response.ok) {
@@ -110,13 +103,13 @@ export default function PaymentSuccess() {
       });
     }
   }, [appointmentId]);
-  
-  // Handle navigation back
+    // Handle navigation back
   const handleViewAppointments = () => {
     if (token) {
       setLocation(`/customer-portal/my-appointments?token=${token}&businessId=${businessId}`);
     } else {
-      setLocation("/appointments");
+      // Redirect to business-aware customer portal route instead of /appointments
+      setLocation(`/customer-portal/my-appointments${businessId ? `?businessId=${businessId}` : ''}`);
     }
   };
   

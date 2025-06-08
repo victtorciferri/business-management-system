@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button";
 import { LoaderIcon, ArrowLeftIcon, CheckCircle, XCircle, Clock } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 interface AppointmentDetails {
   id: number;
@@ -16,7 +17,6 @@ interface AppointmentDetails {
 
 export default function MockPayment() {
   const [_, setLocation] = useLocation();
-  const [appointment, setAppointment] = useState<AppointmentDetails | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   
   // Get the appointment ID from the URL
@@ -26,60 +26,42 @@ export default function MockPayment() {
   const businessId = searchParams.get("businessId");
   
   // Fetch appointment details
-  const { isLoading, error } = useQuery({
+  const { data: appointment, isLoading, error } = useQuery({
     queryKey: ['/api/appointments', appointmentId],
-    queryFn: async () => {
+    queryFn: async (): Promise<AppointmentDetails | null> => {
       if (!appointmentId) return null;
       
       try {
-        // First, try to get the appointment details via customer token
-        if (token) {
-          const response = await fetch(`/api/appointments?token=${token}&businessId=${businessId}`);
-          if (!response.ok) throw new Error("Failed to fetch appointments");
-          
-          const appointments = await response.json();
-          const appt = appointments.find((a: any) => a.id === parseInt(appointmentId as string));
-          
-          if (appt) {
-            // Find service details
-            const serviceResponse = await fetch(`/api/services?businessId=${businessId}`);
-            const services = await serviceResponse.json();
-            const service = services.find((s: any) => s.id === appt.serviceId);
-            
-            setAppointment({
-              id: appt.id,
-              date: new Date(appt.date).toLocaleString(),
-              serviceName: service?.name || "Service",
-              servicePrice: service?.price || 0,
-              businessName: appt.businessName || "Salon",
-              staffName: appt.staffName
-            });
-          }
-          return appointments;
-        } else {
-          // Business owner view - direct API call
-          const response = await fetch(`/api/appointments/${appointmentId}`);
-          if (!response.ok) throw new Error("Failed to fetch appointment");
-          
-          const appt = await response.json();
-          
-          // Get the service details
-          const serviceResponse = await fetch(`/api/services/${appt.serviceId}`);
-          const service = await serviceResponse.json();
-          
-          setAppointment({
-            id: appt.id,
-            date: new Date(appt.date).toLocaleString(),
-            serviceName: service.name,
-            servicePrice: service.price,
-            businessName: "Your Business",
-            staffName: appt.staffName
-          });
-          
-          return appt;
-        }
+        console.log('🔍 Fetching appointment details for ID:', appointmentId);
+        
+        // Use apiRequest for business slug routing to get appointment details
+        const response = await apiRequest("GET", `/api/appointments/${appointmentId}`);
+        if (!response.ok) throw new Error("Failed to fetch appointment");
+        
+        const appt = await response.json();
+        console.log('✅ Appointment data received:', appt);
+        
+        // Get all services to find the specific one
+        const serviceResponse = await apiRequest("GET", `/api/services?businessId=${businessId || appt.userId || 1}`);
+        const services = await serviceResponse.json();
+        const service = services.find((s: any) => s.id === appt.serviceId);
+        
+        console.log('✅ Service data received:', service);
+        
+        const appointmentDetails: AppointmentDetails = {
+          id: appt.id,
+          date: new Date(appt.date).toLocaleString(),
+          serviceName: service?.name || "Service",
+          servicePrice: service?.price || 0,
+          businessName: service?.businessName || "Salon Elegante",
+          staffName: appt.staffName
+        };
+        
+        console.log('✅ Final appointment details:', appointmentDetails);
+        
+        return appointmentDetails;
       } catch (error) {
-        console.error("Error fetching appointment details:", error);
+        console.error("❌ Error fetching appointment details:", error);
         return null;
       }
     },
