@@ -1,5 +1,6 @@
 import { Switch, Route, useLocation, Redirect } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { useMemo, useEffect, useState } from "react";
 import { queryClient } from "./lib/queryClient";
 import Layout from "@/components/layout/header";
 import Dashboard from "@/pages/dashboard";
@@ -43,7 +44,6 @@ import MyAppointments from "@/pages/customer-portal/my-appointments";
 import CustomerServices from "@/pages/customer-portal/services";
 import ErrorTestingPage from "@/pages/error-testing";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import { useState, useEffect, createContext, useContext } from "react";
 import { User } from "@shared/schema";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { BusinessContextProvider } from "@/contexts/BusinessContext";
@@ -73,12 +73,7 @@ function AppContent() {
   // Get current location
   const [location, setLocation] = useLocation();
 
-  // Check if the URL looks like a business portal URL (e.g., /salonelegante)
-  const businessPortalRegex = /^\/([a-zA-Z0-9_-]+)(?:\/.*)?$/;
-  const match = location.match(businessPortalRegex);
-
   // Define reserved paths that should not be treated as business slugs
-    
   const reservedPaths = [
     'api', 'auth', 'admin', 'checkout', 'preview', 'instructions',
     'products', 'services', 'dashboard', 'appointments', 'customers',
@@ -88,8 +83,14 @@ function AppContent() {
     'business-profile', 'custom-domain'
     , 'src', '@fs'];
 
-  const potentialBusinessSlug = match && 
-    !reservedPaths.includes(match[1]) ? match[1] : null;
+  // Memoize the business slug calculation to prevent infinite re-renders
+  const potentialBusinessSlug = useMemo(() => {
+    // Check if the URL looks like a business portal URL (e.g., /salonelegante)
+    const businessPortalRegex = /^\/([a-zA-Z0-9_-]+)(?:\/.*)?$/;
+    const match = location.match(businessPortalRegex);
+    
+    return match && !reservedPaths.includes(match[1]) ? match[1] : null;
+  }, [location]);
 
   // Handle customer portal routes - retain as separate routes
   useEffect(() => {
@@ -184,10 +185,9 @@ function AppContent() {
     );
   }
 
-  return (
-    isBusinessPortal ? (
+  return (    isBusinessPortal ? (
       <div className="min-h-screen bg-background">
-        <BusinessContextProvider>
+        <BusinessContextProvider initialBusiness={businessData?.business || null} initialServices={businessData?.services || []}>
           {/* Use the new theme provider with business context for business portals */}
           <ThemeProvider>
             <Switch>
@@ -235,8 +235,7 @@ function AppContent() {
           <Route path="/new-appointment">
             <Redirect to="/customer-portal/new-appointment" />
           </Route>
-          {/* Customer Portal Routes - Wrapped with BusinessContextProvider and Theme Providers */}
-          <Route path="/customer-portal">
+          {/* Customer Portal Routes - Wrapped with BusinessContextProvider and Theme Providers */}          <Route path="/customer-portal">
             {() => {
               // Get businessId from URL params for context initialization
               const searchParams = new URLSearchParams(window.location.search);
@@ -244,15 +243,14 @@ function AppContent() {
               const businessIdNum = businessId ? parseInt(businessId, 10) : undefined;
 
               return (
-                <BusinessContextProvider initialBusiness={null}>
+                <BusinessContextProvider initialBusiness={null} initialServices={[]}>
                   <ThemeProvider businessId={businessIdNum}>
                     <CustomerPortal />
                   </ThemeProvider>
                 </BusinessContextProvider>
               );
             }}
-          </Route>
-          <Route path="/customer-portal/new-appointment">
+          </Route>          <Route path="/customer-portal/new-appointment">
             {() => {
               // Get businessId from URL params for context initialization
               const searchParams = new URLSearchParams(window.location.search);
@@ -260,15 +258,14 @@ function AppContent() {
               const businessIdNum = businessId ? parseInt(businessId, 10) : undefined;
 
               return (
-                <BusinessContextProvider initialBusiness={null}>
+                <BusinessContextProvider initialBusiness={null} initialServices={[]}>
                   <ThemeProvider businessId={businessIdNum}>
                     <NewAppointment />
                   </ThemeProvider>
                 </BusinessContextProvider>
               );
             }}
-          </Route>
-          <Route path="/customer-portal/my-appointments">
+          </Route>          <Route path="/customer-portal/my-appointments">
             {() => {
               // Get businessId from URL params for context initialization
               const searchParams = new URLSearchParams(window.location.search);
@@ -276,15 +273,14 @@ function AppContent() {
               const businessIdNum = businessId ? parseInt(businessId, 10) : undefined;
 
               return (
-                <BusinessContextProvider initialBusiness={null}>
+                <BusinessContextProvider initialBusiness={null} initialServices={[]}>
                   <ThemeProvider businessId={businessIdNum}>
                     <MyAppointments />
                   </ThemeProvider>
                 </BusinessContextProvider>
               );
             }}
-          </Route>
-          <Route path="/customer-portal/services">
+          </Route>          <Route path="/customer-portal/services">
             {() => {
               // Get businessId from URL params for context initialization
               const searchParams = new URLSearchParams(window.location.search);
@@ -292,7 +288,7 @@ function AppContent() {
               const businessIdNum = businessId ? parseInt(businessId, 10) : undefined;
 
               return (
-                <BusinessContextProvider initialBusiness={null}>
+                <BusinessContextProvider initialBusiness={null} initialServices={[]}>
                   <ThemeProvider businessId={businessIdNum}>
                     <CustomerServices />
                   </ThemeProvider>
@@ -425,41 +421,36 @@ function AppContent() {
             <ProtectedRoute>
               <StaffSchedule />
             </ProtectedRoute>
-          </Route>
-
-          {/* Theme and Settings routes */}
+          </Route>          {/* Theme and Settings routes */}
           <Route path="/theme-selector-demo">
             <ProtectedRoute>
-              <BusinessContextProvider>
+              <BusinessContextProvider initialBusiness={null} initialServices={[]}>
                 <ThemeProvider>
                     <ThemeSelectorDemo />
                 </ThemeProvider>
               </BusinessContextProvider>
             </ProtectedRoute>
-          </Route>
-          <Route path="/color-mode-demo">
+          </Route>          <Route path="/color-mode-demo">
             <ProtectedRoute>
-              <BusinessContextProvider>
+              <BusinessContextProvider initialBusiness={null} initialServices={[]}>
                 <ThemeProvider>
                     <ColorModeDemo />
                 </ThemeProvider>
               </BusinessContextProvider>
             </ProtectedRoute>
-          </Route>
-          <Route path="/theme-showcase">
+          </Route>          <Route path="/theme-showcase">
             <ProtectedRoute>
-              <BusinessContextProvider>
+              <BusinessContextProvider initialBusiness={null} initialServices={[]}>
                 <ThemeProvider>
                     {/* Placeholder for ThemeShowcase */}
                     <div>Theme Showcase Coming Soon</div>
                 </ThemeProvider>
               </BusinessContextProvider>
             </ProtectedRoute>
-          </Route>
-          <Route path="/theme-marketplace">
+          </Route>          <Route path="/theme-marketplace">
             <ProtectedRoute>
               <GlobalThemeProvider>
-                <BusinessContextProvider>
+                <BusinessContextProvider initialBusiness={null} initialServices={[]}>
                   <ThemeProvider>
                     <DarkModeInitializer />
                     <ThemeMarketplacePage />
@@ -467,10 +458,9 @@ function AppContent() {
                 </BusinessContextProvider>
               </GlobalThemeProvider>
             </ProtectedRoute>
-          </Route>
-          <Route path="/theme-editor">
+          </Route>          <Route path="/theme-editor">
             <ProtectedRoute>
-              <BusinessContextProvider>
+              <BusinessContextProvider initialBusiness={null} initialServices={[]}>
                 <GlobalThemeProvider>
                   <ThemeProvider>
                     <DarkModeInitializer />
@@ -479,19 +469,17 @@ function AppContent() {
                 </GlobalThemeProvider>
               </BusinessContextProvider>
             </ProtectedRoute>
-          </Route>
-          <Route path="/dashboard/settings">
+          </Route>          <Route path="/dashboard/settings">
             <ProtectedRoute>
-              <BusinessContextProvider>
+              <BusinessContextProvider initialBusiness={null} initialServices={[]}>
                 <ThemeProvider>
                     <DashboardSettings />
                 </ThemeProvider>
               </BusinessContextProvider>
             </ProtectedRoute>
-          </Route>
-          <Route path="/dashboard/settings/theme/templates">
+          </Route>          <Route path="/dashboard/settings/theme/templates">
             <ProtectedRoute>
-              <BusinessContextProvider>
+              <BusinessContextProvider initialBusiness={null} initialServices={[]}>
                 <ThemeProvider>
                     <TemplateSettings />
                 </ThemeProvider>
@@ -499,8 +487,7 @@ function AppContent() {
             </ProtectedRoute>
           </Route>
 
-          {/* Payment related routes */}
-          <Route path="/payment/success">
+          {/* Payment related routes */}          <Route path="/payment/success">
             {() => {
               // Get businessId from URL params for context initialization
               const searchParams = new URLSearchParams(window.location.search);
@@ -508,15 +495,14 @@ function AppContent() {
               const businessIdNum = businessId ? parseInt(businessId, 10) : undefined;
 
               return (
-                <BusinessContextProvider initialBusiness={null}>
+                <BusinessContextProvider initialBusiness={null} initialServices={[]}>
                   <ThemeProvider businessId={businessIdNum}>
                     <PaymentSuccess />
                   </ThemeProvider>
                 </BusinessContextProvider>
               );
             }}
-          </Route>
-          <Route path="/payment/failure">
+          </Route>          <Route path="/payment/failure">
             {() => {
               // Get businessId from URL params for context initialization
               const searchParams = new URLSearchParams(window.location.search);
@@ -524,15 +510,14 @@ function AppContent() {
               const businessIdNum = businessId ? parseInt(businessId, 10) : undefined;
 
               return (
-                <BusinessContextProvider initialBusiness={null}>
+                <BusinessContextProvider initialBusiness={null} initialServices={[]}>
                   <ThemeProvider businessId={businessIdNum}>
                     <PaymentFailure />
                   </ThemeProvider>
                 </BusinessContextProvider>
               );
             }}
-          </Route>
-          <Route path="/payment/pending">
+          </Route>          <Route path="/payment/pending">
             {() => {
               // Get businessId from URL params for context initialization
               const searchParams = new URLSearchParams(window.location.search);
@@ -540,7 +525,7 @@ function AppContent() {
               const businessIdNum = businessId ? parseInt(businessId, 10) : undefined;
 
               return (
-                <BusinessContextProvider initialBusiness={null}>
+                <BusinessContextProvider initialBusiness={null} initialServices={[]}>
                   <ThemeProvider businessId={businessIdNum}>
                     <PaymentPending />
                   </ThemeProvider>
@@ -555,14 +540,14 @@ function AppContent() {
               const businessIdNum = businessId ? parseInt(businessId, 10) : undefined;
 
               return (
-                <BusinessContextProvider initialBusiness={null}>
+                <BusinessContextProvider initialBusiness={null} initialServices={[]}>
                   <ThemeProvider businessId={businessIdNum}>
                     <MockPayment />
                   </ThemeProvider>
                 </BusinessContextProvider>
               );
             }}
-          </Route>          <Route path="/payment/test-mock">
+          </Route><Route path="/payment/test-mock">
             <TestMockPayment />
           </Route>
 
@@ -584,7 +569,7 @@ function App() {
             it's available throughout the entire application and prevent nested providers
           */}
           <LanguageProvider>
-            <BusinessContextProvider>
+            <BusinessContextProvider initialBusiness={null} initialServices={[]}>
               <AppContent />
               <DarkModeInitializer />
             </BusinessContextProvider>

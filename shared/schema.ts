@@ -58,8 +58,12 @@ export const users = pgTable("users", {
   mercadopagoApplicationId: text("mercadopago_application_id"), // Application ID for OAuth
   mercadopagoClientId: text("mercadopago_client_id"), // OAuth client ID
   mercadopagoClientSecret: text("mercadopago_client_secret"), // OAuth client secret
-  mercadopagoRefreshToken: text("mercadopago_refresh_token"), // OAuth refresh token
-  mercadopagoAccessToken: text("mercadopago_access_token"), // OAuth access token
+  mercadopagoRefreshToken: text("mercadopago_refresh_token"), // OAuth refresh token  mercadopagoAccessToken: text("mercadopago_access_token"), // OAuth access token
+  // Stripe integration fields for subscription management
+  stripeCustomerId: text("stripe_customer_id"), // Stripe customer ID for the business
+  stripeSubscriptionId: text("stripe_subscription_id"), // Stripe subscription ID
+  // MercadoPago customer tracking
+  mercadopagoCustomerId: text("mercadopago_customer_id"), // MercadoPago customer ID for the business
   emailConfirmed: boolean("email_confirmed").default(false),
   businessTimeZone: text("business_time_zone").default("America/Santiago"), // Default to Chile time zone
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -92,10 +96,12 @@ export const insertUserSchema = createInsertSchema(users).pick({
   role: true,
   subscription: true,
   subscriptionStatus: true,
-  subscriptionExpiresAt: true,
-  platformFeePercentage: true,
+  subscriptionExpiresAt: true,  platformFeePercentage: true,
   mercadopagoAccountId: true,
   mercadopagoIntegrationEnabled: true,
+  stripeCustomerId: true,
+  stripeSubscriptionId: true,
+  mercadopagoCustomerId: true,
   emailConfirmed: true,
   businessTimeZone: true,
 });

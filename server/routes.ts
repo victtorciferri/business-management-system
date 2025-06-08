@@ -246,10 +246,11 @@ export async function registerRoutes(app: Express): Promise<Server> {  // CORS c
     
     try {
       if (!req.business) {
-        console.log(`🔍 Looking up business for slug: ${slug}`);
-        const business = await storage.getUserBySlug(slug);
+        console.log(`🔍 Looking up business for slug: ${slug}`);        const business = await storage.getUserByBusinessSlug(slug);
         if (business) {
-          req.business = business;
+          // Remove password from business object
+          const { password, ...businessWithoutPassword } = business;
+          req.business = businessWithoutPassword;
           console.log(`✅ Found business: ${business.businessName} (ID: ${business.id})`);
         } else {
           console.log(`❌ No business found for slug: ${slug}`);
@@ -282,11 +283,84 @@ export async function registerRoutes(app: Express): Promise<Server> {  // CORS c
   businessApiRouter.use("/products", productRoutes);
   businessApiRouter.use("/cart", shoppingCartRoutes);
   businessApiRouter.use("/payments", paymentRoutes);
-  
-  if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === 'development') {
     businessApiRouter.use("/debug", debugRoutes);
   }
-  // Mount the business API router - THIS MUST COME BEFORE CATCH-ALL ROUTES
+
+  // Customer Portal API Routes - MUST come before business slug API routes
+  // These handle /customer-portal/api/* requests to prevent business slug router conflicts
+  console.log('🎯 Setting up customer-portal API routes...');
+  
+  // Handle /customer-portal/api/appointments with token-based authentication
+  app.use("/customer-portal/api/appointments", async (req: Request, res: Response) => {
+    console.log(`🔧 Customer Portal API: ${req.originalUrl}, method: ${req.method}`);
+    
+    try {
+      const authHeader = req.headers.authorization;
+      const token = authHeader?.startsWith('Bearer ') 
+        ? authHeader.substring(7) 
+        : req.query.token as string;
+      
+      if (!token) {
+        console.log('❌ Customer Portal API: No token provided');
+        return res.status(401).json({ message: "Access token is required" });
+      }
+      
+      // Get customer by token
+      const customer = await storage.getCustomerByAccessToken(token);
+      if (!customer) {
+        console.log('❌ Customer Portal API: Invalid token');
+        return res.status(401).json({ message: "Invalid or expired access token" });
+      }
+      
+      console.log(`✅ Customer Portal API: Found customer ${customer.id} for token`);
+      
+      // Get customer's appointments
+      const appointments = await storage.getAppointmentsByCustomerId(customer.id);
+      res.json(appointments);
+      
+    } catch (error) {
+      console.error('❌ Customer Portal API error:', error);
+      res.status(500).json({ message: "Failed to fetch appointments" });
+    }
+  });
+  
+  // Handle /customer-portal/api/customer-profile with token-based authentication
+  app.use("/customer-portal/api/customer-profile", async (req: Request, res: Response) => {
+    console.log(`🔧 Customer Portal Profile API: ${req.originalUrl}, method: ${req.method}`);
+    
+    try {
+      const authHeader = req.headers.authorization;
+      const token = authHeader?.startsWith('Bearer ') 
+        ? authHeader.substring(7) 
+        : req.query.token as string;
+      
+      if (!token) {
+        console.log('❌ Customer Portal Profile API: No token provided');
+        return res.status(401).json({ message: "Access token is required" });
+      }
+      
+      const customer = await storage.getCustomerByAccessToken(token);
+      if (!customer) {
+        console.log('❌ Customer Portal Profile API: Invalid token');
+        return res.status(401).json({ message: "Invalid or expired access token" });
+      }
+      
+      console.log(`✅ Customer Portal Profile API: Found customer ${customer.id}`);
+      
+      const appointments = await storage.getAppointmentsByCustomerId(customer.id);
+      res.json({
+        customer,
+        appointments
+      });
+      
+    } catch (error) {
+      console.error('❌ Customer Portal Profile API error:', error);
+      res.status(500).json({ message: "Failed to fetch customer profile" });
+    }
+  });
+
+  // Mount the business API router - THIS MUST COME AFTER CUSTOMER-PORTAL API ROUTES
   app.use("/:slug/api", (req, res, next) => {
     console.log(`🎯 Business API route matched: ${req.originalUrl}, method: ${req.method}, path: ${req.path}`);
     console.log(`🔍 Route stack for businessApiRouter:`, businessApiRouter.stack.map(layer => ({ 
