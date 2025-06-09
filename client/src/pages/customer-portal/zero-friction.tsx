@@ -49,8 +49,7 @@ export default function ZeroFriction() {
   const params = new URLSearchParams(window.location.search);
   const businessId = params.get("businessId") ? parseInt(params.get("businessId")!) : 1;
   const emailFromParams = params.get("email");
-  
-  // Check for saved email in cookies
+    // Check for saved email in cookies and auto-lookup email from URL params
   useEffect(() => {
     const getCookie = (name: string) => {
       const value = `; ${document.cookie}`;
@@ -59,14 +58,23 @@ export default function ZeroFriction() {
       return null;
     };
     
-    const savedEmail = getCookie('appointease_email');
-    if (savedEmail) {
-      setEmail(savedEmail);
-      form.setValue('email', savedEmail);
-      // Optional: auto-lookup if email found in cookie
-      //handleSubmit({ email: savedEmail });
+    // Check for email from URL parameters first
+    if (emailFromParams) {
+      setEmail(emailFromParams);
+      form.setValue('email', emailFromParams);
+      // Auto-lookup appointments for email from URL
+      handleSubmit({ email: emailFromParams });
+    } else {
+      // Otherwise check for saved email in cookies
+      const savedEmail = getCookie('appointease_email');
+      if (savedEmail) {
+        setEmail(savedEmail);
+        form.setValue('email', savedEmail);
+        // Optional: auto-lookup if email found in cookie
+        //handleSubmit({ email: savedEmail });
+      }
     }
-  }, []);
+  }, [emailFromParams]);
   
   // Initialize the form with react-hook-form
   const form = useForm<z.infer<typeof emailSchema>>({

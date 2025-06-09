@@ -7,13 +7,11 @@ import {
   Payment, InsertPayment,
   Product, InsertProduct,
   ProductVariant, InsertProductVariant,
-  Cart, InsertCart,
-  CartItem, InsertCartItem,
+  Cart, InsertCart,  CartItem, InsertCartItem,
   StaffAvailability, InsertStaffAvailability,
-  CustomerAccessToken, InsertCustomerAccessToken,
   ThemeEntity, InsertThemeEntity,
-  users, services, customers, appointments, payments, products, productVariants, carts, cartItems, staffAvailability, customerAccessTokens, themes,
-  UserRole, insertCustomerAccessTokenSchema,
+  users, services, customers, appointments, payments, products, productVariants, carts, cartItems, staffAvailability, themes,
+  UserRole,
 } from "@shared/schema";
 import { Theme } from "@shared/config";
 import { db } from "./db";
@@ -123,9 +121,33 @@ export class DatabaseStorage implements IStorage {
   async getAppointmentsByUserId(userId: number): Promise<Appointment[]> {
     return db.select().from(appointments).where(eq(appointments.userId, userId));
   }
-
   async getAppointmentsByCustomerId(customerId: number): Promise<Appointment[]> {
-    return db.select().from(appointments).where(eq(appointments.customerId, customerId));
+    // Enhanced query to include service name and business information
+    const result = await db
+      .select({
+        id: appointments.id,
+        userId: appointments.userId,
+        serviceId: appointments.serviceId,
+        staffId: appointments.staffId,
+        customerId: appointments.customerId,
+        date: appointments.date,
+        duration: appointments.duration,
+        notes: appointments.notes,
+        status: appointments.status,
+        createdAt: appointments.createdAt,
+        reminderSent: appointments.reminderSent,
+        paymentStatus: appointments.paymentStatus,
+        serviceName: services.name,
+        servicePrice: services.price,
+        businessName: users.businessName
+      })
+      .from(appointments)
+      .leftJoin(services, eq(appointments.serviceId, services.id))
+      .leftJoin(users, eq(appointments.userId, users.id))
+      .where(eq(appointments.customerId, customerId))
+      .orderBy(desc(appointments.date));
+    
+    return result as any[];
   }
 
   async getAppointmentsByDateRange(userId: number, startDate: Date, endDate: Date): Promise<Appointment[]> {
@@ -209,28 +231,6 @@ export class DatabaseStorage implements IStorage {
     const result = await db.delete(users).where(eq(users.id, staffId));
     return !!result;
   }
-
-  // Customer access token methods
-  async createCustomerAccessToken(token: typeof insertCustomerAccessTokenSchema._input): Promise<typeof customerAccessTokens.$inferSelect> {
-    const [newCustomerAccessToken] = await db
-      .insert(customerAccessTokens)
-      .values(token)
-      .returning();
-    return newCustomerAccessToken;
-  }
-  async getCustomerAccessToken(token: string): Promise<typeof customerAccessTokens.$inferSelect | undefined> {
-    const [customerAccessToken] = await db
-      .select()
-      .from(customerAccessTokens)
-      .where(eq(customerAccessTokens.token, token));
-    return customerAccessToken || undefined;
-  }  async deleteCustomerAccessToken(token: string): Promise<boolean> {
-    const result = await db
-      .delete(customerAccessTokens)
-      .where(eq(customerAccessTokens.token, token));
-    return !!result;
-  }
-
   // Theme methods
   async getAllThemes(): Promise<Theme[]> {
     try {
@@ -446,9 +446,7 @@ export class DatabaseStorage implements IStorage {
           gte(customerAccessTokens.expiresAt, new Date())
         )
       )
-      .limit(1);
-
-    return result[0]?.customers || undefined;
+      .limit(1);    return result[0]?.customers || undefined;
   }
 
   async updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined> {

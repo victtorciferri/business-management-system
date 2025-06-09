@@ -7,10 +7,8 @@ import {
   Payment, InsertPayment,
   Product, InsertProduct,
   ProductVariant, InsertProductVariant,
-  Cart, InsertCart,
-  CartItem, InsertCartItem,
+  Cart, InsertCart,  CartItem, InsertCartItem,
   StaffAvailability, InsertStaffAvailability,
-  CustomerAccessToken, InsertCustomerAccessToken,
   ThemeEntity, InsertThemeEntity
 } from "@shared/schema";
 import { Theme } from "@shared/config";
@@ -442,34 +440,10 @@ export class BusinessSlugAdapter implements IStorage {
   async deleteStaffAvailability(id: number): Promise<boolean> {
     return this.storage.deleteStaffAvailability(id);
   }
-
   // Staff appointments
   async getStaffAppointments(staffId: number): Promise<Appointment[]> {
     const appointments = await this.storage.getStaffAppointments(staffId);
     return this.addBusinessSlugToArray(appointments, appointments[0]?.userId);
-  }
-
-  // Customer access token methods
-  async createCustomerAccessToken(token: InsertCustomerAccessToken): Promise<CustomerAccessToken> {
-    return this.storage.createCustomerAccessToken(token);
-  }
-
-  async getCustomerAccessToken(token: string): Promise<CustomerAccessToken | undefined> {
-    return this.storage.getCustomerAccessToken(token);
-  }
-
-  async getCustomerByAccessToken(token: string): Promise<Customer | undefined> {
-    const customer = await this.storage.getCustomerByAccessToken(token);
-    return this.addBusinessSlugToObject(customer, customer?.userId);
-  }
-
-  async deleteCustomerAccessToken(token: string): Promise<boolean> {
-    return this.storage.deleteCustomerAccessToken(token);
-  }
-
-  async getCustomerByEmailAndBusinessId(email: string, businessId: string): Promise<Customer | undefined> {
-    const customer = await this.storage.getCustomerByEmailAndBusinessId(email, parseInt(businessId, 10));
-    return this.addBusinessSlugToObject(customer, customer?.userId);
   }
 
   // Theme methods

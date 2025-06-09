@@ -102,15 +102,11 @@ export default function PaymentSuccess() {
         console.error('Error updating appointment status:', error);
       });
     }
-  }, [appointmentId]);
-    // Handle navigation back
+  }, [appointmentId]);  // Handle navigation back
   const handleViewAppointments = () => {
-    if (token) {
-      setLocation(`/customer-portal/my-appointments?token=${token}&businessId=${businessId}`);
-    } else {
-      // Redirect to business-aware customer portal route instead of /appointments
-      setLocation(`/customer-portal/my-appointments${businessId ? `?businessId=${businessId}` : ''}`);
-    }
+    // For frictionless system, we need the customer email to view appointments
+    // We'll redirect to the zero-friction page which allows email lookup
+    setLocation(`/customer-portal/zero-friction${businessId ? `?businessId=${businessId}` : ''}`);
   };
   
   return (

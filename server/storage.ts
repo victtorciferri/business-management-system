@@ -7,10 +7,8 @@ import {
   Payment, InsertPayment,
   Product, InsertProduct,
   ProductVariant, InsertProductVariant,
-  Cart, InsertCart,
-  CartItem, InsertCartItem,
+  Cart, InsertCart,  CartItem, InsertCartItem,
   StaffAvailability, InsertStaffAvailability,
-  CustomerAccessToken, InsertCustomerAccessToken,
   ThemeEntity, InsertThemeEntity,
   themes
 } from "@shared/schema";
@@ -114,13 +112,7 @@ export interface IStorage {
   
   // Staff Appointments
   getStaffAppointments(staffId: number): Promise<Appointment[]>;
-  
-  // Customer Access Token methods
-  createCustomerAccessToken(token: InsertCustomerAccessToken): Promise<CustomerAccessToken>;
-  getCustomerAccessToken(token: string): Promise<CustomerAccessToken | undefined>;
-  getCustomerByAccessToken(token: string): Promise<Customer | undefined>;
-  deleteCustomerAccessToken(token: string): Promise<boolean>;
-}
+  }
 
 // Use the BusinessSlugAdapter which already implements all IStorage methods
 export const storage: IStorage = new BusinessSlugAdapter();

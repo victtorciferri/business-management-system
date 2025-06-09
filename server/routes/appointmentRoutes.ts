@@ -1,5 +1,6 @@
 import express, { Request, Response } from "express";
 import { storage } from "../storage";
+import { validateAppointmentBooking } from "../utils/appointmentValidation";
 
 const router = express.Router();
 
@@ -81,8 +82,33 @@ router.post("/appointments", async (req: Request, res: Response) => {
     if (!user) {
       return res.status(401).json({ message: "Authentication required" });
     }
-    // Validate and extract appointment data as necessary
+    
+    // Validate and extract appointment data
     const appointmentData = req.body;
+    
+    // If staffId and appointment time are provided, validate for conflicts
+    if (appointmentData.staffId && appointmentData.date) {
+      const appointmentDate = new Date(appointmentData.date);
+      const duration = appointmentData.duration || 60; // Default to 60 minutes if not specified
+      
+      // Validate appointment to prevent double booking
+      const validation = await validateAppointmentBooking({
+        staffId: appointmentData.staffId,
+        date: appointmentDate,
+        duration: duration
+      });
+      
+      if (!validation.isValid) {
+        console.log(`❌ Appointment creation validation failed: ${validation.error}`);
+        return res.status(409).json({ 
+          message: validation.error || "Appointment slot not available",
+          code: "BOOKING_CONFLICT"
+        });
+      }
+      
+      console.log("✅ Appointment validation passed, creating appointment...");
+    }
+    
     const appointment = await storage.createAppointment(appointmentData);
     return res.status(201).json(appointment);
   } catch (error: any) {
@@ -128,7 +154,33 @@ router.put("/appointments/:id", async (req: Request, res: Response) => {
     if (isNaN(appointmentId)) {
       return res.status(400).json({ message: "Invalid appointment ID" });
     }
+    
     const updatedData = req.body;
+    
+    // If updating time/staff, validate for conflicts
+    if (updatedData.staffId && updatedData.date) {
+      const appointmentDate = new Date(updatedData.date);
+      const duration = updatedData.duration || 60; // Default to 60 minutes if not specified
+      
+      // Validate appointment to prevent double booking (exclude current appointment)
+      const validation = await validateAppointmentBooking({
+        staffId: updatedData.staffId,
+        date: appointmentDate,
+        duration: duration,
+        excludeAppointmentId: appointmentId
+      });
+      
+      if (!validation.isValid) {
+        console.log(`❌ Appointment update validation failed: ${validation.error}`);
+        return res.status(409).json({ 
+          message: validation.error || "Appointment slot not available",
+          code: "BOOKING_CONFLICT"
+        });
+      }
+      
+      console.log("✅ Appointment update validation passed...");
+    }
+    
     const updatedAppointment = await storage.updateAppointment(appointmentId, updatedData);
     if (!updatedAppointment) {
       return res.status(404).json({ message: "Appointment not found" });

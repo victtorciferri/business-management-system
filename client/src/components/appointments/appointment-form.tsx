@@ -302,12 +302,23 @@ export function AppointmentForm({
       // Call success callback if provided
       if (onSubmitSuccess) {
         onSubmitSuccess();
-      }
-    } catch (error: any) {
+      }    } catch (error: any) {
       console.error("Appointment submission error:", error);
       
       let errorMessage = "Failed to save the appointment. Please try again.";
-      if (error.message) {
+      
+      // Handle specific booking conflict errors
+      if (error.status === 409 || (error.response && error.response.status === 409)) {
+        errorMessage = "This time slot is already booked or the staff member is not available. Please select a different time.";
+        
+        // Refresh available time slots to update the UI
+        if (selectedDate && selectedStaffId !== "none" && selectedServiceId) {
+          // Force refresh of available time slots
+          const currentDate = selectedDate;
+          setSelectedDate(undefined);
+          setTimeout(() => setSelectedDate(currentDate), 100);
+        }
+      } else if (error.message) {
         errorMessage = error.message;
       }
       

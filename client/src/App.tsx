@@ -42,6 +42,7 @@ import NewAppointment from "@/pages/customer-portal/new-appointment";
 import CustomerPortal from "@/pages/customer-portal/index";
 import MyAppointments from "@/pages/customer-portal/my-appointments";
 import CustomerServices from "@/pages/customer-portal/services";
+import ZeroFriction from "@/pages/customer-portal/zero-friction";
 import ErrorTestingPage from "@/pages/error-testing";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { User } from "@shared/schema";
@@ -279,8 +280,7 @@ function AppContent() {
                   </ThemeProvider>
                 </BusinessContextProvider>
               );
-            }}
-          </Route>          <Route path="/customer-portal/services">
+            }}          </Route>          <Route path="/customer-portal/services">
             {() => {
               // Get businessId from URL params for context initialization
               const searchParams = new URLSearchParams(window.location.search);
@@ -291,6 +291,21 @@ function AppContent() {
                 <BusinessContextProvider initialBusiness={null} initialServices={[]}>
                   <ThemeProvider businessId={businessIdNum}>
                     <CustomerServices />
+                  </ThemeProvider>
+                </BusinessContextProvider>
+              );
+            }}
+          </Route>          <Route path="/customer-portal/zero-friction">
+            {() => {
+              // Get businessId from URL params for context initialization
+              const searchParams = new URLSearchParams(window.location.search);
+              const businessId = searchParams.get('businessId');
+              const businessIdNum = businessId ? parseInt(businessId, 10) : undefined;
+
+              return (
+                <BusinessContextProvider initialBusiness={null} initialServices={[]}>
+                  <ThemeProvider businessId={businessIdNum}>
+                    <ZeroFriction />
                   </ThemeProvider>
                 </BusinessContextProvider>
               );

@@ -314,55 +314,46 @@ export default function NewAppointment() {
         date: appointmentDate.toISOString(),
         time: data.time,
         notes: data.notes || ""
+      });      const appointment = await appointmentResponse.json();
+      
+      // Redirect to payment page without access tokens
+      toast({
+        title: "Almost done!",
+        description: "Please complete the payment to confirm your appointment."
       });
       
-      const appointment = await appointmentResponse.json();
-      
-      // Create a customer access token if needed
-      if (!accessToken) {
-        const tokenResponse = await apiRequest("POST", "/api/customer-access-token", {
-          email: customer.email,
-          businessId: businessId,
-          sendEmail: true
-        });
-        
-        const tokenData = await tokenResponse.json();
-        // Store token locally but don't use useState as it won't be available immediately
-        const newToken = tokenData.token;
-        
-        // Redirect to payment page
-        toast({
-          title: "Almost done!",
-          description: "Please complete the payment to confirm your appointment."
-        });
-        
-        // For development/testing, use the mock payment page
-        // In production with MercadoPago credentials, this would redirect to /checkout/:appointmentId
-        navigate(`/payment/mock?appointmentId=${appointment.id}&token=${tokenData.token}&businessId=${businessId}`);
-      } else {
-        // Use existing token for redirect
-        toast({
-          title: "Almost done!",
-          description: "Please complete the payment to confirm your appointment."
-        });
-        
-        // For development/testing, use the mock payment page
-        // In production with MercadoPago credentials, this would redirect to /checkout/:appointmentId
-        navigate(`/payment/mock?appointmentId=${appointment.id}&token=${accessToken}&businessId=${businessId}`);
-      }
+      // For development/testing, use the mock payment page
+      // In production with MercadoPago credentials, this would redirect to /checkout/:appointmentId
+      navigate(`/payment/mock?appointmentId=${appointment.id}&businessId=${businessId}`);
       
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({
         queryKey: ['/api/appointments']
       });
       
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error booking appointment:", error);
-      toast({
-        title: "Error",
-        description: "There was a problem booking your appointment. Please try again.",
-        variant: "destructive"
-      });
+      
+      // Handle specific booking conflict errors
+      if (error.status === 409 || (error.response && error.response.status === 409)) {
+        toast({
+          title: "Time Slot Unavailable",
+          description: "This time slot is already booked or the staff member is not available. Please select a different time.",
+          variant: "destructive"
+        });
+        
+        // Refresh available times to update the UI
+        if (selectedDate && selectedService && selectedStaff) {
+          // Trigger useEffect to regenerate available times
+          setSelectedDate(new Date(selectedDate)); // Force refresh
+        }
+      } else {
+        toast({
+          title: "Error",
+          description: "There was a problem booking your appointment. Please try again.",
+          variant: "destructive"
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }

@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Double Booking Prevention Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        button:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+        }
+        .success {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        .error {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .info {
+            color: #3498db;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚫 Double Booking Prevention Test</h1>
+        <p>This test demonstrates that the AppointEase system now prevents double bookings by validating appointments on the server side.</p>
+        
+        <div class="test-section">
+            <h3>Test Setup</h3>
+            <p class="info">This test will attempt to create two appointments at the same time with the same staff member to verify conflict prevention.</p>
+            <button onclick="runFullTest()">🧪 Run Complete Test</button>
+            <button onclick="clearLog()">🗑️ Clear Log</button>
+        </div>
+
+        <div class="test-section">
+            <h3>Individual Steps</h3>
+            <button onclick="createTestCustomer()">1️⃣ Create Test Customer</button>
+            <button onclick="bookFirstAppointment()">2️⃣ Book First Appointment</button>
+            <button onclick="attemptConflictingBooking()">3️⃣ Attempt Conflicting Booking</button>
+            <button onclick="bookDifferentTime()">4️⃣ Book Different Time (Should Work)</button>
+        </div>
+
+        <div class="test-section">
+            <h3>Test Results</h3>
+            <div id="log" class="log">Click "Run Complete Test" to begin testing double booking prevention...</div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:9002';
+        const BUSINESS_ID = 1;
+        let testCustomerId = null;
+        let firstAppointmentId = null;
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('log');
+            const className = type === 'success' ? 'success' : type === 'error' ? 'error' : 'info';
+            logElement.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        async function apiRequest(method, endpoint, data = null) {
+            const url = `${API_BASE}${endpoint}`;
+            const options = {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            };
+            
+            if (data) {
+                options.body = JSON.stringify(data);
+            }
+
+            const response = await fetch(url, options);
+            const responseData = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(responseData.message || `HTTP ${response.status}`);
+            }
+            
+            return responseData;
+        }
+
+        async function createTestCustomer() {
+            try {
+                log('Creating test customer...', 'info');
+                
+                const customerData = {
+                    userId: BUSINESS_ID,
+                    firstName: 'Test',
+                    lastName: 'Customer',
+                    email: `test.doubleBooking.${Date.now()}@example.com`,
+                    phone: '1234567890',
+                    notes: 'Test customer for double booking prevention'
+                };
+
+                const customer = await apiRequest('POST', '/api/customers', customerData);
+                testCustomerId = customer.id;
+                
+                log(`✅ Customer created successfully! ID: ${customer.id}, Email: ${customer.email}`, 'success');
+                return customer;
+            } catch (error) {
+                log(`❌ Failed to create customer: ${error.message}`, 'error');
+                throw error;
+            }
+        }
+
+        async function bookFirstAppointment() {
+            try {
+                if (!testCustomerId) {
+                    throw new Error('Test customer not created yet');
+                }
+
+                log('Booking first appointment...', 'info');
+                
+                // Create appointment for tomorrow at 10:00 AM
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                tomorrow.setHours(10, 0, 0, 0);
+
+                const appointmentData = {
+                    businessId: BUSINESS_ID,
+                    serviceId: 1, // Assuming service ID 1 exists
+                    staffId: 3,   // Assuming staff ID 3 exists (typical staff member)
+                    customerId: testCustomerId,
+                    date: tomorrow.toISOString(),
+                    time: '10:00 AM',
+                    notes: 'First appointment - should succeed'
+                };
+
+                const appointment = await apiRequest('POST', '/api/customers/book-appointment', appointmentData);
+                firstAppointmentId = appointment.id;
+                
+                log(`✅ First appointment booked successfully! ID: ${appointment.id}`, 'success');
+                log(`   📅 Date: ${new Date(appointment.date).toLocaleString()}`, 'info');
+                log(`   👨‍💼 Staff ID: ${appointment.staffId}`, 'info');
+                log(`   ⏱️ Duration: ${appointment.duration} minutes`, 'info');
+                
+                return appointment;
+            } catch (error) {
+                log(`❌ Failed to book first appointment: ${error.message}`, 'error');
+                throw error;
+            }
+        }
+
+        async function attemptConflictingBooking() {
+            try {
+                if (!testCustomerId || !firstAppointmentId) {
+                    throw new Error('Prerequisites not met (need customer and first appointment)');
+                }
+
+                log('🔥 Attempting to book conflicting appointment (SHOULD FAIL)...', 'info');
+                
+                // Try to book another appointment at the EXACT same time with the same staff
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                tomorrow.setHours(10, 0, 0, 0);
+
+                const conflictingData = {
+                    businessId: BUSINESS_ID,
+                    serviceId: 2, // Different service, same time/staff
+                    staffId: 3,   // Same staff member
+                    customerId: testCustomerId,
+                    date: tomorrow.toISOString(),
+                    time: '10:00 AM',
+                    notes: 'Conflicting appointment - should be rejected'
+                };
+
+                try {
+                    const result = await apiRequest('POST', '/api/customers/book-appointment', conflictingData);
+                    log(`❌ UNEXPECTED: Conflicting appointment was allowed! This is a bug!`, 'error');
+                    log(`   Appointment ID: ${result.id}`, 'error');
+                    return false;
+                } catch (conflictError) {
+                    if (conflictError.message.includes('already booked') || conflictError.message.includes('not available')) {
+                        log(`✅ SUCCESS: System correctly prevented double booking!`, 'success');
+                        log(`   🚫 Error message: "${conflictError.message}"`, 'success');
+                        return true;
+                    } else {
+                        log(`❌ Unexpected error (not conflict-related): ${conflictError.message}`, 'error');
+                        throw conflictError;
+                    }
+                }
+            } catch (error) {
+                log(`❌ Error testing conflict: ${error.message}`, 'error');
+                throw error;
+            }
+        }
+
+        async function bookDifferentTime() {
+            try {
+                if (!testCustomerId) {
+                    throw new Error('Test customer not created yet');
+                }
+
+                log('Booking appointment at different time (SHOULD SUCCEED)...', 'info');
+                
+                // Book appointment 1 hour later (11:00 AM) - should work
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                tomorrow.setHours(11, 0, 0, 0);
+
+                const differentTimeData = {
+                    businessId: BUSINESS_ID,
+                    serviceId: 2,
+                    staffId: 3,   // Same staff, different time
+                    customerId: testCustomerId,
+                    date: tomorrow.toISOString(),
+                    time: '11:00 AM',
+                    notes: 'Different time appointment - should succeed'
+                };
+
+                const appointment = await apiRequest('POST', '/api/customers/book-appointment', differentTimeData);
+                
+                log(`✅ Different time appointment booked successfully! ID: ${appointment.id}`, 'success');
+                log(`   📅 Date: ${new Date(appointment.date).toLocaleString()}`, 'info');
+                log(`   This proves the system allows valid bookings while preventing conflicts.`, 'success');
+                
+                return appointment;
+            } catch (error) {
+                log(`❌ Failed to book different time appointment: ${error.message}`, 'error');
+                throw error;
+            }
+        }
+
+        async function runFullTest() {
+            try {
+                clearLog();
+                log('🚀 Starting comprehensive double booking prevention test...', 'info');
+                log('═══════════════════════════════════════════════════════', 'info');
+                
+                // Step 1: Create customer
+                await createTestCustomer();
+                log('', 'info');
+                
+                // Step 2: Book first appointment
+                await bookFirstAppointment();
+                log('', 'info');
+                
+                // Step 3: Attempt conflict (should fail)
+                const conflictPrevented = await attemptConflictingBooking();
+                log('', 'info');
+                
+                // Step 4: Book different time (should succeed)
+                await bookDifferentTime();
+                log('', 'info');
+                
+                // Summary
+                log('═══════════════════════════════════════════════════════', 'info');
+                if (conflictPrevented) {
+                    log('🎉 TEST PASSED: Double booking prevention is working correctly!', 'success');
+                    log('✅ The system successfully prevented appointment conflicts', 'success');
+                    log('✅ Valid appointments are still allowed', 'success');
+                } else {
+                    log('❌ TEST FAILED: Double booking prevention is not working!', 'error');
+                }
+                
+            } catch (error) {
+                log('═══════════════════════════════════════════════════════', 'info');
+                log(`❌ TEST FAILED with error: ${error.message}`, 'error');
+                log('Please check the server logs and ensure all services are running.', 'error');
+            }
+        }
+
+        // Auto-run test when page loads (optional)
+        // window.onload = () => setTimeout(runFullTest, 1000);
+    </script>
+</body>
+</html>

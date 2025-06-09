@@ -54,11 +54,9 @@ export default function CustomerPortal() {
   // Use business-specific testimonials if available or fallback to generic ones
   // TODO: In future implementation, fetch business testimonials from API
   const testimonials = business?.testimonials || defaultTestimonials;
-  
-  return (
+    return (
     <CustomerPortalLayout 
-      businessId={businessId} 
-      accessToken={accessToken}
+      businessId={businessId}
     >
       <div className="container mx-auto py-10">
         <div className="flex flex-col items-center mb-10 text-center">

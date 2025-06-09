@@ -4,7 +4,7 @@ import { db, query } from "../db";
 import { z } from "zod";
 import { insertCustomerSchema } from "@shared/schema";
 import crypto from "crypto";
-import { sendTokenEmail } from "../utils/emailUtils";
+import { validateAppointmentBooking } from "../utils/appointmentValidation";
 
 const router = express.Router();
 
@@ -149,126 +149,6 @@ router.post("/check-customer-exists", async (req: Request, res: Response) => {
 });
 
 /*********************************
- * Customer Access Token Routes
- *********************************/
-
-router.post("/customer-access-token", async (req: Request, res: Response) => {
-  try {
-    const schema = z.object({
-      email: z.string().email(),
-      businessId: z.number().int().positive().optional(),
-      sendEmail: z.boolean().optional().default(false)
-    });
-    
-    const { email, sendEmail } = schema.parse(req.body);
-    
-    // Use business context from middleware if available, otherwise use provided businessId
-    const businessId = req.business?.id || req.body.businessId;
-    
-    if (!businessId) {
-      return res.status(400).json({ message: "Business ID is required" });
-    }
-    
-    console.log(`Creating customer access token for: ${email}, business ID: ${businessId}`);
-    
-    const customer = await storage.getCustomerByEmailAndBusinessId(email, businessId);
-    
-    if (!customer) {
-      console.log(`Customer not found with email: ${email} for business ID: ${businessId}`);
-      return res.status(404).json({ message: "Customer not found with the provided email for this business" });
-    }
-    
-    // Check for existing valid token
-    const { rows } = await query(
-      'SELECT * FROM customer_access_tokens WHERE customer_id = $1 AND business_id = $2 AND expires_at > NOW() ORDER BY created_at DESC LIMIT 1',
-      [customer.id, businessId]
-    );
-    
-    if (rows.length > 0) {
-      const existingToken = rows[0];
-      await query(
-        'UPDATE customer_access_tokens SET last_used_at = NOW() WHERE id = $1',
-        [existingToken.id]
-      );
-      
-      const business = await storage.getUser(businessId);
-      
-      if (sendEmail && business) {
-        sendTokenEmail(req, existingToken.token, customer, business);
-      }
-      
-      return res.status(200).json({ 
-        token: existingToken.token,
-        expiresAt: existingToken.expires_at,
-        message: "Using existing valid token"
-      });
-    }
-    
-    // Generate new token if no valid existing token
-    const token = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
-    
-    const accessToken = await storage.createCustomerAccessToken({
-      customerId: customer.id,
-      token,
-      expiresAt,
-      businessId: businessId
-    });
-    
-    const business = await storage.getUser(businessId);
-    
-    if (sendEmail && business) {
-      sendTokenEmail(req, token, customer, business);
-    }
-    
-    res.status(201).json({ 
-      token: accessToken.token,
-      expiresAt: accessToken.expiresAt 
-    });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ message: "Invalid input data", errors: error.errors });
-    }
-    console.error("Error creating customer access token:", error);
-    res.status(500).json({ message: "Failed to create customer access token" });
-  }
-});
-
-router.get("/customer-profile", async (req: Request, res: Response) => {
-  try {
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.startsWith('Bearer ') 
-      ? authHeader.substring(7) 
-      : req.query.token as string;
-    
-    if (!token) {
-      return res.status(401).json({ message: "Access token is required" });
-    }
-    
-    const customer = await storage.getCustomerByAccessToken(token);
-    
-    if (!customer) {
-      return res.status(401).json({ message: "Invalid or expired access token" });
-    }
-    
-    const appointments = await storage.getAppointmentsByCustomerId(customer.id);
-    
-    res.json({
-      customer,
-      appointments
-    });
-  } catch (error) {
-    console.error("Error fetching customer profile:", error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    res.status(500).json({ 
-      message: "Failed to fetch customer profile", 
-      error: errorMessage 
-    });
-  }
-});
-
-/*********************************
  * Public Appointment Booking
  *********************************/
 
@@ -316,6 +196,23 @@ router.post("/book-appointment", async (req: Request, res: Response) => {
     }
     
     console.log("Creating appointment with date:", appointmentDate.toISOString());
+    
+    // ⚠️ VALIDATE APPOINTMENT TO PREVENT DOUBLE BOOKING
+    const validation = await validateAppointmentBooking({
+      staffId: appointmentData.staffId,
+      date: appointmentDate,
+      duration: service.duration
+    });
+    
+    if (!validation.isValid) {
+      console.log(`❌ Appointment booking validation failed: ${validation.error}`);
+      return res.status(409).json({ 
+        message: validation.error || "Appointment slot not available",
+        code: "BOOKING_CONFLICT"
+      });
+    }
+    
+    console.log("✅ Appointment validation passed, creating appointment...");
     
     // Create the appointment
     const appointment = await storage.createAppointment({

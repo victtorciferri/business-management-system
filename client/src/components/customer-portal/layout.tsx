@@ -20,14 +20,12 @@ interface CustomerPortalLayoutProps {
   children: React.ReactNode;
   business?: Omit<User, "password">; // Kept for backward compatibility
   businessId?: string | null;
-  accessToken?: string | null;
 }
 
 export default function CustomerPortalLayout({ 
   children, 
   business: propsBusiness, // Renamed to avoid confusion
-  businessId,
-  accessToken 
+  businessId
 }: CustomerPortalLayoutProps) {
   const [location] = useLocation();
   const { business: contextBusiness, config } = useBusinessContext();
@@ -36,10 +34,8 @@ export default function CustomerPortalLayout({
   
   // Use business from context if available, otherwise fallback to props
   const business = contextBusiness || propsBusiness;
-  
-  // Build query parameters for navigation
+    // Build query parameters for navigation
   const queryParams: Record<string, string | null> = {};
-  if (accessToken) queryParams.token = accessToken;
   if (businessId) queryParams.businessId = businessId;
   
   // Define customer portal navigation items - using the translation system
@@ -67,12 +63,11 @@ export default function CustomerPortalLayout({
       icon: <CalendarIcon className="h-4 w-4 mr-2" />,
       path: "/customer-portal/new-appointment",
       isActive: location === "/customer-portal/new-appointment"
-    },
-    { 
+    },    { 
       label: t('common.appointments'), 
       icon: <ClipboardListIcon className="h-4 w-4 mr-2" />,
-      path: "/customer-portal/my-appointments",
-      isActive: location === "/customer-portal/my-appointments"
+      path: "/customer-portal/zero-friction",
+      isActive: location === "/customer-portal/zero-friction" || location === "/customer-portal/my-appointments"
     },
     { 
       label: t('common.about'), 

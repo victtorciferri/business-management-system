@@ -18,11 +18,10 @@ import {
   insertServiceSchema, 
   insertCustomerSchema, 
   insertAppointmentSchema,
-  insertPaymentSchema,
-  insertProductSchema,
+  insertPaymentSchema,  insertProductSchema,
   insertProductVariantSchema,
   insertCartSchema,
-  insertCartItemSchema,  insertCustomerAccessTokenSchema,
+  insertCartItemSchema,
   users,
   User,
   Customer,
@@ -270,15 +269,7 @@ export async function registerRoutes(app: Express): Promise<Server> {  // CORS c
   businessApiRouter.use("/business", businessRoutes);
   businessApiRouter.use("/themes", themeRoutes);
   businessApiRouter.use("/theme-api", themeApiRoutes);
-  businessApiRouter.use("/", appointmentRoutes); // For /services and /appointments endpoints
-  businessApiRouter.use("/customers", customerRoutes);
-  
-  // Add customer access token route at root level within business context
-  businessApiRouter.use("/customer-access-token", (req, res, next) => {
-    // Forward to the customer routes handler
-    req.url = "/customer-access-token";
-    customerRoutes(req, res, next);
-  });
+  businessApiRouter.use("/", appointmentRoutes); // For /services and /appointments endpoints  businessApiRouter.use("/customers", customerRoutes);
   
   businessApiRouter.use("/products", productRoutes);
   businessApiRouter.use("/cart", shoppingCartRoutes);
@@ -348,8 +339,7 @@ export async function registerRoutes(app: Express): Promise<Server> {  // CORS c
       
       console.log(`✅ Customer Portal Profile API: Found customer ${customer.id}`);
       
-      const appointments = await storage.getAppointmentsByCustomerId(customer.id);
-      res.json({
+      const appointments = await storage.getAppointmentsByCustomerId(customer.id);      res.json({
         customer,
         appointments
       });
@@ -357,6 +347,84 @@ export async function registerRoutes(app: Express): Promise<Server> {  // CORS c
     } catch (error) {
       console.error('❌ Customer Portal Profile API error:', error);
       res.status(500).json({ message: "Failed to fetch customer profile" });
+    }
+  });
+
+  // Handle /customer-portal/api/zero-friction-lookup for frictionless appointment lookup
+  app.use("/customer-portal/api/zero-friction-lookup", async (req: Request, res: Response) => {
+    console.log(`🔧 Customer Portal Zero-Friction API: ${req.originalUrl}, method: ${req.method}`);
+    
+    try {
+      const { email, businessId } = req.body;
+      
+      console.log(`🔍 Zero-friction lookup for email: ${email}, businessId: ${businessId}`);
+      
+      if (!email || !businessId) {
+        console.log('❌ Zero-friction lookup: Missing email or businessId');
+        return res.status(400).json({ message: "Email and businessId are required" });
+      }
+      
+      // Find customer by email and businessId
+      const customer = await storage.getCustomerByEmailAndBusinessId(email, businessId.toString());
+      
+      if (!customer) {
+        console.log(`❌ Zero-friction lookup: No customer found for email ${email} and businessId ${businessId}`);
+        return res.json({
+          customerExists: false,
+          appointments: [],
+          message: "No customer found with this email for this business"
+        });
+      }
+      
+      console.log(`✅ Zero-friction lookup: Found customer ${customer.id} for email ${email}`);
+        // Get appointments for this customer
+      const appointments = await storage.getAppointmentsByCustomerId(customer.id);
+      
+      // Format appointments with proper date/time formatting
+      const formattedAppointments = appointments?.map(appointment => {
+        const appointmentDate = new Date(appointment.date);
+        
+        return {
+          ...appointment,
+          formattedDate: appointmentDate.toLocaleDateString('en-US', {
+            weekday: 'short',
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          }),
+          formattedTime: appointmentDate.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+          })
+        };
+      }) || [];
+      
+      // Get customer initials and first name for display
+      const customerInitials = customer.firstName && customer.lastName 
+        ? `${customer.firstName.charAt(0)}${customer.lastName.charAt(0)}`.toUpperCase()
+        : customer.firstName 
+          ? customer.firstName.charAt(0).toUpperCase()
+          : email.charAt(0).toUpperCase();
+      
+      console.log(`✅ Zero-friction lookup: Found ${appointments?.length || 0} appointments for customer`);
+      
+      res.json({
+        customerExists: true,
+        appointments: formattedAppointments,
+        customerInitials,
+        customerFirstName: customer.firstName,
+        message: appointments?.length > 0 
+          ? `Found ${appointments.length} appointment(s)` 
+          : "No appointments found"
+      });
+      
+    } catch (error) {
+      console.error("❌ Error in zero-friction lookup:", error);
+      res.status(500).json({ 
+        message: "Failed to lookup appointments",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 
@@ -385,16 +453,7 @@ export async function registerRoutes(app: Express): Promise<Server> {  // CORS c
   app.use("/api/auth", authRoutes);
   app.use("/api/business", businessRoutes);
   app.use("/api/themes", themeRoutes);
-  app.use("/api/theme-api", themeApiRoutes);
-  app.use("/api", appointmentRoutes); // Register at /api for both /services and /appointments endpoints
-  app.use("/api/customers", customerRoutes);
-  
-  // Add customer access token route at root API level to match frontend expectations
-  app.use("/api/customer-access-token", (req, res, next) => {
-    // Forward to the customer routes handler
-    req.url = "/customer-access-token";
-    customerRoutes(req, res, next);
-  });
+  app.use("/api/theme-api", themeApiRoutes);  app.use("/api", appointmentRoutes); // Register at /api for both /services and /appointments endpoints  app.use("/api/customers", customerRoutes);
   
   app.use("/api/products", productRoutes);
   app.use("/api/cart", shoppingCartRoutes);

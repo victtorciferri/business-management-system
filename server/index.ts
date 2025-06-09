@@ -295,9 +295,23 @@ app.use((req, res, next) => {
     await setupVite(app, server);
   } else {
     serveStatic(app);
+  }  // Get the port from command line argument, environment variable, or default to 9002
+  const portArg = process.argv.find(arg => arg.startsWith('--port'));
+  let port = 9002;
+  
+  if (portArg) {
+    // Handle both --port=9002 and --port 9002 formats
+    const portValue = portArg.includes('=') ? portArg.split('=')[1] : process.argv[process.argv.indexOf(portArg) + 1];
+    const parsedPort = parseInt(portValue, 10);
+    if (!isNaN(parsedPort)) {
+      port = parsedPort;
+    }
+  } else if (process.env.PORT) {
+    const parsedPort = parseInt(process.env.PORT, 10);
+    if (!isNaN(parsedPort)) {
+      port = parsedPort;
+    }
   }
-  // Get the port from the environment variable, or default to 9002
-  const port = parseInt(process.env.PORT || "9002", 10);
   server.listen(
     {
       port,

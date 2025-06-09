@@ -217,17 +217,7 @@ export default function BookAppointment() {
         reminderSent: false,
         paymentStatus: "pending"
       });
-      
-      const appointment: Appointment = await appointmentResponse.json();
-      
-      // Create a customer access token
-      const tokenResponse = await apiRequest("POST", "/api/customer-access-token", {
-        email: customerData.email,
-        businessId: contextBusiness?.id || businessId,
-        sendEmail: true // Send the access link via email
-      });
-      
-      const tokenData = await tokenResponse.json();
+        const appointment: Appointment = await appointmentResponse.json();
       
       // Invalidate queries to refresh the data
       queryClient.invalidateQueries({
@@ -236,20 +226,33 @@ export default function BookAppointment() {
       
       toast({
         title: "Success!",
-        description: "Your appointment has been booked successfully. Check your email for access to your customer portal."
+        description: "Your appointment has been booked successfully."
       });
+        // Redirect to the frictionless appointment view with customer email
+      navigate(`/customer-portal/zero-friction?email=${encodeURIComponent(customerData.email)}&businessId=${contextBusiness?.id || businessId}`);
       
-      // Redirect to the appointment details page with access token
-      // Use existing token if available, otherwise use the new one
-      navigate(`/customer-portal/my-appointments?token=${accessToken || tokenData.token}`);
-      
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error booking appointment:", error);
-      toast({
-        title: "Error",
-        description: "There was a problem booking your appointment. Please try again.",
-        variant: "destructive"
-      });
+      
+      // Handle specific booking conflict errors
+      if (error.status === 409 || (error.response && error.response.status === 409)) {
+        toast({
+          title: "Time Slot Unavailable",
+          description: "This time slot is already booked. Please select a different time.",
+          variant: "destructive"
+        });
+        
+        // Refresh available times to update the UI
+        if (selectedDate && selectedService) {
+          setSelectedDate(new Date(selectedDate)); // Force refresh of available times
+        }
+      } else {
+        toast({
+          title: "Error", 
+          description: "There was a problem booking your appointment. Please try again.",
+          variant: "destructive"
+        });
+      }
     }
   };
   
