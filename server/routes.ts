@@ -418,13 +418,63 @@ export async function registerRoutes(app: Express): Promise<Server> {  // CORS c
           ? `Found ${appointments.length} appointment(s)` 
           : "No appointments found"
       });
-      
-    } catch (error) {
+        } catch (error) {
       console.error("❌ Error in zero-friction lookup:", error);
       res.status(500).json({ 
         message: "Failed to lookup appointments",
         error: error instanceof Error ? error.message : "Unknown error"
       });
+    }
+  });
+
+  // Handle /customer-portal/api/customers/* routes
+  app.use("/customer-portal/api/customers", customerRoutes);
+
+  // Handle /customer-portal/api/services for browsing services
+  app.use("/customer-portal/api/services", async (req: Request, res: Response) => {
+    console.log(`🔧 Customer Portal Services API: ${req.originalUrl}, method: ${req.method}`);
+    
+    try {
+      // For customer portal, use a default business ID or extract from query params
+      const businessId = req.query.businessId ? parseInt(req.query.businessId as string) : 1;
+      
+      if (isNaN(businessId)) {
+        return res.status(400).json({ message: "Invalid business ID" });
+      }
+      
+      console.log(`🔍 Getting services for business ID: ${businessId}`);
+      const services = await storage.getServicesByUserId(businessId);
+      
+      console.log(`✅ Found ${services?.length || 0} services for business ${businessId}`);
+      res.json(services || []);
+      
+    } catch (error) {
+      console.error("❌ Error fetching services for customer portal:", error);
+      res.status(500).json({ message: "Failed to fetch services" });
+    }
+  });
+
+  // Handle /customer-portal/api/staff for staff information
+  app.use("/customer-portal/api/staff", async (req: Request, res: Response) => {
+    console.log(`🔧 Customer Portal Staff API: ${req.originalUrl}, method: ${req.method}`);
+    
+    try {
+      // For customer portal, use a default business ID or extract from query params
+      const businessId = req.query.businessId ? parseInt(req.query.businessId as string) : 1;
+      
+      if (isNaN(businessId)) {
+        return res.status(400).json({ message: "Invalid business ID" });
+      }
+      
+      console.log(`🔍 Getting staff for business ID: ${businessId}`);
+      const staffMembers = await storage.getStaffByBusinessId(businessId);
+      
+      console.log(`✅ Found ${staffMembers?.length || 0} staff members for business ${businessId}`);
+      res.json(staffMembers || []);
+      
+    } catch (error) {
+      console.error("❌ Error fetching staff for customer portal:", error);
+      res.status(500).json({ message: "Failed to fetch staff" });
     }
   });
 
