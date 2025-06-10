@@ -267,9 +267,9 @@ export async function registerRoutes(app: Express): Promise<Server> {  // CORS c
   businessApiRouter.use("/staff", staffRoutes);
   businessApiRouter.use("/auth", authRoutes);
   businessApiRouter.use("/business", businessRoutes);
-  businessApiRouter.use("/themes", themeRoutes);
-  businessApiRouter.use("/theme-api", themeApiRoutes);
-  businessApiRouter.use("/", appointmentRoutes); // For /services and /appointments endpoints  businessApiRouter.use("/customers", customerRoutes);
+  businessApiRouter.use("/themes", themeRoutes);  businessApiRouter.use("/theme-api", themeApiRoutes);
+  businessApiRouter.use("/", appointmentRoutes); // For /services and /appointments endpoints
+  businessApiRouter.use("/customers", customerRoutes);
   
   businessApiRouter.use("/products", productRoutes);
   businessApiRouter.use("/cart", shoppingCartRoutes);
@@ -452,10 +452,39 @@ export async function registerRoutes(app: Express): Promise<Server> {  // CORS c
       console.error("❌ Error fetching services for customer portal:", error);
       res.status(500).json({ message: "Failed to fetch services" });
     }
+  });  // Handle /customer-portal/api/staff/:id/availability for staff availability (MUST come before general staff route)
+  app.get("/customer-portal/api/staff/:id/availability", async (req: Request, res: Response) => {
+    console.log(`🔧 Customer Portal Staff Availability API: ${req.originalUrl}, method: ${req.method}`);
+    
+    try {
+      const staffId = parseInt(req.params.id);
+      const businessId = req.query.businessId ? parseInt(req.query.businessId as string) : 1;
+      
+      if (isNaN(staffId) || isNaN(businessId)) {
+        return res.status(400).json({ message: "Invalid staff ID or business ID" });
+      }
+      
+      console.log(`🔍 Getting availability for staff ${staffId} in business ${businessId}`);
+      
+      // Verify staff belongs to business
+      const staff = await storage.getUser(staffId);
+      if (!staff || staff.businessId !== businessId) {
+        return res.status(404).json({ message: "Staff not found or not associated with this business" });
+      }
+      
+      const availability = await storage.getStaffAvailability(staffId);
+      
+      console.log(`✅ Found ${availability?.length || 0} availability records for staff ${staffId}`);
+      res.json(availability || []);
+      
+    } catch (error) {
+      console.error("❌ Error fetching staff availability for customer portal:", error);
+      res.status(500).json({ message: "Failed to fetch staff availability" });
+    }
   });
 
   // Handle /customer-portal/api/staff for staff information
-  app.use("/customer-portal/api/staff", async (req: Request, res: Response) => {
+  app.get("/customer-portal/api/staff", async (req: Request, res: Response) => {
     console.log(`🔧 Customer Portal Staff API: ${req.originalUrl}, method: ${req.method}`);
     
     try {
@@ -469,18 +498,34 @@ export async function registerRoutes(app: Express): Promise<Server> {  // CORS c
       console.log(`🔍 Getting staff for business ID: ${businessId}`);
       const staffMembers = await storage.getStaffByBusinessId(businessId);
       
-      console.log(`✅ Found ${staffMembers?.length || 0} staff members for business ${businessId}`);
-      res.json(staffMembers || []);
+      // Remove passwords and other sensitive information for public API
+      const publicStaffInfo = (staffMembers || []).map(staff => ({
+        id: staff.id,
+        username: staff.username,
+        email: staff.email,
+        phone: staff.phone,
+        role: staff.role
+      }));
+      
+      console.log(`✅ Found ${publicStaffInfo.length} staff members for business ${businessId}`);
+      res.json(publicStaffInfo);
       
     } catch (error) {
       console.error("❌ Error fetching staff for customer portal:", error);
       res.status(500).json({ message: "Failed to fetch staff" });
-    }
-  });
-
+    }  });
   // Mount the business API router - THIS MUST COME AFTER CUSTOMER-PORTAL API ROUTES
+  // IMPORTANT: This should NOT match /api/* routes (main API) - only business slug routes
   app.use("/:slug/api", (req, res, next) => {
-    console.log(`🎯 Business API route matched: ${req.originalUrl}, method: ${req.method}, path: ${req.path}`);
+    const slug = req.params.slug;
+    
+    // Skip if this is the main API route (no slug, just /api)
+    if (!slug || slug === 'api') {
+      console.log(`⏭️ Skipping main API route: ${req.originalUrl}`);
+      return next('route');
+    }
+    
+    console.log(`🎯 Business API route matched: ${req.originalUrl}, method: ${req.method}, path: ${req.path}, slug: ${slug}`);
     console.log(`🔍 Route stack for businessApiRouter:`, businessApiRouter.stack.map(layer => ({ 
       regexp: layer.regexp.toString(), 
       keys: layer.keys,
@@ -501,9 +546,10 @@ export async function registerRoutes(app: Express): Promise<Server> {  // CORS c
   app.use("/api/admin", adminRoutes);
   app.use("/api/staff", staffRoutes);
   app.use("/api/auth", authRoutes);
-  app.use("/api/business", businessRoutes);
-  app.use("/api/themes", themeRoutes);
-  app.use("/api/theme-api", themeApiRoutes);  app.use("/api", appointmentRoutes); // Register at /api for both /services and /appointments endpoints  app.use("/api/customers", customerRoutes);
+  app.use("/api/business", businessRoutes);  app.use("/api/themes", themeRoutes);
+  app.use("/api/theme-api", themeApiRoutes);
+  app.use("/api", appointmentRoutes); // Register at /api for both /services and /appointments endpoints
+  app.use("/api/customers", customerRoutes);
   
   app.use("/api/products", productRoutes);
   app.use("/api/cart", shoppingCartRoutes);

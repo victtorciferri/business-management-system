@@ -7,6 +7,23 @@ import bcrypt from "bcryptjs";
 
 const router = express.Router();
 
+// Root admin route - shows available endpoints
+router.get("/", (req: Request, res: Response) => {
+    res.json({
+        message: "Admin API endpoints",
+        endpoints: [
+            "POST /api/admin/login - Admin login",
+            "GET /api/admin/businesses - List all businesses (requires admin auth)",
+            "PUT /api/admin/business/:id - Update business (requires admin auth)",
+            "GET /api/admin/business/:id/theme - Get business theme (requires admin auth)",
+            "POST /api/admin/business/:id/theme - Update business theme (requires admin auth)",
+            "GET /api/admin/customers - List customers (requires admin auth)",
+            "GET /api/admin/appointments - List appointments (requires admin auth)",
+            "GET /api/admin/payments - List payments (requires admin auth)"
+        ]
+    });
+});
+
 // Admin Login Route
 router.post("/login", async (req: Request, res: Response) => {
     try {

@@ -12,13 +12,14 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeftIcon, CalendarIcon, ClockIcon } from "lucide-react";
-import { type Service, type Customer, type Appointment } from "@shared/schema";
+import { type Service, type Customer, type Appointment, type StaffAvailability } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { CustomerCheck } from "@/components/appointments/customer-check";
 import CustomerPortalLayout from "@/components/customer-portal/layout";
 import { useBusinessContext } from "@/contexts/BusinessContext";
+import { generateAvailableTimeSlots } from "@/utils/availability-utils";
 
 const formSchema = z.object({
   notes: z.string().optional(),
@@ -34,19 +35,46 @@ export default function BookAppointment() {
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [customerData, setCustomerData] = useState<Customer | null>(null);
   const [step, setStep] = useState<'customer-check' | 'booking-details'>('customer-check');
+  const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
   
   // Get URL parameters
   const params = new URLSearchParams(window.location.search);
   const serviceId = parseInt(params.get("serviceId") || "0");
   const accessToken = params.get("token");
   
-  // Fetch the service details
+  // Get business context
+  const { business: contextBusiness } = useBusinessContext();
+  const businessId = contextBusiness?.id || 1;
+    // Fetch the service details
   const { data: services } = useQuery({
     queryKey: ['/api/services'],
     enabled: true
   });
   
-  // Set the selected service based on the serviceId
+  // Fetch staff members for the selected service
+  const { data: staff } = useQuery({
+    queryKey: ['/api/staff', businessId, selectedService?.id],
+    queryFn: async () => {
+      if (selectedService) {
+        const response = await fetch(`/api/staff?businessId=${businessId}&serviceId=${selectedService.id}`, {
+          credentials: "include",
+        });
+        if (!response.ok) {
+          throw new Error('Failed to fetch staff members');
+        }
+        return response.json();
+      }
+      return [];
+    },
+    enabled: !!selectedService
+  });
+  
+  // Fetch staff availability
+  const { data: staffAvailability = [] } = useQuery<StaffAvailability[]>({
+    queryKey: [`/api/staff/${selectedStaffId}/availability`],
+    enabled: !!selectedStaffId && selectedStaffId !== 'none'
+  });
+    // Set the selected service based on the serviceId
   useEffect(() => {
     if (services && serviceId) {
       const service = services.find((s: Service) => s.id === serviceId);
@@ -56,59 +84,56 @@ export default function BookAppointment() {
     }
   }, [services, serviceId]);
   
-  // Fetch existing appointments to avoid conflicts
+  // Set default staff selection
+  useEffect(() => {
+    if (staff && staff.length > 0 && !selectedStaffId) {
+      setSelectedStaffId(staff[0].id.toString());
+    }
+  }, [staff, selectedStaffId]);
+    // Fetch existing appointments to avoid conflicts
   const { data: appointments } = useQuery({
     queryKey: ['/api/appointments'],
-    enabled: !!selectedDate
+    enabled: !!selectedDate && !!selectedStaffId
   });
   
-  // Generate available time slots based on selected date and service duration
+  // Generate available time slots based on selected date, service, staff, and staff availability
   useEffect(() => {
-    if (selectedDate && selectedService) {
+    if (selectedDate && selectedService && selectedStaffId && staffAvailability.length > 0) {
       const serviceDuration = selectedService.duration;
+      const staffId = parseInt(selectedStaffId);
+      
+      // Filter appointments for selected date and staff
       const existingAppointmentsOnDate = appointments?.filter(
-        (app: Appointment) => format(new Date(app.date), 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd')
+        (app: Appointment) => {
+          const appDate = new Date(app.date);
+          return format(appDate, 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd') && 
+                 app.staffId === staffId;
+        }
       ) || [];
       
-      // Business hours: 9 AM to 6 PM
-      const businessStart = 9;
-      const businessEnd = 18;
+      // Generate available time slots using staff availability
+      const timeSlots = generateAvailableTimeSlots(
+        selectedDate,
+        staffAvailability,
+        existingAppointmentsOnDate,
+        serviceDuration,
+        30 // 30-minute intervals
+      );
       
-      const timeSlots: string[] = [];
-      const date = startOfDay(selectedDate);
+      // Convert from HH:mm format to h:mm a format for display
+      const formattedTimeSlots = timeSlots.map(timeSlot => {
+        const [hours, minutes] = timeSlot.split(':').map(Number);
+        const date = new Date();
+        date.setHours(hours, minutes, 0, 0);
+        return format(date, 'h:mm a');
+      });
       
-      // Generate times in 30-minute increments
-      for (let hour = businessStart; hour < businessEnd; hour++) {
-        for (let minute of [0, 30]) {
-          const slotStart = setMinutes(setHours(date, hour), minute);
-          const slotEnd = addMinutes(slotStart, serviceDuration);
-          
-          // Skip if this slot would end after business hours
-          if (slotEnd.getHours() >= businessEnd && slotEnd.getMinutes() > 0) {
-            continue;
-          }
-          
-          // Check if this slot conflicts with existing appointments
-          const hasConflict = existingAppointmentsOnDate.some((app: Appointment) => {
-            const appStart = new Date(app.date);
-            const appEnd = addMinutes(appStart, app.duration);
-            
-            return (
-              (slotStart >= appStart && slotStart < appEnd) || // slot starts during existing appointment
-              (slotEnd > appStart && slotEnd <= appEnd) || // slot ends during existing appointment
-              (slotStart <= appStart && slotEnd >= appEnd) // slot encompasses existing appointment
-            );
-          });
-          
-          if (!hasConflict) {
-            timeSlots.push(format(slotStart, 'h:mm a'));
-          }
-        }
-      }
-      
-      setAvailableTimes(timeSlots);
+      setAvailableTimes(formattedTimeSlots);
+    } else {
+      // Clear time slots if requirements aren't met
+      setAvailableTimes([]);
     }
-  }, [selectedDate, appointments, selectedService]);
+  }, [selectedDate, appointments, selectedService, selectedStaffId, staffAvailability]);
   
   // Handle existing customer continuation
   const handleExistingCustomer = async (customer: any) => {
@@ -178,9 +203,8 @@ export default function BookAppointment() {
       notes: "",
     }
   });
-  
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!selectedService || !customerData) {
+    const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!selectedService || !customerData || !selectedStaffId) {
       toast({
         title: "Error",
         description: "Missing required information. Please try again.",
@@ -210,6 +234,7 @@ export default function BookAppointment() {
         userId: contextBusiness?.id || businessId,
         customerId: customerData.id,
         serviceId: selectedService.id,
+        staffId: parseInt(selectedStaffId),
         date: appointmentDate.toISOString(),
         duration: selectedService.duration,
         status: "scheduled",

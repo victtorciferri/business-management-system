@@ -12,6 +12,22 @@ import { db } from '../db';
 
 const router = Router();
 
+// Root theme API route - shows available endpoints
+router.get("/", (req, res) => {
+  res.json({
+    message: "Theme API endpoints",
+    endpoints: [
+      "GET /api/theme-api/themes - Get all themes",
+      "GET /api/theme-api/themes/business/:businessId - Get themes for business",
+      "GET /api/theme-api/themes/active/:businessId - Get active theme for business",
+      "POST /api/theme-api/themes/:themeId/activate/:businessId - Activate theme for business",
+      "POST /api/theme-api/themes/create - Create new theme",
+      "PUT /api/theme-api/themes/:themeId - Update theme",
+      "DELETE /api/theme-api/themes/:themeId - Delete theme"
+    ]
+  });
+});
+
 // Get all themes
 router.get('/themes', async (req, res) => {
   try {
@@ -405,19 +421,18 @@ router.post('/themes', async (req, res) => {
       const themeResponse = newTheme[0];
       console.log('Theme response being sent to client:', JSON.stringify(themeResponse, null, 2));
       
-      return res.status(201).json(themeResponse);
-    } catch (insertError) {
+      return res.status(201).json(themeResponse);    } catch (insertError) {
       console.error('Error during theme insert operation:', insertError);
       return res.status(500).json({ 
         message: 'Database error creating theme',
-        error: insertError.message || 'Unknown database error'
+        error: insertError instanceof Error ? insertError.message : 'Unknown database error'
       });
     }
   } catch (error) {
     console.error('Error creating theme:', error);
     return res.status(500).json({ 
       message: 'Failed to create theme',
-      error: error.message || 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });
@@ -483,12 +498,11 @@ router.patch('/themes/:themeId', async (req, res) => {
       .where(eq(themes.id, themeId))
       .returning();
     
-    return res.json(updatedTheme);
-  } catch (error) {
+    return res.json(updatedTheme);  } catch (error) {
     console.error('Error updating theme:', error);
     return res.status(500).json({ 
       message: 'Failed to update theme',
-      error: error.message || 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });

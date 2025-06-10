@@ -16,7 +16,8 @@ const registerSchema = z.object({
   businessName: z.string().min(2),
   businessSlug: z.string().min(2),
   firstName: z.string().min(2),
-  lastName: z.string().min(2)
+  lastName: z.string().min(2),
+  username: z.string().min(2).optional()
 });
 
 /**
@@ -41,10 +42,10 @@ router.post("/register", async (req: Request, res: Response) => {
     
     // Hash password
     const hashedPassword = await bcrypt.hash(userData.password, 10);
-    
-    // Create new business account
+      // Create new business account
     const newBusiness = await storage.createUser({
       ...userData,
+      username: userData.username || userData.businessSlug, // Use businessSlug as username if not provided
       password: hashedPassword,
       role: 'owner',
       themeSettings: defaultThemeSettings

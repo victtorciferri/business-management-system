@@ -135,13 +135,21 @@ router.delete("/:id", async (req: Request, res: Response) => {
 // GET /api/staff/:id/availability
 router.get("/:id/availability", async (req: Request, res: Response) => {
   try {
+    const staffId = parseInt(req.params.id);
+    if (isNaN(staffId)) {
+      return res.status(400).json({ message: "Invalid staff ID" });
+    }
+
+    let staff;
+    let availability;
+
+    // Public access: if businessId is provided as query parameter
     if (req.query.businessId) {
       const businessId = parseInt(req.query.businessId as string);
-      const staffId = parseInt(req.params.id);
-      if (isNaN(businessId) || isNaN(staffId)) {
-        return res.status(400).json({ message: "Invalid parameters" });
+      if (isNaN(businessId)) {
+        return res.status(400).json({ message: "Invalid business ID" });
       }
-      const staff = await storage.getUser(staffId);
+      staff = await storage.getUser(staffId);
       const business = await storage.getUser(businessId);
       if (!staff || !business || business.role !== "business") {
         return res.status(404).json({ message: "Staff or business not found" });
@@ -149,19 +157,34 @@ router.get("/:id/availability", async (req: Request, res: Response) => {
       if (staff.businessId !== businessId) {
         return res.status(403).json({ message: "Staff not associated with this business" });
       }
-      const availability = await storage.getStaffAvailability(staffId);
+      availability = await storage.getStaffAvailability(staffId);
       return res.json(availability);
     }
+    
+    // Business context access (for customer portal and business slug routes)
+    if (req.business) {
+      staff = await storage.getUser(staffId);
+      if (!staff) {
+        return res.status(404).json({ message: "Staff member not found" });
+      }
+      if (staff.businessId !== req.business.id) {
+        return res.status(403).json({ message: "Staff not associated with this business" });
+      }
+      availability = await storage.getStaffAvailability(staffId);
+      return res.json(availability);
+    }
+    
+    // Authenticated access (for logged-in users)
     if (!req.session?.user) {
       return res.status(401).json({ message: "Not authenticated" });
     }
-    const staffId = parseInt(req.params.id);
-    const staff = await storage.getUser(staffId);
+    
+    staff = await storage.getUser(staffId);
     if (!staff) return res.status(404).json({ message: "Staff member not found" });
     if (req.session.user.role === "business" && staff.businessId !== req.session.user.id && req.session.user.id !== staffId) {
       return res.status(403).json({ message: "Not authorized to view this staff's availability" });
     }
-    const availability = await storage.getStaffAvailability(staffId);
+    availability = await storage.getStaffAvailability(staffId);
     res.json(availability);
   } catch (error) {
     console.error("Error fetching staff availability:", error);

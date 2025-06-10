@@ -4,7 +4,7 @@ import crypto from "crypto";
 
 const router = express.Router();
 
-// GET /api/cart
+// Root route - provide API information
 router.get("/", async (req: Request, res: Response) => {
     try {
         let cart;
@@ -15,7 +15,19 @@ router.get("/", async (req: Request, res: Response) => {
         } else if (req.query.customerId) {
             cart = await storage.getCartByCustomerId(parseInt(req.query.customerId as string));
         } else {
-            return res.status(400).json({ message: "Missing identifier for cart retrieval" });
+            // If no identifier provided, return API info instead of error
+            return res.json({
+                message: "Shopping Cart API",
+                endpoints: {
+                    "GET /api/cart?customerId=:id": "Get cart by customer ID",
+                    "GET /api/cart?guestId=:id": "Get cart by guest ID", 
+                    "POST /api/cart": "Create new cart",
+                    "POST /api/cart/items": "Add item to cart",
+                    "PUT /api/cart/items/:id": "Update cart item",
+                    "DELETE /api/cart/items/:id": "Remove cart item"
+                },
+                note: "Cart requires customerId, guestId, or authenticated session"
+            });
         }
 
         if (!cart) {

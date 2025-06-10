@@ -7,6 +7,17 @@ import { requireAuth } from "../middleware/auth";
 
 const router = express.Router();
 
+// Root business route - shows available endpoints
+router.get("/", (req: Request, res: Response) => {
+  res.json({
+    message: "Business API endpoints",
+    endpoints: [
+      "GET /api/business/:slug - Get business by slug",
+      "PATCH /api/business/logo - Update business logo (requires auth)"
+    ]
+  });
+});
+
 // GET /api/business/:slug
 router.get("/:slug", async (req: Request, res: Response) => {
   try {
@@ -32,11 +43,11 @@ router.patch('/logo', requireAuth, async (req: Request, res: Response) => {
       RETURNING *
     `);
     
-    if (!result || result.length === 0) {
+    if (!result.rows || result.rows.length === 0) {
       return res.status(404).json({ error: 'User not found' });
     }
     
-    const { password, ...updatedUser } = result[0];
+    const { password, ...updatedUser } = result.rows[0];
     res.status(200).json({ user: updatedUser });
   } catch (error) {
     console.error('Error updating business logo:', error);

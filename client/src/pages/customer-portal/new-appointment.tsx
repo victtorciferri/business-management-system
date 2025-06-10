@@ -14,12 +14,13 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeftIcon, CalendarIcon, ClockIcon, UserIcon, CheckIcon, LoaderIcon } from "lucide-react";
-import { type Service, type Customer, type Appointment } from "@shared/schema";
+import { type Service, type Customer, type Appointment, type StaffAvailability } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import CustomerPortalLayout from "@/components/customer-portal/layout";
 import { useBusinessContext } from "@/contexts/BusinessContext";
+import { generateAvailableTimeSlots } from "@/utils/availability-utils";
 
 // Define email schema for the first step
 const emailSchema = z.object({
@@ -122,11 +123,16 @@ export default function NewAppointment() {
     },
     enabled: currentStep === 'appointment-details'
   });
-  
-  // Query to fetch appointments for time slot availability
+    // Query to fetch appointments for time slot availability
   const { data: appointments } = useQuery({
     queryKey: ['/api/appointments'],
     enabled: !!selectedDate && !!selectedService && !!selectedStaff
+  });
+  
+  // Query to fetch staff availability
+  const { data: staffAvailability = [] } = useQuery<StaffAvailability[]>({
+    queryKey: [`/api/staff/${selectedStaff}/availability`],
+    enabled: !!selectedStaff && selectedStaff !== 'none'
   });
   
   // Set service ID effect
@@ -147,10 +153,9 @@ export default function NewAppointment() {
       appointmentForm.setValue('staffId', staff[0].id.toString());
     }
   }, [staff, selectedStaff, appointmentForm]);
-  
-  // Generate available time slots based on selected date, service, and staff
+    // Generate available time slots based on selected date, service, staff, and staff availability
   useEffect(() => {
-    if (selectedDate && selectedService && selectedStaff) {
+    if (selectedDate && selectedService && selectedStaff && staffAvailability.length > 0) {
       const serviceDuration = selectedService.duration;
       const staffId = parseInt(selectedStaff);
       
@@ -163,45 +168,29 @@ export default function NewAppointment() {
         }
       ) || [];
       
-      // Business hours: 9 AM to 6 PM
-      const businessStart = 9;
-      const businessEnd = 18;
+      // Generate available time slots using staff availability
+      const timeSlots = generateAvailableTimeSlots(
+        selectedDate,
+        staffAvailability,
+        existingAppointmentsOnDate,
+        serviceDuration,
+        30 // 30-minute intervals to match the UI expectations
+      );
       
-      const timeSlots: string[] = [];
-      const date = startOfDay(selectedDate);
+      // Convert from HH:mm format to h:mm a format for display
+      const formattedTimeSlots = timeSlots.map(timeSlot => {
+        const [hours, minutes] = timeSlot.split(':').map(Number);
+        const date = new Date();
+        date.setHours(hours, minutes, 0, 0);
+        return format(date, 'h:mm a');
+      });
       
-      // Generate times in 30-minute increments
-      for (let hour = businessStart; hour < businessEnd; hour++) {
-        for (let minute of [0, 30]) {
-          const slotStart = setMinutes(setHours(date, hour), minute);
-          const slotEnd = addMinutes(slotStart, serviceDuration);
-          
-          // Skip if this slot would end after business hours
-          if (slotEnd.getHours() >= businessEnd && slotEnd.getMinutes() > 0) {
-            continue;
-          }
-          
-          // Check if this slot conflicts with existing appointments
-          const hasConflict = existingAppointmentsOnDate.some((app: Appointment) => {
-            const appStart = new Date(app.date);
-            const appEnd = addMinutes(appStart, app.duration);
-            
-            return (
-              (slotStart >= appStart && slotStart < appEnd) || // slot starts during existing appointment
-              (slotEnd > appStart && slotEnd <= appEnd) || // slot ends during existing appointment
-              (slotStart <= appStart && slotEnd >= appEnd) // slot encompasses existing appointment
-            );
-          });
-          
-          if (!hasConflict) {
-            timeSlots.push(format(slotStart, 'h:mm a'));
-          }
-        }
-      }
-      
-      setAvailableTimes(timeSlots);
+      setAvailableTimes(formattedTimeSlots);
+    } else {
+      // Clear time slots if requirements aren't met
+      setAvailableTimes([]);
     }
-  }, [selectedDate, appointments, selectedService, selectedStaff]);
+  }, [selectedDate, appointments, selectedService, selectedStaff, staffAvailability]);
   
   // Handle email submission to check if customer exists
   const onSubmitEmail = async (data: z.infer<typeof emailSchema>) => {

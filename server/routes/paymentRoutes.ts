@@ -7,11 +7,26 @@ import Stripe from "stripe";
 // Initialize Stripe if secret key is available
 export const stripe = process.env.STRIPE_SECRET_KEY 
   ? new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: "2025-03-31.basil",
+      apiVersion: "2025-04-30.basil",
     })
   : undefined;
 
 const router = express.Router();
+
+// Root payment route - shows available endpoints
+router.get("/", (req: Request, res: Response) => {
+  res.json({
+    message: "Payment API endpoints",
+    endpoints: [
+      "POST /api/payments/create-payment-intent - Create Stripe payment intent",
+      "POST /api/payments/webhook - Handle payment webhooks",
+      "POST /api/payments/mercadopago/create - Create MercadoPago payment",
+      "POST /api/payments/mercadopago/webhook - Handle MercadoPago webhooks",
+      "GET /api/payments/appointment/:id - Get payment by appointment ID",
+      "POST /api/payments/record - Record payment manually"
+    ]
+  });
+});
 
 /*********************************
  * Payment Intent Creation
