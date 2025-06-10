@@ -410,26 +410,33 @@ export class DatabaseStorage implements IStorage {
   async removeCartItem(id: number): Promise<boolean> {
     return false;
   }
-
-  // Staff Availability methods (placeholder implementations)
+  // Staff Availability methods
   async getStaffAvailability(staffId: number): Promise<StaffAvailability[]> {
-    return [];
+    return db.select().from(staffAvailability).where(eq(staffAvailability.staffId, staffId));
   }
 
   async getStaffAvailabilityById(id: number): Promise<StaffAvailability | undefined> {
-    return undefined;
+    const [availability] = await db.select().from(staffAvailability).where(eq(staffAvailability.id, id));
+    return availability || undefined;
   }
 
   async createStaffAvailability(availability: InsertStaffAvailability): Promise<StaffAvailability> {
-    throw new Error("Staff availability not implemented yet");
+    const [newAvailability] = await db.insert(staffAvailability).values(availability).returning();
+    return newAvailability;
   }
 
-  async updateStaffAvailability(id: number, availability: Partial<InsertStaffAvailability>): Promise<StaffAvailability | undefined> {
-    return undefined;
+  async updateStaffAvailability(id: number, availabilityUpdate: Partial<InsertStaffAvailability>): Promise<StaffAvailability | undefined> {
+    const [updatedAvailability] = await db
+      .update(staffAvailability)
+      .set(availabilityUpdate)
+      .where(eq(staffAvailability.id, id))
+      .returning();
+    return updatedAvailability || undefined;
   }
 
   async deleteStaffAvailability(id: number): Promise<boolean> {
-    return false;
+    const result = await db.delete(staffAvailability).where(eq(staffAvailability.id, id));
+    return !!result;
   }
 
   // Staff Appointments

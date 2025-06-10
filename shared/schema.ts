@@ -404,7 +404,6 @@ export const insertCartItemSchema = createInsertSchema(cartItems).pick({
 export const staffAvailability = pgTable("staff_availability", {
   id: serial("id").primaryKey(),
   staffId: integer("staff_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  businessSlug: text("business_slug").notNull(), // Add business slug for direct business scoping
   dayOfWeek: integer("day_of_week").notNull(), // 0 = Sunday, 1 = Monday, etc.
   startTime: text("start_time").notNull(), // Format: "HH:MM" in 24-hour format
   endTime: text("end_time").notNull(), // Format: "HH:MM" in 24-hour format
@@ -414,16 +413,12 @@ export const staffAvailability = pgTable("staff_availability", {
 }, (table) => {
   return {
     staffIdIdx: index("staff_availability_staff_id_idx").on(table.staffId),
-    businessSlugIdx: index("staff_availability_business_slug_idx").on(table.businessSlug), // Add index for business slug
     dayOfWeekIdx: index("staff_availability_day_of_week_idx").on(table.dayOfWeek),
-    // Compound index for business-specific day of week queries
-    businessDayIdx: index("staff_availability_business_day_idx").on(table.businessSlug, table.dayOfWeek),
   };
 });
 
 export const insertStaffAvailabilitySchema = createInsertSchema(staffAvailability).pick({
   staffId: true,
-  businessSlug: true, // Add business slug to insert schema
   dayOfWeek: true,
   startTime: true,
   endTime: true,
