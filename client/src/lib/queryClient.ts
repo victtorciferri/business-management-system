@@ -9,10 +9,35 @@ async function throwIfResNotOk(res: Response) {
 }
 
 /**
- * Get the business slug from the current URL path
+ * Get the business slug from the current URL (path or subdomain)
  */
-function getBusinessSlugFromPath(): string | null {
-  return extractBusinessSlug(window.location.pathname);
+function getBusinessSlug(): string | null {
+  // First try to get from URL path
+  const pathSlug = extractBusinessSlug(window.location.pathname);
+  if (pathSlug) {
+    return pathSlug;
+  }
+  
+  // Then try to get from subdomain
+  const hostname = window.location.hostname;
+  
+  // Check if it's a subdomain pattern (e.g., appointease.cd, business.domain.com)
+  if (hostname.includes('.') && !hostname.startsWith('www.')) {
+    const parts = hostname.split('.');
+    
+    // For domains like appointease.cd, the first part is the business identifier
+    if (parts.length >= 2) {
+      const potentialSlug = parts[0];
+      
+      // Don't treat common subdomains as business slugs
+      const commonSubdomains = ['www', 'api', 'admin', 'app', 'staging', 'dev', 'test'];
+      if (!commonSubdomains.includes(potentialSlug)) {
+        return potentialSlug;
+      }
+    }
+  }
+  
+  return null;
 }
 
 /**
@@ -24,7 +49,7 @@ function buildApiUrl(url: string): string {
     return url;
   }
   
-  const businessSlug = getBusinessSlugFromPath();
+  const businessSlug = getBusinessSlug();
   
   // If no business slug or URL doesn't start with /api/, return as is
   if (!businessSlug || !url.startsWith('/api/')) {
@@ -41,11 +66,11 @@ export async function apiRequest(
   data?: unknown | undefined,
 ): Promise<Response> {
   const finalUrl = buildApiUrl(url);
-  
-  // Debug logging
+    // Debug logging
   console.log(`🔍 apiRequest: ${method} ${url} -> ${finalUrl}`);
   console.log(`🔍 Current path: ${window.location.pathname}`);
-  console.log(`🔍 Business slug: ${getBusinessSlugFromPath()}`);
+  console.log(`🔍 Current hostname: ${window.location.hostname}`);
+  console.log(`🔍 Business slug: ${getBusinessSlug()}`);
   
   const res = await fetch(finalUrl, {
     method,
