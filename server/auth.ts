@@ -8,32 +8,6 @@ import { storage } from "./storage";
 import { User } from "@shared/schema";
 import createMemoryStore from "memorystore";
 
-declare global {
-  namespace Express {
-    interface User {
-      id: number;
-      username: string;
-      password: string;
-      email: string;
-      businessName: string | null;
-      businessSlug: string | null;
-      customDomain: string | null;
-      phone: string | null;
-      role: string;
-      subscription: string | null;
-      subscriptionStatus: string | null;
-      subscriptionExpiresAt: Date | null;
-      platformFeePercentage: number;
-      stripeCustomerId: string | null;
-      stripeSubscriptionId: string | null;
-      mercadopagoCustomerId: string | null;
-      mercadopagoAccessToken: string | null;
-      createdAt: Date;
-      updatedAt: Date;
-    }
-  }
-}
-
 const scryptAsync = promisify(scrypt);
 
 async function hashPassword(password: string) {
@@ -81,18 +55,17 @@ export function setupAuth(app: Express) {
   app.use(session(sessionSettings));
   app.use(passport.initialize());
   app.use(passport.session());
-
   // Add middleware to sync passport and custom session
   app.use((req, res, next) => {
     // If passport has authenticated user but our custom session doesn't, sync them
-    if (req.isAuthenticated() && req.user && (!req.session?.user || req.user.id !== req.session?.user?.id)) {
+    if (req.isAuthenticated() && req.user && (!req.session?.user || (req.user as any).id !== req.session?.user?.id)) {
       console.log('Syncing passport user to session');
-      req.session.user = req.user;
+      req.session.user = req.user as User;
     }
     // If we have a user in our custom session but not in passport, try to sync that too
     else if (!req.user && req.session?.user) {
       console.log('User found in custom session but not in passport');
-      req.user = req.session.user;
+      req.user = req.session.user as any;
     }
     next();
   });
@@ -111,9 +84,8 @@ export function setupAuth(app: Express) {
       }
     }),
   );
-
   passport.serializeUser((user, done) => {
-    done(null, user.id);
+    done(null, (user as User).id);
   });
   
   passport.deserializeUser(async (id: number, done) => {
@@ -123,11 +95,11 @@ export function setupAuth(app: Express) {
     } catch (error) {
       done(error);
     }
-  });
-
-  app.post("/api/login", passport.authenticate("local"), (req, res) => {
+  });  app.post("/api/login", passport.authenticate("local"), (req, res) => {
     // We omit the password field from the user object for security
     const { password, ...safeUser } = req.user as User;
+    // Sync user to session for routes that expect req.session.user
+    req.session.user = safeUser as User;
     res.status(200).json(safeUser);
   });
 
@@ -145,9 +117,7 @@ export function setupAuth(app: Express) {
         role: req.body.role || "business", // Default role is business
         createdAt: new Date(),
         updatedAt: new Date()
-      });
-
-      req.login(user, (err) => {
+      });      req.login(user, (err) => {
         if (err) return next(err);
         // We omit the password field from the user object for security
         const { password, ...safeUser } = user;

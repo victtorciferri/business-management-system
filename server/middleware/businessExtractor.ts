@@ -75,7 +75,7 @@ export interface BusinessConfig {
 export const RESERVED_PATHS = [
   'api', 'assets', 'src', 'components', 
   'products', 'services', 'dashboard', 'appointments', 
-  'customers', 'admin', 'auth', 'checkout', 'payment',
+  'customers', 'admin', 'auth', 'staff', 'checkout', 'payment',
   'login', 'register', 'logout', 'signup',
   'profile', 'settings', 'theme', 'templates',
   'images', 'css', 'js', 'fonts', 'favicon.ico',
@@ -125,8 +125,11 @@ setInterval(() => {
  */
 export const businessExtractor = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // Skip API routes
-    if (req.path.startsWith('/api/')) {
+    // Skip API routes and utility endpoints
+    if (req.path.startsWith('/api/') || 
+        req.path === '/health' || 
+        req.path.startsWith('/uploads/') ||
+        req.path.startsWith('/static/')) {
       return next();
     }
 

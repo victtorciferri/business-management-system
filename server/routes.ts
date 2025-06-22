@@ -261,14 +261,14 @@ export async function registerRoutes(app: Express): Promise<Server> {  // CORS c
       console.error('❌ Error setting business context for API:', error);
       res.status(500).json({ message: "Internal server error" });
     }
-  });
-    // Mount the API routes within the business context
+  });  // Mount the API routes within the business context
   businessApiRouter.use("/admin", adminRoutes);
-  businessApiRouter.use("/staff", staffRoutes);
+  // Note: Staff routes removed from business context to avoid conflicts with main API
   businessApiRouter.use("/auth", authRoutes);
   businessApiRouter.use("/business", businessRoutes);
-  businessApiRouter.use("/themes", themeRoutes);  businessApiRouter.use("/theme-api", themeApiRoutes);
-  businessApiRouter.use("/", appointmentRoutes); // For /services and /appointments endpoints
+  businessApiRouter.use("/themes", themeRoutes);
+  businessApiRouter.use("/theme-api", themeApiRoutes);
+  // Note: Removed appointmentRoutes from business context to avoid conflicts with main API
   businessApiRouter.use("/customers", customerRoutes);
   
   businessApiRouter.use("/products", productRoutes);
@@ -541,19 +541,19 @@ export async function registerRoutes(app: Express): Promise<Server> {  // CORS c
     console.log(`Full path: ${fullPath}`);
     console.log(`File exists: ${fs.existsSync(fullPath)}`);
     next();
-  }, express.static(uploadsDir));
-  // API Routes - MUST come after business slug API middleware
+  }, express.static(uploadsDir));  // API Routes - MUST come after business slug API middleware
   app.use("/api/admin", adminRoutes);
   app.use("/api/staff", staffRoutes);
   app.use("/api/auth", authRoutes);
-  app.use("/api/business", businessRoutes);  app.use("/api/themes", themeRoutes);
+  app.use("/api/business", businessRoutes);
+  app.use("/api/themes", themeRoutes);
   app.use("/api/theme-api", themeApiRoutes);
-  app.use("/api", appointmentRoutes); // Register at /api for both /services and /appointments endpoints
   app.use("/api/customers", customerRoutes);
-  
   app.use("/api/products", productRoutes);
   app.use("/api/cart", shoppingCartRoutes);
   app.use("/api/payments", paymentRoutes);
+  // Mount appointment routes AFTER more specific routes to avoid conflicts
+  app.use("/api", appointmentRoutes); // Register at /api for both /services and /appointments endpoints
 
   if (process.env.NODE_ENV === 'development') {
     app.use("/api/debug", debugRoutes);
@@ -562,6 +562,49 @@ export async function registerRoutes(app: Express): Promise<Server> {  // CORS c
   // Health check endpoint
   app.get("/health", (_req: Request, res: Response) => {
     res.json({ status: "healthy" });
+  });
+
+  // Simple test endpoint without database dependency
+  app.get("/api/test", (_req: Request, res: Response) => {
+    res.json({ 
+      message: "API routing is working", 
+      timestamp: new Date().toISOString(),
+      routes: {
+        staff: "/api/staff",
+        appointments: "/api/appointments", 
+        login: "/api/login"
+      }
+    });
+  });
+
+  // Test login endpoint without database (for testing route structure)
+  app.post("/api/test-login", (req: Request, res: Response) => {
+    const { username, password } = req.body;
+    
+    // Mock authentication for testing
+    if (username === "staffmember" && password === "password123") {
+      const mockUser = {
+        id: 3,
+        username: "staffmember",
+        email: "staff@test.com",
+        role: "staff",
+        businessId: 1
+      };
+      
+      // Set mock session
+      req.session.user = mockUser as any;
+      
+      res.json({ 
+        success: true, 
+        user: mockUser,
+        message: "Mock login successful - routes are working" 
+      });
+    } else {
+      res.status(401).json({ 
+        success: false, 
+        message: "Invalid credentials" 
+      });
+    }
   });
 
   // Serve static assets from the built client
@@ -587,6 +630,10 @@ export async function registerRoutes(app: Express): Promise<Server> {  // CORS c
     try {
       const { slug } = req.params;
       
+      console.log(`🔍 Catch-all route hit: ${req.originalUrl}, slug: ${slug}, method: ${req.method}`);
+      console.log(`🔍 RESERVED_PATHS:`, RESERVED_PATHS);
+      console.log(`🔍 Is '${slug}' in reserved paths?`, RESERVED_PATHS.includes(slug));
+      
       // Skip asset paths and API routes - don't treat them as business slugs
       if (slug.startsWith('@') || 
           slug === 'src' || 
@@ -594,11 +641,13 @@ export async function registerRoutes(app: Express): Promise<Server> {  // CORS c
           slug === 'uploads' || 
           slug === 'static' || 
           slug === 'health') {
+        console.log(`🚫 Skipping asset/api path: ${slug}`);
         return next();
       }
 
       // Skip reserved paths - don't treat them as business slugs
       if (RESERVED_PATHS.includes(slug)) {
+        console.log(`🚫 Skipping reserved path: ${slug}`);
         return next();
       }
 
@@ -608,8 +657,10 @@ export async function registerRoutes(app: Express): Promise<Server> {  // CORS c
         return next();
       }
 
+      console.log(`🔍 Looking for business with slug: ${slug}`);
       const business = req.business;
       if (!business) {
+        console.log(`❌ No business found for slug: ${slug}`);
         return res.status(404).json({ 
           message: "Business not found",
           slug,
@@ -617,6 +668,7 @@ export async function registerRoutes(app: Express): Promise<Server> {  // CORS c
         });
       }
 
+      console.log(`✅ Business found for slug: ${slug}`, business.businessName);
       // For frontend routes (non-API), serve the React HTML file
       // The business context is already attached to req.business by businessExtractor middleware
       const indexPath = path.join(process.cwd(), 'dist', 'public', 'index.html');

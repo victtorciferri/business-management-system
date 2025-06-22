@@ -67,66 +67,98 @@ export default function StaffSchedule() {
     startTime: "12:00",
     endTime: "13:00"
   });
-
-  // Initialize schedule state
-  const [scheduleState, setScheduleState] = useState<DaySchedule[]>([]);
-  const [hasPendingChanges, setHasPendingChanges] = useState(false);
-
-  // Fetch staff availability data
+  // Initialize schedule state with default values immediately
+  const [scheduleState, setScheduleState] = useState<DaySchedule[]>(() => {
+    return weekDays.map(day => ({
+      dayId: day.id,
+      dayName: day.name,
+      isEnabled: false,
+      startTime: "09:00",
+      endTime: "17:00",
+      breaks: [],
+      existingAvailabilityId: undefined
+    }));
+  });
+  const [hasPendingChanges, setHasPendingChanges] = useState(false);  // Fetch staff availability data with cache busting
   const { 
     data: availabilityData, 
-    isLoading: availabilityLoading 
+    isLoading: availabilityLoading,
+    error: availabilityError 
   } = useQuery({
-    queryKey: ['/api/staff', user?.id, 'availability'],
+    queryKey: ['/api/staff', user?.id, 'availability', Date.now()], // Add timestamp to bust cache
     queryFn: async () => {
-      if (!user?.id) return [];
-      const res = await fetch(`/api/staff/${user.id}/availability`);
-      if (!res.ok) {
-        throw new Error('Failed to fetch availability');
+      if (!user?.id) {
+        console.log('❌ No user ID available for availability query');
+        return [];
       }
-      return res.json();
+      const url = `/api/staff/${user.id}/availability`;
+      console.log('🔍 Fetching availability from URL:', url);
+      console.log('🔍 Current pathname:', window.location.pathname);
+      console.log('🔍 User data:', user);
+      
+      try {
+        const res = await apiRequest('GET', url);
+        const data = await res.json();
+        console.log('✅ Availability data received:', data);
+        return data;
+      } catch (error) {
+        console.error('❌ Availability fetch failed:', error);
+        throw error;
+      }
     },
-    enabled: !!user?.id
-  });
-
-  // Fetch staff appointments
+    enabled: !!user?.id,
+    retry: 1,
+    retryDelay: 1000,
+    staleTime: 0, // Always fetch fresh data
+    cacheTime: 0  // Don't cache the result
+  });// Fetch staff appointments
   const { 
     data: appointmentsData, 
-    isLoading: appointmentsLoading 
+    isLoading: appointmentsLoading,
+    error: appointmentsError
   } = useQuery({
     queryKey: ['/api/staff', user?.id, 'appointments'],
     queryFn: async () => {
       if (!user?.id) return [];
-      const res = await fetch(`/api/staff/${user.id}/appointments`);
-      if (!res.ok) {
-        throw new Error('Failed to fetch appointments');
-      }
-      return res.json();
+      const url = `/api/staff/${user.id}/appointments`;
+      console.log('🔍 Fetching appointments from URL:', url);
+      
+      const res = await apiRequest('GET', url);
+      const data = await res.json();
+      console.log('✅ Appointments data received:', data);
+      return data;
     },
     enabled: !!user?.id
-  });
-
-  // Initialize schedule data when availability data is loaded
+  });  // Update schedule data when availability data is loaded
   useEffect(() => {
-    if (availabilityData && Array.isArray(availabilityData)) {
-      const initialSchedule = weekDays.map(day => {
-        // Find existing availability for this day
-        const existingAvailability = availabilityData.find(
-          (a: StaffAvailability) => a.dayOfWeek === day.id
-        );
-        
-        return {
-          dayId: day.id,
-          dayName: day.name,
-          isEnabled: !!existingAvailability,
-          startTime: existingAvailability?.startTime || "09:00",
-          endTime: existingAvailability?.endTime || "17:00",
-          breaks: [], // In the future, breaks can be stored in a separate table
-          existingAvailabilityId: existingAvailability?.id
-        };
-      });
+    console.log('🔧 useEffect triggered with availabilityData:', availabilityData);
+    console.log('🔧 Current scheduleState:', scheduleState);
+    
+    if (availabilityData && Array.isArray(availabilityData) && availabilityData.length > 0) {
+      console.log('✅ Processing availability data:', availabilityData);
       
-      setScheduleState(initialSchedule);
+      setScheduleState(prevState => 
+        prevState.map(day => {
+          // Find existing availability for this day
+          const existingAvailability = availabilityData.find(
+            (a: StaffAvailability) => a.dayOfWeek === day.dayId
+          );
+          console.log(`📅 Day ${day.dayName} (${day.dayId}):`, existingAvailability);
+          
+          if (existingAvailability) {
+            return {
+              ...day,
+              isEnabled: true,
+              startTime: existingAvailability.startTime || "09:00",
+              endTime: existingAvailability.endTime || "17:00",
+              existingAvailabilityId: existingAvailability.id
+            };
+          }
+          return day; // Keep existing day data if no availability found
+        })
+      );
+    } else {
+      console.log('❌ No availability data or empty array:', availabilityData);
     }
   }, [availabilityData]);
 
@@ -317,12 +349,67 @@ export default function StaffSchedule() {
       return { date: "Invalid date", time: "Invalid time" };
     }
   };
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold tracking-tight">My Schedule</h1>
-      </div>
+      </div>      {/* Debug Information - Always visible for troubleshooting */}
+      <Card className="bg-red-50 border-red-200 mb-4">
+        <CardHeader>
+          <CardTitle className="text-sm text-red-800">🔍 Debug Information (Always Visible)</CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm text-red-700">
+          <p><strong>User:</strong> {user ? `${user.username} (ID: ${user.id}, Role: ${user.role})` : 'Not logged in'}</p>
+          <p><strong>Availability Loading:</strong> {availabilityLoading ? 'Yes' : 'No'}</p>
+          <p><strong>Availability Error:</strong> {availabilityError ? String(availabilityError) : 'None'}</p>
+          <p><strong>Availability Data:</strong> {availabilityData ? `${Array.isArray(availabilityData) ? availabilityData.length : 'Not array'} items` : 'None'}</p>
+          <p><strong>Appointments Loading:</strong> {appointmentsLoading ? 'Yes' : 'No'}</p>
+          <p><strong>Appointments Error:</strong> {appointmentsError ? String(appointmentsError) : 'None'}</p>
+          <p><strong>Appointments Data:</strong> {appointmentsData ? `${Array.isArray(appointmentsData) ? appointmentsData.length : 'Not array'} items` : 'None'}</p>
+          <p><strong>Schedule State Length:</strong> {scheduleState.length}</p>
+          {availabilityError && (
+            <details className="mt-2">
+              <summary className="cursor-pointer font-bold text-red-900">Availability Error Details</summary>
+              <pre className="mt-1 p-2 bg-red-100 rounded text-xs overflow-auto">
+                {JSON.stringify(availabilityError, null, 2)}
+              </pre>
+            </details>
+          )}
+          {appointmentsError && (
+            <details className="mt-2">
+              <summary className="cursor-pointer font-bold text-red-900">Appointments Error Details</summary>
+              <pre className="mt-1 p-2 bg-red-100 rounded text-xs overflow-auto">
+                {JSON.stringify(appointmentsError, null, 2)}
+              </pre>
+            </details>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Original Debug Information - only in development */}
+      {process.env.NODE_ENV === 'development' && (
+        <Card className="bg-blue-50 border-blue-200">
+          <CardHeader>
+            <CardTitle className="text-sm text-blue-800">Debug Information</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-blue-700">
+            <p><strong>User:</strong> {user ? `${user.username} (ID: ${user.id}, Role: ${user.role})` : 'Not logged in'}</p>
+            <p><strong>Availability Loading:</strong> {availabilityLoading ? 'Yes' : 'No'}</p>
+            <p><strong>Availability Error:</strong> {availabilityError ? String(availabilityError) : 'None'}</p>
+            <p><strong>Availability Data:</strong> {availabilityData ? `${Array.isArray(availabilityData) ? availabilityData.length : 'Not array'} items` : 'None'}</p>
+            <p><strong>Appointments Loading:</strong> {appointmentsLoading ? 'Yes' : 'No'}</p>
+            <p><strong>Appointments Error:</strong> {appointmentsError ? String(appointmentsError) : 'None'}</p>
+            <p><strong>Appointments Data:</strong> {appointmentsData ? `${Array.isArray(appointmentsData) ? appointmentsData.length : 'Not array'} items` : 'None'}</p>
+            <p><strong>Schedule State:</strong> {scheduleState ? `${scheduleState.length} days` : 'Empty'}</p>
+            <details>
+              <summary>Schedule State Details</summary>
+              <pre className="text-xs mt-2 bg-blue-100 p-2 rounded overflow-auto">
+                {JSON.stringify(scheduleState, null, 2)}
+              </pre>
+            </details>
+          </CardContent>
+        </Card>
+      )}
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid grid-cols-2 w-[400px]">
@@ -350,12 +437,16 @@ export default function StaffSchedule() {
               Save Changes
             </Button>
           </div>
-          
-          {availabilityLoading ? (
+            {availabilityLoading ? (
             <div className="flex justify-center p-8">
               <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
             </div>
-          ) : (
+          ) : availabilityError ? (
+            <div className="p-6 text-center border rounded-lg bg-red-50 border-red-200">
+              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-2" />
+              <p className="text-red-700 font-medium">Failed to load availability</p>
+              <p className="text-red-600 text-sm mt-1">{String(availabilityError)}</p>
+            </div>          ) : (
             <div className="border rounded-md overflow-hidden">
               <Table>
                 <TableHeader>
@@ -369,7 +460,7 @@ export default function StaffSchedule() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {scheduleState.map((day) => (
+                  {scheduleState.length > 0 ? scheduleState.map((day) => (
                     <TableRow key={day.dayId}>
                       <TableCell className="font-medium">
                         {day.dayName}
@@ -458,22 +549,52 @@ export default function StaffSchedule() {
                           <Copy className="h-3 w-3 mr-1" />
                           Copy to all
                         </Button>
+                      </TableCell>                    </TableRow>
+                  )) : (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                        No schedule data available. Loading...
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
               </Table>
             </div>
           )}
         </TabsContent>
         
-        {/* Appointments Tab */}
-        <TabsContent value="appointments" className="space-y-4">
+        {/* Appointments Tab */}        <TabsContent value="appointments" className="space-y-4">
           <h2 className="text-xl font-semibold">My Appointments</h2>
+          
+          {/* Debug for appointments */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="bg-yellow-50 border border-yellow-200 p-3 rounded text-sm">
+              <p><strong>Debug - Appointments:</strong></p>
+              <p>Loading: {appointmentsLoading ? 'Yes' : 'No'}</p>
+              <p>Error: {appointmentsError ? String(appointmentsError) : 'None'}</p>
+              <p>Data: {appointmentsData ? `Array with ${appointmentsData.length} items` : 'No data'}</p>
+              <p>Data type: {typeof appointmentsData}</p>
+              <p>Is Array: {Array.isArray(appointmentsData) ? 'Yes' : 'No'}</p>
+              {appointmentsData && appointmentsData.length > 0 && (
+                <details className="mt-2">
+                  <summary>First appointment data:</summary>
+                  <pre className="text-xs bg-yellow-100 p-2 mt-1 rounded overflow-auto">
+                    {JSON.stringify(appointmentsData[0], null, 2)}
+                  </pre>
+                </details>
+              )}
+            </div>
+          )}
           
           {appointmentsLoading ? (
             <div className="flex justify-center p-8">
               <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+            </div>
+          ) : appointmentsError ? (
+            <div className="p-6 text-center border rounded-lg bg-red-50 border-red-200">
+              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-2" />
+              <p className="text-red-700 font-medium">Failed to load appointments</p>
+              <p className="text-red-600 text-sm mt-1">{String(appointmentsError)}</p>
             </div>
           ) : (
             <div className="space-y-4">

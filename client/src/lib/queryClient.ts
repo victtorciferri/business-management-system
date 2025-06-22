@@ -42,6 +42,11 @@ export async function apiRequest(
 ): Promise<Response> {
   const finalUrl = buildApiUrl(url);
   
+  // Debug logging
+  console.log(`🔍 apiRequest: ${method} ${url} -> ${finalUrl}`);
+  console.log(`🔍 Current path: ${window.location.pathname}`);
+  console.log(`🔍 Business slug: ${getBusinessSlugFromPath()}`);
+  
   const res = await fetch(finalUrl, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
@@ -49,6 +54,8 @@ export async function apiRequest(
     credentials: "include",
   });
 
+  console.log(`🔍 Response status: ${res.status} for ${finalUrl}`);
+  
   await throwIfResNotOk(res);
   return res;
 }

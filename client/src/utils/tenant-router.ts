@@ -12,6 +12,7 @@ export const RESERVED_PATHS = [
   'api',
   'auth',
   'admin',
+  'staff', // Added staff to reserved paths
   'checkout',
   'dashboard',
   'settings',
@@ -23,6 +24,10 @@ export const RESERVED_PATHS = [
   'thegourmetplace', // Added thegourmetplace to reserved paths
   'profile',
   'theme-editor', // Added theme-editor to reserved paths
+  'appointments', // Added for business appointments page
+  'staff-schedule', // Added for staff schedule page
+  'customers', // Added for customers page
+  'services', // Added for services page
 ];
 
 /**

@@ -431,12 +431,16 @@ function AppContent() {
                 <StaffProfile staffId={params.id} />
               </ProtectedRoute>
             )}
-          </Route>
-          <Route path="/staff/schedule">
+          </Route>          <Route path="/staff/schedule">
             <ProtectedRoute>
               <StaffSchedule />
             </ProtectedRoute>
-          </Route>          {/* Theme and Settings routes */}
+          </Route>
+          <Route path="/staff-schedule">
+            <ProtectedRoute>
+              <StaffSchedule />
+            </ProtectedRoute>
+          </Route>{/* Theme and Settings routes */}
           <Route path="/theme-selector-demo">
             <ProtectedRoute>
               <BusinessContextProvider initialBusiness={null} initialServices={[]}>

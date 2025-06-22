@@ -26,9 +26,9 @@ router.get("/", async (req: Request, res: Response) => {
           role: staff.role,
         }));
       return res.json(publicStaffInfo);
-    }
-    // Authenticated access
-    if (!req.session?.user) {
+    }    // Authenticated access
+    const user = req.user || req.session?.user;
+    if (!user) {
       return res.status(401).json({ message: "Authentication required" });
     }
     const businessId =
@@ -55,18 +55,19 @@ router.get("/", async (req: Request, res: Response) => {
 // GET /api/staff/:id
 router.get("/:id", async (req: Request, res: Response) => {
   try {
+    const user = req.user || req.session?.user;
     if (
-      !req.session?.user ||
-      (req.session.user.role !== "business" &&
-        req.session.user.role !== "admin" &&
-        req.session.user.id !== parseInt(req.params.id))
+      !user ||
+      ((user as any).role !== "business" &&
+        (user as any).role !== "admin" &&
+        (user as any).id !== parseInt(req.params.id))
     ) {
       return res.status(403).json({ message: "Not authorized to view this staff profile" });
     }
     const staffId = parseInt(req.params.id);
     const staff = await storage.getUser(staffId);
     if (!staff) return res.status(404).json({ message: "Staff member not found" });
-    if (req.session.user.role === "business" && staff.businessId !== req.session.user.id) {
+    if ((user as any).role === "business" && staff.businessId !== (user as any).id) {
       return res.status(403).json({ message: "This staff member does not belong to your business" });
     }
     const { password, ...staffData } = staff;
@@ -78,9 +79,9 @@ router.get("/:id", async (req: Request, res: Response) => {
 });
 
 // POST /api/staff
-router.post("/", async (req: Request, res: Response) => {
-  try {
-    if (!req.session?.user || (req.session.user.role !== "business" && req.session.user.role !== "admin")) {
+router.post("/", async (req: Request, res: Response) => {  try {
+    const user = req.user || req.session?.user;
+    if (!user || ((user as any).role !== "business" && (user as any).role !== "admin")) {
       return res.status(403).json({ message: "Not authorized to create staff members" });
     }
     const { username, email, password, role } = req.body;
@@ -172,18 +173,24 @@ router.get("/:id/availability", async (req: Request, res: Response) => {
       }
       availability = await storage.getStaffAvailability(staffId);
       return res.json(availability);
-    }
-    
-    // Authenticated access (for logged-in users)
-    if (!req.session?.user) {
+    }      // Authenticated access (for logged-in users)
+    const user = req.user || req.session?.user;
+    if (!user) {
       return res.status(401).json({ message: "Not authenticated" });
     }
     
     staff = await storage.getUser(staffId);
     if (!staff) return res.status(404).json({ message: "Staff member not found" });
-    if (req.session.user.role === "business" && staff.businessId !== req.session.user.id && req.session.user.id !== staffId) {
+    
+    // Authorization check: Allow if user is the staff member themselves, or if user is the business owner
+    const isOwnData = user.id === staffId;
+    const isBusinessOwner = user.role === "business" && staff.businessId === user.id;
+    const isAdmin = user.role === "admin";
+    
+    if (!isOwnData && !isBusinessOwner && !isAdmin) {
       return res.status(403).json({ message: "Not authorized to view this staff's availability" });
     }
+    
     availability = await storage.getStaffAvailability(staffId);
     res.json(availability);
   } catch (error) {
@@ -250,13 +257,16 @@ router.delete("/availability/:id", async (req: Request, res: Response) => {
 // GET /api/staff/:id/appointments
 router.get("/:id/appointments", async (req: Request, res: Response) => {
   try {
-    if (!req.session?.user) {
+    const user = req.user || req.session?.user;
+    if (!user) {
       return res.status(401).json({ message: "Not authenticated" });
     }
     const staffId = parseInt(req.params.id);
     const staff = await storage.getUser(staffId);
     if (!staff) return res.status(404).json({ message: "Staff member not found" });
-    if (req.session.user.role === "business" && staff.businessId !== req.session.user.id && req.session.user.id !== staffId) {
+    
+    const userAny = user as any;
+    if (userAny.role === "business" && staff.businessId !== userAny.id && userAny.id !== staffId) {
       return res.status(403).json({ message: "Not authorized to view this staff's appointments" });
     }
     const appointments = await storage.getStaffAppointments(staffId);
