@@ -40,7 +40,8 @@ export default function Layout({ children, currentUser }: LayoutProps) {
     window.location.href = '/auth';
   };
 
-  // Different navigation items based on user role  const businessOwnerNavItems = [
+  // Different navigation items based on user role
+  const businessOwnerNavItems = [
     { name: "Dashboard", path: "/" },
     { name: "Appointments", path: "/appointments" },
     { name: "Customers", path: "/customers" },
