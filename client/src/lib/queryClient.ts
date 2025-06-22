@@ -44,9 +44,9 @@ function getBusinessSlug(): string | null {
  * Build API URL with business slug if applicable
  */
 function buildApiUrl(url: string): string {
-  // TEMPORARY: Disable business slug transformation entirely for testing
-  // This will make production behave exactly like local development
-  console.log(`🔍 buildApiUrl: ${url} (transformation disabled)`);
+  // EMERGENCY FIX: Completely disable business slug transformation
+  // This should fix the production issue immediately
+  console.log(`� EMERGENCY FIX: ${url} (transformation completely disabled - ${new Date().toISOString()})`);
   return url;
   
   // Original logic commented out for now:
