@@ -44,6 +44,13 @@ function getBusinessSlug(): string | null {
  * Build API URL with business slug if applicable
  */
 function buildApiUrl(url: string): string {
+  // TEMPORARY: Disable business slug transformation entirely for testing
+  // This will make production behave exactly like local development
+  console.log(`🔍 buildApiUrl: ${url} (transformation disabled)`);
+  return url;
+  
+  // Original logic commented out for now:
+  /*
   // If the URL already contains a business slug pattern, return as is
   if (url.includes('/api/') && !url.startsWith('/api/')) {
     return url;
@@ -69,7 +76,15 @@ function buildApiUrl(url: string): string {
     url.startsWith(endpoint) || url.includes(endpoint)
   );
   
+  // Enhanced debug logging
+  console.log(`🔍 buildApiUrl: ${url}`);
+  console.log(`🔍 Is global endpoint:`, isGlobalEndpoint);
+  console.log(`🔍 Matching endpoints:`, globalEndpoints.filter(endpoint => 
+    url.startsWith(endpoint) || url.includes(endpoint)
+  ));
+  
   if (isGlobalEndpoint) {
+    console.log(`🔍 Returning as global: ${url}`);
     return url;
   }
   
@@ -77,11 +92,15 @@ function buildApiUrl(url: string): string {
   
   // If no business slug or URL doesn't start with /api/, return as is
   if (!businessSlug || !url.startsWith('/api/')) {
+    console.log(`🔍 No business slug or not API: ${url}`);
     return url;
   }
   
   // Replace /api/ with /{businessSlug}/api/
-  return url.replace('/api/', `/${businessSlug}/api/`);
+  const transformedUrl = url.replace('/api/', `/${businessSlug}/api/`);
+  console.log(`🔍 Transformed: ${url} -> ${transformedUrl}`);
+  return transformedUrl;
+  */
 }
 
 export async function apiRequest(
@@ -90,7 +109,8 @@ export async function apiRequest(
   data?: unknown | undefined,
 ): Promise<Response> {
   const finalUrl = buildApiUrl(url);
-    // Debug logging
+  
+  // Basic debug logging
   console.log(`🔍 apiRequest: ${method} ${url} -> ${finalUrl}`);
   console.log(`🔍 Current path: ${window.location.pathname}`);
   console.log(`🔍 Current hostname: ${window.location.hostname}`);
@@ -143,3 +163,36 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+// Test function for URL transformations - run in browser console
+// @ts-ignore
+window.testUrlTransformations = function() {
+  console.log("🧪 Testing URL transformations...");
+  
+  const testUrls = [
+    '/api/login',
+    '/api/staff/3/availability',
+    '/api/staff/3/appointments', 
+    '/api/appointments',
+    '/api/customers',
+    '/api/services',
+    '/api/user',
+    '/api/themes'
+  ];
+  
+  testUrls.forEach(url => {
+    const result = buildApiUrl(url);
+    console.log(`${url} -> ${result}`);
+  });
+  
+  console.log(`Current hostname: ${window.location.hostname}`);
+  console.log(`Business slug: ${getBusinessSlug()}`);
+};
+
+// Export for testing
+// @ts-ignore
+window.buildApiUrl = buildApiUrl;
+// @ts-ignore  
+window.getBusinessSlug = getBusinessSlug;
+
+console.log("🧪 Test function available: testUrlTransformations()");
