@@ -48,8 +48,7 @@ function buildApiUrl(url: string): string {
   if (url.includes('/api/') && !url.startsWith('/api/')) {
     return url;
   }
-  
-  // Global endpoints that should NOT have business slug applied
+    // Global endpoints that should NOT have business slug applied
   const globalEndpoints = [
     '/api/login',
     '/api/logout',
@@ -58,7 +57,11 @@ function buildApiUrl(url: string): string {
     '/api/user',
     '/api/auth-debug',
     '/api/themes',
-    '/api/current-business'
+    '/api/current-business',
+    '/api/staff/', // Staff endpoints should be global
+    '/api/appointments', // Appointments endpoints should be global
+    '/api/customers', // Customers endpoints should be global
+    '/api/services' // Services endpoints should be global
   ];
   
   // Check if this is a global endpoint
