@@ -408,6 +408,7 @@ export const staffAvailability = pgTable("staff_availability", {
   startTime: text("start_time").notNull(), // Format: "HH:MM" in 24-hour format
   endTime: text("end_time").notNull(), // Format: "HH:MM" in 24-hour format
   isAvailable: boolean("is_available").default(true),
+  breaks: jsonb("breaks").$type<Array<{startTime: string; endTime: string}>>().default([]),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => {
@@ -423,6 +424,7 @@ export const insertStaffAvailabilitySchema = createInsertSchema(staffAvailabilit
   startTime: true,
   endTime: true,
   isAvailable: true,
+  breaks: true,
 });
 
 // Define relationships between tables for Drizzle ORM

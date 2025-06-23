@@ -2,15 +2,10 @@ import { Appointment, StaffAvailability } from "@shared/schema";
 import { RRule } from "rrule";
 import { format, parse, isWithinInterval, addMinutes, isSameDay, setHours, setMinutes, isAfter, isBefore } from "date-fns";
 
-// Type for breaks that isn't in the schema yet but used in the UI
+// Type for breaks that is now included in the schema
 export interface BreakTime {
   startTime: string;
   endTime: string;
-}
-
-// Extended availability with breaks
-export interface ExtendedStaffAvailability extends StaffAvailability {
-  breaks?: BreakTime[];
 }
 
 // Map numeric day of week to day name
@@ -58,7 +53,7 @@ export function isTimeWithinAvailability(
   date: Date,
   time: string,
   duration: number,
-  availabilities: (StaffAvailability | ExtendedStaffAvailability)[]
+  availabilities: StaffAvailability[]
 ): boolean {
   // Parse the appointment time
   const [hours, minutes] = time.split(':').map(Number);
@@ -95,11 +90,9 @@ export function isTimeWithinAvailability(
   const isWithinAvailabilityTime = 
     (isAfter(appointmentDate, availabilityStartDate) || appointmentDate.getTime() === availabilityStartDate.getTime()) && 
     (isBefore(appointmentEndDate, availabilityEndDate) || appointmentEndDate.getTime() === availabilityEndDate.getTime());
-  
-  // If the staff member has breaks, check if the appointment overlaps with any break
-  const extendedAvailability = dayAvailability as ExtendedStaffAvailability;
-  if (extendedAvailability.breaks && extendedAvailability.breaks.length > 0) {
-    for (const breakTime of extendedAvailability.breaks) {
+    // If the staff member has breaks, check if the appointment overlaps with any break
+  if (dayAvailability.breaks && dayAvailability.breaks.length > 0) {
+    for (const breakTime of dayAvailability.breaks) {
       const breakStart = parse(breakTime.startTime, 'HH:mm', new Date());
       const breakEnd = parse(breakTime.endTime, 'HH:mm', new Date());
       

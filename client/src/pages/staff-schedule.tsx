@@ -110,7 +110,7 @@ export default function StaffSchedule() {
     retry: 1,
     retryDelay: 1000,
     staleTime: 0, // Always fetch fresh data
-    cacheTime: 0  // Don't cache the result
+    cacheTime: undefined  // Don't cache the result
   });// Fetch staff appointments
   const { 
     data: appointmentsData, 
@@ -153,14 +153,18 @@ export default function StaffSchedule() {
               (a: StaffAvailability) => a.dayOfWeek === day.dayId
             );
             console.log(`📅 Day ${day.dayName} (${day.dayId}):`, existingAvailability);
-            
-            if (existingAvailability) {
+              if (existingAvailability) {
               return {
                 ...day,
                 isEnabled: true,
                 startTime: existingAvailability.startTime || "09:00",
                 endTime: existingAvailability.endTime || "17:00",
-                existingAvailabilityId: existingAvailability.id
+                existingAvailabilityId: existingAvailability.id,
+                breaks: (existingAvailability.breaks || []).map((breakTime: any, index: number) => ({
+                  id: `${day.dayId}-break-${index}`,
+                  startTime: breakTime.startTime,
+                  endTime: breakTime.endTime
+                }))
               };
             }
             return day; // Keep existing day data if no availability found
@@ -181,15 +185,18 @@ export default function StaffSchedule() {
     mutationFn: async (schedules: DaySchedule[]) => {
       // Filter only enabled days
       const enabledSchedules = schedules.filter(schedule => schedule.isEnabled);
-      
-      // Process each day's schedule - create, update or delete as needed
+        // Process each day's schedule - create, update or delete as needed
       const operations = enabledSchedules.map(async (schedule) => {
         const data = {
           staffId: user?.id,
           dayOfWeek: schedule.dayId,
           startTime: schedule.startTime,
           endTime: schedule.endTime,
-          isAvailable: true // Always true when explicitly set
+          isAvailable: true, // Always true when explicitly set
+          breaks: schedule.breaks.map(breakPeriod => ({
+            startTime: breakPeriod.startTime,
+            endTime: breakPeriod.endTime
+          }))
         };
         
         if (schedule.existingAvailabilityId) {

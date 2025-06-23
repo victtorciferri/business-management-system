@@ -211,7 +211,7 @@ router.post("/:id/availability", async (req: Request, res: Response) => {
     if (req.session.user.role === "business" && staff.businessId !== req.session.user.id && req.session.user.id !== staffId) {
       return res.status(403).json({ message: "Not authorized to manage this staff's availability" });
     }
-    const { dayOfWeek, startTime, endTime, isAvailable } = req.body;
+    const { dayOfWeek, startTime, endTime, isAvailable, breaks } = req.body;
     if (dayOfWeek < 0 || dayOfWeek > 6) {
       return res.status(400).json({ message: "Invalid day of week" });
     }
@@ -221,6 +221,7 @@ router.post("/:id/availability", async (req: Request, res: Response) => {
       startTime,
       endTime,
       isAvailable: isAvailable !== undefined ? isAvailable : true,
+      breaks: breaks || [],
     });
     res.status(201).json(availability);
   } catch (error) {
