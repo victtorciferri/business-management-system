@@ -251,6 +251,63 @@ router.delete("/availability/:id", async (req: Request, res: Response) => {
   }
 });
 
+// PUT /api/staff/availability/:id
+router.put("/availability/:id", async (req: Request, res: Response) => {
+  try {
+    const user = req.user || req.session?.user;
+    if (!user) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    
+    const availabilityId = parseInt(req.params.id);
+    const { dayOfWeek, startTime, endTime, isAvailable, breaks } = req.body;
+    
+    // Get the existing availability to check permissions
+    const existingAvailability = await storage.getStaffAvailabilityById(availabilityId);
+    if (!existingAvailability) {
+      return res.status(404).json({ message: "Availability slot not found" });
+    }
+    
+    const staff = await storage.getUser(existingAvailability.staffId);
+    if (!staff) {
+      return res.status(404).json({ message: "Staff member not found" });
+    }
+    
+    // Authorization check: Allow if user is the staff member themselves, or if user is the business owner
+    const isOwnData = (user as any).id === existingAvailability.staffId;
+    const isBusinessOwner = (user as any).role === "business" && staff.businessId === (user as any).id;
+    const isAdmin = (user as any).role === "admin";
+    
+    if (!isOwnData && !isBusinessOwner && !isAdmin) {
+      return res.status(403).json({ message: "Not authorized to update this staff's availability" });
+    }
+    
+    // Validate day of week if provided
+    if (dayOfWeek !== undefined && (dayOfWeek < 0 || dayOfWeek > 6)) {
+      return res.status(400).json({ message: "Invalid day of week" });
+    }
+    
+    const updateData = {
+      ...(dayOfWeek !== undefined && { dayOfWeek }),
+      ...(startTime !== undefined && { startTime }),
+      ...(endTime !== undefined && { endTime }),
+      ...(isAvailable !== undefined && { isAvailable }),
+      ...(breaks !== undefined && { breaks })
+    };
+    
+    const updatedAvailability = await storage.updateStaffAvailability(availabilityId, updateData);
+    
+    if (!updatedAvailability) {
+      return res.status(404).json({ message: "Failed to update availability" });
+    }
+    
+    res.json(updatedAvailability);
+  } catch (error) {
+    console.error("Error updating staff availability:", error);
+    res.status(500).json({ message: "Failed to update staff availability" });
+  }
+});
+
 /*********************************
  * Staff Appointments Routes
  *********************************/
