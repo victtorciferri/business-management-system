@@ -371,63 +371,9 @@ export default function StaffSchedule() {
     }
   };
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-6">      <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold tracking-tight">My Schedule</h1>
-      </div>      {/* Debug Information - Always visible for troubleshooting */}
-      <Card className="bg-red-50 border-red-200 mb-4">
-        <CardHeader>
-          <CardTitle className="text-sm text-red-800">🔍 Debug Information (Always Visible)</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-red-700">
-          <p><strong>User:</strong> {user ? `${user.username} (ID: ${user.id}, Role: ${user.role})` : 'Not logged in'}</p>
-          <p><strong>Availability Loading:</strong> {availabilityLoading ? 'Yes' : 'No'}</p>
-          <p><strong>Availability Error:</strong> {availabilityError ? String(availabilityError) : 'None'}</p>
-          <p><strong>Availability Data:</strong> {availabilityData ? `${Array.isArray(availabilityData) ? availabilityData.length : 'Not array'} items` : 'None'}</p>
-          <p><strong>Appointments Loading:</strong> {appointmentsLoading ? 'Yes' : 'No'}</p>
-          <p><strong>Appointments Error:</strong> {appointmentsError ? String(appointmentsError) : 'None'}</p>
-          <p><strong>Appointments Data:</strong> {appointmentsData ? `${Array.isArray(appointmentsData) ? appointmentsData.length : 'Not array'} items` : 'None'}</p>
-          <p><strong>Schedule State Length:</strong> {scheduleState.length}</p>
-          {availabilityError && (
-            <details className="mt-2">
-              <summary className="cursor-pointer font-bold text-red-900">Availability Error Details</summary>
-              <pre className="mt-1 p-2 bg-red-100 rounded text-xs overflow-auto">
-                {JSON.stringify(availabilityError, null, 2)}
-              </pre>
-            </details>
-          )}
-          {appointmentsError && (
-            <details className="mt-2">
-              <summary className="cursor-pointer font-bold text-red-900">Appointments Error Details</summary>
-              <pre className="mt-1 p-2 bg-red-100 rounded text-xs overflow-auto">
-                {JSON.stringify(appointmentsError, null, 2)}
-              </pre>
-            </details>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Original Debug Information - only in development */}
-      {process.env.NODE_ENV === 'development' && (
-        <Card className="bg-blue-50 border-blue-200">
-          <CardHeader>
-            <CardTitle className="text-sm text-blue-800">Debug Information</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-blue-700">
-            <p><strong>User:</strong> {user ? `${user.username} (ID: ${user.id}, Role: ${user.role})` : 'Not logged in'}</p>
-            <p><strong>Availability Loading:</strong> {availabilityLoading ? 'Yes' : 'No'}</p>
-            <p><strong>Availability Error:</strong> {availabilityError ? String(availabilityError) : 'None'}</p>
-            <p><strong>Availability Data:</strong> {availabilityData ? `${Array.isArray(availabilityData) ? availabilityData.length : 'Not array'} items` : 'None'}</p>
-            <p><strong>Appointments Loading:</strong> {appointmentsLoading ? 'Yes' : 'No'}</p>
-            <p><strong>Appointments Error:</strong> {appointmentsError ? String(appointmentsError) : 'None'}</p>
-            <p><strong>Appointments Data:</strong> {appointmentsData ? `${Array.isArray(appointmentsData) ? appointmentsData.length : 'Not array'} items` : 'None'}</p>
-            <p><strong>Schedule State:</strong> {scheduleState ? `${scheduleState.length} days` : 'Empty'}</p>
-            <details>
-              <summary>Schedule State Details</summary>
-              <pre className="text-xs mt-2 bg-blue-100 p-2 rounded overflow-auto">
-                {JSON.stringify(scheduleState, null, 2)}
-              </pre>
-            </details>
+      </div>
           </CardContent>
         </Card>
       )}
@@ -585,28 +531,7 @@ export default function StaffSchedule() {
         </TabsContent>
         
         {/* Appointments Tab */}        <TabsContent value="appointments" className="space-y-4">
-          <h2 className="text-xl font-semibold">My Appointments</h2>
-          
-          {/* Debug for appointments */}
-          {process.env.NODE_ENV === 'development' && (
-            <div className="bg-yellow-50 border border-yellow-200 p-3 rounded text-sm">
-              <p><strong>Debug - Appointments:</strong></p>
-              <p>Loading: {appointmentsLoading ? 'Yes' : 'No'}</p>
-              <p>Error: {appointmentsError ? String(appointmentsError) : 'None'}</p>
-              <p>Data: {appointmentsData ? `Array with ${appointmentsData.length} items` : 'No data'}</p>
-              <p>Data type: {typeof appointmentsData}</p>
-              <p>Is Array: {Array.isArray(appointmentsData) ? 'Yes' : 'No'}</p>
-              {appointmentsData && appointmentsData.length > 0 && (
-                <details className="mt-2">
-                  <summary>First appointment data:</summary>
-                  <pre className="text-xs bg-yellow-100 p-2 mt-1 rounded overflow-auto">
-                    {JSON.stringify(appointmentsData[0], null, 2)}
-                  </pre>
-                </details>
-              )}
-            </div>
-          )}
-          
+          <h2 className="text-xl font-semibold">My Appointments</h2>          
           {appointmentsLoading ? (
             <div className="flex justify-center p-8">
               <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
