@@ -77,29 +77,26 @@ export default function StaffSchedule() {
       endTime: "17:00",
       breaks: [],
       existingAvailabilityId: undefined
-    }));
-  });
-  const [hasPendingChanges, setHasPendingChanges] = useState(false);  // Fetch staff availability data with cache busting
+    }));  });
+  
+  const [hasPendingChanges, setHasPendingChanges] = useState(false);
+  
+  // Fetch staff availability data
   const { 
     data: availabilityData, 
     isLoading: availabilityLoading,
     error: availabilityError 
-  } = useQuery({    queryKey: ['/api/staff', user?.id, 'availability'], // Remove Date.now() to fix caching
+  } = useQuery({
+    queryKey: ['/api/staff', user?.id, 'availability'],
     queryFn: async () => {
       if (!user?.id) {
-        console.log('❌ No user ID available for availability query');
         return [];
       }
       const url = `/api/staff/${user.id}/availability`;
-      console.log('🔍 Fetching availability from URL:', url);
-      console.log('🔍 Current pathname:', window.location.pathname);
-      console.log('🔍 User data:', user);
       
       try {
         const res = await apiRequest('GET', url);
         const data = await res.json();
-        console.log('✅ Availability data received:', data);
-        console.log('✅ Data type:', typeof data, 'Is Array:', Array.isArray(data));
         return data;
       } catch (error) {
         console.error('❌ Availability fetch failed:', error);
@@ -110,50 +107,37 @@ export default function StaffSchedule() {
     retry: 1,
     retryDelay: 1000,
     staleTime: 0, // Always fetch fresh data
-    cacheTime: undefined  // Don't cache the result
-  });// Fetch staff appointments
+    gcTime: 0  // Don't cache the result (updated from cacheTime)
+  });
+
+  // Fetch staff appointments
   const { 
     data: appointmentsData, 
     isLoading: appointmentsLoading,
     error: appointmentsError
   } = useQuery({
-    queryKey: ['/api/staff', user?.id, 'appointments'],
-    queryFn: async () => {
+    queryKey: ['/api/staff', user?.id, 'appointments'],    queryFn: async () => {
       if (!user?.id) return [];
       const url = `/api/staff/${user.id}/appointments`;
-      console.log('🔍 Fetching appointments from URL:', url);
       
       const res = await apiRequest('GET', url);
       const data = await res.json();
-      console.log('✅ Appointments data received:', data);
       return data;
     },
-    enabled: !!user?.id
-  });  // Update schedule data when availability data is loaded
+    enabled: !!user?.id  });
+
+  // Update schedule data when availability data is loaded
   useEffect(() => {
-    console.log('🔧 useEffect triggered!');
-    console.log('🔧 availabilityData:', availabilityData);
-    console.log('🔧 availabilityLoading:', availabilityLoading);
-    console.log('🔧 availabilityError:', availabilityError);
-    console.log('🔧 Current scheduleState length:', scheduleState.length);
-    
     if (availabilityData) {
-      console.log('✅ availabilityData exists, type:', typeof availabilityData);
-      console.log('✅ is Array:', Array.isArray(availabilityData));
-      console.log('✅ length:', Array.isArray(availabilityData) ? availabilityData.length : 'not array');
-      
       if (Array.isArray(availabilityData) && availabilityData.length > 0) {
-        console.log('✅ Processing availability data:', availabilityData);
-        
         setScheduleState(prevState => {
-          console.log('🔄 Updating scheduleState from:', prevState.length, 'days');
           const newState = prevState.map(day => {
             // Find existing availability for this day
             const existingAvailability = availabilityData.find(
               (a: StaffAvailability) => a.dayOfWeek === day.dayId
             );
-            console.log(`📅 Day ${day.dayName} (${day.dayId}):`, existingAvailability);
-              if (existingAvailability) {
+            
+            if (existingAvailability) {
               return {
                 ...day,
                 isEnabled: true,
@@ -169,14 +153,9 @@ export default function StaffSchedule() {
             }
             return day; // Keep existing day data if no availability found
           });
-          console.log('🔄 New scheduleState:', newState);
           return newState;
         });
-      } else {
-        console.log('❌ availabilityData is not a valid array or is empty');
       }
-    } else {
-      console.log('❌ No availabilityData');
     }
   }, [availabilityData]);
 
@@ -370,13 +349,12 @@ export default function StaffSchedule() {
       return { date: "Invalid date", time: "Invalid time" };
     }
   };
+
   return (
-    <div className="space-y-6">      <div className="flex justify-between items-center">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold tracking-tight">My Schedule</h1>
       </div>
-          </CardContent>
-        </Card>
-      )}
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid grid-cols-2 w-[400px]">
