@@ -84,8 +84,7 @@ export default function StaffSchedule() {
     data: availabilityData, 
     isLoading: availabilityLoading,
     error: availabilityError 
-  } = useQuery({
-    queryKey: ['/api/staff', user?.id, 'availability', Date.now()], // Add timestamp to bust cache
+  } = useQuery({    queryKey: ['/api/staff', user?.id, 'availability'], // Remove Date.now() to fix caching
     queryFn: async () => {
       if (!user?.id) {
         console.log('❌ No user ID available for availability query');
@@ -100,6 +99,7 @@ export default function StaffSchedule() {
         const res = await apiRequest('GET', url);
         const data = await res.json();
         console.log('✅ Availability data received:', data);
+        console.log('✅ Data type:', typeof data, 'Is Array:', Array.isArray(data));
         return data;
       } catch (error) {
         console.error('❌ Availability fetch failed:', error);
@@ -131,34 +131,48 @@ export default function StaffSchedule() {
     enabled: !!user?.id
   });  // Update schedule data when availability data is loaded
   useEffect(() => {
-    console.log('🔧 useEffect triggered with availabilityData:', availabilityData);
-    console.log('🔧 Current scheduleState:', scheduleState);
+    console.log('🔧 useEffect triggered!');
+    console.log('🔧 availabilityData:', availabilityData);
+    console.log('🔧 availabilityLoading:', availabilityLoading);
+    console.log('🔧 availabilityError:', availabilityError);
+    console.log('🔧 Current scheduleState length:', scheduleState.length);
     
-    if (availabilityData && Array.isArray(availabilityData) && availabilityData.length > 0) {
-      console.log('✅ Processing availability data:', availabilityData);
+    if (availabilityData) {
+      console.log('✅ availabilityData exists, type:', typeof availabilityData);
+      console.log('✅ is Array:', Array.isArray(availabilityData));
+      console.log('✅ length:', Array.isArray(availabilityData) ? availabilityData.length : 'not array');
       
-      setScheduleState(prevState => 
-        prevState.map(day => {
-          // Find existing availability for this day
-          const existingAvailability = availabilityData.find(
-            (a: StaffAvailability) => a.dayOfWeek === day.dayId
-          );
-          console.log(`📅 Day ${day.dayName} (${day.dayId}):`, existingAvailability);
-          
-          if (existingAvailability) {
-            return {
-              ...day,
-              isEnabled: true,
-              startTime: existingAvailability.startTime || "09:00",
-              endTime: existingAvailability.endTime || "17:00",
-              existingAvailabilityId: existingAvailability.id
-            };
-          }
-          return day; // Keep existing day data if no availability found
-        })
-      );
+      if (Array.isArray(availabilityData) && availabilityData.length > 0) {
+        console.log('✅ Processing availability data:', availabilityData);
+        
+        setScheduleState(prevState => {
+          console.log('🔄 Updating scheduleState from:', prevState.length, 'days');
+          const newState = prevState.map(day => {
+            // Find existing availability for this day
+            const existingAvailability = availabilityData.find(
+              (a: StaffAvailability) => a.dayOfWeek === day.dayId
+            );
+            console.log(`📅 Day ${day.dayName} (${day.dayId}):`, existingAvailability);
+            
+            if (existingAvailability) {
+              return {
+                ...day,
+                isEnabled: true,
+                startTime: existingAvailability.startTime || "09:00",
+                endTime: existingAvailability.endTime || "17:00",
+                existingAvailabilityId: existingAvailability.id
+              };
+            }
+            return day; // Keep existing day data if no availability found
+          });
+          console.log('🔄 New scheduleState:', newState);
+          return newState;
+        });
+      } else {
+        console.log('❌ availabilityData is not a valid array or is empty');
+      }
     } else {
-      console.log('❌ No availability data or empty array:', availabilityData);
+      console.log('❌ No availabilityData');
     }
   }, [availabilityData]);
 
