@@ -1,6 +1,7 @@
 import express, { Request, Response } from "express";
 import { storage } from "../storage";
 import { validateAppointmentBooking } from "../utils/appointmentValidation";
+import { User } from "@shared/schema";
 
 const router = express.Router();
 
@@ -15,10 +16,9 @@ router.get("/services", async (req: Request, res: Response) => {
     // Check if businessId is provided as query parameter (for customer portal)
     const businessId = req.query.businessId || req.body.businessId;
     let business = req.business;
-    
-    if (!business && businessId) {
+      if (!business && businessId) {
       // If business context not set but businessId provided, fetch business directly
-      business = await storage.getUser(parseInt(businessId as string));
+      business = await storage.getUser(parseInt(businessId as string)) as Omit<User, "password">;
     }
     
     if (!business) {
@@ -34,9 +34,8 @@ router.get("/services", async (req: Request, res: Response) => {
 });
 
 // POST /api/services
-router.post("/services", async (req: Request, res: Response) => {
-  try {
-    const user = req.user || req.session?.user;
+router.post("/services", async (req: Request, res: Response) => {  try {
+    const user = req.user || req.session?.user as User;
     if (!user) {
       return res.status(401).json({ message: "Authentication required" });
     }
@@ -55,19 +54,38 @@ router.post("/services", async (req: Request, res: Response) => {
  *********************************/
 
 // GET /api/appointments
-router.get("/appointments", async (req: Request, res: Response) => {
-  try {
-    const user = req.user || req.session?.user;
+router.get("/appointments", async (req: Request, res: Response) => {  try {
+    const user = req.user || req.session?.user as User;
     if (!user) {
       return res.status(401).json({ message: "Authentication required" });
-    }    let appointments;
-    // Assuming business users see appointments for their business,
-    // while customers see their own.
-    if (user.role === "business") {
-      appointments = await storage.getAppointmentsByUserId(user.id);
-    } else {
-      appointments = await storage.getAppointmentsByCustomerId(user.id);
     }
+    
+    let appointments;
+    
+    // Check for date range filtering parameters
+    const { startDate, endDate, userId: queryUserId } = req.query;
+    
+    // Use the query userId if provided (for specific user filtering), otherwise use the logged-in user
+    const targetUserId = queryUserId ? parseInt(queryUserId as string) : user.id;
+    
+    // Handle date range filtering if both startDate and endDate are provided
+    if (startDate && endDate) {
+      const start = new Date(startDate as string);
+      const end = new Date(endDate as string);
+      
+      console.log(`📅 Fetching appointments for user ${targetUserId} from ${start.toISOString()} to ${end.toISOString()}`);
+      
+      appointments = await storage.getAppointmentsByDateRange(targetUserId, start, end);
+    } else {
+      // Fallback to getting all appointments for the user
+      if (user.role === "business") {
+        appointments = await storage.getAppointmentsByUserId(targetUserId);
+      } else {
+        appointments = await storage.getAppointmentsByCustomerId(targetUserId);
+      }
+    }
+    
+    console.log(`✅ Found ${appointments?.length || 0} appointments for user ${targetUserId}`);
     return res.json(appointments);
   } catch (error: any) {
     console.error("Error fetching appointments:", error);
