@@ -25,7 +25,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 
 interface ServiceFormProps {
-  userId: number;
+  userId?: number; // Make userId optional since backend uses authenticated user
   existingService?: Service | null;
   onSubmitSuccess?: () => void;
 }
@@ -47,7 +47,6 @@ const weekDays = [
 
 // Service form schema
 const formSchema = z.object({
-  userId: z.number(),
   name: z.string().min(1, { message: "Service name is required" }),
   description: z.string().optional(),
   duration: z.string().min(1, { message: "Duration is required" }),
@@ -147,7 +146,6 @@ export function ServiceForm({
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      userId: userId,
       name: existingService?.name || "",
       description: existingService?.description || "",
       duration: existingService ? existingService.duration.toString() : "60",
@@ -170,10 +168,10 @@ export function ServiceForm({
   const onSubmit = async (values: FormValues) => {
     try {
       // Create service data that exactly matches the expected schema format
+      // Create service data that exactly matches the expected schema format
       // The backend validates using the insertServiceSchema from shared/schema.ts
       // Numbers are expected as numbers, strings as strings
       const serviceData = {
-        userId: values.userId,  // Already a number
         name: values.name,
         description: values.description || null,
         // Numeric fields - convert from strings appropriately
