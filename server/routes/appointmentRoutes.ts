@@ -12,23 +12,47 @@ const router = express.Router();
 // GET /api/services - Public endpoint for browsing services
 router.get("/services", async (req: Request, res: Response) => {
   try {
+    console.log("🔍 Services endpoint called");
+    console.log("🔍 Session user:", req.session?.user);
+    console.log("🔍 Request user:", req.user);
+    console.log("🔍 Business context:", req.business);
+    
     // For public access, we need to get services by business
     // Check if businessId is provided as query parameter (for customer portal)
     const businessId = req.query.businessId || req.body.businessId;
     let business = req.business;
-      if (!business && businessId) {
+    
+    console.log("🔍 Business ID from query:", businessId);
+    
+    // If no business context and no businessId, check if user is authenticated and is a business owner
+    if (!business && !businessId) {
+      const user = req.user || req.session?.user as User;
+      console.log("🔍 Authenticated user found:", user ? `${user.username} (ID: ${user.id}, Role: ${user.role})` : "None");
+      
+      if (user && user.role === "business") {
+        business = user as Omit<User, "password">;
+        console.log("🔍 Using authenticated business user as business context");
+      }
+    }
+    
+    if (!business && businessId) {
       // If business context not set but businessId provided, fetch business directly
+      console.log("🔍 Fetching business by ID:", businessId);
       business = await storage.getUser(parseInt(businessId as string)) as Omit<User, "password">;
     }
     
     if (!business) {
+      console.log("❌ No business found - returning 404");
       return res.status(404).json({ message: "Business not found" });
     }
     
+    console.log("✅ Found business:", business.businessName || business.username, "ID:", business.id);
     const services = await storage.getServicesByUserId(business.id);
+    console.log("✅ Found services:", services.length);
+    
     return res.json(services);
   } catch (error: any) {
-    console.error("Error fetching services:", error);
+    console.error("❌ Error fetching services:", error);
     return res.status(500).json({ message: "Failed to fetch services", error: error.message });
   }
 });

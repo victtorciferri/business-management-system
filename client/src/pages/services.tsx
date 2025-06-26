@@ -29,20 +29,17 @@ export default function Services() {
   const [deleteServiceId, setDeleteServiceId] = useState<number | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
-  // In a real app, this would come from an auth context
-  const userId = 1;
-  
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
   // Fetch services
   const { data: services = [], isLoading: isLoadingServices } = useQuery<Service[]>({
-    queryKey: [`/api/services?userId=${userId}`],
+    queryKey: [`/api/services`],
   });
   
   // Fetch appointments to check which services are in use
   const { data: appointments = [] } = useQuery<Appointment[]>({
-    queryKey: [`/api/appointments?userId=${userId}`],
+    queryKey: [`/api/appointments`],
   });
   
   // Filter services based on search term and sort by active status
