@@ -33,14 +33,35 @@ export default function Services() {
   const queryClient = useQueryClient();
   
   // Fetch services
-  const { data: services = [], isLoading: isLoadingServices } = useQuery<Service[]>({
+  const { data: services = [], isLoading: isLoadingServices, error: servicesError } = useQuery<Service[]>({
     queryKey: [`/api/services`],
+    onError: (error) => {
+      console.error("❌ Services query error:", error);
+    },
+    onSuccess: (data) => {
+      console.log("✅ Services query success:", data);
+    }
   });
+
+  // Debug logging
+  console.log("🔍 Services page - Loading:", isLoadingServices);
+  console.log("🔍 Services page - Services:", services);
+  console.log("🔍 Services page - Error:", servicesError);
   
   // Fetch appointments to check which services are in use
-  const { data: appointments = [] } = useQuery<Appointment[]>({
+  const { data: appointments = [], error: appointmentsError } = useQuery<Appointment[]>({
     queryKey: [`/api/appointments`],
+    onError: (error) => {
+      console.error("❌ Appointments query error:", error);
+    },
+    onSuccess: (data) => {
+      console.log("✅ Appointments query success:", data);
+    }
   });
+
+  // Debug logging for appointments
+  console.log("🔍 Services page - Appointments:", appointments);
+  console.log("🔍 Services page - Appointments Error:", appointmentsError);
   
   // Filter services based on search term and sort by active status
   const filteredServices = services
@@ -191,7 +212,19 @@ export default function Services() {
       
       {/* Services Grid */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {isLoadingServices ? (
+        {servicesError ? (
+          <div className="text-center py-10 col-span-full">
+            <div className="text-red-500 mb-4">⚠️ Error loading services</div>
+            <p className="text-gray-500">{servicesError.message || 'Failed to load services'}</p>
+            <Button 
+              onClick={() => window.location.reload()} 
+              className="mt-4"
+              variant="outline"
+            >
+              Retry
+            </Button>
+          </div>
+        ) : isLoadingServices ? (
           <div className="text-center py-10 col-span-full">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
             <p className="mt-4 text-gray-500">Loading services...</p>
